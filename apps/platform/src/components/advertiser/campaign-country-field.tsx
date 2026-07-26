@@ -27,6 +27,11 @@ type CampaignCountryFieldProps = {
   showTierButtons?: boolean;
   singleTierOnly?: boolean;
   searchPlaceholder?: string;
+  /** Tiers locked because the opposite Allow/Block list uses them. */
+  disabledTiers?: CountryTier[];
+  /** Individual countries locked by the opposite list. */
+  disabledCountries?: string[];
+  conflictLabel?: string;
 };
 
 export function CampaignCountryField({
@@ -37,6 +42,9 @@ export function CampaignCountryField({
   showTierButtons = true,
   singleTierOnly = false,
   searchPlaceholder = "Search countries...",
+  disabledTiers = [],
+  disabledCountries = [],
+  conflictLabel = "the other traffic list",
 }: CampaignCountryFieldProps) {
   if (singleTierOnly) {
     return (
@@ -47,6 +55,9 @@ export function CampaignCountryField({
         onChange={onChange}
         showTierButtons={showTierButtons}
         searchPlaceholder={searchPlaceholder}
+        disabledTiers={disabledTiers}
+        disabledCountries={disabledCountries}
+        conflictLabel={conflictLabel}
       />
     );
   }
@@ -59,6 +70,9 @@ export function CampaignCountryField({
       onChange={onChange}
       showTierButtons={showTierButtons}
       searchPlaceholder={searchPlaceholder}
+      disabledTiers={disabledTiers}
+      disabledCountries={disabledCountries}
+      conflictLabel={conflictLabel}
     />
   );
 }
@@ -70,9 +84,20 @@ function SingleTierCountryField({
   onChange,
   showTierButtons,
   searchPlaceholder,
+  disabledTiers = [],
+  disabledCountries = [],
+  conflictLabel = "the other traffic list",
 }: Pick<
   CampaignCountryFieldProps,
-  "label" | "hint" | "selected" | "onChange" | "showTierButtons" | "searchPlaceholder"
+  | "label"
+  | "hint"
+  | "selected"
+  | "onChange"
+  | "showTierButtons"
+  | "searchPlaceholder"
+  | "disabledTiers"
+  | "disabledCountries"
+  | "conflictLabel"
 >) {
   const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState(true);
@@ -81,6 +106,11 @@ function SingleTierCountryField({
   const partialTier = getPartialTierFromSelection(selected);
   const fullTiers = getFullySelectedTiers(selected);
   const hasInvalidSelection = hasPartialAndFullTierMix(selected);
+  const disabledTierSet = useMemo(() => new Set(disabledTiers), [disabledTiers]);
+  const disabledCountrySet = useMemo(
+    () => new Set(disabledCountries.map((code) => code.trim().toUpperCase())),
+    [disabledCountries],
+  );
 
   const filteredGroups = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -95,6 +125,17 @@ function SingleTierCountryField({
     })).filter((group) => group.countries.length > 0);
   }, [search]);
 
+  function isExternallyDisabledTier(tier: CountryTier) {
+    return disabledTierSet.has(tier);
+  }
+
+  function isExternallyDisabledCountry(code: string) {
+    const upper = code.trim().toUpperCase();
+    if (disabledCountrySet.has(upper)) return true;
+    const tier = resolveCountryTier(upper);
+    return tier !== null && disabledTierSet.has(tier);
+  }
+
   function isTierFullySelected(tier: CountryTier) {
     return isTierFullySelectedInList(tier, selected);
   }
@@ -105,6 +146,7 @@ function SingleTierCountryField({
   }
 
   function canUseSelectAll(tier: CountryTier) {
+    if (isExternallyDisabledTier(tier)) return false;
     if (hasInvalidSelection) return false;
     if (partialTier && partialTier !== tier) return false;
     return true;
@@ -121,6 +163,13 @@ function SingleTierCountryField({
         return;
       }
       onChange(selected.filter((item) => item !== code));
+      return;
+    }
+
+    if (isExternallyDisabledCountry(code) || isExternallyDisabledTier(countryTier)) {
+      setTierNotice(
+        `${TIER_META[countryTier].label} is already used in ${conflictLabel}. Choose a different tier.`,
+      );
       return;
     }
 
@@ -148,6 +197,13 @@ function SingleTierCountryField({
 
   function selectFullTier(tier: CountryTier) {
     setTierNotice(null);
+
+    if (isExternallyDisabledTier(tier)) {
+      setTierNotice(
+        `${TIER_META[tier].label} is already used in ${conflictLabel}. Choose a different tier.`,
+      );
+      return;
+    }
 
     if (hasInvalidSelection) {
       onChange([...TIER_COUNTRIES[tier]]);
@@ -180,6 +236,7 @@ function SingleTierCountryField({
   }
 
   function isCountryClickable(tier: CountryTier) {
+    if (isExternallyDisabledTier(tier)) return false;
     if (hasInvalidSelection) return false;
     if (selected.length === 0) return true;
     if (fullTiers.length > 0) return false;
@@ -193,6 +250,7 @@ function SingleTierCountryField({
   }
 
   function isTierLockedForSelectAll(tier: CountryTier) {
+    if (isExternallyDisabledTier(tier)) return true;
     return partialTier !== null && partialTier !== tier;
   }
 
@@ -200,6 +258,16 @@ function SingleTierCountryField({
     <div className="space-y-2">
       <Label>{label}</Label>
       {hint && <p className="text-xs text-slate-500">{hint}</p>}
+
+      {disabledTiers.length > 0 && (
+        <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+          <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600" />
+          <p>
+            Unavailable here (used in {conflictLabel}):{" "}
+            <strong>{disabledTiers.map((tier) => TIER_META[tier].label).join(", ")}</strong>
+          </p>
+        </div>
+      )}
 
       {hasInvalidSelection && (
         <Alert className="border-red-200 bg-red-50 text-red-900">
@@ -299,6 +367,7 @@ function SingleTierCountryField({
               <div className="space-y-4">
                 {filteredGroups.map((group) => {
                   const fullySelected = isTierFullySelected(group.tier);
+                  const externallyDisabled = isExternallyDisabledTier(group.tier);
                   const selectAllEnabled = canUseSelectAll(group.tier);
                   const countriesInteractive = isCountryClickable(group.tier);
                   const selectAllOnly = isTierSelectAllOnly(group.tier);
@@ -316,12 +385,17 @@ function SingleTierCountryField({
                       <div className="flex items-center justify-between gap-2 border-b border-slate-100 px-3 py-2">
                         <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
                           {group.label}
-                          {locked && (
+                          {externallyDisabled && (
+                            <span className="ml-2 font-normal normal-case text-amber-700">
+                              (used in {conflictLabel})
+                            </span>
+                          )}
+                          {!externallyDisabled && locked && (
                             <span className="ml-2 font-normal normal-case text-slate-400">
                               (locked)
                             </span>
                           )}
-                          {selectAllOnly && (
+                          {selectAllOnly && !externallyDisabled && (
                             <span className="ml-2 font-normal normal-case text-slate-400">
                               (Select all to add)
                             </span>
@@ -332,7 +406,7 @@ function SingleTierCountryField({
                             </span>
                           )}
                         </p>
-                        {selectAllEnabled ? (
+                        {selectAllEnabled || fullySelected ? (
                           <button
                             type="button"
                             onClick={() => selectFullTier(group.tier)}
@@ -348,7 +422,8 @@ function SingleTierCountryField({
                         {group.countries.map((code) => {
                           const active = selected.includes(code);
                           const canToggle =
-                            countriesInteractive || (active && partialTier === group.tier);
+                            !externallyDisabled &&
+                            (countriesInteractive || (active && partialTier === group.tier));
 
                           if (!canToggle) {
                             return (
@@ -426,7 +501,10 @@ function SingleTierCountryField({
               key={tier}
               type="button"
               onClick={() => selectFullTier(tier)}
-              disabled={!canUseSelectAll(tier) && !isTierFullySelected(tier)}
+              disabled={
+                isExternallyDisabledTier(tier) ||
+                (!canUseSelectAll(tier) && !isTierFullySelected(tier))
+              }
               className={cn(
                 "rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40",
                 isTierFullySelected(tier)
@@ -463,12 +541,28 @@ function CountrySearchMultiSelect({
   onChange,
   showTierButtons,
   searchPlaceholder,
+  disabledTiers = [],
+  disabledCountries = [],
+  conflictLabel = "the other traffic list",
 }: Pick<
   CampaignCountryFieldProps,
-  "label" | "hint" | "selected" | "onChange" | "showTierButtons" | "searchPlaceholder"
+  | "label"
+  | "hint"
+  | "selected"
+  | "onChange"
+  | "showTierButtons"
+  | "searchPlaceholder"
+  | "disabledTiers"
+  | "disabledCountries"
+  | "conflictLabel"
 >) {
   const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState(true);
+  const disabledTierSet = useMemo(() => new Set(disabledTiers), [disabledTiers]);
+  const disabledCountrySet = useMemo(
+    () => new Set(disabledCountries.map((code) => code.trim().toUpperCase())),
+    [disabledCountries],
+  );
 
   const filteredGroups = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -483,11 +577,23 @@ function CountrySearchMultiSelect({
     })).filter((group) => group.countries.length > 0);
   }, [search]);
 
+  function isExternallyDisabledTier(tier: CountryTier) {
+    return disabledTierSet.has(tier);
+  }
+
+  function isExternallyDisabledCountry(code: string) {
+    const upper = code.trim().toUpperCase();
+    if (disabledCountrySet.has(upper)) return true;
+    const tier = resolveCountryTier(upper);
+    return tier !== null && disabledTierSet.has(tier);
+  }
+
   function toggleCountry(code: string) {
     if (selected.includes(code)) {
       onChange(selected.filter((item) => item !== code));
       return;
     }
+    if (isExternallyDisabledCountry(code)) return;
     onChange([...selected, code]);
   }
 
@@ -496,6 +602,7 @@ function CountrySearchMultiSelect({
   }
 
   function addTier(tier: CountryTier) {
+    if (isExternallyDisabledTier(tier)) return;
     onChange(Array.from(new Set([...selected, ...TIER_COUNTRIES[tier]])));
   }
 
@@ -512,6 +619,13 @@ function CountrySearchMultiSelect({
     <div className="space-y-2">
       <Label>{label}</Label>
       {hint && <p className="text-xs text-slate-500">{hint}</p>}
+
+      {disabledTiers.length > 0 && (
+        <p className="text-xs text-amber-800">
+          Unavailable here (used in {conflictLabel}):{" "}
+          {disabledTiers.map((tier) => TIER_META[tier].label).join(", ")}
+        </p>
+      )}
 
       {selected.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
@@ -566,16 +680,26 @@ function CountrySearchMultiSelect({
             <div className="space-y-4">
               {filteredGroups.map((group) => {
                 const fullySelected = isTierFullySelected(group.tier);
+                const externallyDisabled = isExternallyDisabledTier(group.tier);
                 return (
                   <div
                     key={group.tier}
-                    className={cn("rounded-lg border border-t-2 bg-slate-50/40", group.accent)}
+                    className={cn(
+                      "rounded-lg border border-t-2 bg-slate-50/40",
+                      group.accent,
+                      externallyDisabled && "opacity-60",
+                    )}
                   >
                     <div className="flex items-center justify-between gap-2 border-b border-slate-100 px-3 py-2">
                       <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
                         {group.label}
+                        {externallyDisabled && (
+                          <span className="ml-2 font-normal normal-case text-amber-700">
+                            (used in {conflictLabel})
+                          </span>
+                        )}
                       </p>
-                      {showTierButtons && (
+                      {showTierButtons && !externallyDisabled && (
                         <button
                           type="button"
                           onClick={() => (fullySelected ? clearTier(group.tier) : addTier(group.tier))}
@@ -588,6 +712,21 @@ function CountrySearchMultiSelect({
                     <div className="grid gap-1 p-2 sm:grid-cols-2">
                       {group.countries.map((code) => {
                         const active = selected.includes(code);
+                        const disabled = externallyDisabled || isExternallyDisabledCountry(code);
+                        if (disabled && !active) {
+                          return (
+                            <div
+                              key={code}
+                              className="flex cursor-not-allowed items-center gap-2 rounded-md border border-transparent px-2.5 py-2 text-left text-sm text-slate-400"
+                            >
+                              <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded border border-slate-200 bg-slate-100" />
+                              <span className="min-w-0 truncate">
+                                {getCountryName(code)}{" "}
+                                <span className="text-xs">({code})</span>
+                              </span>
+                            </div>
+                          );
+                        }
                         return (
                           <button
                             key={code}

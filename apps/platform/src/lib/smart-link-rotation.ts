@@ -23,7 +23,6 @@ export function parseCampaignTargeting(targeting: unknown): CampaignTargetingGeo
 /** Whether a campaign accepts traffic from the visitor's country (if known). */
 export function campaignAcceptsCountry(targeting: unknown, countryCode?: string): boolean {
   const parsed = parseCampaignTargeting(targeting);
-  const trafficMode = parsed.trafficMode ?? "allow";
   const countries = parsed.countries ?? [];
   const blacklistedCountries = parsed.blacklistedCountries ?? [];
   const country = countryCode?.trim().toUpperCase();
@@ -34,12 +33,17 @@ export function campaignAcceptsCountry(targeting: unknown, countryCode?: string)
     return true;
   }
 
-  if (trafficMode === "block") {
-    return !blacklistedCountries.includes(country);
+  // Legacy block-only campaigns (empty allow list): keep previous blacklist behavior.
+  if (countries.length === 0) {
+    if ((parsed.trafficMode ?? "allow") === "block") {
+      return !blacklistedCountries.includes(country);
+    }
+    return true;
   }
 
-  if (countries.length === 0) return true;
-  return countries.includes(country);
+  if (!countries.includes(country)) return false;
+  if (blacklistedCountries.includes(country)) return false;
+  return true;
 }
 
 export function filterCampaignsByCountry<T extends Pick<Campaign, "targeting">>(

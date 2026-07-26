@@ -24,6 +24,8 @@ import {
   DEFAULT_VERTICAL,
   isValidTierCountrySelection,
   getBidRecommendationsFromTiers,
+  getSelectedTiersFromCountries,
+  selectionsConflict,
 } from "@/lib/campaign-form";
 import {
   getCampaignEditFormDefaults,
@@ -387,9 +389,9 @@ export function CreateCampaignForm({
 
   const minCpl = 0.1;
   const cplInvalid = cplValue > 0 && (cplValue < minCpl || cplValue > 100);
-  const guidanceCountries =
-    trafficMode === "block" ? blacklistedCountries : selectedCountries;
-  const tierBidGuidance = getBidRecommendationsFromTiers(payoutTiers, guidanceCountries);
+  const allowLockedTiers = getSelectedTiersFromCountries(blacklistedCountries);
+  const blockLockedTiers = getSelectedTiersFromCountries(selectedCountries);
+  const tierBidGuidance = getBidRecommendationsFromTiers(payoutTiers, selectedCountries);
   const cplBelowTierGuidance =
     cplValue > 0 && !cplInvalid && cplValue < tierBidGuidance.minimum;
   const cplAboveTierGuidance =
@@ -436,13 +438,28 @@ export function CreateCampaignForm({
       setError("You do not have enough balance to create a campaign. Please add funds to your account.");
       return;
     }
+    if (selectedCountries.length === 0) {
+      setError("Select at least one Allow Traffic country.");
+      return;
+    }
+    if (!isValidTierCountrySelection(selectedCountries)) {
+      setError(
+        "Invalid Allow Traffic selection. Use specific countries within one tier, or select full tier(s) only.",
+      );
+      return;
+    }
     if (
-      trafficMode === "allow" &&
-      selectedCountries.length > 0 &&
-      !isValidTierCountrySelection(selectedCountries)
+      blacklistedCountries.length > 0 &&
+      !isValidTierCountrySelection(blacklistedCountries)
     ) {
       setError(
-        "Invalid country selection. Use specific countries within one tier, or select full tier(s) only.",
+        "Invalid Block Traffic selection. Use specific countries within one tier, or select full tier(s) only.",
+      );
+      return;
+    }
+    if (selectionsConflict(selectedCountries, blacklistedCountries)) {
+      setError(
+        "Allow Traffic and Block Traffic cannot use the same countries or tiers. Move conflicting countries to one list only.",
       );
       return;
     }
@@ -456,10 +473,10 @@ export function CreateCampaignForm({
         endMode,
         endDate: endMode === "scheduled" ? endDate : null,
       },
-      trafficMode,
+      trafficMode: "allow" as const,
       vertical,
-      countries: trafficMode === "allow" ? selectedCountries : [],
-      blacklistedCountries: trafficMode === "block" ? blacklistedCountries : [],
+      countries: selectedCountries,
+      blacklistedCountries,
       devices: trafficMode === "allow" ? devices : [],
       operatingSystems: trafficMode === "allow" ? operatingSystems : [],
       blacklistedDevices: trafficMode === "block" ? blacklistedDevices : [],
@@ -834,11 +851,14 @@ export function CreateCampaignForm({
 
               <TabsContent value="allow" className="mt-4 space-y-4">
                 <CampaignCountryField
-                  label="Specific Countries"
-                  hint="Leave empty for all countries. Pick specific countries within one tier, or use Select all to add full tiers (Tier 1 + Tier 2 + Tier 3 together)."
+                  label="Specific Countries *"
+                  hint="Required. Pick specific countries within one tier, or use Select all to add full tiers. Countries/tiers used in Block Traffic are unavailable here."
                   selected={selectedCountries}
                   onChange={setSelectedCountries}
                   singleTierOnly
+                  disabledTiers={allowLockedTiers}
+                  disabledCountries={blacklistedCountries}
+                  conflictLabel="Block Traffic"
                 />
 
                 <TierPayoutInfoPanel payoutTiers={payoutTiers} />
@@ -863,10 +883,15 @@ export function CreateCampaignForm({
               <TabsContent value="block" className="mt-4 space-y-4">
                 <CampaignCountryField
                   label="Blacklisted Countries"
+                  hint="Optional. Block countries/tiers that are not already in Allow Traffic. Shared countries or tiers are not allowed."
                   selected={blacklistedCountries}
                   onChange={setBlacklistedCountries}
-                  showTierButtons={false}
+                  singleTierOnly
+                  showTierButtons
                   searchPlaceholder="Search countries..."
+                  disabledTiers={blockLockedTiers}
+                  disabledCountries={selectedCountries}
+                  conflictLabel="Allow Traffic"
                 />
 
                 <CampaignSearchMultiSelect
@@ -1051,7 +1076,7 @@ export function CreateCampaignForm({
           <BidRecommendationPanel
             cplValue={cplValue}
             payoutTiers={payoutTiers}
-            selectedCountries={guidanceCountries}
+            selectedCountries={selectedCountries}
           />
 
           <TierPayoutInfoPanel payoutTiers={payoutTiers} />

@@ -150,6 +150,33 @@ export function getActiveTiersFromCountries(countryCodes: string[]): CountryTier
   return tiers.size > 0 ? Array.from(tiers) : ["tier1", "tier2", "tier3"];
 }
 
+/** Tiers that actually appear in the selection (empty when no countries). */
+export function getSelectedTiersFromCountries(countryCodes: string[]): CountryTier[] {
+  const tiers = new Set<CountryTier>();
+  for (const code of countryCodes) {
+    const tier = resolveCountryTier(code);
+    if (tier) tiers.add(tier);
+  }
+  return Array.from(tiers);
+}
+
+export function getCountriesForTiers(tiers: CountryTier[]): string[] {
+  return Array.from(new Set(tiers.flatMap((tier) => [...TIER_COUNTRIES[tier]])));
+}
+
+/** True when Allow and Block share a country or any country tier. */
+export function selectionsConflict(allowCountries: string[], blockCountries: string[]): boolean {
+  if (allowCountries.length === 0 || blockCountries.length === 0) return false;
+
+  const allowSet = new Set(allowCountries.map((code) => code.trim().toUpperCase()));
+  if (blockCountries.some((code) => allowSet.has(code.trim().toUpperCase()))) {
+    return true;
+  }
+
+  const allowTiers = new Set(getSelectedTiersFromCountries(allowCountries));
+  return getSelectedTiersFromCountries(blockCountries).some((tier) => allowTiers.has(tier));
+}
+
 export function resolveCountryTier(code: string): CountryTier | null {
   const upper = code.trim().toUpperCase();
   for (const tier of ["tier1", "tier2", "tier3"] as CountryTier[]) {
