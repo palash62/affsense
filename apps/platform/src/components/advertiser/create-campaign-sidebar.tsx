@@ -11,7 +11,6 @@ import {
 import {
   TIER_PAYOUT_ROWS,
   formatUsd,
-  estimateTierPayout,
   type PayoutTiersDisplay,
 } from "@/lib/platform-settings";
 import { Badge } from "@/components/ui/badge";
@@ -304,14 +303,24 @@ export function BidRecommendationPanel({
           Enter a CPL bid to see where you land on the scale
         </p>
       )}
+      {hasBid && cplValue < bids.minimum ? (
+        <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+          Your bid is below the Conservative recommendation (${bids.minimum.toFixed(2)}). Consider
+          raising CPL for the selected countries.
+        </p>
+      ) : null}
+      {hasBid && cplValue > bids.maximum ? (
+        <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+          Your bid is above the Aggressive recommendation (${bids.maximum.toFixed(2)}) for the
+          selected countries.
+        </p>
+      ) : null}
     </div>
   );
 }
 
 interface TierPayoutInfoPanelProps {
   payoutTiers: PayoutTiersDisplay;
-  cplValue?: number;
-  compact?: boolean;
 }
 
 function TierPayoutChip({
@@ -320,16 +329,12 @@ function TierPayoutChip({
   countries,
   min,
   max,
-  estimate,
-  hasCpl,
 }: {
   label: string;
   shortLabel: string;
   countries: string;
   min: number;
   max: number;
-  estimate: number | null;
-  hasCpl: boolean;
 }) {
   return (
     <Tooltip>
@@ -343,11 +348,6 @@ function TierPayoutChip({
         <span className="truncate text-xs font-semibold text-[var(--theme-primary)]">
           {formatUsd(min)}–{formatUsd(max)}
         </span>
-        {hasCpl && estimate !== null && (
-          <span className="hidden shrink-0 text-[10px] text-slate-500 sm:inline">
-            → {formatUsd(estimate)}
-          </span>
-        )}
       </TooltipTrigger>
       <TooltipContent side="top" className="max-w-[220px] text-center">
         <p className="font-medium">{label}</p>
@@ -357,12 +357,7 @@ function TierPayoutChip({
   );
 }
 
-export function TierPayoutInfoPanel({
-  payoutTiers,
-  cplValue = 0,
-}: TierPayoutInfoPanelProps) {
-  const hasCpl = cplValue > 0;
-
+export function TierPayoutInfoPanel({ payoutTiers }: TierPayoutInfoPanelProps) {
   return (
     <TooltipProvider delay={200}>
       <div className="rounded-lg border border-slate-200/80 bg-gradient-to-r from-slate-50/80 to-white px-2.5 py-2">
@@ -375,12 +370,6 @@ export function TierPayoutInfoPanel({
             {TIER_PAYOUT_ROWS.map((row) => {
               const min = payoutTiers[row.minKey];
               const max = payoutTiers[row.maxKey];
-              const estimate = estimateTierPayout(
-                cplValue,
-                min,
-                max,
-                payoutTiers.publisherPayoutPercent,
-              );
               return (
                 <TierPayoutChip
                   key={row.label}
@@ -389,15 +378,10 @@ export function TierPayoutInfoPanel({
                   countries={row.countries}
                   min={min}
                   max={max}
-                  estimate={estimate}
-                  hasCpl={hasCpl}
                 />
               );
             })}
           </div>
-          <span className="shrink-0 text-[10px] text-slate-400">
-            {payoutTiers.publisherPayoutPercent}% CPL
-          </span>
         </div>
       </div>
     </TooltipProvider>

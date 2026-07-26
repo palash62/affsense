@@ -12,8 +12,10 @@ import {
   Target,
   Wallet,
   X,
+  AlertTriangle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   DEFAULT_LEAD_FIELDS,
   DEVICE_TYPES,
@@ -21,6 +23,7 @@ import {
   VERTICALS,
   DEFAULT_VERTICAL,
   isValidTierCountrySelection,
+  getBidRecommendationsFromTiers,
 } from "@/lib/campaign-form";
 import {
   getCampaignEditFormDefaults,
@@ -384,6 +387,11 @@ export function CreateCampaignForm({
 
   const minCpl = 0.1;
   const cplInvalid = cplValue > 0 && (cplValue < minCpl || cplValue > 100);
+  const tierBidGuidance = getBidRecommendationsFromTiers(payoutTiers, selectedCountries);
+  const cplBelowTierGuidance =
+    cplValue > 0 && !cplInvalid && cplValue < tierBidGuidance.minimum;
+  const cplAboveTierGuidance =
+    cplValue > 0 && !cplInvalid && cplValue > tierBidGuidance.maximum;
   const budgetInvalid =
     totalBudget.trim() !== "" &&
     (totalBudgetValue === null || Number.isNaN(totalBudgetValue) || totalBudgetValue <= 0);
@@ -831,7 +839,7 @@ export function CreateCampaignForm({
                   singleTierOnly
                 />
 
-                <TierPayoutInfoPanel payoutTiers={payoutTiers} cplValue={cplValue} />
+                <TierPayoutInfoPanel payoutTiers={payoutTiers} />
 
                 <CampaignSearchMultiSelect
                   label="Device Types (Keep empty to target all device types)"
@@ -920,6 +928,29 @@ export function CreateCampaignForm({
                 disabled={!canEditField("cpl")}
               />
               <FieldHint>Min. {minCpl.toFixed(2)} and Max. 100.00</FieldHint>
+              {cplBelowTierGuidance ? (
+                <Alert className="border-amber-200 bg-amber-50 text-amber-900">
+                  <AlertTriangle className="text-amber-600" />
+                  <AlertTitle className="text-amber-900">Bid below tier guidance</AlertTitle>
+                  <AlertDescription className="text-amber-800">
+                    Your CPL bid is below the recommended range for the selected countries ($
+                    {tierBidGuidance.minimum.toFixed(2)}–${tierBidGuidance.maximum.toFixed(2)} based
+                    on admin tier guidance). Raise your bid for better delivery.
+                  </AlertDescription>
+                </Alert>
+              ) : null}
+              {cplAboveTierGuidance ? (
+                <Alert className="border-amber-200 bg-amber-50 text-amber-900">
+                  <AlertTriangle className="text-amber-600" />
+                  <AlertTitle className="text-amber-900">Bid above tier guidance</AlertTitle>
+                  <AlertDescription className="text-amber-800">
+                    Your CPL bid is above the recommended range for the selected countries ($
+                    {tierBidGuidance.minimum.toFixed(2)}–${tierBidGuidance.maximum.toFixed(2)} based
+                    on admin tier guidance). You can still save, but consider a lower bid if you want
+                    to stay within guidance.
+                  </AlertDescription>
+                </Alert>
+              ) : null}
             </div>
 
             <div className="grid gap-5 sm:grid-cols-2">
@@ -1021,7 +1052,7 @@ export function CreateCampaignForm({
             selectedCountries={selectedCountries}
           />
 
-          <TierPayoutInfoPanel payoutTiers={payoutTiers} cplValue={cplValue} />
+          <TierPayoutInfoPanel payoutTiers={payoutTiers} />
 
           <div className="rounded-[18px] border border-slate-200/80 bg-white p-5 shadow-sm">
             <div className="mb-4 flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2">
