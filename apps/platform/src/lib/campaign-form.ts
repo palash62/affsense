@@ -132,10 +132,8 @@ export const OPERATING_SYSTEMS = [
 
 import type { PayoutTiersDisplay } from "@/lib/platform-settings";
 
-function cplForPublisherPayout(payout: number, publisherPayoutPercent: number) {
-  const rate = publisherPayoutPercent / 100;
-  if (rate <= 0) return 0;
-  return Math.round((payout / rate) * 100) / 100;
+function roundUsd(amount: number) {
+  return Math.round(amount * 100) / 100;
 }
 
 export function getActiveTiersFromCountries(countryCodes: string[]): CountryTier[] {
@@ -273,13 +271,12 @@ export function getBidRecommendationsFromTiers(
 
   const payoutMin = Math.min(...ranges.map((range) => range.min));
   const payoutMax = Math.max(...ranges.map((range) => range.max));
-  const payoutMid = (payoutMin + payoutMax) / 2;
-  const percent = payoutTiers.publisherPayoutPercent;
+  const payoutMid = roundUsd((payoutMin + payoutMax) / 2);
 
   return {
-    minimum: cplForPublisherPayout(payoutMin, percent),
-    optimal: cplForPublisherPayout(payoutMid, percent),
-    maximum: cplForPublisherPayout(payoutMax, percent),
+    minimum: payoutMin,
+    optimal: payoutMid,
+    maximum: payoutMax,
     payoutMin,
     payoutMax,
     activeTiers,

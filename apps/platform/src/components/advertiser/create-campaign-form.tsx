@@ -387,7 +387,9 @@ export function CreateCampaignForm({
 
   const minCpl = 0.1;
   const cplInvalid = cplValue > 0 && (cplValue < minCpl || cplValue > 100);
-  const tierBidGuidance = getBidRecommendationsFromTiers(payoutTiers, selectedCountries);
+  const guidanceCountries =
+    trafficMode === "block" ? blacklistedCountries : selectedCountries;
+  const tierBidGuidance = getBidRecommendationsFromTiers(payoutTiers, guidanceCountries);
   const cplBelowTierGuidance =
     cplValue > 0 && !cplInvalid && cplValue < tierBidGuidance.minimum;
   const cplAboveTierGuidance =
@@ -933,9 +935,9 @@ export function CreateCampaignForm({
                   <AlertTriangle className="text-amber-600" />
                   <AlertTitle className="text-amber-900">Bid below tier guidance</AlertTitle>
                   <AlertDescription className="text-amber-800">
-                    Your CPL bid is below the recommended range for the selected countries ($
-                    {tierBidGuidance.minimum.toFixed(2)}–${tierBidGuidance.maximum.toFixed(2)} based
-                    on admin tier guidance). Raise your bid for better delivery.
+                    Your CPL bid is below the admin-configured tier range for the selected
+                    countries (${tierBidGuidance.minimum.toFixed(2)}–$
+                    {tierBidGuidance.maximum.toFixed(2)}). Raise your bid for better delivery.
                   </AlertDescription>
                 </Alert>
               ) : null}
@@ -944,10 +946,10 @@ export function CreateCampaignForm({
                   <AlertTriangle className="text-amber-600" />
                   <AlertTitle className="text-amber-900">Bid above tier guidance</AlertTitle>
                   <AlertDescription className="text-amber-800">
-                    Your CPL bid is above the recommended range for the selected countries ($
-                    {tierBidGuidance.minimum.toFixed(2)}–${tierBidGuidance.maximum.toFixed(2)} based
-                    on admin tier guidance). You can still save, but consider a lower bid if you want
-                    to stay within guidance.
+                    Your CPL bid is above the admin-configured tier range for the selected
+                    countries (${tierBidGuidance.minimum.toFixed(2)}–$
+                    {tierBidGuidance.maximum.toFixed(2)}). You can still save, but consider a
+                    lower bid if you want to stay within guidance.
                   </AlertDescription>
                 </Alert>
               ) : null}
@@ -1049,7 +1051,7 @@ export function CreateCampaignForm({
           <BidRecommendationPanel
             cplValue={cplValue}
             payoutTiers={payoutTiers}
-            selectedCountries={selectedCountries}
+            selectedCountries={guidanceCountries}
           />
 
           <TierPayoutInfoPanel payoutTiers={payoutTiers} />
