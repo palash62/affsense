@@ -2,10 +2,7 @@ import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { ThankYouFunnelPage } from "@/components/optin/thank-you-funnel-page";
 import { resolveFunnelByDomain } from "@/services/advertiser-domain.service";
-import {
-  getThankYouFunnelPreviewBySlug,
-  getPublicThankYouFunnel,
-} from "@/services/optin-funnel.service";
+import { resolveThankYouPageForRequest } from "@/services/optin-funnel.service";
 
 function decodeHostParam(host: string) {
   try {
@@ -38,15 +35,7 @@ export default async function CustomDomainThankYouPage({
   const origin = await getOrigin();
   const slug = resolved.funnel.slug;
 
-  if (preview === "1") {
-    const draft = await getThankYouFunnelPreviewBySlug(slug);
-    if (!draft) notFound();
-    return <ThankYouFunnelPage page={draft} origin={origin} />;
-  }
-
-  if (!leadId) notFound();
-
-  const page = await getPublicThankYouFunnel(slug, leadId);
+  const page = await resolveThankYouPageForRequest({ slug, leadId, preview });
   if (!page) notFound();
 
   return <ThankYouFunnelPage page={page} origin={origin} />;

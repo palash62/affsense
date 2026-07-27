@@ -1,10 +1,7 @@
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { ThankYouFunnelPage } from "@/components/optin/thank-you-funnel-page";
-import {
-  getThankYouFunnelPreviewBySlug,
-  getPublicThankYouFunnel,
-} from "@/services/optin-funnel.service";
+import { resolveThankYouPageForRequest } from "@/services/optin-funnel.service";
 
 async function getOrigin() {
   const headerStore = await headers();
@@ -25,16 +22,7 @@ export default async function OptinThankYouPage({
   const { lead_id: leadId, preview } = await searchParams;
   const origin = await getOrigin();
 
-  if (preview === "1") {
-    const draft = await getThankYouFunnelPreviewBySlug(slug);
-    if (!draft) notFound();
-
-    return <ThankYouFunnelPage page={draft} origin={origin} />;
-  }
-
-  if (!leadId) notFound();
-
-  const page = await getPublicThankYouFunnel(slug, leadId);
+  const page = await resolveThankYouPageForRequest({ slug, leadId, preview });
   if (!page) notFound();
 
   return <ThankYouFunnelPage page={page} origin={origin} />;

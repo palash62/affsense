@@ -1207,6 +1207,28 @@ export async function getThankYouFunnelPreviewBySlug(
   });
 }
 
+/**
+ * Resolve thank-you page for a public request.
+ * Prefer live lead-aware payload when possible; otherwise fall back to draft
+ * preview so unpublished URLs remain testable without preview=1 / lead_id.
+ */
+export async function resolveThankYouPageForRequest(input: {
+  slug: string;
+  leadId?: string | null;
+  preview?: string | null;
+}): Promise<PublicThankYouFunnel | null> {
+  if (input.preview === "1") {
+    return getThankYouFunnelPreviewBySlug(input.slug);
+  }
+
+  if (input.leadId) {
+    const live = await getPublicThankYouFunnel(input.slug, input.leadId);
+    if (live) return live;
+  }
+
+  return getThankYouFunnelPreviewBySlug(input.slug);
+}
+
 export async function getPublicThankYouFunnel(
   slug: string,
   leadId: string,
