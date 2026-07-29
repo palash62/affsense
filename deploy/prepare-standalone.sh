@@ -28,6 +28,23 @@ prepare_app() {
     mkdir -p "$standalone/apps/$app_name/public"
   fi
 
+  # Fix broken symlinks for @prisma/client-* (Next traces them as symlinks
+  # pointing to the build machine's absolute path, which won't exist in Docker).
+  find "$standalone" -type l -path '*/@prisma/client-*' | while read -r link; do
+    target="$(readlink "$link")"
+    rm "$link"
+    if [ -d "$target" ]; then
+      cp -R "$target" "$link"
+    else
+      # Symlink target doesn't exist (cross-platform build); copy from root node_modules
+      cp -R "$ROOT/node_modules/@prisma/client" "$link"
+    fi
+    echo "  Fixed prisma symlink: $(basename "$link")"
+  done
+
+  # Remove Windows query engine temp files to save ~400MB
+  find "$standalone" -name 'query_engine-windows.dll.node*' -delete 2>/dev/null || true
+
   echo "Prepared standalone: $app_name"
 }
 
