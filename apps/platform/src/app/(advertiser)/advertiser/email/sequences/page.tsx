@@ -1,5 +1,5 @@
-import { SequencesPanel } from "@/components/advertiser/email/panels/sequences-panel";
+import { redirect } from "next/navigation";
 
 export default function SequencesPage() {
-  return <SequencesPanel />;
+  redirect("/advertiser/email/automations");
 }

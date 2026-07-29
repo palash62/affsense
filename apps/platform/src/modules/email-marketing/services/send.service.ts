@@ -8,7 +8,7 @@ import {
   wrapLinksForTracking,
 } from "../lib/render-template";
 import { signTrackingToken } from "../lib/tokens";
-import { sendMarketingEmail } from "./ses-sender.service";
+import { sendMarketingEmail, getDefaultFromEmail } from "./ses-sender.service";
 import { MAX_SEND_ATTEMPTS } from "../config/defaults";
 
 export async function processEmailSend(sendId: string) {
@@ -59,10 +59,11 @@ export async function processEmailSend(sendId: string) {
     },
   });
 
+  const platformFromEmail = await getDefaultFromEmail();
   const fromEmail =
     send.step?.fromEmail?.trim() ||
     verifiedIdentity?.fromEmail ||
-    sesConfig.fromEmail;
+    platformFromEmail;
 
   const mergeData: Record<string, string> = {
     first_name: send.contact.firstName ?? "",
@@ -160,6 +161,7 @@ export async function sendTestEmail(
   });
 
   const sesConfig = await getResolvedSesConfig();
+  const platformFromEmail = await getDefaultFromEmail();
   const mergeData = {
     first_name: "Test",
     last_name: "User",
@@ -185,7 +187,7 @@ export async function sendTestEmail(
       advertiser?.advertiserProfile?.company ??
       advertiser?.name ??
       "Team",
-    fromEmail: sesConfig.fromEmail,
+    fromEmail: platformFromEmail,
     replyTo: PLATFORM_EMAILS.support,
     subject,
     html,

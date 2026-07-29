@@ -4,6 +4,9 @@ import {
   type SendEmailCommandInput,
 } from "@aws-sdk/client-sesv2";
 import { getResolvedSesConfig } from "@/services/ses-settings.service";
+import { sendEmail } from "@/services/email.service";
+import { getMailgunConfig } from "@/lib/email/mailgun";
+import { getResolvedEmailConfig } from "@/services/smtp-settings.service";
 
 let cachedClient: SESv2Client | null = null;
 let cachedKey: string | null = null;
@@ -41,16 +44,10 @@ export type MarketingEmailResult =
   | { ok: true; messageId: string }
   | { ok: false; error: string };
 
-export async function sendMarketingEmail(
+async function sendViaSes(
   input: MarketingEmailInput,
+  config: Awaited<ReturnType<typeof getResolvedSesConfig>>,
 ): Promise<MarketingEmailResult> {
-  const config = await getResolvedSesConfig();
-
-  if (!config.enabled) {
-    console.info("[email-marketing] SES not configured — skipping send to", input.to);
-    return { ok: false, error: "SES not configured" };
-  }
-
   const from = `"${input.fromName.replace(/"/g, '\\"')}" <${input.fromEmail}>`;
 
   const commandInput: SendEmailCommandInput = {
@@ -92,11 +89,69 @@ export async function sendMarketingEmail(
   }
 }
 
+async function sendViaTransactionalProvider(
+  input: MarketingEmailInput,
+): Promise<MarketingEmailResult> {
+  const from = `"${input.fromName.replace(/"/g, '\\"')}" <${input.fromEmail}>`;
+  const result = await sendEmail({
+    to: input.to,
+    from,
+    subject: input.subject,
+    html: input.html,
+    text: input.text ?? "",
+    replyTo: input.replyTo,
+    listUnsubscribeUrl: input.listUnsubscribeUrl,
+    template: "generic",
+  });
+
+  if (result.sent) {
+    return { ok: true, messageId: `${result.provider ?? "smtp"}-${Date.now()}` };
+  }
+  return { ok: false, error: result.error ?? "Email provider send failed" };
+}
+
+export async function sendMarketingEmail(
+  input: MarketingEmailInput,
+): Promise<MarketingEmailResult> {
+  const sesConfig = await getResolvedSesConfig();
+
+  if (sesConfig.enabled) {
+    return sendViaSes(input, sesConfig);
+  }
+
+  console.info("[email-marketing] SES not configured — falling back to Mailgun/SMTP for", input.to);
+  return sendViaTransactionalProvider(input);
+}
+
 export function buildFromAddress(fromName: string, fromEmail: string): { fromName: string; fromEmail: string } {
   return { fromName, fromEmail };
 }
 
 export async function getDefaultFromEmail(): Promise<string> {
-  const config = await getResolvedSesConfig();
-  return config.fromEmail;
+  const sesConfig = await getResolvedSesConfig();
+  if (sesConfig.enabled) return sesConfig.fromEmail;
+
+  const mailgun = getMailgunConfig();
+  if (mailgun) {
+    const match = mailgun.from.match(/<([^>]+)>/);
+    return match?.[1] ?? mailgun.from;
+  }
+
+  const smtpConfig = await getResolvedEmailConfig();
+  if (smtpConfig.from) {
+    const match = smtpConfig.from.match(/<([^>]+)>/);
+    return match?.[1] ?? smtpConfig.from;
+  }
+
+  return sesConfig.fromEmail;
+}
+
+export async function getMarketingProviderName(): Promise<string> {
+  const sesConfig = await getResolvedSesConfig();
+  if (sesConfig.enabled) return "ses";
+
+  const mailgun = getMailgunConfig();
+  if (mailgun) return "mailgun";
+
+  return "smtp";
 }

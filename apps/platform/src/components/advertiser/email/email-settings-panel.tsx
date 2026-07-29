@@ -26,11 +26,15 @@ export function EmailSettingsPanel() {
   const [domainFromName, setDomainFromName] = useState("");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
+  const [provider, setProvider] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/v1/advertiser/email/settings")
       .then((r) => r.json())
       .then((d) => setSettings(d.data ?? { fromName: "", replyTo: "" }));
+    fetch("/api/v1/advertiser/email/provider")
+      .then((r) => r.json())
+      .then((d) => setProvider(d.data?.marketingProvider ?? null));
     loadIdentities();
   }, []);
 
@@ -75,6 +79,14 @@ export function EmailSettingsPanel() {
 
   return (
     <div className="space-y-8">
+      {provider && provider !== "ses" && (
+        <div className="flex gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800 max-w-2xl">
+          <Info className="mt-0.5 h-4 w-4 shrink-0 text-blue-500" />
+          <p>
+            Sending via platform {provider === "mailgun" ? "Mailgun" : "SMTP"}. Custom domain verification below is optional and requires AWS SES to be configured by an administrator.
+          </p>
+        </div>
+      )}
       <div className="rounded-xl border border-slate-200 bg-white p-6 space-y-4 max-w-xl">
         <h3 className="font-semibold text-slate-900">Sender details</h3>
         <div>

@@ -19,4 +19,5 @@ export type SendEmailInput = {
   metadata?: Record<string, unknown>;
   from?: string;
   replyTo?: string;
+  listUnsubscribeUrl?: string;
 };

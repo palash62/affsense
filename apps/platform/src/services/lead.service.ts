@@ -861,6 +861,7 @@ type LeadListFilters = {
   advertiserId?: string;
   status?: LeadStatus;
   source?: string;
+  email?: string;
   minRiskScore?: number;
   sort?: AdvertiserLeadSort;
   dateFrom?: Date;
@@ -901,6 +902,9 @@ function buildLeadListWhere(filters: LeadListFilters) {
     }),
     ...(filters.status && { status: filters.status }),
     ...(filters.source?.trim() && { source: filters.source.trim() }),
+    ...(filters.email?.trim() && {
+      data: { path: ["email"], equals: filters.email.trim() },
+    }),
     ...(filters.minRiskScore !== undefined && { riskScore: { gte: filters.minRiskScore } }),
     ...(Object.keys(createdAt).length > 0 && { createdAt }),
     ...(campaignWhere && { campaign: campaignWhere }),

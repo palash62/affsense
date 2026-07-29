@@ -1,14 +1,35 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Mail, MousePointerClick, Send, UserPlus, Users } from "lucide-react";
 import { PageSection } from "@/components/admin/page-section";
 import { LeadsTrendChart } from "@/components/dashboard/dashboard-charts";
 import { EmailModuleShell } from "../email-module-shell";
-import { MOCK_OPENS_TREND, MOCK_RECENT_ACTIVITY, MOCK_SENDS_TREND } from "../email-mock-data";
 import { ButtonLink } from "@/components/ui/button-link";
 
+type Stats = {
+  totalContacts: number;
+  totalSends: number;
+  openRate: number;
+  clickRate: number;
+  trend: { date: string; sends: number; opens: number }[];
+  activity: { id: string; action: string; detail: string; time: string }[];
+};
+
 export function DashboardPanel() {
+  const [stats, setStats] = useState<Stats | null>(null);
+
+  useEffect(() => {
+    fetch("/api/v1/advertiser/email/stats?activityLimit=10")
+      .then((r) => r.json())
+      .then((j) => setStats(j.data))
+      .catch(() => {});
+  }, []);
+
+  const sendsTrend = stats?.trend?.map((t) => ({ date: t.date, count: t.sends })) ?? [];
+  const opensTrend = stats?.trend?.map((t) => ({ date: t.date, count: t.opens })) ?? [];
+
   return (
     <EmailModuleShell
       title="Dashboard"
@@ -18,10 +39,10 @@ export function DashboardPanel() {
         { label: "Dashboard" },
       ]}
       stats={[
-        { label: "Total Subscribers", value: "1,240", icon: Users, accent: "purple" },
-        { label: "Emails Sent", value: "8,420", icon: Send, variant: "leads" },
-        { label: "Open Rate", value: "38.2%", icon: Mail, accent: "green", trend: 4.2 },
-        { label: "Click Rate", value: "7.8%", icon: MousePointerClick, accent: "orange", trend: -1.1 },
+        { label: "Total Subscribers", value: stats ? stats.totalContacts.toLocaleString() : "—", icon: Users, accent: "purple" },
+        { label: "Emails Sent", value: stats ? stats.totalSends.toLocaleString() : "—", icon: Send, variant: "leads" },
+        { label: "Open Rate", value: stats ? `${stats.openRate}%` : "—", icon: Mail, accent: "green" },
+        { label: "Click Rate", value: stats ? `${stats.clickRate}%` : "—", icon: MousePointerClick, accent: "orange" },
       ]}
       showToolbar={false}
       primaryAction={{ label: "Create Campaign", href: "/advertiser/email/campaigns", icon: Send }}
@@ -35,26 +56,30 @@ export function DashboardPanel() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <LeadsTrendChart title="Emails Sent" data={MOCK_SENDS_TREND} />
-        <LeadsTrendChart title="Opens Over Time" data={MOCK_OPENS_TREND} />
+        <LeadsTrendChart title="Emails Sent" data={sendsTrend} />
+        <LeadsTrendChart title="Opens Over Time" data={opensTrend} />
       </div>
 
-      <PageSection title="Recent Activity" description="Latest email events" icon={Mail} gradient="leads">
-        <ul className="divide-y divide-slate-100">
-          {MOCK_RECENT_ACTIVITY.map((item) => (
-            <li
-              key={item.id}
-              className="flex items-start justify-between gap-4 px-6 py-4 transition-colors hover:bg-slate-50"
-            >
-              <div>
-                <p className="font-medium text-slate-900">{item.action}</p>
-                <p className="text-sm text-slate-500">{item.detail}</p>
-              </div>
-              <span className="shrink-0 text-xs text-slate-400">{item.time}</span>
-            </li>
-          ))}
-        </ul>
-      </PageSection>
+      {stats?.activity && stats.activity.length > 0 && (
+        <PageSection title="Recent Activity" description="Latest email events" icon={Mail} gradient="leads">
+          <ul className="divide-y divide-slate-100">
+            {stats.activity.map((item) => (
+              <li
+                key={item.id}
+                className="flex items-start justify-between gap-4 px-6 py-4 transition-colors hover:bg-slate-50"
+              >
+                <div>
+                  <p className="font-medium text-slate-900">{item.action}</p>
+                  <p className="text-sm text-slate-500">{item.detail}</p>
+                </div>
+                <span className="shrink-0 text-xs text-slate-400">
+                  {new Date(item.time).toLocaleDateString()}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </PageSection>
+      )}
 
       <div
         className="rounded-xl border px-5 py-4"

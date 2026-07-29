@@ -42,7 +42,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Sequences", href: "/advertiser/email/sequences", icon: GitBranch },
   { label: "Forms", href: "/advertiser/email/forms", icon: FormInput },
   { label: "Analytics", href: "/advertiser/email/analytics", icon: BarChart3 },
-  { label: "SMTP", href: "/advertiser/email/smtp", icon: Server },
+  { label: "Email Provider", href: "/advertiser/email/smtp", icon: Server },
   { label: "Email Logs", href: "/advertiser/email/logs", icon: ScrollText },
   { label: "Suppression List", href: "/advertiser/email/suppression", icon: AlertTriangle },
   { label: "Settings", href: "/advertiser/email/settings", icon: Settings },

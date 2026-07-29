@@ -1,0 +1,28 @@
+
+> cpl@0.1.0 dev:platform
+> npm run dev --workspace @cpl/platform
+
+
+> @cpl/platform@0.1.0 dev
+> next dev --port 3010 --webpack
+
+⨯ Failed to start server
+Error: listen EADDRINUSE: address already in use :::3010
+    at <unknown> (Error: listen EADDRINUSE: address already in use :::3010)
+    at new Promise (<anonymous>) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '::',
+  port: 3010
+}
+[?25h
+npm error Lifecycle script `dev` failed with error:
+npm error code 1
+npm error path D:\my\yuvraj\cpl\apps\platform
+npm error workspace @cpl/platform@0.1.0
+npm error location D:\my\yuvraj\cpl\apps\platform
+npm error command failed
+npm error command C:\WINDOWS\system32\cmd.exe /d /s /c next dev --port 3010 --webpack
+
+D:\my\yuvraj\cpl>

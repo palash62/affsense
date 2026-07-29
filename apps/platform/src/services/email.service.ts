@@ -73,6 +73,14 @@ async function sendViaSmtp(
       html: input.html,
       text: input.text,
       ...(input.replyTo ? { replyTo: input.replyTo } : {}),
+      ...(input.listUnsubscribeUrl
+        ? {
+            headers: {
+              "List-Unsubscribe": `<${input.listUnsubscribeUrl}>`,
+              "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+            },
+          }
+        : {}),
     });
     await logEmail(input, "sent");
     return { sent: true, provider: "smtp" };
@@ -98,6 +106,7 @@ export async function sendEmail(
       html: input.html,
       text: input.text,
       replyTo: input.replyTo,
+      listUnsubscribeUrl: input.listUnsubscribeUrl,
     });
 
     if (result.ok) {

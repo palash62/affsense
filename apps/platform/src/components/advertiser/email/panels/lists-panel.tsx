@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo } from "react";
-import { List, Plus } from "lucide-react";
+import { useEffect, useState } from "react";
+import { List } from "lucide-react";
 import { PageSection } from "@/components/admin/page-section";
 import {
   Table,
@@ -11,68 +11,70 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useEmailModuleFilters } from "../email-module-filter-context";
 import { EmailModuleShell } from "../email-module-shell";
-import { filterBySearch, MOCK_LISTS } from "../email-mock-data";
 
-function ListsContent() {
-  const { search } = useEmailModuleFilters();
-  const rows = useMemo(
-    () => filterBySearch(MOCK_LISTS, search, ["name"]),
-    [search],
-  );
-
-  return (
-    <PageSection title="Email Lists" icon={List} gradient="leads">
-      <div className="overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Subscribers</TableHead>
-              <TableHead>Created</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {rows.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={3} className="h-32 text-center text-slate-500">
-                  No lists match your search
-                </TableCell>
-              </TableRow>
-            ) : (
-              rows.map((list) => (
-                <TableRow key={list.id} className="transition-colors hover:bg-slate-50">
-                  <TableCell className="font-medium">{list.name}</TableCell>
-                  <TableCell>{list.subscribers.toLocaleString()}</TableCell>
-                  <TableCell className="text-slate-500">{list.createdAt}</TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
-    </PageSection>
-  );
-}
+type ListRow = { id: string; name: string; subscribers: number };
 
 export function ListsPanel() {
+  const [rows, setRows] = useState<ListRow[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/v1/advertiser/email/contacts/lists")
+      .then((r) => r.json())
+      .then((j) => setRows(j.data ?? []))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const total = rows.find((r) => r.id === "all")?.subscribers ?? 0;
+
   return (
     <EmailModuleShell
       title="Lists"
-      description="Organize subscribers into lists for targeted campaigns."
+      description="Subscriber lists organized by the lead campaign they came from."
       breadcrumbs={[
         { label: "Autoresponder", href: "/advertiser/email" },
         { label: "Lists" },
       ]}
       stats={[
-        { label: "Total Lists", value: "4", icon: List, accent: "purple" },
-        { label: "Total Subscribers", value: "2,186", icon: List, accent: "green" },
+        { label: "Total Lists", value: rows.length.toLocaleString(), icon: List, accent: "purple" },
+        { label: "Total Subscribers", value: total.toLocaleString(), icon: List, accent: "green" },
       ]}
-      searchPlaceholder="Search lists…"
-      primaryAction={{ label: "Create List", icon: Plus }}
+      showToolbar={false}
     >
-      <ListsContent />
+      <PageSection title="Subscriber Lists" icon={List} gradient="leads">
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>List Name</TableHead>
+                <TableHead>Subscribers</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={2} className="h-32 text-center text-slate-500">Loading...</TableCell>
+                </TableRow>
+              ) : rows.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={2} className="h-32 text-center text-slate-500">
+                    No subscribers yet. Leads captured from your campaigns become subscribers automatically.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                rows.map((list) => (
+                  <TableRow key={list.id} className="transition-colors hover:bg-slate-50">
+                    <TableCell className="font-medium">{list.name}</TableCell>
+                    <TableCell>{list.subscribers.toLocaleString()}</TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </PageSection>
     </EmailModuleShell>
   );
 }

@@ -7,6 +7,7 @@ export type MailgunSendInput = {
   html: string;
   text: string;
   replyTo?: string;
+  listUnsubscribeUrl?: string;
 };
 
 export type MailgunConfig = {
@@ -53,6 +54,10 @@ export async function sendViaMailgun(
   body.set("text", input.text);
   if (input.replyTo?.trim()) {
     body.set("h:Reply-To", input.replyTo.trim());
+  }
+  if (input.listUnsubscribeUrl) {
+    body.set("h:List-Unsubscribe", `<${input.listUnsubscribeUrl}>`);
+    body.set("h:List-Unsubscribe-Post", "List-Unsubscribe=One-Click");
   }
 
   const auth = Buffer.from(`api:${config.apiKey}`).toString("base64");

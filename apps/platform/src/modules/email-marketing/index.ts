@@ -18,7 +18,17 @@ export {
   deleteAutomation,
 } from "./services/automation.service";
 export { processEmailSend, sendTestEmail } from "./services/send.service";
-export { getEmailStats, listSends, getAutomationStepStats } from "./services/stats.service";
+export {
+  getDefaultFromEmail,
+  getMarketingProviderName,
+} from "./services/ses-sender.service";
+export {
+  getEmailStats,
+  listSends,
+  getAutomationStepStats,
+  getSendTrend,
+  getRecentActivity,
+} from "./services/stats.service";
 export {
   getAdvertiserEmailSettings,
   updateAdvertiserEmailSettings,

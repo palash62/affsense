@@ -44,6 +44,7 @@ interface PageProps {
   searchParams: Promise<{
     campaignId?: string;
     status?: string;
+    email?: string;
     from?: string;
     to?: string;
     sort?: string;
@@ -108,6 +109,7 @@ export default async function AdvertiserLeadDetailsPage({ searchParams }: PagePr
       advertiserId: session.user.id,
       campaignId: params.campaignId,
       status,
+      email: params.email,
       dateFrom: new Date(dateFrom),
       dateTo: new Date(dateTo),
       sort: parseSort(params.sort),

@@ -13,10 +13,6 @@ export function SettingsPagePanel() {
         { label: "Autoresponder", href: "/advertiser/email" },
         { label: "Settings" },
       ]}
-      stats={[
-        { label: "Verified Domains", value: "1", icon: Settings, accent: "green" },
-        { label: "Sender Name", value: "Set", icon: Settings, accent: "purple" },
-      ]}
       showToolbar={false}
     >
       <EmailSettingsPanel />

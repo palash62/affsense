@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ScrollText } from "lucide-react";
 import { PageSection } from "@/components/admin/page-section";
 import { Badge } from "@/components/ui/badge";
@@ -14,26 +14,58 @@ import {
 } from "@/components/ui/table";
 import { useEmailModuleFilters } from "../email-module-filter-context";
 import { EmailModuleShell } from "../email-module-shell";
-import { filterByField, filterBySearch, MOCK_EMAIL_LOGS } from "../email-mock-data";
 
 const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-  delivered: "secondary",
-  opened: "default",
-  clicked: "default",
-  bounced: "destructive",
-  failed: "destructive",
+  SENT: "default",
+  DELIVERED: "default",
+  QUEUED: "secondary",
+  FAILED: "destructive",
+};
+
+type SendRow = {
+  id: string;
+  status: string;
+  sentAt: string | null;
+  createdAt: string;
+  hasOpen: boolean;
+  hasClick: boolean;
+  contact: { email: string; firstName: string | null; lastName: string | null };
+  template: { subject: string };
+  automation: { name: string } | null;
 };
 
 function LogsContent() {
   const { search, filterValues } = useEmailModuleFilters();
-  const rows = useMemo(() => {
-    let r = filterBySearch(MOCK_EMAIL_LOGS, search, ["recipient", "subject"]);
-    r = filterByField(r, "status", filterValues.status);
-    return r;
-  }, [search, filterValues]);
+  const [rows, setRows] = useState<SendRow[]>([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(() => {
+    setLoading(true);
+    const params = new URLSearchParams({ page: "1", limit: "50" });
+    if (filterValues.status) params.set("status", filterValues.status);
+    fetch(`/api/v1/advertiser/email/sends?${params}`)
+      .then((r) => r.json())
+      .then((j) => {
+        setRows(j.data?.items ?? []);
+        setTotal(j.data?.total ?? 0);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [filterValues.status]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const filtered = search
+    ? rows.filter(
+        (r) =>
+          r.contact.email.toLowerCase().includes(search.toLowerCase()) ||
+          r.template.subject.toLowerCase().includes(search.toLowerCase()),
+      )
+    : rows;
 
   return (
-    <PageSection title="Delivery History" icon={ScrollText} gradient="leads">
+    <PageSection title={`Delivery History (${total})`} icon={ScrollText} gradient="leads">
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
@@ -41,25 +73,35 @@ function LogsContent() {
               <TableHead>Recipient</TableHead>
               <TableHead>Subject</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>Opened</TableHead>
+              <TableHead>Clicked</TableHead>
               <TableHead>Sent At</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {rows.length === 0 ? (
+            {loading ? (
               <TableRow>
-                <TableCell colSpan={4} className="h-32 text-center text-slate-500">
-                  No logs match your search
+                <TableCell colSpan={6} className="h-32 text-center text-slate-500">Loading...</TableCell>
+              </TableRow>
+            ) : filtered.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="h-32 text-center text-slate-500">
+                  No email sends found
                 </TableCell>
               </TableRow>
             ) : (
-              rows.map((log) => (
-                <TableRow key={log.id} className="transition-colors hover:bg-slate-50">
-                  <TableCell className="font-medium">{log.recipient}</TableCell>
-                  <TableCell className="text-slate-600">{log.subject}</TableCell>
+              filtered.map((row) => (
+                <TableRow key={row.id} className="transition-colors hover:bg-slate-50">
+                  <TableCell className="font-medium">{row.contact.email}</TableCell>
+                  <TableCell className="text-slate-600">{row.template.subject}</TableCell>
                   <TableCell>
-                    <Badge variant={STATUS_VARIANT[log.status]}>{log.status}</Badge>
+                    <Badge variant={STATUS_VARIANT[row.status] ?? "outline"}>{row.status.toLowerCase()}</Badge>
                   </TableCell>
-                  <TableCell className="text-slate-500">{log.sentAt}</TableCell>
+                  <TableCell>{row.hasOpen ? "Yes" : "—"}</TableCell>
+                  <TableCell>{row.hasClick ? "Yes" : "—"}</TableCell>
+                  <TableCell className="text-slate-500">
+                    {row.sentAt ? new Date(row.sentAt).toLocaleString() : "—"}
+                  </TableCell>
                 </TableRow>
               ))
             )}
@@ -79,22 +121,16 @@ export function LogsPanel() {
         { label: "Autoresponder", href: "/advertiser/email" },
         { label: "Email Logs" },
       ]}
-      stats={[
-        { label: "Total Sent", value: "8,420", icon: ScrollText, accent: "purple" },
-        { label: "Delivered", value: "98.4%", icon: ScrollText, accent: "green" },
-        { label: "Failed", value: "12", icon: ScrollText, accent: "red" },
-      ]}
       searchPlaceholder="Search by recipient or subject…"
       filters={[
         {
           id: "status",
           label: "Status",
           options: [
-            { value: "delivered", label: "Delivered" },
-            { value: "opened", label: "Opened" },
-            { value: "clicked", label: "Clicked" },
-            { value: "bounced", label: "Bounced" },
-            { value: "failed", label: "Failed" },
+            { value: "SENT", label: "Sent" },
+            { value: "DELIVERED", label: "Delivered" },
+            { value: "QUEUED", label: "Queued" },
+            { value: "FAILED", label: "Failed" },
           ],
         },
       ]}
