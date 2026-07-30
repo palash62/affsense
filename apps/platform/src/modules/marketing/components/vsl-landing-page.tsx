@@ -6,6 +6,7 @@ import { TrustRow } from "./trust-row";
 import { CostSection } from "./cost-section";
 import { ProblemSolutionSection } from "./problem-solution-section";
 import { FeaturesSection } from "./features-section";
+import { ChatProofSection } from "./chat-proof-section";
 import { IntegrationsSection } from "./integrations-section";
 import { VslSection } from "./vsl-section";
 import { HowItWorksSection } from "./how-it-works-section";
@@ -26,6 +27,7 @@ export function VslLandingPage() {
       <CostSection />
       <ProblemSolutionSection />
       <FeaturesSection />
+      <ChatProofSection />
       <IntegrationsSection />
       <VslSection />
       <HowItWorksSection />

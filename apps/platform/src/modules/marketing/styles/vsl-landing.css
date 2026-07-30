@@ -470,6 +470,243 @@ html {
   font-size: 15px;
 }
 
+.vslLanding .chat-proof .section-title .badge {
+  display: inline-flex;
+  margin-bottom: 16px;
+}
+
+.vslLanding .chat-proof-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  max-width: 980px;
+  margin-inline: auto;
+}
+
+.vslLanding .chat-proof-card {
+  margin: 0;
+  background: linear-gradient(160deg, #0b1024 0%, #0e1733 100%);
+  border: 1px solid #202b52;
+  border-radius: 16px;
+  overflow: hidden;
+  transition:
+    transform 0.3s ease,
+    border-color 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+.vslLanding .chat-proof-card:hover {
+  transform: translateY(-4px);
+  border-color: #5c49ff;
+  box-shadow:
+    0 12px 32px #5c49ff22,
+    0 0 0 1px #8b3dff33;
+}
+
+.vslLanding .chat-proof-media {
+  position: relative;
+  overflow: hidden;
+  background: #050711;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.vslLanding .chat-proof-img {
+  width: 100%;
+  height: auto;
+  max-height: 340px;
+  object-fit: contain;
+  object-position: top center;
+  display: block;
+  margin: 0 auto;
+  transition: transform 0.4s ease;
+}
+
+.vslLanding .chat-proof-card:hover .chat-proof-img {
+  transform: scale(1.02);
+}
+
+.vslLanding .chat-proof-caption {
+  padding: 10px 12px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: #c6cce0;
+  border-top: 1px solid #202b52;
+  background: linear-gradient(180deg, #0d1430, #0b1024);
+  text-align: center;
+}
+
+.vslLanding .chat-proof-media-btn {
+  display: block;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: transparent;
+  cursor: zoom-in;
+  text-align: inherit;
+  color: inherit;
+  font: inherit;
+}
+
+.vslLanding .chat-proof-media-btn:focus-visible {
+  outline: 2px solid #8b3dff;
+  outline-offset: -2px;
+}
+
+.vslLanding .chat-proof-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  animation: chatProofLightboxIn 0.22s ease;
+}
+
+@keyframes chatProofLightboxIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.vslLanding .chat-proof-lightbox-backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  background: rgba(5, 7, 17, 0.88);
+  cursor: pointer;
+}
+
+.vslLanding .chat-proof-lightbox-panel {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: min(460px, 94vw);
+  max-height: 90vh;
+  animation: chatProofPanelIn 0.28s ease;
+}
+
+@keyframes chatProofPanelIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.vslLanding .chat-proof-lightbox-frame {
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid #2a3668;
+  background: #050711;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.55), 0 0 40px #5c49ff22;
+}
+
+.vslLanding .chat-proof-lightbox-img {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: min(420px, 92vw);
+  max-height: 82vh;
+  object-fit: contain;
+}
+
+.vslLanding .chat-proof-lightbox-caption {
+  margin: 14px 0 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #c6cce0;
+  text-align: center;
+}
+
+.vslLanding .chat-proof-lightbox-close {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  z-index: 2;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  border: 1px solid #334477;
+  background: #10172e;
+  color: #fff;
+  font-size: 26px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.vslLanding .chat-proof-lightbox-close:hover {
+  border-color: #8b3dff;
+  background: #1a2150;
+}
+
+.vslLanding .chat-proof-lightbox-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  border: 1px solid #334477;
+  background: linear-gradient(135deg, #8b3dff55, #008cff55);
+  background-color: #10172e;
+  color: #fff;
+  font-size: 32px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.vslLanding .chat-proof-lightbox-nav:hover {
+  border-color: #8b3dff;
+  box-shadow: 0 0 24px #5c49ff44;
+}
+
+.vslLanding .chat-proof-lightbox-prev {
+  left: -56px;
+}
+
+.vslLanding .chat-proof-lightbox-next {
+  right: -56px;
+}
+
+@media (max-width: 640px) {
+  .vslLanding .chat-proof-lightbox-prev {
+    left: 4px;
+  }
+
+  .vslLanding .chat-proof-lightbox-next {
+    right: 4px;
+  }
+
+  .vslLanding .chat-proof-lightbox-close {
+    top: -4px;
+    right: 0;
+  }
+}
+
 .vslLanding .integrations {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -610,6 +847,16 @@ html {
     grid-template-columns: 1fr;
   }
 
+  .vslLanding .chat-proof-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    max-width: none;
+  }
+
+  .vslLanding .chat-proof-img {
+    max-height: 300px;
+  }
+
   .vslLanding h1 {
     font-size: 42px;
   }
@@ -712,6 +959,19 @@ html {
 
   .vslLanding .section-title h2 {
     font-size: 30px;
+  }
+
+  .vslLanding .chat-proof-grid {
+    grid-template-columns: 1fr;
+    max-width: 320px;
+  }
+
+  .vslLanding .chat-proof-img {
+    max-height: 360px;
+  }
+
+  .vslLanding .chat-proof-media {
+    max-height: none;
   }
 
   .vslLanding .cta h2 {
