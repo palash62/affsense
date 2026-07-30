@@ -192,7 +192,7 @@ export default async function PublisherLeadsPage({ searchParams }: PageProps) {
                         {os}
                       </TableCell>
                       <TableCell className="whitespace-nowrap px-4 py-4 text-sm capitalize text-slate-600">
-                        {lead.source ?? "ù"}
+                        {lead.source ?? "‚Äî"}
                       </TableCell>
                       <TableCell className="whitespace-nowrap px-4 py-4">
                         {lead.ctaClicked ? (
