@@ -54,6 +54,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           name: user.name,
           role: user.role,
           tokenVersion: user.tokenVersion ?? 0,
+          timezone: user.timezone ?? "UTC",
         };
       },
     }),
@@ -92,6 +93,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           name: user.name,
           role: user.role,
           tokenVersion: user.tokenVersion ?? 0,
+          timezone: user.timezone ?? "UTC",
         };
       },
     }),
@@ -113,6 +115,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           name: result.user.name,
           role: result.user.role,
           tokenVersion: result.user.tokenVersion ?? 0,
+          timezone: result.user.timezone ?? "UTC",
           impersonatorId: result.impersonatorId,
         };
       },

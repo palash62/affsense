@@ -1,7 +1,8 @@
 "use client";
 
 import { Fragment, useEffect, useMemo, useState } from "react";
-import { format } from "date-fns";
+import { formatUserDateTime } from "@/lib/user-timezone";
+import { useSession } from "next-auth/react";
 import {
   CheckCircle2,
   ChevronDown,
@@ -52,6 +53,7 @@ interface SupportTicket {
 }
 
 export function SupportTicketsPanel() {
+  const { data: session } = useSession();
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
@@ -300,7 +302,7 @@ export function SupportTicketsPanel() {
                           )}
                         </TableCell>
                         <TableCell className="px-4 py-4 text-sm text-slate-600">
-                          {format(new Date(ticket.createdAt), "MMM d, yyyy")}
+                          {formatUserDateTime(ticket.createdAt, session?.user?.timezone, "MMM d, yyyy")}
                         </TableCell>
                         <TableCell className="px-4 py-4">
                           <div className="flex items-center gap-2">

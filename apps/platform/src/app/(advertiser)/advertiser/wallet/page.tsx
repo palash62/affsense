@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { Suspense } from "react";
-import { format } from "date-fns";
+import { formatUserDateTime } from "@/lib/user-timezone";
 import { History, Plus, Wallet } from "lucide-react";
 import { getSession } from "@/lib/session";
 import { getWalletBalance, listUserDeposits } from "@/services/wallet.service";
@@ -31,6 +31,7 @@ function shortDepositId(id: string) {
 
 export default async function WalletPage({ searchParams }: PageProps) {
   const session = await getSession();
+  const tz = session!.user.timezone;
   const params = await searchParams;
   const page = Math.max(1, parseInt(params.page ?? "1", 10));
   const limit = 10;
@@ -114,7 +115,7 @@ export default async function WalletPage({ searchParams }: PageProps) {
                     className="border-slate-100 transition-colors hover:bg-blue-50/40"
                   >
                     <TableCell className="px-6 py-4 text-sm text-slate-700">
-                      {format(deposit.createdAt, "MMM d, yyyy HH:mm")}
+                      {formatUserDateTime(deposit.createdAt, tz, "MMM d, yyyy HH:mm")}
                     </TableCell>
                     <TableCell className="px-4 py-4">
                       <span className="font-mono text-xs font-medium text-slate-600">

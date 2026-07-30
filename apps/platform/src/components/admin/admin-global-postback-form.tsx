@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHero } from "@/components/admin/page-hero";
@@ -15,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { readApiErrorMessage } from "@/lib/errors";
+import { formatUserDateTime } from "@/lib/user-timezone";
 
 type Settings = {
   useSecurityKey: boolean;
@@ -50,6 +52,8 @@ type TestFireResult = {
 };
 
 export function AdminGlobalPostbackForm() {
+  const { data: session } = useSession();
+  const timezone = session?.user?.timezone;
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [values, setValues] = useState<Settings>({
@@ -309,7 +313,7 @@ export function AdminGlobalPostbackForm() {
                   {testClicks.map((click) => (
                     <SelectItem key={click.id} value={click.id}>
                       {click.offerName} — {click.id.slice(0, 12)}… (
-                      {new Date(click.createdAt).toLocaleString()})
+                      {formatUserDateTime(click.createdAt, timezone, "MMM d, yyyy HH:mm")})
                     </SelectItem>
                   ))}
                 </SelectContent>

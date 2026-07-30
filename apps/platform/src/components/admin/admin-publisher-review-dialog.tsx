@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { format } from "date-fns";
+import { formatUserDateTime } from "@/lib/user-timezone";
+import { useSession } from "next-auth/react";
 import { Ban, CheckCircle2, ClipboardList, MapPin, ShieldAlert, Users, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -45,6 +46,7 @@ type PublisherRow = {
 };
 
 export function AdminPublisherReviewDialog({ publisher }: { publisher: PublisherRow }) {
+  const { data: session } = useSession();
   const router = useRouter();
   const profile = publisher.publisherProfile;
   const spamScore = profile?.spamScore ?? null;
@@ -144,7 +146,7 @@ export function AdminPublisherReviewDialog({ publisher }: { publisher: Publisher
                 <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
                   <p className="text-xs text-slate-500">Joined</p>
                   <p className="text-sm font-medium text-slate-900">
-                    {format(new Date(publisher.createdAt), "MMM d, yyyy")}
+                    {formatUserDateTime(publisher.createdAt, session?.user?.timezone, "MMM d, yyyy")}
                   </p>
                 </div>
                 <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">

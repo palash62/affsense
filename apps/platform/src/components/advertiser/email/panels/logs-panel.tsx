@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 import { ScrollText } from "lucide-react";
 import { PageSection } from "@/components/admin/page-section";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { formatUserDateTime } from "@/lib/user-timezone";
 import { useEmailModuleFilters } from "../email-module-filter-context";
 import { EmailModuleShell } from "../email-module-shell";
 
@@ -35,6 +37,8 @@ type SendRow = {
 };
 
 function LogsContent() {
+  const { data: session } = useSession();
+  const timezone = session?.user?.timezone;
   const { search, filterValues } = useEmailModuleFilters();
   const [rows, setRows] = useState<SendRow[]>([]);
   const [total, setTotal] = useState(0);
@@ -100,7 +104,9 @@ function LogsContent() {
                   <TableCell>{row.hasOpen ? "Yes" : "—"}</TableCell>
                   <TableCell>{row.hasClick ? "Yes" : "—"}</TableCell>
                   <TableCell className="text-slate-500">
-                    {row.sentAt ? new Date(row.sentAt).toLocaleString() : "—"}
+                    {row.sentAt
+                      ? formatUserDateTime(row.sentAt, timezone, "MMM d, yyyy HH:mm")
+                      : "—"}
                   </TableCell>
                 </TableRow>
               ))

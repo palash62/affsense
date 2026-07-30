@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { format } from "date-fns";
+import { formatUserDateTime } from "@/lib/user-timezone";
 import {
   ArrowLeft,
   Building2,
@@ -48,6 +48,7 @@ interface PageProps {
 export default async function AdminAdvertiserDetailPage({ params }: PageProps) {
   const { id } = await params;
   const session = await getSession();
+  const tz = session?.user?.timezone;
   const adminId = session?.user?.id ?? "";
 
   const [advertiser, activityCounts] = await Promise.all([
@@ -144,7 +145,7 @@ export default async function AdminAdvertiserDetailPage({ params }: PageProps) {
         <div className="rounded-[18px] border border-slate-200 bg-white p-5 shadow-sm">
           <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Joined</p>
           <p className="mt-2 text-sm font-semibold text-slate-900">
-            {format(new Date(advertiser.createdAt), "MMM d, yyyy")}
+            {formatUserDateTime(advertiser.createdAt, tz, "MMM d, yyyy")}
           </p>
         </div>
       </div>
@@ -297,7 +298,7 @@ export default async function AdminAdvertiserDetailPage({ params }: PageProps) {
                   {advertiser.deposits.map((d) => (
                     <TableRow key={d.id}>
                       <TableCell className="px-6 text-sm text-slate-600">
-                        {format(new Date(d.createdAt), "MMM d, yyyy HH:mm")}
+                        {formatUserDateTime(d.createdAt, tz, "MMM d, yyyy HH:mm")}
                       </TableCell>
                       <TableCell>{formatDepositMethod(d.method)}</TableCell>
                       <TableCell className="text-right font-medium">

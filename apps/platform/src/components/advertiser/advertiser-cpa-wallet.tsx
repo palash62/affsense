@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { format } from "date-fns";
+import { formatUserDateTime } from "@/lib/user-timezone";
 import { ArrowDownLeft, ArrowUpRight, Banknote, Clock, History, Wallet } from "lucide-react";
 import {
   lowestCpaMinPayout,
@@ -89,9 +89,11 @@ function ActivityStatusBadge({ row }: { row: CpaWalletActivityRow }) {
 export function AdvertiserCpaWallet({
   snapshot,
   minPayoutSettings,
+  timezone,
 }: {
   snapshot: WalletSnapshot;
   minPayoutSettings: CpaMinPayoutSettings;
+  timezone?: string;
 }) {
   const [tab, setTab] = useState<"activity" | "summary">("activity");
   const { balances, activity, summary } = snapshot;
@@ -239,7 +241,7 @@ export function AdvertiserCpaWallet({
                         {formatCurrency(Math.abs(row.amount))}
                       </TableCell>
                       <TableCell className="px-4 py-4 text-sm text-slate-600">
-                        {format(new Date(row.date), "MMM d, yyyy HH:mm")}
+                        {formatUserDateTime(row.date, timezone, "MMM d, yyyy HH:mm")}
                       </TableCell>
                       <TableCell className="px-6 py-4">
                         <ActivityStatusBadge row={row} />

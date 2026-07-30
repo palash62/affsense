@@ -1,4 +1,4 @@
-import { format } from "date-fns";
+import { formatUserDateTime } from "@/lib/user-timezone";
 import { FileText } from "lucide-react";
 import { LeadStatusBadge } from "@/components/admin/admin-ui";
 import { PageSection } from "@/components/admin/page-section";
@@ -20,7 +20,13 @@ interface RecentLead {
   payoutClassName: string;
 }
 
-export function PublisherRecentLeadsTable({ leads }: { leads: RecentLead[] }) {
+export function PublisherRecentLeadsTable({
+  leads,
+  timezone,
+}: {
+  leads: RecentLead[];
+  timezone?: string;
+}) {
   return (
     <PageSection
       title="Recent Leads"
@@ -51,7 +57,7 @@ export function PublisherRecentLeadsTable({ leads }: { leads: RecentLead[] }) {
                 className="border-slate-100 transition-colors hover:bg-blue-50/40"
               >
                 <TableCell className="whitespace-nowrap px-6 py-4 text-sm text-slate-600">
-                  {format(lead.createdAt, "MMM d, yyyy HH:mm")}
+                  {formatUserDateTime(lead.createdAt, timezone, "MMM d, yyyy HH:mm")}
                 </TableCell>
                 <TableCell
                   className={cn("px-4 py-4 text-right text-sm", lead.payoutClassName)}

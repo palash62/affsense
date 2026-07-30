@@ -69,7 +69,7 @@ function verifySignedToken(token: string): SignedTokenPayload | null {
 async function loadTargetUser(targetUserId: string) {
   return prisma.user.findUnique({
     where: { id: targetUserId },
-    select: { id: true, email: true, name: true, role: true, status: true, tokenVersion: true },
+    select: { id: true, email: true, name: true, role: true, status: true, tokenVersion: true, timezone: true },
   });
 }
 

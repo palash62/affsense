@@ -153,6 +153,7 @@ export type LoginOtpUser = {
   status: UserStatus;
   tokenVersion: number;
   emailVerified: Date | null;
+  timezone: string;
 };
 
 async function findActiveLoginOtp(userId: string) {
@@ -181,6 +182,7 @@ async function validateLoginOtp(
       status: true,
       tokenVersion: true,
       emailVerified: true,
+      timezone: true,
     },
   });
 

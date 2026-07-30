@@ -1,9 +1,9 @@
 export const dynamic = "force-dynamic";
 
-import { format } from "date-fns";
 import { Info, KeyRound, Plug, Shield } from "lucide-react";
 import Link from "next/link";
 import { getSession } from "@/lib/session";
+import { formatUserDateTime, resolveUserTimezone } from "@/lib/user-timezone";
 import { getAdvertiserSettings } from "@/services/user.service";
 import { GradientStatCard, NeutralStatCard } from "@/components/admin/gradient-stat-card";
 import { UserStatusBadge, avatarColors, getInitials } from "@/components/admin/admin-ui";
@@ -25,7 +25,8 @@ export default async function AdvertiserSettingsPage() {
   }
 
   const company = user.advertiserProfile?.company ?? "";
-  const memberSince = format(user.createdAt, "MMM d, yyyy");
+  const timezone = resolveUserTimezone(user.timezone);
+  const memberSince = formatUserDateTime(user.createdAt, timezone, "MMM d, yyyy");
 
   return (
     <div className="space-y-7">
@@ -94,6 +95,7 @@ export default async function AdvertiserSettingsPage() {
       <AdvertiserProfileForm
         initialName={user.name}
         initialCompany={company}
+        initialTimezone={timezone}
         email={user.email}
       />
 

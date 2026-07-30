@@ -81,6 +81,7 @@ export default async function AdvertiserCampaignDetailPage({ params }: PageProps
           publisherCampaigns: campaign.publisherCampaigns,
           leadCount,
         }}
+        timezone={session?.user?.timezone}
       />
     </div>
   );

@@ -1,4 +1,5 @@
-import { format } from "date-fns";
+import { formatUserDateTime } from "@/lib/user-timezone";
+import { getSession } from "@/lib/session";
 import { ClipboardList, History, Shield, User } from "lucide-react";
 import { listAuditLogs } from "@/services/admin.service";
 import { PageHero } from "@/components/admin/page-hero";
@@ -17,6 +18,8 @@ import {
 export const dynamic = "force-dynamic";
 
 export default async function AdminAuditLogPage() {
+  const session = await getSession();
+  const tz = session?.user?.timezone;
   const { data: logs } = await listAuditLogs({ limit: 100 });
 
   const uniqueActions = new Set(logs.map((l) => l.action)).size;
@@ -70,7 +73,7 @@ export default async function AdminAuditLogPage() {
                     )}
                   </TableCell>
                   <TableCell className="px-4 py-3 text-right text-xs text-slate-400">
-                    {format(log.createdAt, "MMM d, yyyy HH:mm")}
+                    {formatUserDateTime(log.createdAt, tz, "MMM d, yyyy HH:mm")}
                   </TableCell>
                 </TableRow>
               ))}

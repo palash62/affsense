@@ -1,5 +1,6 @@
 import { Suspense } from "react";
-import { format } from "date-fns";
+import { formatUserDateTime } from "@/lib/user-timezone";
+import { getSession } from "@/lib/session";
 import { Building2, DollarSign, FileText, Megaphone, Users } from "lucide-react";
 import type { CampaignStatus } from "@prisma/client";
 import { listCampaigns, type CampaignSort } from "@/services/admin.service";
@@ -50,6 +51,8 @@ function parseSort(sort?: string): CampaignSort {
 }
 
 export default async function AdminCampaignsPage({ searchParams }: PageProps) {
+  const session = await getSession();
+  const tz = session?.user?.timezone;
   const params = await searchParams;
   const page = Math.max(1, parseInt(params.page ?? "1", 10));
   const cplMin = params.cplMin ? parseFloat(params.cplMin) : undefined;
@@ -187,7 +190,7 @@ export default async function AdminCampaignsPage({ searchParams }: PageProps) {
                       <CampaignStatusBadge status={c.status} />
                     </TableCell>
                     <TableCell className="px-4 py-4 text-sm text-slate-500">
-                      {format(new Date(c.createdAt), "MMM d, yyyy")}
+                      {formatUserDateTime(c.createdAt, tz, "MMM d, yyyy")}
                     </TableCell>
                     <TableCell className="px-6 py-4 text-right">
                       <div className="flex flex-wrap items-center justify-end gap-2">

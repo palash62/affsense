@@ -1,7 +1,30 @@
-import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { AppError, Errors } from "@/lib/errors";
+import { isValidTimezone, resolveUserTimezone } from "@/lib/user-timezone";
+import bcrypt from "bcryptjs";
 import { notifyPasswordChanged } from "@/services/notify.service";
+
+function assertTimezone(timezone: string) {
+  if (!isValidTimezone(timezone)) {
+    throw new AppError("VALIDATION_ERROR", "Invalid timezone", 422);
+  }
+  return timezone.trim();
+}
+
+export async function getAdminSettings(userId: string) {
+  return prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      status: true,
+      timezone: true,
+      createdAt: true,
+    },
+  });
+}
 
 export async function getAdvertiserSettings(userId: string) {
   return prisma.user.findUnique({
@@ -12,6 +35,7 @@ export async function getAdvertiserSettings(userId: string) {
       email: true,
       role: true,
       status: true,
+      timezone: true,
       referralCode: true,
       createdAt: true,
       advertiserProfile: {
@@ -30,6 +54,7 @@ export async function getPublisherSettings(userId: string) {
       email: true,
       role: true,
       status: true,
+      timezone: true,
       createdAt: true,
       publisherProfile: {
         select: {
@@ -47,14 +72,39 @@ export async function getPublisherSettings(userId: string) {
   });
 }
 
+export async function getUserTimezone(userId: string): Promise<string> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { timezone: true },
+  });
+  return resolveUserTimezone(user?.timezone);
+}
+
+export async function updateAdminPreferences(
+  userId: string,
+  data: { timezone: string },
+) {
+  const timezone = assertTimezone(data.timezone);
+  await prisma.user.update({
+    where: { id: userId },
+    data: { timezone },
+  });
+  return getAdminSettings(userId);
+}
+
 export async function updatePublisherProfile(
   userId: string,
-  data: { name: string; website?: string; trafficSource?: string },
+  data: { name: string; website?: string; trafficSource?: string; timezone?: string },
 ) {
+  const timezone = data.timezone !== undefined ? assertTimezone(data.timezone) : undefined;
+
   return prisma.$transaction(async (tx) => {
     await tx.user.update({
       where: { id: userId },
-      data: { name: data.name },
+      data: {
+        name: data.name,
+        ...(timezone ? { timezone } : {}),
+      },
     });
 
     await tx.publisherProfile.upsert({
@@ -89,12 +139,17 @@ export async function updatePublisherGlobalLink(
 
 export async function updateAdvertiserProfile(
   userId: string,
-  data: { name: string; company?: string },
+  data: { name: string; company?: string; timezone?: string },
 ) {
+  const timezone = data.timezone !== undefined ? assertTimezone(data.timezone) : undefined;
+
   return prisma.$transaction(async (tx) => {
     await tx.user.update({
       where: { id: userId },
-      data: { name: data.name },
+      data: {
+        name: data.name,
+        ...(timezone ? { timezone } : {}),
+      },
     });
 
     if (data.company !== undefined) {

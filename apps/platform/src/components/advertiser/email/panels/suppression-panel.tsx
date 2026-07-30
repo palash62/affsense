@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 import { AlertTriangle } from "lucide-react";
 import { PageSection } from "@/components/admin/page-section";
 import {
@@ -12,6 +13,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { formatUserDateTime } from "@/lib/user-timezone";
 import { useEmailModuleFilters } from "../email-module-filter-context";
 import { EmailModuleShell } from "../email-module-shell";
 
@@ -24,6 +26,8 @@ type Contact = {
 };
 
 function SuppressionTable({ rows }: { rows: Contact[] }) {
+  const { data: session } = useSession();
+  const timezone = session?.user?.timezone;
   return (
     <div className="overflow-x-auto">
       <Table>
@@ -47,7 +51,7 @@ function SuppressionTable({ rows }: { rows: Contact[] }) {
                 <TableCell className="font-medium">{row.email}</TableCell>
                 <TableCell className="text-slate-600">{row.status.toLowerCase()}</TableCell>
                 <TableCell className="text-slate-500">
-                  {new Date(row.unsubscribedAt ?? row.createdAt).toLocaleDateString()}
+                  {formatUserDateTime(row.unsubscribedAt ?? row.createdAt, timezone, "MMM d, yyyy")}
                 </TableCell>
               </TableRow>
             ))

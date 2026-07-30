@@ -1,6 +1,6 @@
 "use client";
 
-import { format } from "date-fns";
+import { formatUserDateTime } from "@/lib/user-timezone";
 import { Ban, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -22,8 +22,10 @@ type BlockedPublisher = {
 
 export function AdvertiserBlockedPublishersTable({
   blockedPublishers,
+  timezone,
 }: {
   blockedPublishers: BlockedPublisher[];
+  timezone?: string;
 }) {
   const router = useRouter();
   const [loadingId, setLoadingId] = useState<string | null>(null);
@@ -74,7 +76,7 @@ export function AdvertiserBlockedPublishersTable({
                 {shortPublisherId(block.publisherId)}
               </TableCell>
               <TableCell className="px-4 py-4 text-sm text-slate-600">
-                {format(new Date(block.createdAt), "MMM d, yyyy HH:mm")}
+                {formatUserDateTime(block.createdAt, timezone, "MMM d, yyyy HH:mm")}
               </TableCell>
               <TableCell className="px-6 py-4 text-right">
                 <Button

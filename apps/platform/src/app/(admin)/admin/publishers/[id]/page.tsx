@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
-import { format } from "date-fns";
+import { formatUserDateTime } from "@/lib/user-timezone";
+import { getSession } from "@/lib/session";
 import { ArrowLeft, Globe, Mail, MapPin, Share2, ShieldAlert, Wallet } from "lucide-react";
 import { getPublisherDetail } from "@/services/admin.service";
 import { getPublisherSpamScoresByIds } from "@/modules/fraud/repositories/quality.repo";
@@ -25,6 +26,8 @@ interface PageProps {
 
 export default async function AdminPublisherDetailPage({ params }: PageProps) {
   const { id } = await params;
+  const session = await getSession();
+  const tz = session?.user?.timezone;
   const publisher = await getPublisherDetail(id);
 
   if (!publisher) {
@@ -96,7 +99,7 @@ export default async function AdminPublisherDetailPage({ params }: PageProps) {
         <div className="rounded-[18px] border border-slate-200 bg-white p-5 shadow-sm">
           <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Joined</p>
           <p className="mt-2 text-sm font-semibold text-slate-900">
-            {format(new Date(publisher.createdAt), "MMM d, yyyy")}
+            {formatUserDateTime(publisher.createdAt, tz, "MMM d, yyyy")}
           </p>
         </div>
       </div>

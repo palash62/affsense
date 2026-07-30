@@ -382,6 +382,7 @@ export const platformPixelSettingsSchema = z
 export const updateAdvertiserProfileSchema = z.object({
   name: z.string().trim().min(2, "Name must be at least 2 characters"),
   company: z.string().trim().min(2, "Company name must be at least 2 characters").optional(),
+  timezone: z.string().trim().min(1).optional(),
 });
 
 export const updatePublisherProfileSchema = z.object({
@@ -393,7 +394,16 @@ export const updatePublisherProfileSchema = z.object({
     .refine((val) => !val || val === "" || z.string().url().safeParse(val).success, {
       message: "Enter a valid website URL",
     }),
-  trafficSource: z.string().trim().max(120)    .optional(),
+  trafficSource: z.string().trim().max(120).optional(),
+  timezone: z.string().trim().min(1).optional(),
+});
+
+export const updateUserTimezoneSchema = z.object({
+  timezone: z.string().trim().min(1, "Timezone is required"),
+});
+
+export const updateAdminPreferencesSchema = z.object({
+  timezone: z.string().trim().min(1, "Timezone is required"),
 });
 
 export const updatePublisherGlobalLinkSchema = z.object({

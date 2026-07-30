@@ -1,4 +1,5 @@
-import { format } from "date-fns";
+import { formatUserDateTime } from "@/lib/user-timezone";
+import { getSession } from "@/lib/session";
 import { ShieldAlert, Ban, Settings } from "lucide-react";
 import { getFraudDashboardMetrics, listHighRiskLeads } from "@/modules/fraud";
 import { PageHero } from "@/components/admin/page-hero";
@@ -19,6 +20,8 @@ import {
 export const dynamic = "force-dynamic";
 
 export default async function AdminFraudPage() {
+  const session = await getSession();
+  const tz = session?.user?.timezone;
   const [metrics, leadsResult] = await Promise.all([
     getFraudDashboardMetrics(),
     listHighRiskLeads(1, 25),
@@ -78,7 +81,7 @@ export default async function AdminFraudPage() {
               {leads.map((lead) => (
                 <TableRow key={lead.id} className="border-slate-100 align-top hover:bg-violet-50/40">
                   <TableCell className="px-6 py-4 text-sm text-slate-500">
-                    {format(new Date(lead.createdAt), "MMM d, yyyy HH:mm")}
+                    {formatUserDateTime(lead.createdAt, tz, "MMM d, yyyy HH:mm")}
                   </TableCell>
                   <TableCell className="px-4 py-4 text-sm font-medium text-slate-900">
                     {lead.campaign.name}

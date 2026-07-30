@@ -14,6 +14,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 | `cpl-workflow.mdc` | Feature planning vs direct fixes |
 | `cpl-nextjs.mdc` | Next.js 16, RSC, auth (`apps/**`) |
 | `cpl-platform-ui.mdc` | Platform UI and email module (`apps/platform/**`) |
+| `cpl-docker-standalone.mdc` | Standalone Docker packaging, hashed externals, GHCR `:latest` |
 
 ## Project skill
 

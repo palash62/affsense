@@ -1,18 +1,25 @@
 import { withAuth } from "@/lib/api-handler";
 import { errorResponse } from "@/lib/errors";
 import {
+  updateAdminPreferencesSchema,
   updateAdvertiserProfileSchema,
   updatePublisherProfileSchema,
 } from "@/lib/validations";
 import {
+  getAdminSettings,
   getAdvertiserSettings,
   getPublisherSettings,
+  updateAdminPreferences,
   updateAdvertiserProfile,
   updatePublisherProfile,
 } from "@/services/user.service";
 
 export async function GET() {
   return withAuth(async (session) => {
+    if (session.user.role === "ADMIN") {
+      const user = await getAdminSettings(session.user.id);
+      return Response.json({ data: user });
+    }
     const user =
       session.user.role === "PUBLISHER"
         ? await getPublisherSettings(session.user.id)
@@ -25,6 +32,19 @@ export async function PATCH(request: Request) {
   return withAuth(async (session) => {
     try {
       const body = await request.json();
+
+      if (session.user.role === "ADMIN") {
+        const parsed = updateAdminPreferencesSchema.safeParse(body);
+        if (!parsed.success) {
+          const message = parsed.error.issues[0]?.message ?? "Please check the form and try again";
+          return Response.json(
+            { error: { code: "VALIDATION_ERROR", message, status: 422 } },
+            { status: 422 },
+          );
+        }
+        const user = await updateAdminPreferences(session.user.id, parsed.data);
+        return Response.json({ data: user });
+      }
 
       if (session.user.role === "PUBLISHER") {
         const parsed = updatePublisherProfileSchema.safeParse(body);
@@ -39,6 +59,7 @@ export async function PATCH(request: Request) {
           name: parsed.data.name,
           website: parsed.data.website || undefined,
           trafficSource: parsed.data.trafficSource,
+          timezone: parsed.data.timezone,
         });
         return Response.json({ data: user });
       }

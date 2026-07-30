@@ -1,6 +1,7 @@
 "use client";
 
-import { format } from "date-fns";
+import { formatUserDateTime } from "@/lib/user-timezone";
+import { useSession } from "next-auth/react";
 import { Headphones, Send, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -54,6 +55,7 @@ export function TicketConversation({
   secondaryActionDisabled = false,
   secondaryActionIcon,
 }: TicketConversationProps) {
+  const { data: session } = useSession();
   const showSecondaryAction = Boolean(secondaryActionLabel && onSecondaryAction);
   return (
     <div className="space-y-4">
@@ -92,7 +94,7 @@ export function TicketConversation({
                         )}
                       </div>
                       <p className="text-xs text-slate-400">
-                        {format(new Date(message.createdAt), "MMM d, yyyy HH:mm")}
+                        {formatUserDateTime(message.createdAt, session?.user?.timezone, "MMM d, yyyy HH:mm")}
                       </p>
                     </div>
                     <p className="mt-2 text-sm leading-relaxed text-slate-700">{message.body}</p>

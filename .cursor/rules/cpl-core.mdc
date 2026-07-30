@@ -29,6 +29,7 @@ Run from repo root: `npm run dev:platform`, `npm run dev:tracking`, `npm run db:
 - "Push" means **git push to GitHub** unless the user clearly means server deploy.
 - Do not recreate `deploy/`, GitHub deploy workflows, or production env scripts without explicit request.
 - `build:production` is a local build only (`build:tracking` then `build:platform`).
+- Docker package-only images: always `prepare-standalone.sh` + `verify-standalone-image.sh` before push. Production `:latest` is owned by GitHub Actions — see `cpl-docker-standalone.mdc`. Do not local-push `:latest` unless the user explicitly asks (requires `ALLOW_LOCAL_LATEST_PUSH=1`).
 
 ## Git
 

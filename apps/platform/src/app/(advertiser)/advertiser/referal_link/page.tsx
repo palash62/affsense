@@ -1,6 +1,6 @@
 export const dynamic = "force-dynamic";
 
-import { format } from "date-fns";
+import { formatUserDateTime } from "@/lib/user-timezone";
 import { Gift, History, Info, Share2, TrendingUp, Users, Wallet } from "lucide-react";
 import { getSession } from "@/lib/session";
 import {
@@ -29,6 +29,7 @@ import { cn } from "@/lib/utils";
 
 export default async function AdvertiserReferralLinkPage() {
   const session = await getSession();
+  const tz = session!.user.timezone;
   const data = await getAdvertiserReferralData(session!.user.id);
 
   return (
@@ -216,7 +217,7 @@ export default async function AdvertiserReferralLinkPage() {
                     className="border-slate-100 transition-colors hover:bg-blue-50/40"
                   >
                     <TableCell className="px-6 py-4 text-sm text-slate-600">
-                      {format(entry.createdAt, "MMM d, yyyy HH:mm")}
+                      {formatUserDateTime(entry.createdAt, tz, "MMM d, yyyy HH:mm")}
                     </TableCell>
                     <TableCell className="px-4 py-4 text-sm text-slate-700">
                       {entry.description ?? "Referral commission"}
@@ -298,7 +299,7 @@ export default async function AdvertiserReferralLinkPage() {
                       </Badge>
                     </TableCell>
                     <TableCell className="px-4 py-4 text-sm text-slate-600">
-                      {format(referral.createdAt, "MMM d, yyyy")}
+                      {formatUserDateTime(referral.createdAt, tz, "MMM d, yyyy")}
                     </TableCell>
                     <TableCell className="px-4 py-4">
                       <UserStatusBadge status={referral.status as "ACTIVE" | "PENDING" | "SUSPENDED"} />

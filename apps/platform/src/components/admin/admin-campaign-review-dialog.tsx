@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { format } from "date-fns";
+import { formatUserDateTime } from "@/lib/user-timezone";
+import { useSession } from "next-auth/react";
 import { Ban, Building2, CheckCircle2, Eye, FileText, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -43,6 +44,7 @@ function readTargeting(targeting: unknown) {
 }
 
 export function AdminCampaignReviewDialog({ campaign }: { campaign: CampaignRow }) {
+  const { data: session } = useSession();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -119,7 +121,7 @@ export function AdminCampaignReviewDialog({ campaign }: { campaign: CampaignRow 
               <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
                 <p className="text-xs text-slate-500">Submitted</p>
                 <p className="text-sm font-medium text-slate-900">
-                  {format(new Date(campaign.createdAt), "MMM d, yyyy")}
+                  {formatUserDateTime(campaign.createdAt, session?.user?.timezone, "MMM d, yyyy")}
                 </p>
               </div>
               <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">

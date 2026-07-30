@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { format } from "date-fns";
+import { formatUserDateTime } from "@/lib/user-timezone";
+import { useSession } from "next-auth/react";
 import { AlertTriangle, Banknote, Clock, Loader2 } from "lucide-react";
 import { formatCurrency } from "@/components/admin/admin-ui";
 import { PageSection } from "@/components/admin/page-section";
@@ -51,6 +52,7 @@ export function PublisherPayoutRequestForm({
   minPayoutSettings: MinPayoutSettings;
   payoutEligibility: PayoutEligibility;
 }) {
+  const { data: session } = useSession();
   const router = useRouter();
   const [method, setMethod] = useState<PayoutMethod>("WISE");
   const minPayoutAmount = minForMethod(method, minPayoutSettings);
@@ -64,7 +66,7 @@ export function PublisherPayoutRequestForm({
   const [warning, setWarning] = useState(
     payoutEligibility.canRequest
       ? ""
-      : buildWeeklyLimitWarning(payoutEligibility.nextAllowedAt),
+      : buildWeeklyLimitWarning(payoutEligibility.nextAllowedAt, session?.user?.timezone),
   );
 
   useEffect(() => {
@@ -221,10 +223,10 @@ export function PublisherPayoutRequestForm({
   );
 }
 
-function buildWeeklyLimitWarning(nextAllowedAt?: string | null) {
+function buildWeeklyLimitWarning(nextAllowedAt?: string | null, timezone?: string) {
   if (!nextAllowedAt) {
     return "You can only request one payout per week. Please try again later.";
   }
 
-  return `You can only request one payout per week. Your next request will be available on ${format(new Date(nextAllowedAt), "MMM d, yyyy")}.`;
+  return `You can only request one payout per week. Your next request will be available on ${formatUserDateTime(nextAllowedAt, timezone, "MMM d, yyyy")}.`;
 }

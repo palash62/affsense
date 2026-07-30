@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { format } from "date-fns";
+import { formatUserDateTime } from "@/lib/user-timezone";
 import { FileText } from "lucide-react";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
@@ -55,6 +55,7 @@ function parseSort(sort?: string): AdvertiserLeadSort {
 export default async function PublisherLeadsPage({ searchParams }: PageProps) {
   const session = await getSession();
   if (!session?.user) redirect("/login");
+  const tz = session.user.timezone;
 
   const params = await searchParams;
   const page = Math.max(1, parseInt(params.page ?? "1", 10));
@@ -165,7 +166,7 @@ export default async function PublisherLeadsPage({ searchParams }: PageProps) {
                       className="border-slate-100 transition-colors hover:bg-blue-50/40"
                     >
                       <TableCell className="whitespace-nowrap px-4 py-4 text-sm text-slate-600">
-                        {format(new Date(lead.createdAt), "MMM d, yyyy HH:mm:ss")}
+                        {formatUserDateTime(lead.createdAt, tz, "MMM d, yyyy HH:mm:ss")}
                       </TableCell>
                       <TableCell className="whitespace-nowrap px-4 py-4 font-mono text-xs text-slate-500">
                         {shortLeadId(lead.id)}
@@ -191,7 +192,7 @@ export default async function PublisherLeadsPage({ searchParams }: PageProps) {
                         {os}
                       </TableCell>
                       <TableCell className="whitespace-nowrap px-4 py-4 text-sm capitalize text-slate-600">
-                        {lead.source ?? "‚Äî"}
+                        {lead.source ?? "ù"}
                       </TableCell>
                       <TableCell className="whitespace-nowrap px-4 py-4">
                         {lead.ctaClicked ? (

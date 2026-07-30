@@ -229,6 +229,7 @@ model User {
   referredById  String?    @map("referred_by_id")
   tokenVersion  Int        @default(0) @map("token_version")
   stripeCustomerId String? @unique @map("stripe_customer_id")
+  timezone      String     @default("UTC") @map("timezone")
   createdAt     DateTime   @default(now()) @map("created_at")
   updatedAt     DateTime   @updatedAt @map("updated_at")
 

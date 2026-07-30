@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { format } from "date-fns";
+import { formatUserDateTime } from "@/lib/user-timezone";
+import { useSession } from "next-auth/react";
 import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +24,7 @@ type BlocklistRow = {
 };
 
 export function BlocklistManager() {
+  const { data: session } = useSession();
   const [rows, setRows] = useState<BlocklistRow[]>([]);
   const [ip, setIp] = useState("");
   const [reason, setReason] = useState("");
@@ -113,7 +115,7 @@ export function BlocklistManager() {
                 <TableCell className="font-mono text-sm">{row.ip}</TableCell>
                 <TableCell className="text-sm text-slate-600">{row.reason ?? "—"}</TableCell>
                 <TableCell className="text-sm text-slate-500">
-                  {format(new Date(row.createdAt), "MMM d, yyyy")}
+                  {formatUserDateTime(row.createdAt, session?.user?.timezone, "MMM d, yyyy")}
                 </TableCell>
                 <TableCell>
                   <Button

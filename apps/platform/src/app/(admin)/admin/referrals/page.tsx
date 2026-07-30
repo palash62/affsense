@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { format } from "date-fns";
+import { formatUserDateTime } from "@/lib/user-timezone";
+import { getSession } from "@/lib/session";
 import { Gift, Users, Wallet, Clock, DollarSign } from "lucide-react";
 import { PageHero } from "@/components/admin/page-hero";
 import { PageSection } from "@/components/admin/page-section";
@@ -24,6 +25,8 @@ interface PageProps {
 }
 
 export default async function AdminReferralsPage({ searchParams }: PageProps) {
+  const session = await getSession();
+  const tz = session?.user?.timezone;
   const params = await searchParams;
   const report = await getAdminReferralReport({ q: params.q });
 
@@ -130,7 +133,7 @@ export default async function AdminReferralsPage({ searchParams }: PageProps) {
                       </div>
                     </TableCell>
                     <TableCell className="px-4 py-4 text-sm text-slate-600">
-                      {format(row.joinedAt, "MMM d, yyyy")}
+                      {formatUserDateTime(row.joinedAt, tz, "MMM d, yyyy")}
                     </TableCell>
                     <TableCell className="px-4 py-4">
                       <UserStatusBadge

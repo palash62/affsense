@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { Suspense } from "react";
-import { format } from "date-fns";
+import { formatUserDateTime } from "@/lib/user-timezone";
 import { FileText, Info } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -86,6 +86,7 @@ export default async function AdvertiserLeadDetailsPage({ searchParams }: PagePr
   if (!session?.user) {
     redirect("/login");
   }
+  const tz = session.user.timezone;
 
   const params = await searchParams;
   const page = Math.max(1, parseInt(params.page ?? "1", 10));
@@ -229,7 +230,7 @@ export default async function AdvertiserLeadDetailsPage({ searchParams }: PagePr
                       className="border-slate-100 transition-colors hover:bg-blue-50/40"
                     >
                       <TableCell className="whitespace-nowrap px-4 py-4 text-sm text-slate-600">
-                        {format(new Date(lead.createdAt), "MMM d, yyyy HH:mm:ss")}
+                        {formatUserDateTime(lead.createdAt, tz, "MMM d, yyyy HH:mm:ss")}
                       </TableCell>
                       <TableCell className="whitespace-nowrap px-4 py-4 font-mono text-xs text-slate-500">
                         <span className="inline-flex items-center gap-2">

@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { Suspense } from "react";
-import { format } from "date-fns";
+import { formatUserDateTime } from "@/lib/user-timezone";
 import { CheckCircle, FileText, ShieldAlert, XCircle } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -66,6 +66,7 @@ export default async function AdminLeadsPage({ searchParams }: PageProps) {
     redirect("/login");
   }
 
+  const tz = session.user.timezone;
   const params = await searchParams;
   const page = Math.max(1, parseInt(params.page ?? "1", 10));
   const limit = 15;
@@ -140,7 +141,7 @@ export default async function AdminLeadsPage({ searchParams }: PageProps) {
     return {
       id: lead.id,
       status: lead.status,
-      createdAtLabel: format(new Date(lead.createdAt), "MMM d, yyyy HH:mm:ss"),
+      createdAtLabel: formatUserDateTime(lead.createdAt, tz, "MMM d, yyyy HH:mm:ss"),
       shortId: shortLeadId(lead.id),
       advertiserName: lead.campaign.advertiser?.name ?? "—",
       campaignName: lead.campaign.name,

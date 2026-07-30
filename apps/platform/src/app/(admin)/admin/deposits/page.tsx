@@ -6,7 +6,8 @@ import {
   listPendingDeposits,
 } from "@/services/wallet.service";
 import { ArrowDownToLine, Clock, DollarSign, History, Wallet } from "lucide-react";
-import { format } from "date-fns";
+import { formatUserDateTime } from "@/lib/user-timezone";
+import { getSession } from "@/lib/session";
 import { PageHero } from "@/components/admin/page-hero";
 import { PageSection } from "@/components/admin/page-section";
 import { GradientStatCard, NeutralStatCard } from "@/components/admin/gradient-stat-card";
@@ -40,6 +41,8 @@ function depositDialogProps(deposit: Awaited<ReturnType<typeof listAdminDeposits
 }
 
 export default async function AdminDepositsPage({ searchParams }: PageProps) {
+  const session = await getSession();
+  const tz = session?.user?.timezone;
   const params = await searchParams;
   const page = Math.max(1, parseInt(params.page ?? "1", 10));
 
@@ -106,7 +109,7 @@ export default async function AdminDepositsPage({ searchParams }: PageProps) {
               {pendingDeposits.map((deposit) => (
                 <TableRow key={deposit.id} className="border-slate-100 transition-colors hover:bg-blue-50/40">
                   <TableCell className="px-6 py-4 text-sm text-slate-600">
-                    {format(deposit.createdAt, "MMM d, yyyy HH:mm")}
+                    {formatUserDateTime(deposit.createdAt, tz, "MMM d, yyyy HH:mm")}
                   </TableCell>
                   <TableCell className="px-4 py-4">
                     <p className="font-medium text-slate-900">{deposit.user.name}</p>
@@ -182,7 +185,7 @@ export default async function AdminDepositsPage({ searchParams }: PageProps) {
                   {history.data.map((deposit) => (
                     <TableRow key={deposit.id} className="border-slate-100 transition-colors hover:bg-blue-50/40">
                       <TableCell className="px-6 py-4 text-sm text-slate-600">
-                        {format(deposit.createdAt, "MMM d, yyyy HH:mm")}
+                        {formatUserDateTime(deposit.createdAt, tz, "MMM d, yyyy HH:mm")}
                       </TableCell>
                       <TableCell className="px-4 py-4">
                         <p className="font-medium text-slate-900">{deposit.user.name}</p>

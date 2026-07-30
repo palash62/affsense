@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { Suspense } from "react";
-import { format } from "date-fns";
+import { formatUserDateTime } from "@/lib/user-timezone";
 import { Ban, FileText, Info } from "lucide-react";
 import Link from "next/link";
 import { getSession } from "@/lib/session";
@@ -51,6 +51,7 @@ function formatCurrency(amount: number) {
 
 export default async function AdvertiserLeadReportPage({ searchParams }: PageProps) {
   const session = await getSession();
+  const tz = session!.user.timezone;
   const params = await searchParams;
   const dateFrom = params.from ?? defaultCampaignDateFrom();
   const dateTo = params.to ?? defaultCampaignDateTo();
@@ -185,7 +186,7 @@ export default async function AdvertiserLeadReportPage({ searchParams }: PagePro
                     </TableCell>
                     <TableCell className="whitespace-nowrap px-4 py-4 text-sm text-slate-600">
                       {row.lastLeadAt
-                        ? format(new Date(row.lastLeadAt), "MMM d, yyyy HH:mm")
+                        ? formatUserDateTime(row.lastLeadAt, tz, "MMM d, yyyy HH:mm")
                         : "—"}
                     </TableCell>
                     <TableCell className="px-6 py-4 text-right">
@@ -209,6 +210,7 @@ export default async function AdvertiserLeadReportPage({ searchParams }: PagePro
         gradient="revenue"
       >
         <AdvertiserBlockedPublishersTable
+          timezone={tz}
           blockedPublishers={blockedPublishers.map((b) => ({
             publisherId: b.publisherId,
             createdAt: b.createdAt,

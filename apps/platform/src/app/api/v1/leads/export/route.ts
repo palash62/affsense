@@ -41,7 +41,10 @@ export async function GET(request: Request) {
       sort: parseSort(searchParams.get("sort")),
     });
 
-    const csv = leadsToCsv(leads, { includeAdvertiser: isAdmin });
+    const csv = leadsToCsv(leads, {
+      includeAdvertiser: isAdmin,
+      timezone: session.user.timezone,
+    });
     const filename = `leads-${format(new Date(), "yyyy-MM-dd")}.csv`;
 
     return new Response(csv, {

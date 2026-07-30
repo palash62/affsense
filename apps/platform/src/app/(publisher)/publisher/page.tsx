@@ -112,7 +112,7 @@ export default async function PublisherDashboardPage({ searchParams }: PageProps
       </div>
 
       <div className="space-y-6">
-        <PublisherRecentLeadsTable leads={data.recentLeads} />
+        <PublisherRecentLeadsTable leads={data.recentLeads} timezone={session.user.timezone} />
 
         {data.leadsTrend.length > 0 && (
           <PageSection

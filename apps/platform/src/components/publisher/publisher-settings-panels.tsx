@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Globe, KeyRound, Loader2, Save, User } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { Globe, Loader2, Save, User } from "lucide-react";
 import { PageSection } from "@/components/admin/page-section";
 import { ChangePasswordForm } from "@/components/advertiser/advertiser-settings-panels";
+import { TimezoneSelect } from "@/components/settings/timezone-select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,19 +16,23 @@ export function PublisherProfileForm({
   initialName,
   initialWebsite,
   initialTrafficSource,
+  initialTimezone,
   email,
 }: {
   initialName: string;
   initialWebsite: string;
   initialTrafficSource: string;
+  initialTimezone: string;
   email: string;
 }) {
   const [name, setName] = useState(initialName);
   const [website, setWebsite] = useState(initialWebsite);
   const [trafficSource, setTrafficSource] = useState(initialTrafficSource);
+  const [timezone, setTimezone] = useState(initialTimezone);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const { update } = useSession();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -41,6 +47,7 @@ export function PublisherProfileForm({
         name: name.trim(),
         website: website.trim() || undefined,
         trafficSource: trafficSource.trim() || undefined,
+        timezone,
       }),
     });
     const data = await res.json();
@@ -52,13 +59,14 @@ export function PublisherProfileForm({
       return;
     }
 
+    await update?.({ timezone, name: name.trim() });
     setSuccess("Profile updated successfully.");
   }
 
   return (
     <PageSection
       title="Profile Information"
-      description="Update your publisher profile and traffic details"
+      description="Update your publisher profile, traffic details, and display timezone"
       icon={User}
       gradient="leads"
     >
@@ -115,6 +123,8 @@ export function PublisherProfileForm({
           <Input id="publisher-email" value={email} disabled className="bg-slate-50 text-slate-500" />
           <p className="text-xs text-slate-500">Email cannot be changed here. Contact support if needed.</p>
         </div>
+
+        <TimezoneSelect value={timezone} onChange={setTimezone} disabled={saving} />
 
         <Button
           type="submit"

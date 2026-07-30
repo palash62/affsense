@@ -1,6 +1,6 @@
 name: Docker images (GHCR)
 
-# Build Next.js off the 2GB VPS, push package-only images to GHCR.
+# Build Next.js off the 2GB VPS, verify standalone packaging, push to GHCR.
 # Server then: bash deploy/docker-run.sh  (pull only)
 
 on:
@@ -64,32 +64,53 @@ jobs:
           echo "tracking=ghcr.io/${OWNER_LC}/cpl-tracking" >> "$GITHUB_OUTPUT"
           echo "sha=$SHA_SHORT" >> "$GITHUB_OUTPUT"
 
-      - name: Build & push platform
+      - name: Build platform (load only)
         uses: docker/build-push-action@v6
         with:
           context: .
           file: Dockerfile.platform
-          push: true
+          push: false
+          load: true
           no-cache: true
           tags: |
-            ${{ steps.meta.outputs.platform }}:latest
+            cpl-platform:ci
             ${{ steps.meta.outputs.platform }}:${{ steps.meta.outputs.sha }}
+            ${{ steps.meta.outputs.platform }}:latest
 
-      - name: Build & push tracking
+      - name: Build tracking (load only)
         uses: docker/build-push-action@v6
         with:
           context: .
           file: Dockerfile.tracking
-          push: true
+          push: false
+          load: true
           no-cache: true
           tags: |
-            ${{ steps.meta.outputs.tracking }}:latest
+            cpl-tracking:ci
             ${{ steps.meta.outputs.tracking }}:${{ steps.meta.outputs.sha }}
+            ${{ steps.meta.outputs.tracking }}:latest
+
+      - name: Verify standalone images
+        run: |
+          bash deploy/verify-standalone-image.sh cpl-platform:ci platform
+          bash deploy/verify-standalone-image.sh cpl-tracking:ci tracking
+
+      - name: Push platform
+        run: |
+          docker push "${{ steps.meta.outputs.platform }}:${{ steps.meta.outputs.sha }}"
+          docker push "${{ steps.meta.outputs.platform }}:latest"
+
+      - name: Push tracking
+        run: |
+          docker push "${{ steps.meta.outputs.tracking }}:${{ steps.meta.outputs.sha }}"
+          docker push "${{ steps.meta.outputs.tracking }}:latest"
 
       - name: Summary
         run: |
-          echo "### Images pushed" >> "$GITHUB_STEP_SUMMARY"
+          echo "### Images pushed (after verify)" >> "$GITHUB_STEP_SUMMARY"
           echo "- \`${{ steps.meta.outputs.platform }}:latest\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- \`${{ steps.meta.outputs.platform }}:${{ steps.meta.outputs.sha }}\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- \`${{ steps.meta.outputs.tracking }}:latest\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- \`${{ steps.meta.outputs.tracking }}:${{ steps.meta.outputs.sha }}\`" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "On the 2GB server: \`bash deploy/docker-run.sh\`" >> "$GITHUB_STEP_SUMMARY"

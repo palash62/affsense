@@ -1,5 +1,6 @@
 import { Suspense } from "react";
-import { format } from "date-fns";
+import { formatUserDateTime } from "@/lib/user-timezone";
+import { getSession } from "@/lib/session";
 import { ArrowUpFromLine, Banknote, Clock, DollarSign, History, Wallet } from "lucide-react";
 import { PageHero } from "@/components/admin/page-hero";
 import { PageSection } from "@/components/admin/page-section";
@@ -27,6 +28,8 @@ interface PageProps {
 }
 
 export default async function AdminCpaPayoutsPage({ searchParams }: PageProps) {
+  const session = await getSession();
+  const tz = session?.user?.timezone;
   const params = await searchParams;
   const page = Math.max(1, parseInt(params.page ?? "1", 10));
 
@@ -101,7 +104,7 @@ export default async function AdminCpaPayoutsPage({ searchParams }: PageProps) {
                   className="border-slate-100 transition-colors hover:bg-emerald-50/40"
                 >
                   <TableCell className="px-6 py-4 text-sm text-slate-600">
-                    {format(payout.createdAt, "MMM d, yyyy HH:mm")}
+                    {formatUserDateTime(payout.createdAt, tz, "MMM d, yyyy HH:mm")}
                   </TableCell>
                   <TableCell className="px-4 py-4">
                     <p className="font-medium text-slate-900">{payout.publisher.name}</p>
@@ -177,7 +180,7 @@ export default async function AdminCpaPayoutsPage({ searchParams }: PageProps) {
                       className="border-slate-100 transition-colors hover:bg-emerald-50/40"
                     >
                       <TableCell className="px-6 py-4 text-sm text-slate-600">
-                        {format(payout.createdAt, "MMM d, yyyy HH:mm")}
+                        {formatUserDateTime(payout.createdAt, tz, "MMM d, yyyy HH:mm")}
                       </TableCell>
                       <TableCell className="px-4 py-4">
                         <p className="font-medium text-slate-900">{payout.publisher.name}</p>
@@ -204,7 +207,7 @@ export default async function AdminCpaPayoutsPage({ searchParams }: PageProps) {
                       </TableCell>
                       <TableCell className="px-4 py-4 text-sm text-slate-600">
                         {payout.processedAt
-                          ? format(payout.processedAt, "MMM d, yyyy HH:mm")
+                          ? formatUserDateTime(payout.processedAt, tz, "MMM d, yyyy HH:mm")
                           : "—"}
                       </TableCell>
                       <TableCell className="px-6 py-4 text-right">

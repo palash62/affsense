@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { Suspense } from "react";
-import { format } from "date-fns";
+import { formatUserDateTime } from "@/lib/user-timezone";
 import { FileText, Info } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -41,6 +41,7 @@ function formatCurrency(amount: number) {
 export default async function PublisherLeadReportPage({ searchParams }: PageProps) {
   const session = await getSession();
   if (!session?.user) redirect("/login");
+  const tz = session.user.timezone;
 
   const params = await searchParams;
   const dateFrom = params.from ?? defaultCampaignDateFrom();
@@ -147,7 +148,7 @@ export default async function PublisherLeadReportPage({ searchParams }: PageProp
                     </TableCell>
                     <TableCell className="whitespace-nowrap px-6 py-4 text-sm text-slate-600">
                       {row.lastLeadAt
-                        ? format(new Date(row.lastLeadAt), "MMM d, yyyy HH:mm")
+                        ? formatUserDateTime(row.lastLeadAt, tz, "MMM d, yyyy HH:mm")
                         : "—"}
                     </TableCell>
                   </TableRow>

@@ -10,6 +10,7 @@ declare module "next-auth" {
       email: string;
       name: string;
       role: UserRole;
+      timezone: string;
     };
     impersonatorId?: string;
     viewAsMode?: boolean;
@@ -19,6 +20,7 @@ declare module "next-auth" {
     role: UserRole;
     impersonatorId?: string;
     tokenVersion?: number;
+    timezone?: string;
   }
 }
 
@@ -68,17 +70,28 @@ export const authConfig = {
   pages: { signIn: "/login" },
   session: { strategy: "jwt" },
   callbacks: {
-    jwt({ token, user }) {
+    jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id!;
         token.role = user.role;
         token.email = user.email;
         token.name = user.name;
         token.tokenVersion = user.tokenVersion ?? 0;
+        token.timezone = user.timezone ?? "UTC";
         if (user.impersonatorId) {
           token.impersonatorId = user.impersonatorId;
         } else {
           delete token.impersonatorId;
+        }
+      }
+      // Allow client/server to refresh timezone after settings save via update()
+      if (trigger === "update" && session && typeof session === "object") {
+        const next = session as { timezone?: string; name?: string };
+        if (typeof next.timezone === "string" && next.timezone.trim()) {
+          token.timezone = next.timezone.trim();
+        }
+        if (typeof next.name === "string" && next.name.trim()) {
+          token.name = next.name.trim();
         }
       }
       return token;
@@ -89,6 +102,10 @@ export const authConfig = {
         session.user.role = token.role as UserRole;
         session.user.email = (token.email as string) ?? session.user.email;
         session.user.name = (token.name as string) ?? session.user.name;
+        session.user.timezone =
+          typeof token.timezone === "string" && token.timezone.trim()
+            ? token.timezone
+            : "UTC";
         session.tokenVersion = typeof token.tokenVersion === "number" ? token.tokenVersion : 0;
         if (token.impersonatorId) {
           session.impersonatorId = token.impersonatorId as string;

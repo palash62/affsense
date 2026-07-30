@@ -1,4 +1,4 @@
-import { format } from "date-fns";
+import { formatUserDateTime } from "@/lib/user-timezone";
 import Link from "next/link";
 import {
   Building2,
@@ -80,7 +80,10 @@ function DetailCell({
   );
 }
 
-export function AdminCampaignDetails({ campaign }: AdminCampaignDetailsProps) {
+export function AdminCampaignDetails({
+  campaign,
+  timezone,
+}: AdminCampaignDetailsProps & { timezone?: string }) {
   const targeting = parseCampaignTargeting(campaign.targeting);
   const optinHref = targeting.optinSlug ? `/o/${targeting.optinSlug}` : null;
 
@@ -134,11 +137,11 @@ export function AdminCampaignDetails({ campaign }: AdminCampaignDetailsProps) {
           <DetailCell label="Category" value={campaign.category.replace(/_/g, " ")} />
           <DetailCell
             label="Created"
-            value={format(new Date(campaign.createdAt), "MMM d, yyyy 'at' h:mm a")}
+            value={formatUserDateTime(campaign.createdAt, timezone, "MMM d, yyyy 'at' h:mm a")}
           />
           <DetailCell
             label="Last updated"
-            value={format(new Date(campaign.updatedAt), "MMM d, yyyy 'at' h:mm a")}
+            value={formatUserDateTime(campaign.updatedAt, timezone, "MMM d, yyyy 'at' h:mm a")}
           />
           {campaign.description && (
             <DetailCell
@@ -323,7 +326,7 @@ export function AdminCampaignDetails({ campaign }: AdminCampaignDetailsProps) {
                   </Badge>
                   {join.approvedAt && (
                     <p className="mt-1 text-xs text-slate-500">
-                      Approved {format(new Date(join.approvedAt), "MMM d, yyyy")}
+                      Approved {formatUserDateTime(join.approvedAt, timezone, "MMM d, yyyy")}
                     </p>
                   )}
                 </div>
@@ -340,7 +343,7 @@ export function AdminCampaignDetails({ campaign }: AdminCampaignDetailsProps) {
               {campaign.rejectionReason}
               {campaign.rejectedAt && (
                 <span className="mt-2 block text-xs text-red-600/80">
-                  Rejected {format(new Date(campaign.rejectedAt), "MMM d, yyyy 'at' h:mm a")}
+                  Rejected {formatUserDateTime(campaign.rejectedAt, timezone, "MMM d, yyyy 'at' h:mm a")}
                 </span>
               )}
             </p>

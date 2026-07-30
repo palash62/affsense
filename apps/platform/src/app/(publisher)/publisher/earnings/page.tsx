@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { format } from "date-fns";
+import { formatUserDateTime } from "@/lib/user-timezone";
 import { ArrowDownLeft, Banknote, CheckCircle, Clock, History, Plus, TrendingUp, Wallet } from "lucide-react";
 import { getSession } from "@/lib/session";
 import { getWalletBalance, listPublisherLedger } from "@/services/wallet.service";
@@ -70,6 +70,7 @@ function parseTab(tab?: string): PublisherEarningsTab {
 export default async function PublisherEarningsPage({ searchParams }: PageProps) {
   const session = await getSession();
   if (!session?.user) redirect("/login");
+  const tz = session.user.timezone;
 
   const params = await searchParams;
   const tab = parseTab(params.tab);
@@ -264,7 +265,7 @@ export default async function PublisherEarningsPage({ searchParams }: PageProps)
                         className="border-slate-100 transition-colors hover:bg-blue-50/40"
                       >
                         <TableCell className="px-6 py-4 text-sm text-slate-700">
-                          {format(entry.createdAt, "MMM d, yyyy HH:mm")}
+                          {formatUserDateTime(entry.createdAt, tz, "MMM d, yyyy HH:mm")}
                         </TableCell>
                         <TableCell className="px-4 py-4 font-mono text-xs text-slate-500">
                           {shortLedgerId(entry.referenceId ?? entry.id)}
@@ -381,7 +382,7 @@ export default async function PublisherEarningsPage({ searchParams }: PageProps)
                     >
                       <TableCell className="px-6 py-4">
                         <p className="text-sm text-slate-700">
-                          {format(payout.createdAt, "MMM d, yyyy HH:mm")}
+                          {formatUserDateTime(payout.createdAt, tz, "MMM d, yyyy HH:mm")}
                         </p>
                         <p className="font-mono text-xs text-slate-400">
                           {shortPayoutId(payout.id)}
@@ -405,7 +406,7 @@ export default async function PublisherEarningsPage({ searchParams }: PageProps)
                         </div>
                       </TableCell>
                       <TableCell className="px-6 py-4 text-sm text-slate-600">
-                        {payout.processedAt ? format(payout.processedAt, "MMM d, yyyy") : "—"}
+                        {payout.processedAt ? formatUserDateTime(payout.processedAt, tz, "MMM d, yyyy") : "—"}
                       </TableCell>
                     </TableRow>
                   ))}

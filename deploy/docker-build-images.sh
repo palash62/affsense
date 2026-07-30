@@ -45,6 +45,10 @@ docker build -f Dockerfile.tracking \
   -t "$CPL_TRACKING_IMAGE" \
   .
 
+echo "==> Verify standalone images (hashed externals / Prisma / no host symlinks)..."
+bash "$ROOT/deploy/verify-standalone-image.sh" cpl-platform:latest platform
+bash "$ROOT/deploy/verify-standalone-image.sh" cpl-tracking:latest tracking
+
 if [ "${SAVE_TAR:-0}" = "1" ]; then
   OUT="$ROOT/deploy/cpl-docker-images.tar"
   echo "==> Saving offline archive to $OUT ..."

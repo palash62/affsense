@@ -1,0 +1,37 @@
+---
+description: Next standalone Docker packaging — hashed externals, prepare, verify, GHCR :latest ownership
+globs: deploy/**,Dockerfile*,Dockerfile.**,.github/workflows/docker-images.yml
+alwaysApply: false
+---
+
+# CPL Docker standalone packaging
+
+## Failure mode
+
+Next `output: "standalone"` may emit **hashed traced packages** under `apps/<app>/.next/node_modules/` (e.g. `jsdom-<hash>`, `@prisma/client-<hash>`). On Windows (and some absolute Linux paths) these are **symlinks/junctions to the build machine**. Inside Linux Docker the target does not exist → production 500s (login, admin, funnels, smart links).
+
+## Required pipeline
+
+1. `npm run build:production` (or CI equivalent)
+2. **Always** run `bash deploy/prepare-standalone.sh` (materializes all standalone symlinks)
+3. `docker build` package-only images (`Dockerfile.platform` / `Dockerfile.tracking`)
+4. **Always** run `bash deploy/verify-standalone-image.sh <image> <platform|tracking>` before push
+5. Push only after verify passes
+
+Never skip prepare or verify when packaging images.
+
+## GHCR `:latest` ownership
+
+- Production `:latest` is owned by **GitHub Actions** (`.github/workflows/docker-images.yml`).
+- Do **not** local-push `:latest` unless the user explicitly asks **and** sets `ALLOW_LOCAL_LATEST_PUSH=1`.
+- Prefer SHA tags (`:<7-char-sha>`) for rollbacks and pin tests.
+- VPS: `bash deploy/docker-run.sh` only (pull, no build on the 2GB host).
+
+## Scripts
+
+| Script | Role |
+|--------|------|
+| `deploy/prepare-standalone.sh` | Copy static/public; materialize hashed symlinks |
+| `deploy/verify-standalone-image.sh` | Fail closed if host symlinks / missing hashed pkg / wrong Prisma engine |
+| `deploy/docker-build-images.sh` | Build + verify locally |
+| `deploy/docker-push.sh` | Push (blocks `:latest` by default) |

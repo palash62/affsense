@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 import { Users } from "lucide-react";
 import { PageSection } from "@/components/admin/page-section";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { formatUserDateTime } from "@/lib/user-timezone";
 import { useEmailModuleFilters } from "../email-module-filter-context";
 import { EmailModuleShell } from "../email-module-shell";
 
@@ -32,6 +34,8 @@ type Contact = {
 };
 
 function SubscribersContent() {
+  const { data: session } = useSession();
+  const timezone = session?.user?.timezone;
   const { search, filterValues } = useEmailModuleFilters();
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [total, setTotal] = useState(0);
@@ -85,7 +89,9 @@ function SubscribersContent() {
                   <TableCell>
                     <Badge variant={STATUS_VARIANT[c.status] ?? "outline"}>{c.status.toLowerCase()}</Badge>
                   </TableCell>
-                  <TableCell className="text-slate-500">{new Date(c.createdAt).toLocaleDateString()}</TableCell>
+                  <TableCell className="text-slate-500">
+                    {formatUserDateTime(c.createdAt, timezone, "MMM d, yyyy")}
+                  </TableCell>
                 </TableRow>
               ))
             )}

@@ -1,4 +1,4 @@
-import { format } from "date-fns";
+import { formatUserDateTime } from "@/lib/user-timezone";
 import { formatAdvertiserLeadCpl } from "@/lib/advertiser-lead-details";
 import { getLeadCpl } from "@/lib/lead-cpl";
 import {
@@ -50,7 +50,10 @@ function leadDataRecord(data: unknown): Record<string, string> {
   );
 }
 
-export function leadsToCsv(leads: LeadCsvRow[], options: { includeAdvertiser?: boolean } = {}) {
+export function leadsToCsv(
+  leads: LeadCsvRow[],
+  options: { includeAdvertiser?: boolean; timezone?: string } = {},
+) {
   const dataKeys = new Set<string>();
   for (const lead of leads) {
     for (const key of Object.keys(leadDataRecord(lead.data))) {
@@ -97,7 +100,7 @@ export function leadsToCsv(leads: LeadCsvRow[], options: { includeAdvertiser?: b
 
     const values = [
       lead.id,
-      format(new Date(lead.createdAt), "yyyy-MM-dd HH:mm:ss"),
+      formatUserDateTime(lead.createdAt, options.timezone, "yyyy-MM-dd HH:mm:ss"),
       ...(options.includeAdvertiser ? [lead.campaign.advertiser?.name ?? ""] : []),
       lead.campaign.name,
       lead.publisher.name,

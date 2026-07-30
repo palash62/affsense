@@ -1,7 +1,8 @@
 "use client";
 
 import { Fragment, useEffect, useMemo, useState } from "react";
-import { format } from "date-fns";
+import { formatUserDateTime } from "@/lib/user-timezone";
+import { useSession } from "next-auth/react";
 import {
   ChevronDown,
   ChevronRight,
@@ -53,6 +54,7 @@ interface SupportTicket {
 }
 
 export function AdminSupportTicketsPanel() {
+  const { data: session } = useSession();
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -253,7 +255,7 @@ export function AdminSupportTicketsPanel() {
                                 <Users className="h-3.5 w-3.5" />
                                 <span>
                                   {ticket.user?.name} · {ticket.user?.role} ·{" "}
-                                  {format(new Date(ticket.createdAt), "MMM d, yyyy")}
+                                  {formatUserDateTime(ticket.createdAt, session?.user?.timezone, "MMM d, yyyy")}
                                 </span>
                               </div>
                               {closeError && expandedId === ticket.id && (

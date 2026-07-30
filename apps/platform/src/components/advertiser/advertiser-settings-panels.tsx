@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { useSession } from "next-auth/react";
 import { Building2, KeyRound, Loader2, Save, User } from "lucide-react";
 import { PageSection } from "@/components/admin/page-section";
 import { PasswordRequirements } from "@/components/auth/password-requirements";
+import { TimezoneSelect } from "@/components/settings/timezone-select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,17 +15,21 @@ import { cn } from "@/lib/utils";
 export function AdvertiserProfileForm({
   initialName,
   initialCompany,
+  initialTimezone,
   email,
 }: {
   initialName: string;
   initialCompany: string;
+  initialTimezone: string;
   email: string;
 }) {
   const [name, setName] = useState(initialName);
   const [company, setCompany] = useState(initialCompany);
+  const [timezone, setTimezone] = useState(initialTimezone);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const { update } = useSession();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -34,7 +40,11 @@ export function AdvertiserProfileForm({
     const res = await fetch("/api/v1/users/me", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: name.trim(), company: company.trim() }),
+      body: JSON.stringify({
+        name: name.trim(),
+        company: company.trim(),
+        timezone,
+      }),
     });
     const data = await res.json();
 
@@ -45,13 +55,14 @@ export function AdvertiserProfileForm({
       return;
     }
 
+    await update?.({ timezone, name: name.trim() });
     setSuccess("Profile updated successfully.");
   }
 
   return (
     <PageSection
       title="Profile Information"
-      description="Update your name and company details"
+      description="Update your name, company, and display timezone"
       icon={User}
       gradient="leads"
     >
@@ -99,6 +110,8 @@ export function AdvertiserProfileForm({
           <Input id="profile-email" value={email} disabled className="bg-slate-50 text-slate-500" />
           <p className="text-xs text-slate-500">Email cannot be changed here. Contact support if needed.</p>
         </div>
+
+        <TimezoneSelect value={timezone} onChange={setTimezone} disabled={saving} />
 
         <Button
           type="submit"

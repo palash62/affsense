@@ -1,8 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { formatUserDateTime } from "@/lib/user-timezone";
 
 type EmailLogRow = {
   id: string;
@@ -17,6 +19,8 @@ type EmailLogRow = {
 const PAGE_SIZE = 10;
 
 export function EmailLogsTable() {
+  const { data: session } = useSession();
+  const timezone = session?.user?.timezone;
   const [logs, setLogs] = useState<EmailLogRow[]>([]);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
@@ -74,7 +78,7 @@ export function EmailLogsTable() {
             {logs.map((log) => (
               <tr key={log.id} className="border-t border-slate-100">
                 <td className="px-4 py-3 whitespace-nowrap text-slate-600">
-                  {new Date(log.createdAt).toLocaleString()}
+                  {formatUserDateTime(log.createdAt, timezone, "MMM d, yyyy HH:mm")}
                 </td>
                 <td className="px-4 py-3">{log.to}</td>
                 <td className="px-4 py-3">{log.template}</td>

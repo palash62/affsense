@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { format } from "date-fns";
+import { formatUserDateTime } from "@/lib/user-timezone";
 import { Mail, Megaphone, ShieldAlert, UserCheck, Users, Share2 } from "lucide-react";
 import type { UserStatus } from "@prisma/client";
 import { listUsers, getUserDeleteEligibility } from "@/services/admin.service";
@@ -51,6 +51,7 @@ interface PageProps {
 
 export default async function AdminPublishersPage({ searchParams }: PageProps) {
   const session = await getSession();
+  const tz = session?.user?.timezone;
   const adminId = session?.user?.id ?? "";
   const params = await searchParams;
   const page = Math.max(1, parseInt(params.page ?? "1", 10));
@@ -222,7 +223,7 @@ export default async function AdminPublishersPage({ searchParams }: PageProps) {
                         </div>
                       </TableCell>
                       <TableCell className="px-4 py-4 text-sm text-slate-500">
-                        {format(new Date(publisher.createdAt), "MMM d, yyyy")}
+                        {formatUserDateTime(publisher.createdAt, tz, "MMM d, yyyy")}
                       </TableCell>
                       <TableCell className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-2">

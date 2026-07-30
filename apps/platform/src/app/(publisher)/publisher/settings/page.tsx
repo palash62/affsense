@@ -1,9 +1,9 @@
 export const dynamic = "force-dynamic";
 
 import { redirect } from "next/navigation";
-import { format } from "date-fns";
 import { AlertTriangle, CheckCircle, DollarSign, FileText, KeyRound } from "lucide-react";
 import { getSession } from "@/lib/session";
+import { formatUserDateTime, resolveUserTimezone } from "@/lib/user-timezone";
 import { getPublisherSettings } from "@/services/user.service";
 import { prisma } from "@/lib/prisma";
 import { GradientStatCard, NeutralStatCard } from "@/components/admin/gradient-stat-card";
@@ -41,7 +41,8 @@ export default async function PublisherSettingsPage() {
   const website = user.publisherProfile?.website ?? "";
   const trafficSource = user.publisherProfile?.trafficSource ?? "";
   const rejectionReason = user.publisherProfile?.rejectionReason ?? "";
-  const memberSince = format(user.createdAt, "MMM d, yyyy");
+  const timezone = resolveUserTimezone(user.timezone);
+  const memberSince = formatUserDateTime(user.createdAt, timezone, "MMM d, yyyy");
   const availableBalance = user.wallet
     ? Number(user.wallet.balance)
     : 0;
@@ -121,6 +122,7 @@ export default async function PublisherSettingsPage() {
         initialName={user.name}
         initialWebsite={website}
         initialTrafficSource={trafficSource}
+        initialTimezone={timezone}
         email={user.email}
       />
 

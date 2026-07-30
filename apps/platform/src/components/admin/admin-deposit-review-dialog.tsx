@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { format } from "date-fns";
+import { formatUserDateTime } from "@/lib/user-timezone";
+import { useSession } from "next-auth/react";
 import { Ban, Building2, CheckCircle2, Eye, Mail, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -11,6 +12,7 @@ import { formatDepositMethod, type AdminDepositRow } from "@/lib/deposit";
 import { cn } from "@/lib/utils";
 
 export function AdminDepositReviewDialog({ deposit }: { deposit: AdminDepositRow }) {
+  const { data: session } = useSession();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -87,7 +89,7 @@ export function AdminDepositReviewDialog({ deposit }: { deposit: AdminDepositRow
               <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
                 <p className="text-xs text-slate-500">Submitted</p>
                 <p className="text-sm font-medium text-slate-900">
-                  {format(new Date(deposit.createdAt), "MMM d, yyyy HH:mm")}
+                  {formatUserDateTime(deposit.createdAt, session?.user?.timezone, "MMM d, yyyy HH:mm")}
                 </p>
               </div>
               <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">

@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { Mail, MousePointerClick, Send, UserPlus, Users } from "lucide-react";
 import { PageSection } from "@/components/admin/page-section";
 import { LeadsTrendChart } from "@/components/dashboard/dashboard-charts";
+import { formatUserDateTime } from "@/lib/user-timezone";
 import { EmailModuleShell } from "../email-module-shell";
 import { ButtonLink } from "@/components/ui/button-link";
 
@@ -18,6 +20,8 @@ type Stats = {
 };
 
 export function DashboardPanel() {
+  const { data: session } = useSession();
+  const timezone = session?.user?.timezone;
   const [stats, setStats] = useState<Stats | null>(null);
 
   useEffect(() => {
@@ -73,7 +77,7 @@ export function DashboardPanel() {
                   <p className="text-sm text-slate-500">{item.detail}</p>
                 </div>
                 <span className="shrink-0 text-xs text-slate-400">
-                  {new Date(item.time).toLocaleDateString()}
+                  {formatUserDateTime(item.time, timezone, "MMM d, yyyy")}
                 </span>
               </li>
             ))}

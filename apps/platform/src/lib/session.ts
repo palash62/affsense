@@ -22,6 +22,11 @@ async function resolveViewAsSession(session: Session): Promise<AppSession> {
     return session;
   }
 
+  const viewedUser = await prisma.user.findUnique({
+    where: { id: viewAs.userId },
+    select: { timezone: true },
+  });
+
   return {
     ...session,
     user: {
@@ -29,6 +34,7 @@ async function resolveViewAsSession(session: Session): Promise<AppSession> {
       email: viewAs.email,
       name: viewAs.name,
       role: viewAs.role,
+      timezone: viewedUser?.timezone?.trim() || session.user.timezone || "UTC",
     },
     impersonatorId: viewAs.impersonatorId,
     viewAsMode: true,

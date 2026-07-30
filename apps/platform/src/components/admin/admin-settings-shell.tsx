@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
-import { Cloud, CreditCard, Crosshair, Mail, ScrollText, Settings } from "lucide-react";
+import { Cloud, CreditCard, Crosshair, Mail, ScrollText, Settings, UserCog } from "lucide-react";
+import { AdminPreferencesForm } from "@/components/admin/admin-preferences-form";
 import { PlatformSettingsForm } from "@/components/forms/platform-settings-form";
 import { SmtpSettingsForm } from "@/components/forms/smtp-settings-form";
 import { SesSettingsForm } from "@/components/forms/ses-settings-form";
@@ -14,6 +15,7 @@ import { PageSection } from "@/components/admin/page-section";
 import { cn } from "@/lib/utils";
 
 type SectionId =
+  | "preferences"
   | "payout"
   | "payments"
   | "pixels"
@@ -31,6 +33,14 @@ type SectionItem = {
 };
 
 const SECTIONS: SectionItem[] = [
+  {
+    id: "preferences",
+    label: "Timezone",
+    icon: UserCog,
+    title: "Timezone",
+    description: "Personal display settings for your admin account",
+    gradient: "approved",
+  },
   {
     id: "payout",
     label: "Payout & Links",
@@ -87,10 +97,10 @@ function isSectionId(value: string | null): value is SectionId {
   return SECTIONS.some((section) => section.id === value);
 }
 
-export function AdminSettingsShell() {
+export function AdminSettingsShell({ initialTimezone }: { initialTimezone: string }) {
   const searchParams = useSearchParams();
   const requested = searchParams.get("section");
-  const activeId: SectionId = isSectionId(requested) ? requested : "payout";
+  const activeId: SectionId = isSectionId(requested) ? requested : "preferences";
   const active = SECTIONS.find((section) => section.id === activeId) ?? SECTIONS[0];
 
   return (
@@ -133,6 +143,9 @@ export function AdminSettingsShell() {
           gradient={active.gradient}
         >
           <div className="p-6">
+            {activeId === "preferences" && (
+              <AdminPreferencesForm initialTimezone={initialTimezone} />
+            )}
             {activeId === "payout" && <PlatformSettingsForm />}
             {activeId === "payments" && <StripeSettingsForm />}
             {activeId === "pixels" && <PixelSettingsForm />}

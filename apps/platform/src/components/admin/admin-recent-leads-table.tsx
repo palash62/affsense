@@ -1,4 +1,4 @@
-import { format } from "date-fns";
+import { formatUserDateTime } from "@/lib/user-timezone";
 import { Filter, Download, Search } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -58,7 +58,13 @@ const avatarColors = [
   "bg-orange-100 text-orange-700",
 ];
 
-export function AdminRecentLeadsTable({ leads }: { leads: RecentLead[] }) {
+export function AdminRecentLeadsTable({
+  leads,
+  timezone,
+}: {
+  leads: RecentLead[];
+  timezone?: string;
+}) {
   return (
     <div className="overflow-hidden rounded-[18px] border border-slate-200/80 bg-white shadow-sm transition-shadow duration-300 hover:shadow-md">
       <div className="flex flex-col gap-4 border-b border-slate-100 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
@@ -134,7 +140,7 @@ export function AdminRecentLeadsTable({ leads }: { leads: RecentLead[] }) {
                     <LeadStatusBadge status={lead.status} />
                   </TableCell>
                   <TableCell className="px-6 py-3.5 text-right text-sm text-slate-500">
-                    {format(new Date(lead.createdAt), "MMM d, yyyy")}
+                    {formatUserDateTime(lead.createdAt, timezone, "MMM d, yyyy")}
                   </TableCell>
                 </TableRow>
               ))}

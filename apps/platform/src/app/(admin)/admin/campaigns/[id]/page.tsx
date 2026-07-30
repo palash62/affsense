@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
+import { getSession } from "@/lib/session";
 import { getCampaignById } from "@/services/campaign.service";
 import { PageHero } from "@/components/admin/page-hero";
 import { AdminCampaignActions } from "@/components/admin/admin-campaign-actions";
@@ -17,7 +18,8 @@ interface PageProps {
 }
 
 export default async function AdminCampaignDetailPage({ params }: PageProps) {
-  const { id } = await params;
+  const [{ id }, session] = await Promise.all([params, getSession()]);
+  const tz = session?.user?.timezone;
   const campaign = await getCampaignById(id);
 
   if (!campaign) {
@@ -77,6 +79,7 @@ export default async function AdminCampaignDetailPage({ params }: PageProps) {
           publisherCampaigns: campaign.publisherCampaigns,
           leadCount,
         }}
+        timezone={tz}
       />
 
       {campaign.status === "PENDING" && (

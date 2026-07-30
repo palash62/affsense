@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 import { Send } from "lucide-react";
 import { PageSection } from "@/components/admin/page-section";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { formatUserDateTime } from "@/lib/user-timezone";
 import { EmailModuleShell } from "../email-module-shell";
 
 const STATUS_VARIANT: Record<string, "default" | "secondary" | "outline"> = {
@@ -31,6 +33,8 @@ type CampaignRow = {
 };
 
 export function CampaignsPanel() {
+  const { data: session } = useSession();
+  const timezone = session?.user?.timezone;
   const [rows, setRows] = useState<CampaignRow[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -90,7 +94,9 @@ export function CampaignsPanel() {
                     <TableCell>{c.automationCount}</TableCell>
                     <TableCell>{c.sendCount.toLocaleString()}</TableCell>
                     <TableCell>{c.contactCount.toLocaleString()}</TableCell>
-                    <TableCell className="text-slate-500">{new Date(c.createdAt).toLocaleDateString()}</TableCell>
+                    <TableCell className="text-slate-500">
+                      {formatUserDateTime(c.createdAt, timezone, "MMM d, yyyy")}
+                    </TableCell>
                   </TableRow>
                 ))
               )}
