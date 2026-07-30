@@ -61,14 +61,19 @@ export function ChatProofSection() {
   }, [open, close, goPrev, goNext]);
 
   return (
-    <section id="proof" className="chat-proof">
+    <section id="results" className="chat-proof">
       <div className="container">
         <div className="section-title">
-          <span className="badge">Real advertiser chats</span>
-          <h2>Proof from the field</h2>
+          <span className="badge">Client messages</span>
+          <h2>Our Clients&apos; Results</h2>
           <p>
-            Not stock quotes — real messages from advertisers running LeadVix campaigns. Leads in,
-            sales out, funnels they actually like.
+            Real messages from advertisers using LeadVix. Results shown are from individual clients
+            and may not represent what you will achieve.
+          </p>
+          <p className="chat-proof-disclaimer">
+            <strong>Results not typical.</strong> Individual results vary based on offer, budget,
+            funnel, traffic quality, and experience. These chats are testimonials from specific
+            clients and are not a guarantee of earnings or sales. LeadVix does not promise income.
           </p>
         </div>
 
