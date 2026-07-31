@@ -4,10 +4,12 @@ import { parsePlatformSettings, calculatePublisherPayout } from "@/lib/platform-
 import {
   campaignExcludesBlockedPublishers,
   filterCampaignsByCountry,
+  filterCampaignsByDeviceOs,
   pickCampaignForIpRotation,
   campaignQualifiesForSpecialPayouts,
   readPublisherSpecialTierPayouts,
 } from "@/lib/redirect-helpers";
+import { parseUserAgent } from "@/lib/parse-user-agent";
 import type { Campaign, PublisherSmartLink } from "@prisma/client";
 
 async function getPlatformSettings() {
@@ -157,7 +159,7 @@ async function getEligibleCampaigns(publisherId: string, options?: { countryCode
 
 export async function pickNextCampaign(
   publisherId: string,
-  options: { ip: string; countryCode?: string },
+  options: { ip: string; countryCode?: string; userAgent?: string | null },
 ) {
   const smartLink = await prisma.publisherSmartLink.findUnique({ where: { publisherId } });
   if (!smartLink) {
@@ -171,8 +173,10 @@ export async function pickNextCampaign(
 
   const eligible = await getEligibleCampaigns(publisherId, { countryCode: options.countryCode });
   const countryEligible = filterCampaignsByCountry(eligible, options.countryCode);
+  const { device, os } = parseUserAgent(options.userAgent);
+  const pool = filterCampaignsByDeviceOs(countryEligible, { device, os });
 
-  if (countryEligible.length === 0) {
+  if (pool.length === 0) {
     return {
       smartLink,
       trackingSlug: null as string | null,
@@ -183,7 +187,7 @@ export async function pickNextCampaign(
 
   const shownCampaignIds = await getCampaignsShownToIp(publisherId, options.ip);
   const campaign = pickCampaignForIpRotation(
-    countryEligible,
+    pool,
     shownCampaignIds,
     smartLink.rotationCursor,
   );

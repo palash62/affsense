@@ -4,7 +4,16 @@ export type CampaignTargetingGeo = {
   trafficMode?: "allow" | "block";
   countries?: string[];
   blacklistedCountries?: string[];
+  devices?: string[];
+  operatingSystems?: string[];
+  blacklistedDevices?: string[];
+  blacklistedOperatingSystems?: string[];
 };
+
+function stringList(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.map((item) => String(item)).filter(Boolean);
+}
 
 export function parseCampaignTargeting(targeting: unknown): CampaignTargetingGeo {
   if (!targeting || typeof targeting !== "object") return {};
@@ -17,7 +26,72 @@ export function parseCampaignTargeting(targeting: unknown): CampaignTargetingGeo
     blacklistedCountries: Array.isArray(t.blacklistedCountries)
       ? t.blacklistedCountries.map((c) => String(c).toUpperCase())
       : [],
+    devices: stringList(t.devices),
+    operatingSystems: stringList(t.operatingSystems),
+    blacklistedDevices: stringList(t.blacklistedDevices),
+    blacklistedOperatingSystems: stringList(t.blacklistedOperatingSystems),
   };
+}
+
+function isUnknownDeviceOrOs(value?: string): boolean {
+  const v = value?.trim();
+  return !v || v === "—" || v === "Unknown";
+}
+
+/** Allow/block list match mirroring campaignAcceptsCountry. */
+function acceptsAllowBlockList(
+  allow: string[],
+  blacklist: string[],
+  trafficMode: "allow" | "block",
+  value: string | undefined,
+): boolean {
+  if (isUnknownDeviceOrOs(value)) {
+    // Unknown UA: do not drop (same as unknown country).
+    return true;
+  }
+  const known = value!.trim();
+
+  if (allow.length === 0) {
+    if (trafficMode === "block") {
+      return !blacklist.includes(known);
+    }
+    return true;
+  }
+
+  if (!allow.includes(known)) return false;
+  if (blacklist.includes(known)) return false;
+  return true;
+}
+
+/** Whether a campaign accepts the visitor's device and OS (if known). */
+export function campaignAcceptsDeviceOs(
+  targeting: unknown,
+  visitor: { device?: string; os?: string },
+): boolean {
+  const parsed = parseCampaignTargeting(targeting);
+  const trafficMode = parsed.trafficMode ?? "allow";
+
+  const deviceOk = acceptsAllowBlockList(
+    parsed.devices ?? [],
+    parsed.blacklistedDevices ?? [],
+    trafficMode,
+    visitor.device,
+  );
+  if (!deviceOk) return false;
+
+  return acceptsAllowBlockList(
+    parsed.operatingSystems ?? [],
+    parsed.blacklistedOperatingSystems ?? [],
+    trafficMode,
+    visitor.os,
+  );
+}
+
+export function filterCampaignsByDeviceOs<T extends Pick<Campaign, "targeting">>(
+  campaigns: T[],
+  visitor: { device?: string; os?: string },
+): T[] {
+  return campaigns.filter((c) => campaignAcceptsDeviceOs(c.targeting, visitor));
 }
 
 /** Whether a campaign accepts traffic from the visitor's country (if known). */

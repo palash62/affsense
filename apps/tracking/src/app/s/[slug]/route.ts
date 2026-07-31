@@ -57,7 +57,11 @@ export async function GET(
     (headerCountry && headerCountry !== "XX" ? headerCountry : undefined) ??
     (await lookupIpCountry(ip));
 
-  const result = await pickNextCampaign(smartLink.publisherId, { ip, countryCode });
+  const result = await pickNextCampaign(smartLink.publisherId, {
+    ip,
+    countryCode,
+    userAgent: request.headers.get("user-agent"),
+  });
   if (!result.trackingSlug) {
     if (result.globalLinkUrl) {
       try {

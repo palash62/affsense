@@ -473,7 +473,7 @@ export function CreateCampaignForm({
         endMode,
         endDate: endMode === "scheduled" ? endDate : null,
       },
-      trafficMode: "allow" as const,
+      trafficMode,
       vertical,
       countries: selectedCountries,
       blacklistedCountries,

@@ -3,6 +3,7 @@ import { duplicateRule } from "./duplicate.rule";
 import { emailRule } from "./email.rule";
 import { networkRule } from "./network.rule";
 import { geoRule } from "./geo.rule";
+import { deviceOsRule } from "./device-os.rule";
 import { behavioralRule } from "./behavioral.rule";
 import type { FraudEvaluationContext } from "../types/context";
 import type { FraudConfig } from "../types/config";
@@ -23,6 +24,9 @@ export async function runAllRules(
 
   const geo = geoRule(ctx, config);
   if (geo) outcomes.push(geo);
+
+  const deviceOs = deviceOsRule(ctx, config);
+  if (deviceOs) outcomes.push(deviceOs);
 
   outcomes.push(...behavioralRule(ctx, config));
 

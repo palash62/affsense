@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { pickCampaignForIpRotation } from "@/lib/smart-link-rotation";
+import {
+  campaignAcceptsDeviceOs,
+  filterCampaignsByDeviceOs,
+  pickCampaignForIpRotation,
+} from "@/lib/smart-link-rotation";
 
 const campaigns = [
   { id: "camp_a1", advertiserId: "adv_1" },
@@ -45,5 +49,100 @@ describe("pickCampaignForIpRotation", () => {
     ];
     const pick = pickCampaignForIpRotation(pool, [], 1);
     expect(pick?.id).toBe("camp_b2");
+  });
+});
+
+describe("campaignAcceptsDeviceOs", () => {
+  it("accepts all devices when allow list is empty", () => {
+    expect(
+      campaignAcceptsDeviceOs({ devices: [] }, { device: "Mobile", os: "iOS" }),
+    ).toBe(true);
+    expect(
+      campaignAcceptsDeviceOs({}, { device: "Desktop", os: "Windows" }),
+    ).toBe(true);
+  });
+
+  it("rejects Mobile when Desktop-only", () => {
+    expect(
+      campaignAcceptsDeviceOs(
+        { devices: ["Desktop"], trafficMode: "allow" },
+        { device: "Mobile", os: "iOS" },
+      ),
+    ).toBe(false);
+  });
+
+  it("accepts Desktop when Desktop-only", () => {
+    expect(
+      campaignAcceptsDeviceOs(
+        { devices: ["Desktop"], trafficMode: "allow" },
+        { device: "Desktop", os: "Windows" },
+      ),
+    ).toBe(true);
+  });
+
+  it("rejects OS not on allow list", () => {
+    expect(
+      campaignAcceptsDeviceOs(
+        { operatingSystems: ["Windows"], trafficMode: "allow" },
+        { device: "Desktop", os: "macOS" },
+      ),
+    ).toBe(false);
+  });
+
+  it("passes unknown UA so rotation does not force global fallback", () => {
+    expect(
+      campaignAcceptsDeviceOs(
+        { devices: ["Desktop"] },
+        { device: "—", os: "—" },
+      ),
+    ).toBe(true);
+  });
+
+  it("honors block-mode device blacklist when allow list empty", () => {
+    expect(
+      campaignAcceptsDeviceOs(
+        {
+          trafficMode: "block",
+          devices: [],
+          blacklistedDevices: ["Mobile"],
+        },
+        { device: "Mobile", os: "Android" },
+      ),
+    ).toBe(false);
+    expect(
+      campaignAcceptsDeviceOs(
+        {
+          trafficMode: "block",
+          devices: [],
+          blacklistedDevices: ["Mobile"],
+        },
+        { device: "Desktop", os: "Windows" },
+      ),
+    ).toBe(true);
+  });
+});
+
+describe("filterCampaignsByDeviceOs", () => {
+  it("leaves empty-device campaigns and drops Desktop-only for mobile", () => {
+    const pool = [
+      { id: "desktop_only", targeting: { devices: ["Desktop"] } },
+      { id: "all_devices", targeting: {} },
+      { id: "mobile_ok", targeting: { devices: ["Mobile", "Tablet"] } },
+    ];
+    const filtered = filterCampaignsByDeviceOs(pool, {
+      device: "Mobile",
+      os: "iOS",
+    });
+    expect(filtered.map((c) => c.id)).toEqual(["all_devices", "mobile_ok"]);
+  });
+
+  it("returns empty pool when only Desktop-only campaigns remain for mobile", () => {
+    const pool = [
+      { id: "d1", targeting: { devices: ["Desktop"] } },
+      { id: "d2", targeting: { devices: ["Desktop"] } },
+    ];
+    expect(
+      filterCampaignsByDeviceOs(pool, { device: "Mobile", os: "Android" }),
+    ).toEqual([]);
   });
 });

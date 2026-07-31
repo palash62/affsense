@@ -1,8 +1,10 @@
 import { campaignExcludesBlockedPublishers } from "@/lib/campaign-targeting";
 import {
   filterCampaignsByCountry,
+  filterCampaignsByDeviceOs,
   pickCampaignForIpRotation,
 } from "@/lib/smart-link-rotation";
+import { parseUserAgent } from "@/lib/publisher-leads";
 import { calculatePublisherPayout } from "@/lib/platform-settings";
 import {
   campaignQualifiesForSpecialPayouts,
@@ -172,15 +174,17 @@ async function resolveGlobalLinkFallback(publisherId: string) {
 
 export async function pickNextCampaign(
   publisherId: string,
-  options: { ip: string; countryCode?: string },
+  options: { ip: string; countryCode?: string; userAgent?: string | null },
 ) {
   const smartLink = await getOrCreatePublisherSmartLink(publisherId);
   const eligible = await getEligibleCampaigns(publisherId, {
     countryCode: options.countryCode,
   });
   const countryEligible = filterCampaignsByCountry(eligible, options.countryCode);
+  const { device, os } = parseUserAgent(options.userAgent);
+  const pool = filterCampaignsByDeviceOs(countryEligible, { device, os });
 
-  if (countryEligible.length === 0) {
+  if (pool.length === 0) {
     return {
       smartLink,
       eligible,
@@ -194,7 +198,7 @@ export async function pickNextCampaign(
 
   const shownCampaignIds = await getCampaignsShownToIp(publisherId, options.ip);
   const campaign = pickCampaignForIpRotation(
-    countryEligible,
+    pool,
     shownCampaignIds,
     smartLink.rotationCursor,
   );
@@ -202,7 +206,7 @@ export async function pickNextCampaign(
   if (!campaign) {
     return {
       smartLink,
-      eligible: countryEligible,
+      eligible: pool,
       campaign: null,
       trackingSlug: null,
       campaignLandingUrl: null,
@@ -237,7 +241,7 @@ export async function pickNextCampaign(
 
   return {
     smartLink: updatedSmartLink,
-    eligible: countryEligible,
+    eligible: pool,
     campaign,
     trackingSlug: trackingLink.slug,
     campaignLandingUrl: resolveCampaignLandingUrl(campaign.targeting, {

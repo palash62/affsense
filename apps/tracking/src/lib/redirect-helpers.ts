@@ -64,5 +64,6 @@ export function campaignQualifiesForSpecialPayouts(
 export {
   campaignExcludesBlockedPublishers,
   filterCampaignsByCountry,
+  filterCampaignsByDeviceOs,
   pickCampaignForIpRotation,
 } from "./smart-link-rotation";

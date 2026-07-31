@@ -9,6 +9,7 @@ export type FraudRuleWeights = {
   disposable_email: number;
   role_email: number;
   geo_mismatch: number;
+  device_os_mismatch: number;
   fast_submit: number;
   no_mouse: number;
   paste_only: number;

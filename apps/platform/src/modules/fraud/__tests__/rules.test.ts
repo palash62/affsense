@@ -4,6 +4,7 @@ import { honeypotRule } from "@/modules/fraud/rules/honeypot.rule";
 import { duplicateRule } from "@/modules/fraud/rules/duplicate.rule";
 import { behavioralRule } from "@/modules/fraud/rules/behavioral.rule";
 import { emailRule } from "@/modules/fraud/rules/email.rule";
+import { deviceOsRule } from "@/modules/fraud/rules/device-os.rule";
 import { decideFraud } from "@/modules/fraud/scoring/decide";
 import { aggregateRiskScore } from "@/modules/fraud/scoring/aggregate";
 import type { FraudEvaluationContext } from "@/modules/fraud/types/context";
@@ -121,6 +122,63 @@ describe("behavioralRule", () => {
     const match = outcomes.find((o) => o.rule === "click_match");
     expect(match?.passed).toBe(true);
     expect(match?.riskDelta).toBe(-15);
+  });
+});
+
+describe("deviceOsRule", () => {
+  const mobileUa =
+    "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1";
+  const desktopUa =
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+
+  it("hard-fails mobile UA on Desktop-only campaign", () => {
+    const result = deviceOsRule(
+      baseCtx({
+        userAgent: mobileUa,
+        targeting: { devices: ["Desktop"], trafficMode: "allow" },
+      }),
+      DEFAULT_FRAUD_CONFIG,
+    );
+    expect(result?.passed).toBe(false);
+    expect(result?.hardFail).toBe(true);
+    expect(result?.details).toContain("Mobile");
+  });
+
+  it("passes desktop UA on Desktop-only campaign", () => {
+    const result = deviceOsRule(
+      baseCtx({
+        userAgent: desktopUa,
+        targeting: { devices: ["Desktop"], trafficMode: "allow" },
+      }),
+      DEFAULT_FRAUD_CONFIG,
+    );
+    expect(result?.passed).toBe(true);
+  });
+
+  it("does not reject when device lists are empty", () => {
+    const result = deviceOsRule(
+      baseCtx({
+        userAgent: mobileUa,
+        targeting: {},
+      }),
+      DEFAULT_FRAUD_CONFIG,
+    );
+    expect(result?.passed).toBe(true);
+  });
+
+  it("rejects via hard fail decision for Desktop-only + mobile", () => {
+    const outcome = deviceOsRule(
+      baseCtx({
+        userAgent: mobileUa,
+        targeting: { devices: ["Desktop"] },
+      }),
+      DEFAULT_FRAUD_CONFIG,
+    );
+    expect(outcome).toBeTruthy();
+    const score = aggregateRiskScore([outcome!]);
+    const decision = decideFraud(score, [outcome!], DEFAULT_FRAUD_CONFIG);
+    expect(decision.hardReject).toBe(true);
+    expect(decision.fraudDecision).toBe("auto_reject");
   });
 });
 
