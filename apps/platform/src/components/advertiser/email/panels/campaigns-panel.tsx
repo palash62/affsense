@@ -48,14 +48,14 @@ export function CampaignsPanel() {
 
   return (
     <EmailModuleShell
-      title="Campaigns"
-      description="Your lead campaigns and their email automation activity."
+      title="Broadcast"
+      description="Email automation activity across your lead campaigns."
       breadcrumbs={[
         { label: "Autoresponder", href: "/advertiser/email" },
-        { label: "Campaigns" },
+        { label: "Broadcast" },
       ]}
       stats={[
-        { label: "Campaigns", value: rows.length.toLocaleString(), icon: Send, accent: "purple" },
+        { label: "Broadcasts", value: rows.length.toLocaleString(), icon: Send, accent: "purple" },
         { label: "Total Emails Sent", value: rows.reduce((s, r) => s + r.sendCount, 0).toLocaleString(), icon: Send, variant: "leads" },
       ]}
       showToolbar={false}

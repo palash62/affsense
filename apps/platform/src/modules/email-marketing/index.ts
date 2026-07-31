@@ -1,6 +1,12 @@
 export { dispatchLeadEmailAutomations } from "./services/dispatch.service";
 export { listContacts, unsubscribeByToken, suppressContact } from "./services/contact.service";
 export {
+  listEmailLists,
+  createEmailList,
+  updateEmailList,
+  deleteEmailList,
+} from "./services/list.service";
+export {
   listTemplates,
   getTemplate,
   createTemplate,

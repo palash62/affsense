@@ -49,7 +49,7 @@ export function DashboardPanel() {
         { label: "Click Rate", value: stats ? `${stats.clickRate}%` : "—", icon: MousePointerClick, accent: "orange" },
       ]}
       showToolbar={false}
-      primaryAction={{ label: "Create Campaign", href: "/advertiser/email/campaigns", icon: Send }}
+      primaryAction={{ label: "Create Broadcast", href: "/advertiser/email/campaigns", icon: Send }}
     >
       <div className="flex flex-wrap gap-3">
         <ButtonLink href="/advertiser/email/automations/new">Create automation</ButtonLink>
@@ -95,8 +95,8 @@ export function DashboardPanel() {
         <p className="font-semibold text-slate-900">Get started in 3 steps</p>
         <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-slate-600">
           <li>
-            <Link href="/advertiser/email/templates" className="text-[var(--theme-primary)] hover:underline">
-              Create or edit an email template
+            <Link href="/advertiser/email/subscribers" className="text-[var(--theme-primary)] hover:underline">
+              Add or import subscribers
             </Link>
           </li>
           <li>

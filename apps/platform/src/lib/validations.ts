@@ -687,6 +687,16 @@ export const emailTemplateSchema = z.object({
 
 export const emailTemplateUpdateSchema = emailTemplateSchema.partial();
 
+export const emailListSchema = z.object({
+  name: z.string().trim().min(2).max(80),
+  campaignId: z.string().trim().min(1, "Campaign is required"),
+});
+
+export const emailListUpdateSchema = z.object({
+  name: z.string().trim().min(2).max(80).optional(),
+  campaignId: z.string().trim().min(1, "Campaign is required").optional(),
+});
+
 export const emailAutomationStepSchema = z.object({
   templateId: z.string().cuid(),
   delayMinutes: z.number().int().min(0).max(525600),

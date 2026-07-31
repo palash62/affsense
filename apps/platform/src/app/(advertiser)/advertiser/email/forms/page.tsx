@@ -1,5 +1,5 @@
-import { FormsPanel } from "@/components/advertiser/email/panels/forms-panel";
+import { redirect } from "next/navigation";
 
 export default function FormsPage() {
-  return <FormsPanel />;
+  redirect("/advertiser/email");
 }

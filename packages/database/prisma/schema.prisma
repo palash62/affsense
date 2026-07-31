@@ -263,6 +263,7 @@ model User {
   emailContacts            EmailContact[]
   emailTemplates           EmailTemplate[]
   emailAutomations         EmailAutomation[]
+  emailLists               EmailList[]
   emailSends               EmailSend[]
   emailMarketingSettings   AdvertiserEmailSettings?
   sendingIdentities        AdvertiserSendingIdentity[]
@@ -351,6 +352,7 @@ model Campaign {
   optinPages         AdvertiserOptinPage[]
   landingPages       LandingPage[]
   funnelEvents       FunnelEvent[]
+  emailLists         EmailList[]
 
   @@index([advertiserId])
   @@index([status])
@@ -1003,6 +1005,22 @@ model EmailContact {
   @@index([advertiserId])
   @@index([status])
   @@map("email_contacts")
+}
+
+model EmailList {
+  id           String   @id @default(cuid())
+  advertiserId String   @map("advertiser_id")
+  campaignId   String   @map("campaign_id")
+  name         String
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  advertiser User     @relation(fields: [advertiserId], references: [id], onDelete: Cascade)
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@unique([advertiserId, campaignId])
+  @@index([advertiserId])
+  @@map("email_lists")
 }
 
 model EmailTemplate {
