@@ -138,7 +138,16 @@ export function AdminFunnelTemplateDetailPanel({
 
   return (
     <div className="space-y-6">
-      <FunnelDetailHeader funnelName={template.name} backHref={workflow.backHref} />
+      <FunnelDetailHeader
+        funnelName={template.name}
+        backHref={workflow.backHref}
+        statusLabel={template.isPublished ? "Published" : "Draft"}
+        statusClassName={
+          template.isPublished
+            ? "rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700"
+            : "rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-700"
+        }
+      />
 
       <Tabs value="steps">
         <TabsList className="h-auto w-full justify-start rounded-none border-b border-slate-200 bg-transparent p-0">

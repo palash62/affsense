@@ -23,6 +23,7 @@ type AdminTemplate = {
   thankYouUseCampaignPixel: boolean;
   thankYouCraftState: CraftSerializedState | null;
   thankYouThemeJson: ThemeJson | null;
+  isPublished: boolean;
 };
 
 function parseStepParam(value: string | null): FunnelStepId {
@@ -56,8 +57,9 @@ export function AdminFunnelTemplateBuilderPage({ templateId }: { templateId: str
       mode: "funnel",
       ui: "ghl",
       thankYouEnabled: template?.thankYouEnabled ?? false,
+      templateIsPublished: template?.isPublished ?? false,
     });
-  }, [setBuilderConfig, templateId, template?.thankYouEnabled]);
+  }, [setBuilderConfig, templateId, template?.thankYouEnabled, template?.isPublished]);
 
   useEffect(() => {
     setCraftSavedListener((step, savedCraft) => {
@@ -106,6 +108,7 @@ export function AdminFunnelTemplateBuilderPage({ templateId }: { templateId: str
           mode: "funnel",
           ui: "ghl",
           thankYouEnabled: page.thankYouEnabled,
+          templateIsPublished: page.isPublished,
         });
       })
       .catch((err) => {

@@ -37,6 +37,7 @@ type TemplateCard = {
   craftState: CraftSerializedState;
   themeJson: ThemeJson;
   thankYouEnabled?: boolean;
+  isPublished?: boolean;
 };
 
 export function AdminFunnelTemplatesList() {
@@ -240,6 +241,7 @@ export function AdminFunnelTemplatesList() {
                 craftState={template.craftState}
                 themeJson={template.themeJson}
                 thankYouEnabled={template.thankYouEnabled}
+                isPublished={template.isPublished}
                 createdAt={template.createdAt}
                 variant="admin"
                 actions={renderTemplateActions(template)}

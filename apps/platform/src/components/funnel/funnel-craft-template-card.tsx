@@ -22,6 +22,7 @@ export type FunnelCraftTemplateCardProps = {
   craftState: CraftSerializedState;
   themeJson: ThemeJson;
   thankYouEnabled?: boolean;
+  isPublished?: boolean;
   createdAt?: string;
   selected?: boolean;
   loading?: boolean;
@@ -41,6 +42,7 @@ export function FunnelCraftTemplateCard({
   craftState,
   themeJson,
   thankYouEnabled,
+  isPublished,
   createdAt,
   selected = false,
   loading = false,
@@ -122,9 +124,23 @@ export function FunnelCraftTemplateCard({
 
       <div className="border-t border-slate-100 px-4 py-3">
         <p className="font-semibold text-slate-900">{name}</p>
-        <p className="mt-0.5 text-xs text-slate-500">
-          {variant === "admin" ? "System template" : "Prebuilt funnel template"}
-          {createdLabel ? ` · ${createdLabel}` : ""}
+        <p className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+          <span>
+            {variant === "admin" ? "System template" : "Prebuilt funnel template"}
+            {createdLabel ? ` · ${createdLabel}` : ""}
+          </span>
+          {variant === "admin" && typeof isPublished === "boolean" ? (
+            <Badge
+              variant="outline"
+              className={
+                isPublished
+                  ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                  : "border-amber-200 bg-amber-50 text-amber-700"
+              }
+            >
+              {isPublished ? "Published" : "Draft"}
+            </Badge>
+          ) : null}
         </p>
 
         {variant === "advertiser" && (

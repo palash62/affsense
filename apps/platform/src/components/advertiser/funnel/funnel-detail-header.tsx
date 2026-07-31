@@ -12,11 +12,15 @@ import {
 type FunnelDetailHeaderProps = {
   funnelName: string;
   backHref?: string;
+  statusLabel?: string;
+  statusClassName?: string;
 };
 
 export function FunnelDetailHeader({
   funnelName,
   backHref = "/advertiser/optin-funnels",
+  statusLabel,
+  statusClassName,
 }: FunnelDetailHeaderProps) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-4">
@@ -26,6 +30,16 @@ export function FunnelDetailHeader({
           Back
         </ButtonLink>
         <h1 className="truncate text-xl font-semibold text-slate-900">{funnelName}</h1>
+        {statusLabel ? (
+          <span
+            className={
+              statusClassName ??
+              "rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600"
+            }
+          >
+            {statusLabel}
+          </span>
+        ) : null}
       </div>
       <div className="flex items-center gap-2">
         <TooltipProvider>

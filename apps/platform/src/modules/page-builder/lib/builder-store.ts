@@ -16,6 +16,8 @@ export type BuilderConfig = {
   mode?: "landing" | "funnel" | "template" | "page";
   ui?: "ghl" | "classic";
   thankYouEnabled?: boolean;
+  /** Admin funnel templates only — draft vs published catalog visibility. */
+  templateIsPublished?: boolean;
   customDomainId?: string | null;
   /** Absolute public base URL of a verified custom domain, e.g. https://www.example.com */
   customDomainBase?: string | null;

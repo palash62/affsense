@@ -59,6 +59,7 @@ export type OptinFunnelTemplate = {
   thankYouCraftState: CraftSerializedState | null;
   thankYouThemeJson: ThemeJson | null;
   isSystem: boolean;
+  isPublished: boolean;
   createdAt: string;
 };
 
@@ -170,6 +171,7 @@ function serializeAdminTemplate(template: {
   name: string;
   category: string;
   isSystem: boolean;
+  isPublished?: boolean;
   createdAt: Date;
   craftState: unknown;
   themeJson: unknown;
@@ -193,6 +195,7 @@ function serializeAdminTemplate(template: {
     thankYouPixelHtml: funnelSettings.thankYouPixelHtml,
     thankYouUseCampaignPixel: funnelSettings.thankYouUseCampaignPixel,
     isSystem: template.isSystem,
+    isPublished: Boolean(template.isPublished),
     createdAt: template.createdAt.toISOString(),
   };
 }
@@ -238,7 +241,7 @@ export async function listOptinFunnels(advertiserId: string) {
 
 export async function listOptinFunnelTemplatesForAdvertiser(): Promise<OptinFunnelTemplate[]> {
   const templates = await prisma.pageTemplate.findMany({
-    where: { category: "optin_funnel", isSystem: true },
+    where: { category: "optin_funnel", isSystem: true, isPublished: true },
     orderBy: { createdAt: "desc" },
   });
 
@@ -246,7 +249,12 @@ export async function listOptinFunnelTemplatesForAdvertiser(): Promise<OptinFunn
 }
 
 export async function listOptinFunnelTemplatesForAdmin(): Promise<OptinFunnelTemplate[]> {
-  return listOptinFunnelTemplatesForAdvertiser();
+  const templates = await prisma.pageTemplate.findMany({
+    where: { category: "optin_funnel", isSystem: true },
+    orderBy: { createdAt: "desc" },
+  });
+
+  return templates.map(serializeAdminTemplate);
 }
 
 export async function createOptinFunnelTemplateByAdmin(input: {
@@ -258,6 +266,7 @@ export async function createOptinFunnelTemplateByAdmin(input: {
   destinationUrl?: string | null;
   thankYouPixelHtml?: string | null;
   thankYouUseCampaignPixel?: boolean;
+  isPublished?: boolean;
 }) {
   const name = input.name.trim().slice(0, 80);
   if (name.length < 2) {
@@ -331,6 +340,7 @@ export async function createOptinFunnelTemplateByAdmin(input: {
         ),
         ...buildThankYouScalarFields(funnelSettings),
         isSystem: true,
+        isPublished: input.isPublished ?? false,
         advertiserId: null,
       },
     }),
@@ -375,6 +385,7 @@ export async function updateOptinFunnelTemplateByAdmin(
     thankYouUseCampaignPixel?: boolean;
     step?: "optin" | "thankYou";
     autosave?: boolean;
+    isPublished?: boolean;
   },
 ) {
   const existing = await prisma.pageTemplate.findFirst({
@@ -477,6 +488,7 @@ export async function updateOptinFunnelTemplateByAdmin(
         ...(nextCraftEnvelope ? { craftState: nextCraftEnvelope } : {}),
         ...(nextThemeJsonEnvelope ? { themeJson: nextThemeJsonEnvelope } : {}),
         ...(isSettingsPatch ? buildThankYouScalarFields(nextFunnelSettings) : {}),
+        ...(input.isPublished !== undefined ? { isPublished: input.isPublished } : {}),
       },
     }),
   );
@@ -558,22 +570,28 @@ export async function createOptinFunnel(
   const selectedTemplateId = input.pageTemplateId ?? input.templateId;
   if (selectedTemplateId) {
     const pageTemplate = await prisma.pageTemplate.findFirst({
-      where: { id: selectedTemplateId, category: "optin_funnel", isSystem: true },
+      where: {
+        id: selectedTemplateId,
+        category: "optin_funnel",
+        isSystem: true,
+        isPublished: true,
+      },
     });
-    if (pageTemplate) {
-      templateId = pageTemplate.id;
-      templateName = pageTemplate.name;
-      const templateCraft = parseAdminTemplateCraft(pageTemplate.craftState);
-      const templateTheme = parseAdminTemplateTheme(pageTemplate.themeJson);
-      craftState = templateCraft.craftState;
-      themeJson = templateTheme.themeJson ?? DEFAULT_THEME;
-      thankYouEnabled = pageTemplate.thankYouEnabled;
-      destinationUrl = pageTemplate.destinationUrl?.trim() || null;
-      thankYouCraftState = templateCraft.thankYouCraftState;
-      thankYouThemeJson = templateTheme.thankYouThemeJson ?? templateTheme.themeJson ?? themeJson;
-      thankYouPixelHtml = pageTemplate.thankYouPixelHtml?.trim() || null;
-      thankYouUseCampaignPixel = pageTemplate.thankYouUseCampaignPixel;
+    if (!pageTemplate) {
+      throw Errors.notFound("Funnel template");
     }
+    templateId = pageTemplate.id;
+    templateName = pageTemplate.name;
+    const templateCraft = parseAdminTemplateCraft(pageTemplate.craftState);
+    const templateTheme = parseAdminTemplateTheme(pageTemplate.themeJson);
+    craftState = templateCraft.craftState;
+    themeJson = templateTheme.themeJson ?? DEFAULT_THEME;
+    thankYouEnabled = pageTemplate.thankYouEnabled;
+    destinationUrl = pageTemplate.destinationUrl?.trim() || null;
+    thankYouCraftState = templateCraft.thankYouCraftState;
+    thankYouThemeJson = templateTheme.thankYouThemeJson ?? templateTheme.themeJson ?? themeJson;
+    thankYouPixelHtml = pageTemplate.thankYouPixelHtml?.trim() || null;
+    thankYouUseCampaignPixel = pageTemplate.thankYouUseCampaignPixel;
   }
 
   const title =

@@ -1203,6 +1203,7 @@ model PageTemplate {
   thankYouPixelHtml       String? @db.Text @map("thank_you_pixel_html")
   thankYouUseCampaignPixel Boolean @default(true) @map("thank_you_use_campaign_pixel")
   isSystem      Boolean  @default(true) @map("is_system")
+  isPublished   Boolean  @default(false) @map("is_published")
   advertiserId  String?  @map("advertiser_id")
   favoriteCount Int      @default(0) @map("favorite_count")
   createdAt     DateTime @default(now()) @map("created_at")

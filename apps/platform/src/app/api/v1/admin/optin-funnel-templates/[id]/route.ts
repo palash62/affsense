@@ -53,6 +53,7 @@ export async function PATCH(request: Request, context: RouteContext) {
         thankYouUseCampaignPixel: parsed.data.thankYouUseCampaignPixel,
         step: parsed.data.step,
         autosave: parsed.data.autosave,
+        isPublished: parsed.data.isPublished,
       });
       return Response.json({ data });
     } catch (error) {

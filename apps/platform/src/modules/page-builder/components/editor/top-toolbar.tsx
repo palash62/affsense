@@ -76,6 +76,30 @@ export function TopToolbar({ pageId, pageName, pageSlug }: TopToolbarProps) {
     }
   }
 
+  async function toggleAdminTemplatePublish() {
+    const next = !builderConfig.templateIsPublished;
+    const ok = await handleSave();
+    if (!ok) return;
+    try {
+      const res = await fetch(`${builderConfig.apiBasePath}/${pageId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isPublished: next }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error?.message ?? "Failed to update publish status");
+      }
+      useBuilderStore.getState().setBuilderConfig({
+        ...builderConfig,
+        templateIsPublished: next,
+      });
+      toast.success(next ? "Template published" : "Template set to draft");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to update publish status");
+    }
+  }
+
   async function handlePublish() {
     const ok = await handleSave();
     if (!ok) return;
@@ -239,7 +263,31 @@ export function TopToolbar({ pageId, pageName, pageSlug }: TopToolbarProps) {
         <Save className="mr-1.5 h-4 w-4" />
         Save
       </Button>
-      {!isAdminTemplate && (
+      {isAdminTemplate ? (
+        <>
+          <span
+            className={cn(
+              "hidden rounded-full px-2 py-0.5 text-[11px] font-medium sm:inline",
+              builderConfig.templateIsPublished
+                ? "bg-emerald-50 text-emerald-700"
+                : "bg-amber-50 text-amber-700",
+            )}
+          >
+            {builderConfig.templateIsPublished ? "Published" : "Draft"}
+          </span>
+          <Button
+            size="sm"
+            variant={builderConfig.templateIsPublished ? "outline" : "default"}
+            onClick={() => void toggleAdminTemplatePublish()}
+            className={
+              builderConfig.templateIsPublished ? chrome.toolbarOutline : chrome.toolbarPublish
+            }
+          >
+            <Upload className="mr-1.5 h-4 w-4" />
+            {builderConfig.templateIsPublished ? "Unpublish" : "Publish"}
+          </Button>
+        </>
+      ) : (
         <Button size="sm" onClick={() => void handlePublish()} className={chrome.toolbarPublish}>
           <Upload className="mr-1.5 h-4 w-4" />
           Publish

@@ -811,6 +811,7 @@ export const adminOptinFunnelTemplateCreateSchema = z.object({
   primaryColor: z.string().trim().optional(),
   secondaryColor: z.string().trim().optional(),
   sourceTemplateId: z.string().trim().min(1).optional(),
+  isPublished: z.boolean().optional(),
 });
 
 export const adminOptinFunnelTemplateUpdateSchema = z.object({
@@ -833,6 +834,7 @@ export const adminOptinFunnelTemplateUpdateSchema = z.object({
   thankYouUseCampaignPixel: z.boolean().optional(),
   step: z.enum(["optin", "thankYou"]).optional(),
   autosave: z.boolean().optional(),
+  isPublished: z.boolean().optional(),
 });
 
 export const landingPageUpdateSchema = z.object({

@@ -21,6 +21,8 @@ import {
   duplicateOptinFunnelTemplateByAdmin,
   updateOptinFunnelTemplateByAdmin,
   deleteOptinFunnelTemplateByAdmin,
+  listOptinFunnelTemplatesForAdvertiser,
+  listOptinFunnelTemplatesForAdmin,
 } from "@/services/optin-funnel.service";
 
 const createdIds: string[] = [];
@@ -46,6 +48,28 @@ describe("Admin optin funnel templates", () => {
     expect(created.thankYouEnabled).toBe(true);
     expect(created.category).toBe("optin_funnel");
     expect(created.isSystem).toBe(true);
+    expect(created.isPublished).toBe(false);
+  });
+
+  it("hides draft templates from advertisers until published", async () => {
+    const draft = await createOptinFunnelTemplateByAdmin({ name: "Vitest Draft Visibility" });
+    createdIds.push(draft.id);
+
+    const adminList = await listOptinFunnelTemplatesForAdmin();
+    expect(adminList.some((t) => t.id === draft.id)).toBe(true);
+
+    let advertiserList = await listOptinFunnelTemplatesForAdvertiser();
+    expect(advertiserList.some((t) => t.id === draft.id)).toBe(false);
+
+    const published = await updateOptinFunnelTemplateByAdmin(draft.id, { isPublished: true });
+    expect(published.isPublished).toBe(true);
+
+    advertiserList = await listOptinFunnelTemplatesForAdvertiser();
+    expect(advertiserList.some((t) => t.id === draft.id)).toBe(true);
+
+    const duplicated = await duplicateOptinFunnelTemplateByAdmin(draft.id);
+    createdIds.push(duplicated.id);
+    expect(duplicated.isPublished).toBe(false);
   });
 
   it("duplicates craft and thank-you settings from source template", async () => {
