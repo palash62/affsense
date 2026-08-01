@@ -124,6 +124,22 @@ export const authConfig = {
         return true;
       }
 
+      const guestOnlyPaths = [
+        "/login",
+        "/register",
+        "/register/publisher",
+        "/forgot-password",
+      ];
+
+      if (
+        auth?.user?.role &&
+        guestOnlyPaths.some((p) => pathname === p || pathname.startsWith(`${p}/`))
+      ) {
+        return Response.redirect(
+          new URL(ROLE_ROUTES[auth.user.role], request.nextUrl),
+        );
+      }
+
       if (
         publicPaths.some((p) => pathname.startsWith(p)) ||
         pathname === "/" ||

@@ -3,6 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "../..");
+const isProd = process.env.NODE_ENV === "production";
 
 const nextConfig: NextConfig = {
   output: "standalone",
@@ -14,11 +15,17 @@ const nextConfig: NextConfig = {
   turbopack: {},
   experimental: {
     optimizePackageImports: ["lucide-react", "recharts", "date-fns"],
-    webpackMemoryOptimizations: true,
-    cpus: 1,
+    ...(isProd
+      ? {
+          webpackMemoryOptimizations: true,
+          cpus: 1,
+        }
+      : {}),
   },
   webpack: (config) => {
-    config.parallelism = 1;
+    if (isProd) {
+      config.parallelism = 1;
+    }
     config.resolve.alias = {
       ...config.resolve.alias,
       // Keep craft.js on its nested immer@9 (default produce) — aliasing to v11 breaks undo/redo.
