@@ -1081,6 +1081,38 @@ export async function adjustWallet(
   }
 }
 
+export async function listBulkEmailRecipients(role: "ADVERTISER" | "PUBLISHER") {
+  const data = await prisma.user.findMany({
+    where: { role, status: "ACTIVE" },
+    select: { id: true, name: true, email: true, role: true, status: true },
+    orderBy: { name: "asc" },
+    take: 5000,
+  });
+  return { data };
+}
+
+async function mapPool<T, R>(
+  items: T[],
+  concurrency: number,
+  fn: (item: T) => Promise<R>,
+): Promise<R[]> {
+  const results = new Array<R>(items.length);
+  let next = 0;
+  async function worker() {
+    while (true) {
+      const idx = next;
+      next += 1;
+      if (idx >= items.length) return;
+      results[idx] = await fn(items[idx]);
+    }
+  }
+  const workers = Array.from({ length: Math.min(concurrency, Math.max(items.length, 1)) }, () =>
+    worker(),
+  );
+  await Promise.all(workers);
+  return results;
+}
+
 export async function sendAdminBulkEmail(input: {
   userIds: string[];
   subject: string;
@@ -1118,11 +1150,7 @@ export async function sendAdminBulkEmail(input: {
   const from = formatSupportFrom(supportFrom);
   const htmlMessage = input.message.trim();
 
-  let sent = 0;
-  let failed = 0;
-  let skipped = 0;
-
-  for (const user of users) {
+  const outcomes = await mapPool(users, 8, async (user) => {
     const rendered = renderGenericEmail({
       appUrl: config.appUrl,
       recipientName: user.name,
@@ -1145,27 +1173,48 @@ export async function sendAdminBulkEmail(input: {
       },
     });
 
-    if (result.skipped) skipped += 1;
-    else if (result.sent) sent += 1;
+    if (result.skipped) return "skipped" as const;
+    if (result.sent) return "sent" as const;
+    return "failed" as const;
+  });
+
+  let sent = 0;
+  let failed = 0;
+  let skipped = 0;
+  for (const outcome of outcomes) {
+    if (outcome === "sent") sent += 1;
+    else if (outcome === "skipped") skipped += 1;
     else failed += 1;
   }
 
-  await prisma.auditLog.create({
-    data: {
-      actorId: input.actorId,
-      action: "email.bulk_sent",
-      entityType: "email",
-      entityId: input.actorId,
-      metadata: {
-        subject: input.subject,
-        recipientCount: users.length,
-        sent,
-        failed,
-        skipped,
-        userIds: users.map((user) => user.id),
+  try {
+    await prisma.auditLog.create({
+      data: {
+        actorId: input.actorId,
+        action: "email.bulk_sent",
+        entityType: "email",
+        entityId: input.actorId,
+        metadata: {
+          subject: input.subject,
+          recipientCount: users.length,
+          sent,
+          failed,
+          skipped,
+          userIds: users.map((user) => user.id),
+        },
       },
-    },
-  });
+    });
+  } catch (error) {
+    console.error("[admin:bulk-email] audit log failed", error);
+  }
+
+  if (sent === 0 && failed > 0) {
+    throw new AppError(
+      "INTERNAL_ERROR",
+      `Failed to send email to all ${failed} recipient${failed === 1 ? "" : "s"}. Check Mailgun/SMTP configuration.`,
+      500,
+    );
+  }
 
   return {
     recipientCount: users.length,

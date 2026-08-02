@@ -56,13 +56,31 @@ export function AdminBulkEmailForm() {
   const [testMsg, setTestMsg] = useState<string | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
     setLoadingRecipients(true);
     setSelectedIds([]);
-    fetch(`/api/v1/admin/users?role=${audience}&status=ACTIVE&limit=500`)
-      .then((res) => res.json())
-      .then((data) => setRecipients(data.data ?? []))
-      .catch(() => setRecipients([]))
-      .finally(() => setLoadingRecipients(false));
+    fetch(`/api/v1/admin/bulk-email/recipients?role=${audience}`, {
+      credentials: "same-origin",
+    })
+      .then(async (res) => {
+        const data = await res.json().catch(() => null);
+        if (!res.ok) {
+          throw new Error(data?.error?.message ?? "Unable to load recipients");
+        }
+        return (data?.data ?? []) as Recipient[];
+      })
+      .then((rows) => {
+        if (!cancelled) setRecipients(rows);
+      })
+      .catch(() => {
+        if (!cancelled) setRecipients([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingRecipients(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [audience]);
 
   const filteredRecipients = useMemo(() => {
@@ -99,24 +117,30 @@ export function AdminBulkEmailForm() {
     setError(null);
     setResult(null);
 
-    const res = await fetch("/api/v1/admin/bulk-email", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        userIds: selectedIds,
-        subject: subject.trim(),
-        message,
-      }),
-    });
-    const data = await res.json();
-    setLoading(false);
+    try {
+      const res = await fetch("/api/v1/admin/bulk-email", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userIds: selectedIds,
+          subject: subject.trim(),
+          message,
+        }),
+      });
+      const data = await res.json().catch(() => null);
 
-    if (!res.ok) {
-      setError(data?.error?.message ?? "Unable to send email");
-      return;
+      if (!res.ok) {
+        setError(data?.error?.message ?? "Unable to send email");
+        return;
+      }
+
+      setResult(data.data);
+    } catch {
+      setError("Network error while sending. Some emails may still have been delivered — check email logs.");
+    } finally {
+      setLoading(false);
     }
-
-    setResult(data.data);
   }
 
   async function handleSendTest() {
@@ -124,22 +148,28 @@ export function AdminBulkEmailForm() {
     setTesting(true);
     setTestMsg(null);
     setError(null);
-    const res = await fetch("/api/v1/admin/bulk-email/test", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        to: testTo.trim(),
-        subject: subject.trim(),
-        message,
-      }),
-    });
-    const data = await res.json().catch(() => null);
-    setTesting(false);
-    if (!res.ok) {
-      setTestMsg(data?.error?.message ?? "Test send failed");
-      return;
+    try {
+      const res = await fetch("/api/v1/admin/bulk-email/test", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: testTo.trim(),
+          subject: subject.trim(),
+          message,
+        }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        setTestMsg(data?.error?.message ?? "Test send failed");
+        return;
+      }
+      setTestMsg(data?.message ?? "Test email sent");
+    } catch {
+      setTestMsg("Test send failed (network error)");
+    } finally {
+      setTesting(false);
     }
-    setTestMsg(data?.message ?? "Test email sent");
   }
 
   return (
@@ -261,7 +291,9 @@ export function AdminBulkEmailForm() {
               <Users className="h-4 w-4 text-[var(--theme-primary)]" />
               <h3 className="font-semibold text-slate-900">Recipients</h3>
             </div>
-            <Badge variant="outline">{selectedIds.length} selected</Badge>
+            <Badge variant="outline">
+              {selectedIds.length} selected · {recipients.length} total
+            </Badge>
           </div>
           <div className="mt-3 flex flex-wrap gap-2">
             <Button type="button" variant="outline" size="sm" onClick={selectAllVisible}>
