@@ -449,6 +449,27 @@ export const adminBulkEmailSchema = z.object({
     ),
 });
 
+export const adminPartnerPaymentCreateSchema = z.object({
+  periodMonth: z
+    .string()
+    .regex(/^\d{4}-(0[1-9]|1[0-2])$/, "periodMonth must be YYYY-MM"),
+  amount: z.number().positive("amount must be greater than 0"),
+  paidAt: z.string().trim().min(1).optional(),
+  method: z.string().trim().max(80).optional().nullable(),
+  note: z.string().trim().max(2000).optional().nullable(),
+});
+
+export const adminPartnerPaymentListQuerySchema = z.object({
+  from: z
+    .string()
+    .regex(/^\d{4}-(0[1-9]|1[0-2])$/, "from must be YYYY-MM")
+    .optional(),
+  to: z
+    .string()
+    .regex(/^\d{4}-(0[1-9]|1[0-2])$/, "to must be YYYY-MM")
+    .optional(),
+});
+
 export const adminBulkEmailTestSchema = z.object({
   to: z.string().trim().email("Enter a valid email address"),
   subject: z.string().trim().min(3, "Subject must be at least 3 characters").max(200),

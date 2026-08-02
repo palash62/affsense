@@ -246,6 +246,7 @@ model User {
   blockedByAdvertisers    AdvertiserPublisherBlock[] @relation("PublisherBlocks")
   payouts           Payout[]
   deposits          Deposit[]
+  partnerPayments   PartnerPayment[] @relation("PartnerPaymentCreatedBy")
   notifications     Notification[]
   supportTickets    SupportTicket[]      @relation("TicketOwner")
   assignedTickets   SupportTicket[]      @relation("TicketAssignee")
@@ -614,6 +615,24 @@ model Deposit {
   @@index([status])
   @@index([method])
   @@map("deposits")
+}
+
+/// Manual payments to the 20% platform profit-share partner (outside the app).
+model PartnerPayment {
+  id          String   @id @default(cuid())
+  periodMonth String   @map("period_month") // YYYY-MM
+  amount      Decimal  @db.Decimal(12, 2)
+  paidAt      DateTime @map("paid_at")
+  method      String?
+  note        String?  @db.Text
+  createdById String   @map("created_by_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  createdBy User @relation("PartnerPaymentCreatedBy", fields: [createdById], references: [id])
+
+  @@index([periodMonth])
+  @@index([paidAt])
+  @@map("partner_payments")
 }
 
 model Payout {
