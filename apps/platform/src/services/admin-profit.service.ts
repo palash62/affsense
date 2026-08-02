@@ -188,44 +188,90 @@ export function resolveProfitPageRange(params: {
   return { period, from, to, fromStr, toStr, groupBy };
 }
 
+/**
+ * Advertiser payments for PAID leads using snapshotted lead.cpl (fallback campaign.cpl),
+ * dated by the advertiser lead DEBIT ledger row (payment time) — not leads.updated_at / live campaign.cpl.
+ */
 async function getAdvertiserPaymentsForRange(from: Date, to: Date) {
   const rows = await prisma.$queryRaw<{ total: unknown }[]>`
-    SELECT COALESCE(SUM(c.cpl), 0) AS total
+    SELECT COALESCE(SUM(COALESCE(l.cpl, c.cpl)), 0) AS total
     FROM leads l
     INNER JOIN campaigns c ON c.id = l.campaign_id
+    INNER JOIN ledger_entries le
+      ON le.reference_id = l.id
+     AND le.reference_type = 'lead'
+     AND le.type = 'DEBIT'
+    INNER JOIN wallets w ON w.id = le.wallet_id
+    INNER JOIN users u ON u.id = w.user_id AND u.role = 'ADVERTISER'
     WHERE l.status = 'PAID'
-      AND l.updated_at >= ${from}
-      AND l.updated_at <= ${to}
+      AND le.created_at >= ${from}
+      AND le.created_at <= ${to}
   `;
 
   return Number(rows[0]?.total ?? 0);
 }
 
+/** Publisher lead earnings net of lead_reversal clawbacks (not withdrawals). */
 async function getPublisherPayoutsForRange(from: Date, to: Date) {
-  const result = await prisma.ledgerEntry.aggregate({
-    where: {
-      type: "CREDIT",
-      referenceType: "lead",
-      createdAt: { gte: from, lte: to },
-      wallet: { user: { role: "PUBLISHER" } },
-    },
-    _sum: { amount: true },
-  });
+  const rows = await prisma.$queryRaw<{ total: unknown }[]>`
+    SELECT COALESCE(SUM(
+      CASE
+        WHEN le.type = 'CREDIT' AND le.reference_type = 'lead' THEN le.amount
+        WHEN le.type = 'DEBIT' AND le.reference_type = 'lead_reversal'
+          AND EXISTS (
+            SELECT 1 FROM ledger_entries orig
+            WHERE orig.wallet_id = le.wallet_id
+              AND orig.reference_id = le.reference_id
+              AND orig.reference_type = 'lead'
+              AND orig.type = 'CREDIT'
+          )
+        THEN -le.amount
+        ELSE 0
+      END
+    ), 0) AS total
+    FROM ledger_entries le
+    INNER JOIN wallets w ON w.id = le.wallet_id
+    INNER JOIN users u ON u.id = w.user_id
+    WHERE u.role = 'PUBLISHER'
+      AND (
+        (le.type = 'CREDIT' AND le.reference_type = 'lead')
+        OR (le.type = 'DEBIT' AND le.reference_type = 'lead_reversal')
+      )
+      AND le.created_at >= ${from}
+      AND le.created_at <= ${to}
+  `;
 
-  return Number(result._sum.amount ?? 0);
+  return Number(rows[0]?.total ?? 0);
 }
 
+/** Referral commissions net of lead_reversal clawbacks. */
 async function getReferralPayForRange(from: Date, to: Date) {
-  const result = await prisma.ledgerEntry.aggregate({
-    where: {
-      type: "CREDIT",
-      referenceType: "referral",
-      createdAt: { gte: from, lte: to },
-    },
-    _sum: { amount: true },
-  });
+  const rows = await prisma.$queryRaw<{ total: unknown }[]>`
+    SELECT COALESCE(SUM(
+      CASE
+        WHEN le.type = 'CREDIT' AND le.reference_type = 'referral' THEN le.amount
+        WHEN le.type = 'DEBIT' AND le.reference_type = 'lead_reversal'
+          AND EXISTS (
+            SELECT 1 FROM ledger_entries orig
+            WHERE orig.wallet_id = le.wallet_id
+              AND orig.reference_id = le.reference_id
+              AND orig.reference_type = 'referral'
+              AND orig.type = 'CREDIT'
+          )
+        THEN -le.amount
+        ELSE 0
+      END
+    ), 0) AS total
+    FROM ledger_entries le
+    WHERE (
+        (le.type = 'CREDIT' AND le.reference_type = 'referral')
+        OR (le.type = 'DEBIT' AND le.reference_type = 'lead_reversal')
+      )
+      AND le.created_at >= ${from}
+      AND le.created_at <= ${to}
+  `;
 
-  return Number(result._sum.amount ?? 0);
+  return Number(rows[0]?.total ?? 0);
 }
 
 async function getGroupedTotals(
@@ -241,25 +287,17 @@ async function getGroupedTotals(
 
   const [advertiserRows, publisherRows, referralRows] = await Promise.all([
     prisma.$queryRaw<{ bucket: string; total: unknown }[]>`
-      SELECT DATE_FORMAT(l.updated_at, ${pattern}) AS bucket,
-             COALESCE(SUM(c.cpl), 0) AS total
+      SELECT DATE_FORMAT(le.created_at, ${pattern}) AS bucket,
+             COALESCE(SUM(COALESCE(l.cpl, c.cpl)), 0) AS total
       FROM leads l
       INNER JOIN campaigns c ON c.id = l.campaign_id
-      WHERE l.status = 'PAID'
-        AND l.updated_at >= ${from}
-        AND l.updated_at <= ${to}
-      GROUP BY bucket
-      ORDER BY bucket
-    `,
-    prisma.$queryRaw<{ bucket: string; total: unknown }[]>`
-      SELECT DATE_FORMAT(le.created_at, ${pattern}) AS bucket,
-             COALESCE(SUM(le.amount), 0) AS total
-      FROM ledger_entries le
+      INNER JOIN ledger_entries le
+        ON le.reference_id = l.id
+       AND le.reference_type = 'lead'
+       AND le.type = 'DEBIT'
       INNER JOIN wallets w ON w.id = le.wallet_id
-      INNER JOIN users u ON u.id = w.user_id
-      WHERE le.type = 'CREDIT'
-        AND le.reference_type = 'lead'
-        AND u.role = 'PUBLISHER'
+      INNER JOIN users u ON u.id = w.user_id AND u.role = 'ADVERTISER'
+      WHERE l.status = 'PAID'
         AND le.created_at >= ${from}
         AND le.created_at <= ${to}
       GROUP BY bucket
@@ -267,10 +305,56 @@ async function getGroupedTotals(
     `,
     prisma.$queryRaw<{ bucket: string; total: unknown }[]>`
       SELECT DATE_FORMAT(le.created_at, ${pattern}) AS bucket,
-             COALESCE(SUM(le.amount), 0) AS total
+             COALESCE(SUM(
+               CASE
+                 WHEN le.type = 'CREDIT' AND le.reference_type = 'lead' THEN le.amount
+                 WHEN le.type = 'DEBIT' AND le.reference_type = 'lead_reversal'
+                   AND EXISTS (
+                     SELECT 1 FROM ledger_entries orig
+                     WHERE orig.wallet_id = le.wallet_id
+                       AND orig.reference_id = le.reference_id
+                       AND orig.reference_type = 'lead'
+                       AND orig.type = 'CREDIT'
+                   )
+                 THEN -le.amount
+                 ELSE 0
+               END
+             ), 0) AS total
       FROM ledger_entries le
-      WHERE le.type = 'CREDIT'
-        AND le.reference_type = 'referral'
+      INNER JOIN wallets w ON w.id = le.wallet_id
+      INNER JOIN users u ON u.id = w.user_id
+      WHERE u.role = 'PUBLISHER'
+        AND (
+          (le.type = 'CREDIT' AND le.reference_type = 'lead')
+          OR (le.type = 'DEBIT' AND le.reference_type = 'lead_reversal')
+        )
+        AND le.created_at >= ${from}
+        AND le.created_at <= ${to}
+      GROUP BY bucket
+      ORDER BY bucket
+    `,
+    prisma.$queryRaw<{ bucket: string; total: unknown }[]>`
+      SELECT DATE_FORMAT(le.created_at, ${pattern}) AS bucket,
+             COALESCE(SUM(
+               CASE
+                 WHEN le.type = 'CREDIT' AND le.reference_type = 'referral' THEN le.amount
+                 WHEN le.type = 'DEBIT' AND le.reference_type = 'lead_reversal'
+                   AND EXISTS (
+                     SELECT 1 FROM ledger_entries orig
+                     WHERE orig.wallet_id = le.wallet_id
+                       AND orig.reference_id = le.reference_id
+                       AND orig.reference_type = 'referral'
+                       AND orig.type = 'CREDIT'
+                   )
+                 THEN -le.amount
+                 ELSE 0
+               END
+             ), 0) AS total
+      FROM ledger_entries le
+      WHERE (
+          (le.type = 'CREDIT' AND le.reference_type = 'referral')
+          OR (le.type = 'DEBIT' AND le.reference_type = 'lead_reversal')
+        )
         AND le.created_at >= ${from}
         AND le.created_at <= ${to}
       GROUP BY bucket

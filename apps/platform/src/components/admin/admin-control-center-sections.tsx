@@ -517,7 +517,7 @@ export function AdminProfitOverview({
       </div>
 
       <p className="mt-3 text-xs text-slate-500">
-        Publisher withdrawals and referral commissions reduce admin profit after advertisers pay for
+        Publisher lead earnings and referral commissions reduce admin profit after advertisers pay for
         leads.
       </p>
     </AccentCard>
