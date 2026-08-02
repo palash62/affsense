@@ -69,7 +69,7 @@ function AppShellInner({
           <Suspense fallback={null}>
             <NavigationProgressBar />
           </Suspense>
-          <div className="relative p-4 sm:p-6 md:p-8">{children}</div>
+          <div className="relative p-4 pb-6 sm:p-5 sm:pb-6 lg:p-6">{children}</div>
         </main>
       </div>
     </div>

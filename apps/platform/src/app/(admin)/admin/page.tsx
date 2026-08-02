@@ -29,7 +29,7 @@ export default async function AdminDashboardPage() {
   const firstName = session.user.name?.split(" ")[0] ?? "Admin";
 
   return (
-    <div className="space-y-7">
+    <div className="space-y-5">
       {/* 1. Welcome Section */}
       <AdminWelcomeSummary
         userName={firstName}

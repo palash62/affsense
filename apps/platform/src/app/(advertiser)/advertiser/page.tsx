@@ -39,7 +39,7 @@ export default async function AdvertiserDashboardPage({ searchParams }: PageProp
   const firstName = session?.user?.name?.split(" ")[0] ?? "Advertiser";
 
   return (
-    <div className="space-y-7">
+    <div className="space-y-5">
       <RoleHero
         eyebrow="Advertiser Portal"
         title={`Hello, ${session?.user?.name ?? firstName}!`}

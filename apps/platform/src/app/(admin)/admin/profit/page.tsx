@@ -7,7 +7,12 @@ import {
   PROFIT_TABLE_PAGE_SIZE,
   resolveProfitPageRange,
 } from "@/services/admin-profit.service";
-import { getPartnerSettlementByMonth } from "@/services/partner-payment.service";
+import {
+  getPartnerSettlementByMonth,
+  type PartnerPaymentRecord,
+  type PartnerSettlementRow,
+  type PartnerSettlementSummary,
+} from "@/services/partner-payment.service";
 import { PageHero } from "@/components/admin/page-hero";
 import { AdminProfitFilters } from "@/components/admin/admin-profit-filters";
 import { AdminPartnerPaymentForm } from "@/components/admin/admin-partner-payment-form";
@@ -20,6 +25,16 @@ import {
 } from "@/components/admin/admin-profit-page";
 
 export const dynamic = "force-dynamic";
+
+const EMPTY_PARTNER_SETTLEMENT: {
+  rows: PartnerSettlementRow[];
+  summary: PartnerSettlementSummary;
+  payments: PartnerPaymentRecord[];
+} = {
+  rows: [],
+  summary: { owed: 0, paid: 0, remaining: 0 },
+  payments: [],
+};
 
 interface PageProps {
   searchParams: Promise<{
@@ -39,10 +54,26 @@ export default async function AdminProfitPage({ searchParams }: PageProps) {
 
   const params = await searchParams;
   const range = resolveProfitPageRange(params);
-  const [data, partnerSettlement] = await Promise.all([
+
+  const [profitResult, settlementResult] = await Promise.allSettled([
     getAdminProfitPageData(range.from, range.to, range.groupBy),
     getPartnerSettlementByMonth(range.from, range.to),
   ]);
+
+  if (profitResult.status === "rejected") {
+    throw profitResult.reason;
+  }
+  const data = profitResult.value;
+
+  let partnerSettlement = EMPTY_PARTNER_SETTLEMENT;
+  if (settlementResult.status === "fulfilled") {
+    partnerSettlement = settlementResult.value;
+  } else {
+    console.error(
+      "[admin/profit] partner settlement failed (run npm run db:push if partner_payments is missing):",
+      settlementResult.reason,
+    );
+  }
 
   const total = data.rows.length;
   const totalPages = Math.max(1, Math.ceil(total / PROFIT_TABLE_PAGE_SIZE));

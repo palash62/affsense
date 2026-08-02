@@ -39,7 +39,7 @@ export default async function PublisherDashboardPage({ searchParams }: PageProps
   const firstName = session.user.name?.split(" ")[0] ?? "Publisher";
 
   return (
-    <div className="space-y-7">
+    <div className="space-y-5">
       <RoleHero
         eyebrow="Publisher Portal"
         title={`Welcome back, ${firstName}`}
