@@ -36,7 +36,7 @@ function AppShellInner({
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   return (
-    <div className="flex h-screen bg-[var(--theme-bg)]">
+    <div className="flex min-h-dvh bg-[var(--theme-bg)]">
       <NavPrefetch
         role={role}
         canAccessCpaOffers={canAccessCpaOffers}
@@ -54,18 +54,20 @@ function AppShellInner({
         open={mobileNavOpen}
         onOpenChange={setMobileNavOpen}
       />
-      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        {viewAs ? (
-          <ImpersonationBanner userName={viewAs.userName} userRole={viewAs.userRole} />
-        ) : null}
-        <Header
-          role={role}
-          title={title}
-          breadcrumbs={breadcrumbs}
-          premium
-          onOpenMobileNav={() => setMobileNavOpen(true)}
-        />
-        <main className="relative flex-1 overflow-y-auto">
+      <div className="flex min-h-dvh min-w-0 flex-1 flex-col">
+        <div className="sticky top-0 z-20">
+          {viewAs ? (
+            <ImpersonationBanner userName={viewAs.userName} userRole={viewAs.userRole} />
+          ) : null}
+          <Header
+            role={role}
+            title={title}
+            breadcrumbs={breadcrumbs}
+            premium
+            onOpenMobileNav={() => setMobileNavOpen(true)}
+          />
+        </div>
+        <main className="relative min-w-0">
           <Suspense fallback={null}>
             <NavigationProgressBar />
           </Suspense>

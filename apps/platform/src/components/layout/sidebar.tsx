@@ -27,7 +27,7 @@ export function Sidebar({
   return (
     <aside
       className={cn(
-        "hidden h-full flex-col shadow-lg lg:flex",
+        "hidden sticky top-0 h-dvh shrink-0 flex-col shadow-lg lg:flex",
         collapsed ? "w-16" : "w-64",
         className,
       )}

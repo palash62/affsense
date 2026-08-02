@@ -37,8 +37,8 @@ export default async function RootLayout({
   const hasTracking = Boolean(pixelConfig.meta || pixelConfig.googleAds);
 
   return (
-    <html lang="en" className={`${inter.variable} h-full`} data-theme="slate-pro" suppressHydrationWarning>
-      <body className="min-h-full bg-background font-sans antialiased">
+    <html lang="en" className={inter.variable} data-theme="slate-pro" suppressHydrationWarning>
+      <body className="bg-background font-sans antialiased">
         {hasTracking ? <PublicPageTrackingScripts config={pixelConfig} /> : null}
         {pixelConfig.meta ? <PlatformPixelRouteTracker /> : null}
         <TawkToChat />

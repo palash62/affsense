@@ -12,7 +12,7 @@ interface AuthenticatedShellProps {
 
 function ShellSkeleton() {
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex min-h-dvh bg-background">
       <aside className="w-64 border-r border-border bg-card p-4">
         <Skeleton className="h-8 w-32" />
         <div className="mt-6 space-y-2">
@@ -21,9 +21,9 @@ function ShellSkeleton() {
           ))}
         </div>
       </aside>
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="flex min-h-dvh min-w-0 flex-1 flex-col">
         <Skeleton className="h-16 w-full shrink-0" />
-        <main className="flex-1 p-6">
+        <main className="p-6">
           <Skeleton className="h-8 w-48" />
           <Skeleton className="mt-4 h-64 w-full" />
         </main>
