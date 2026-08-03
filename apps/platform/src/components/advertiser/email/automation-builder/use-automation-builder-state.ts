@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import type {
   AutomationForm,
   AutomationStep,
-  Campaign,
+  EmailListOption,
   SaveStatus,
   Selection,
   StepStat,
@@ -24,7 +24,7 @@ type Snapshot = {
 
 type Props = {
   automationId?: string;
-  campaigns: Campaign[];
+  lists: EmailListOption[];
   initialCreate?: { name: string; trigger: Trigger };
 };
 
@@ -77,7 +77,7 @@ async function createStepTemplate(label: string): Promise<TemplateContent> {
 
 export function useAutomationBuilderState({
   automationId: initialId,
-  campaigns,
+  lists,
   initialCreate,
 }: Props) {
   const router = useRouter();
@@ -334,7 +334,7 @@ export function useAutomationBuilderState({
     return {
       name: form.name.trim(),
       trigger: form.trigger,
-      campaignId: form.campaignId || null,
+      campaignId: form.campaignId.trim(),
       fromName: form.fromName.trim(),
       replyTo: form.replyTo.trim() || null,
       steps: steps.map((s, i) => ({
@@ -742,7 +742,7 @@ export function useAutomationBuilderState({
     setSteps,
     templateContents,
     templates,
-    campaigns,
+    lists,
     stats,
     selection,
     setSelection,

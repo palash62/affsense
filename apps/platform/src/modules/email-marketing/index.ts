@@ -45,6 +45,7 @@ export {
   requestDomainVerification,
   refreshDomainVerification,
   setDefaultIdentity,
+  deleteSendingIdentity,
 } from "./services/identity.service";
 export { renderTemplate } from "./lib/render-template";
 export { enqueueEmailSend } from "./queue/email-queue";

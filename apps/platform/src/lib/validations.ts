@@ -732,7 +732,7 @@ export const emailAutomationStepSchema = z.object({
 export const emailAutomationSchema = z.object({
   name: z.string().trim().min(2).max(80),
   trigger: z.enum(["LEAD_CAPTURED", "LEAD_APPROVED"]),
-  campaignId: z.string().cuid().optional().nullable(),
+  campaignId: z.string().trim().min(1, "Select a list"),
   fromName: z.string().trim().min(2).max(80),
   replyTo: z.string().email().optional().nullable().or(z.literal("")),
   steps: z.array(emailAutomationStepSchema).min(1).max(20),
@@ -741,7 +741,7 @@ export const emailAutomationSchema = z.object({
 export const emailAutomationUpdateSchema = z.object({
   name: z.string().trim().min(2).max(80).optional(),
   trigger: z.enum(["LEAD_CAPTURED", "LEAD_APPROVED"]).optional(),
-  campaignId: z.string().cuid().optional().nullable(),
+  campaignId: z.string().trim().min(1, "Select a list").optional(),
   fromName: z.string().trim().min(2).max(80).optional(),
   replyTo: z.string().email().optional().nullable().or(z.literal("")),
   status: z.enum(["DRAFT", "ACTIVE", "PAUSED"]).optional(),

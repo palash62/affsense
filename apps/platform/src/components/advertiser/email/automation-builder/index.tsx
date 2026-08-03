@@ -3,13 +3,13 @@
 import { useState } from "react";
 import { AutomationCreateForm } from "./automation-create-form";
 import { AutomationBuilderShell } from "./automation-builder-shell";
-import type { Campaign, Trigger } from "./types";
+import type { EmailListOption, Trigger } from "./types";
 
 type Props = {
-  campaigns: Campaign[];
+  lists: EmailListOption[];
 };
 
-export function NewAutomationExperience({ campaigns }: Props) {
+export function NewAutomationExperience({ lists }: Props) {
   const [seed, setSeed] = useState<{ name: string; trigger: Trigger } | null>(null);
 
   if (!seed) {
@@ -20,7 +20,5 @@ export function NewAutomationExperience({ campaigns }: Props) {
     );
   }
 
-  return (
-    <AutomationBuilderShell campaigns={campaigns} initialCreate={seed} />
-  );
+  return <AutomationBuilderShell lists={lists} initialCreate={seed} />;
 }

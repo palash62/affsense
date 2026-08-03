@@ -21,6 +21,10 @@ export function validateAutomation(
     issues.push({ path: "fromName", message: "From name must be at most 80 characters" });
   }
 
+  if (!form.campaignId.trim()) {
+    issues.push({ path: "campaignId", message: "Select a list" });
+  }
+
   if (form.replyTo.trim()) {
     const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.replyTo.trim());
     if (!emailOk) {

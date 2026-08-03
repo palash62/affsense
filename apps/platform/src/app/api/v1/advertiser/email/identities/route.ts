@@ -22,7 +22,13 @@ export async function POST(request: Request) {
       const parsed = sendingIdentitySchema.safeParse(body);
       if (!parsed.success) {
         return Response.json(
-          { error: { code: "VALIDATION_ERROR", message: parsed.error.issues[0]?.message ?? "Invalid input", status: 422 } },
+          {
+            error: {
+              code: "VALIDATION_ERROR",
+              message: parsed.error.issues[0]?.message ?? "Invalid input",
+              status: 422,
+            },
+          },
           { status: 422 },
         );
       }

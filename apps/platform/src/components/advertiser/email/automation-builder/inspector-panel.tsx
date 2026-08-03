@@ -524,7 +524,7 @@ export function InspectorPanel({ state }: Props) {
     setForm,
     steps,
     selection,
-    campaigns,
+    lists,
     stats,
     validateFlash,
     issues,
@@ -693,25 +693,34 @@ export function InspectorPanel({ state }: Props) {
                 </Select>
               </div>
               <div>
-                <Label>Campaign scope</Label>
+                <Label>List</Label>
                 <Select
-                  value={form.campaignId || "all"}
-                  onValueChange={(v) =>
-                    setForm({ campaignId: !v || v === "all" ? "" : v })
+                  value={
+                    lists.find((l) => l.campaignId === form.campaignId)?.id ?? ""
                   }
+                  onValueChange={(listId) => {
+                    const list = lists.find((l) => l.id === listId);
+                    if (list) setForm({ campaignId: list.campaignId });
+                  }}
                 >
                   <SelectTrigger className="mt-1.5 w-full">
-                    <SelectValue placeholder="All campaigns" />
+                    <SelectValue placeholder="Select a list" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All campaigns</SelectItem>
-                    {campaigns.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>
-                        {c.name}
+                    {lists.map((l) => (
+                      <SelectItem key={l.id} value={l.id}>
+                        {l.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+                {lists.length === 0 ? (
+                  <p className="mt-1.5 text-xs text-amber-700">
+                    Create a list under Lists first, then attach this automation to it.
+                  </p>
+                ) : !form.campaignId ? (
+                  <p className="mt-1.5 text-xs text-slate-500">Required — lists are tied to a campaign.</p>
+                ) : null}
               </div>
               <div>
                 <Label>Default from name</Label>

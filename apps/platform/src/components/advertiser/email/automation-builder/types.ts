@@ -1,6 +1,11 @@
 export type Trigger = "LEAD_CAPTURED" | "LEAD_APPROVED";
 
-export type Campaign = { id: string; name: string };
+/** Managed email list (excludes virtual All Subscribers). */
+export type EmailListOption = {
+  id: string;
+  name: string;
+  campaignId: string;
+};
 
 export type Template = {
   id: string;

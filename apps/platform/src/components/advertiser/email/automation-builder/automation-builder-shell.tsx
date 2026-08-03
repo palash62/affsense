@@ -9,11 +9,11 @@ import {
   useAutomationBuilderState,
   type AutomationBuilderState,
 } from "./use-automation-builder-state";
-import type { Campaign, Trigger } from "./types";
+import type { EmailListOption, Trigger } from "./types";
 
 type Props = {
   automationId?: string;
-  campaigns: Campaign[];
+  lists: EmailListOption[];
   initialCreate?: { name: string; trigger: Trigger };
 };
 
@@ -72,12 +72,12 @@ function BuilderKeyboardShortcuts({ state }: { state: AutomationBuilderState }) 
 
 export function AutomationBuilderShell({
   automationId,
-  campaigns,
+  lists,
   initialCreate,
 }: Props) {
   const state = useAutomationBuilderState({
     automationId,
-    campaigns,
+    lists,
     initialCreate,
   });
 

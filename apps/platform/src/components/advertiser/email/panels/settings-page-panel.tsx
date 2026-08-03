@@ -8,7 +8,7 @@ export function SettingsPagePanel() {
   return (
     <EmailModuleShell
       title="Settings"
-      description="General email settings, sender details, and custom domain verification."
+      description="General email settings and default sender details."
       breadcrumbs={[
         { label: "Autoresponder", href: "/advertiser/email" },
         { label: "Settings" },

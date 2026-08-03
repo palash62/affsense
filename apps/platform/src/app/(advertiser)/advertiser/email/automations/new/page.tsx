@@ -1,16 +1,19 @@
 import { getSession } from "@/lib/session";
-import { prisma } from "@/lib/prisma";
+import { listEmailLists } from "@/modules/email-marketing";
 import { NewAutomationExperience } from "@/components/advertiser/email/automation-builder";
 
 export const dynamic = "force-dynamic";
 
 export default async function NewEmailAutomationPage() {
   const session = await getSession();
-  const campaigns = await prisma.campaign.findMany({
-    where: { advertiserId: session!.user.id },
-    select: { id: true, name: true },
-    orderBy: { name: "asc" },
-  });
+  const allLists = await listEmailLists(session!.user.id);
+  const lists = allLists
+    .filter((l) => !l.system && l.campaignId)
+    .map((l) => ({
+      id: l.id,
+      name: l.name,
+      campaignId: l.campaignId!,
+    }));
 
-  return <NewAutomationExperience campaigns={campaigns} />;
+  return <NewAutomationExperience lists={lists} />;
 }

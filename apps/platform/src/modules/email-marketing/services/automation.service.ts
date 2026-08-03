@@ -167,6 +167,9 @@ export async function activateAutomation(advertiserId: string, id: string) {
   if (!automation.steps.length) {
     throw new AppError("VALIDATION_ERROR", "Add at least one step before activating", 422);
   }
+  if (!automation.campaignId) {
+    throw new AppError("VALIDATION_ERROR", "Select a list before publishing", 422);
+  }
   return prisma.emailAutomation.update({
     where: { id },
     data: { status: "ACTIVE" },
