@@ -6,6 +6,7 @@ import {
   parseISO,
   startOfDay,
   startOfMonth,
+  subMonths,
 } from "date-fns";
 import { prisma } from "@/lib/prisma";
 import { Errors } from "@/lib/errors";
@@ -52,6 +53,35 @@ export function isValidPeriodMonth(value: string): boolean {
   if (!PERIOD_MONTH_RE.test(value)) return false;
   const parsed = parseISO(`${value}-01`);
   return !Number.isNaN(parsed.getTime()) && format(parsed, "yyyy-MM") === value;
+}
+
+/** Current calendar month as YYYY-MM (default settlement month in the form). */
+export function currentCalendarMonth(now: Date = new Date()): string {
+  return format(startOfMonth(now), "yyyy-MM");
+}
+
+/** Previous completed calendar month as YYYY-MM. */
+export function previousCalendarMonth(now: Date = new Date()): string {
+  return format(subMonths(startOfMonth(now), 1), "yyyy-MM");
+}
+
+/** Human label for a stored YYYY-MM period, e.g. "July 2026". */
+export function formatPartnerPeriodMonthLabel(periodMonth: string): string {
+  if (!isValidPeriodMonth(periodMonth)) return periodMonth;
+  return format(parseISO(`${periodMonth}-01`), "MMMM yyyy");
+}
+
+/**
+ * Stable calendar paid-date display from an ISO timestamp or YYYY-MM-DD.
+ * Uses the date portion only so timezone shifts do not blank the cell.
+ */
+export function formatPartnerPaidDate(value: string | null | undefined): string {
+  if (!value) return "—";
+  const day = value.trim().slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return "—";
+  const parsed = parseISO(day);
+  if (Number.isNaN(parsed.getTime())) return "—";
+  return format(parsed, "dd MMM yyyy");
 }
 
 export function partnerSettlementStatus(owed: number, paid: number): PartnerSettlementStatus {

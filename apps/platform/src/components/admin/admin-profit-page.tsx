@@ -10,11 +10,13 @@ import {
   type AdminProfitPageData,
   type ProfitGroupBy,
 } from "@/services/admin-profit.service";
-import type {
-  PartnerPaymentRecord,
-  PartnerSettlementRow,
-  PartnerSettlementStatus,
-  PartnerSettlementSummary,
+import {
+  formatPartnerPaidDate,
+  formatPartnerPeriodMonthLabel,
+  type PartnerPaymentRecord,
+  type PartnerSettlementRow,
+  type PartnerSettlementStatus,
+  type PartnerSettlementSummary,
 } from "@/services/partner-payment.service";
 import { cn } from "@/lib/utils";
 
@@ -120,7 +122,7 @@ export function AdminPartnerSettlementTable({ rows }: { rows: PartnerSettlementR
               {rows.map((row) => (
                 <tr key={row.periodMonth} className="border-t border-slate-100 hover:bg-slate-50/60">
                   <td className="px-4 py-3 pl-5 font-medium text-slate-800">
-                    {formatProfitPeriodLabel(row.periodMonth, "month")}
+                    {formatPartnerPeriodMonthLabel(row.periodMonth)}
                   </td>
                   <td className={cn("px-4 py-3", moneyClass(row.owed))}>
                     {formatCurrency(row.owed)}
@@ -175,13 +177,13 @@ export function AdminPartnerPaymentHistory({ payments }: { payments: PartnerPaym
               {payments.map((payment) => (
                 <tr key={payment.id} className="border-t border-slate-100 hover:bg-slate-50/60">
                   <td className="px-4 py-3 pl-5 font-medium text-slate-800">
-                    {formatProfitPeriodLabel(payment.periodMonth, "month")}
+                    {formatPartnerPeriodMonthLabel(payment.periodMonth)}
                   </td>
                   <td className="px-4 py-3 font-semibold text-slate-800">
                     {formatCurrency(payment.amount)}
                   </td>
                   <td className="px-4 py-3 text-slate-700">
-                    {formatProfitDateDisplay(payment.paidAt.slice(0, 10))}
+                    {formatPartnerPaidDate(payment.paidAt)}
                   </td>
                   <td className="px-4 py-3 text-slate-700">{payment.method || "—"}</td>
                   <td className="max-w-[220px] truncate px-4 py-3 text-slate-600" title={payment.note ?? ""}>

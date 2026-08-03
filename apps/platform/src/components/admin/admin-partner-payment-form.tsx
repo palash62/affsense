@@ -1,17 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  formatPartnerPeriodMonthLabel,
+  isValidPeriodMonth,
+} from "@/services/partner-payment.service";
+import { formatCurrency } from "@/components/admin/admin-ui";
 
 type AdminPartnerPaymentFormProps = {
   defaultPeriodMonth: string;
+  /** Owed amounts keyed by YYYY-MM for soft overpay warnings. */
+  owedByMonth?: Record<string, number>;
 };
 
-export function AdminPartnerPaymentForm({ defaultPeriodMonth }: AdminPartnerPaymentFormProps) {
+export function AdminPartnerPaymentForm({
+  defaultPeriodMonth,
+  owedByMonth = {},
+}: AdminPartnerPaymentFormProps) {
   const router = useRouter();
   const [periodMonth, setPeriodMonth] = useState(defaultPeriodMonth);
   const [amount, setAmount] = useState("");
@@ -22,18 +32,58 @@ export function AdminPartnerPaymentForm({ defaultPeriodMonth }: AdminPartnerPaym
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
+  const periodLabel = useMemo(
+    () =>
+      isValidPeriodMonth(periodMonth)
+        ? formatPartnerPeriodMonthLabel(periodMonth)
+        : periodMonth || "selected month",
+    [periodMonth],
+  );
+
+  const owedForMonth = owedByMonth[periodMonth];
+  const parsedAmount = Number.parseFloat(amount);
+  const overpayWarning =
+    Number.isFinite(parsedAmount) &&
+    parsedAmount > 0 &&
+    typeof owedForMonth === "number" &&
+    owedForMonth >= 0 &&
+    parsedAmount > owedForMonth + 0.01;
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
     setError(null);
     setSuccess(null);
+
+    if (!isValidPeriodMonth(periodMonth)) {
+      setError("Select a valid settlement month");
+      return;
+    }
+    if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
+      setError("Enter a valid amount greater than 0");
+      return;
+    }
+
+    const confirmLines = [
+      `Record ${formatCurrency(parsedAmount)} for ${periodLabel}?`,
+      `Paid date: ${paidAt}`,
+    ];
+    if (overpayWarning) {
+      confirmLines.push(
+        `Warning: this is more than currently owed for ${periodLabel} (${formatCurrency(owedForMonth)}).`,
+      );
+    }
+    if (!window.confirm(confirmLines.join("\n"))) {
+      return;
+    }
+
+    setLoading(true);
 
     const res = await fetch("/api/v1/admin/partner-payments", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         periodMonth,
-        amount: parseFloat(amount),
+        amount: parsedAmount,
         paidAt,
         method: method.trim() || null,
         note: note.trim() || null,
@@ -50,7 +100,7 @@ export function AdminPartnerPaymentForm({ defaultPeriodMonth }: AdminPartnerPaym
     setAmount("");
     setMethod("");
     setNote("");
-    setSuccess("Partner payment recorded.");
+    setSuccess(`Partner payment recorded for ${periodLabel}.`);
     router.refresh();
   }
 
@@ -63,6 +113,7 @@ export function AdminPartnerPaymentForm({ defaultPeriodMonth }: AdminPartnerPaym
         <h2 className="text-base font-semibold text-slate-900">Record partner payment</h2>
         <p className="mt-1 text-sm text-slate-500">
           Log a manual payment toward the 20% partner profit share for a calendar month.
+          Defaults to the current month.
         </p>
       </div>
 
@@ -87,6 +138,12 @@ export function AdminPartnerPaymentForm({ defaultPeriodMonth }: AdminPartnerPaym
             value={periodMonth}
             onChange={(e) => setPeriodMonth(e.target.value)}
           />
+          <p className="text-sm font-medium text-slate-700">Paying for: {periodLabel}</p>
+          {typeof owedForMonth === "number" && (
+            <p className="text-xs text-slate-500">
+              Currently owed for this month: {formatCurrency(owedForMonth)}
+            </p>
+          )}
         </div>
         <div className="space-y-2">
           <Label htmlFor="partner-amount">Amount (USD)</Label>
@@ -100,6 +157,12 @@ export function AdminPartnerPaymentForm({ defaultPeriodMonth }: AdminPartnerPaym
             onChange={(e) => setAmount(e.target.value)}
             placeholder="100.00"
           />
+          {overpayWarning && (
+            <p className="text-xs text-amber-700">
+              Amount exceeds owed ({formatCurrency(owedForMonth)}) — this will mark the month
+              overpaid.
+            </p>
+          )}
         </div>
         <div className="space-y-2">
           <Label htmlFor="partner-paid-at">Paid date</Label>

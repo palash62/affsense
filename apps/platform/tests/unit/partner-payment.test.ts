@@ -29,8 +29,12 @@ vi.mock("@/services/admin-profit.service", async () => {
 import {
   buildPartnerSettlementRows,
   createPartnerPayment,
+  currentCalendarMonth,
+  formatPartnerPaidDate,
+  formatPartnerPeriodMonthLabel,
   isValidPeriodMonth,
   partnerSettlementStatus,
+  previousCalendarMonth,
   summarizePartnerSettlement,
 } from "@/services/partner-payment.service";
 
@@ -40,6 +44,25 @@ describe("partner payment helpers", () => {
     expect(isValidPeriodMonth("2026-13")).toBe(false);
     expect(isValidPeriodMonth("2026-8")).toBe(false);
     expect(isValidPeriodMonth("08-2026")).toBe(false);
+  });
+
+  it("defaults settlement month to the current calendar month", () => {
+    expect(currentCalendarMonth(new Date("2026-08-03T12:00:00Z"))).toBe("2026-08");
+    expect(currentCalendarMonth(new Date("2026-01-15T12:00:00Z"))).toBe("2026-01");
+  });
+
+  it("can resolve the previous calendar month when needed", () => {
+    expect(previousCalendarMonth(new Date("2026-08-03T12:00:00Z"))).toBe("2026-07");
+    expect(previousCalendarMonth(new Date("2026-01-15T12:00:00Z"))).toBe("2025-12");
+  });
+
+  it("formats period months and paid dates for display", () => {
+    expect(formatPartnerPeriodMonthLabel("2026-07")).toBe("July 2026");
+    expect(formatPartnerPeriodMonthLabel("2026-08")).toBe("August 2026");
+    expect(formatPartnerPaidDate("2026-08-03T00:00:00.000Z")).toBe("03 Aug 2026");
+    expect(formatPartnerPaidDate("2026-07-31")).toBe("31 Jul 2026");
+    expect(formatPartnerPaidDate("")).toBe("—");
+    expect(formatPartnerPaidDate(undefined)).toBe("—");
   });
 
   it("builds settlement remaining for unpaid, partial, settled, and overpaid", () => {

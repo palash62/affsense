@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { format } from "date-fns";
+import { endOfDay, endOfMonth, parseISO, startOfMonth } from "date-fns";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import {
@@ -9,6 +9,7 @@ import {
 } from "@/services/admin-profit.service";
 import {
   getPartnerSettlementByMonth,
+  currentCalendarMonth,
   type PartnerPaymentRecord,
   type PartnerSettlementRow,
   type PartnerSettlementSummary,
@@ -54,10 +55,14 @@ export default async function AdminProfitPage({ searchParams }: PageProps) {
 
   const params = await searchParams;
   const range = resolveProfitPageRange(params);
+  const defaultPeriodMonth = currentCalendarMonth();
+  const defaultMonthStart = startOfMonth(parseISO(`${defaultPeriodMonth}-01`));
+  const defaultMonthEnd = endOfDay(endOfMonth(defaultMonthStart));
 
-  const [profitResult, settlementResult] = await Promise.allSettled([
+  const [profitResult, settlementResult, defaultMonthResult] = await Promise.allSettled([
     getAdminProfitPageData(range.from, range.to, range.groupBy),
     getPartnerSettlementByMonth(range.from, range.to),
+    getPartnerSettlementByMonth(defaultMonthStart, defaultMonthEnd),
   ]);
 
   if (profitResult.status === "rejected") {
@@ -75,6 +80,16 @@ export default async function AdminProfitPage({ searchParams }: PageProps) {
     );
   }
 
+  const owedByMonth: Record<string, number> = {};
+  if (defaultMonthResult.status === "fulfilled") {
+    for (const row of defaultMonthResult.value.rows) {
+      owedByMonth[row.periodMonth] = row.owed;
+    }
+  }
+  for (const row of partnerSettlement.rows) {
+    owedByMonth[row.periodMonth] = row.owed;
+  }
+
   const total = data.rows.length;
   const totalPages = Math.max(1, Math.ceil(total / PROFIT_TABLE_PAGE_SIZE));
   const requestedPage = Number.parseInt(params.page ?? "1", 10);
@@ -84,7 +99,6 @@ export default async function AdminProfitPage({ searchParams }: PageProps) {
       : 1;
   const start = (page - 1) * PROFIT_TABLE_PAGE_SIZE;
   const pageRows = data.rows.slice(start, start + PROFIT_TABLE_PAGE_SIZE);
-  const defaultPeriodMonth = format(range.to, "yyyy-MM");
 
   return (
     <div className="space-y-6">
@@ -107,7 +121,10 @@ export default async function AdminProfitPage({ searchParams }: PageProps) {
 
       <AdminPartnerSettlementSummary summary={partnerSettlement.summary} />
 
-      <AdminPartnerPaymentForm defaultPeriodMonth={defaultPeriodMonth} />
+      <AdminPartnerPaymentForm
+        defaultPeriodMonth={defaultPeriodMonth}
+        owedByMonth={owedByMonth}
+      />
 
       <AdminPartnerSettlementTable rows={partnerSettlement.rows} />
 
