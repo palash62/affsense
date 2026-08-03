@@ -1029,6 +1029,63 @@ export async function listAuditLogs(filters: { page?: number; limit?: number }) 
   return { data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
 }
 
+type BulkEmailMeta = {
+  subject?: string;
+  recipientCount?: number;
+  sent?: number;
+  failed?: number;
+  skipped?: number;
+  audience?: string;
+};
+
+function parseBulkEmailMeta(metadata: unknown): {
+  subject: string;
+  sent: number;
+  failed: number;
+  skipped: number;
+  audience: string;
+} {
+  const m =
+    metadata && typeof metadata === "object" && !Array.isArray(metadata)
+      ? (metadata as BulkEmailMeta)
+      : {};
+  const audienceRaw = typeof m.audience === "string" ? m.audience : "";
+  const audience =
+    audienceRaw === "ADVERTISER" || audienceRaw === "PUBLISHER" || audienceRaw === "MIXED"
+      ? audienceRaw
+      : "—";
+  return {
+    subject: typeof m.subject === "string" ? m.subject : "(no subject)",
+    sent: typeof m.sent === "number" ? m.sent : 0,
+    failed: typeof m.failed === "number" ? m.failed : 0,
+    skipped: typeof m.skipped === "number" ? m.skipped : 0,
+    audience,
+  };
+}
+
+export async function getAdminBulkEmailReport() {
+  const logs = await prisma.auditLog.findMany({
+    where: { action: "email.bulk_sent" },
+    orderBy: { createdAt: "desc" },
+    take: 100,
+  });
+
+  const rows = logs.map((log) => {
+    const meta = parseBulkEmailMeta(log.metadata);
+    return {
+      id: log.id,
+      createdAt: log.createdAt.toISOString(),
+      subject: meta.subject,
+      audience: meta.audience,
+      sent: meta.sent,
+      failed: meta.failed,
+      skipped: meta.skipped,
+    };
+  });
+
+  return { rows };
+}
+
 export async function adjustWallet(
   userId: string,
   amount: number,
@@ -1200,6 +1257,11 @@ export async function sendAdminBulkEmail(input: {
           sent,
           failed,
           skipped,
+          audience: users.every((user) => user.role === "PUBLISHER")
+            ? "PUBLISHER"
+            : users.every((user) => user.role === "ADVERTISER")
+              ? "ADVERTISER"
+              : "MIXED",
           userIds: users.map((user) => user.id),
         },
       },

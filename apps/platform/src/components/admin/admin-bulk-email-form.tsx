@@ -33,7 +33,7 @@ function isEmptyHtml(html: string) {
   return htmlToPlainText(html).length < 10;
 }
 
-export function AdminBulkEmailForm() {
+export function AdminBulkEmailForm({ onSent }: { onSent?: () => void }) {
   const [audience, setAudience] = useState<AudienceRole>("ADVERTISER");
   const [recipients, setRecipients] = useState<Recipient[]>([]);
   const [loadingRecipients, setLoadingRecipients] = useState(true);
@@ -136,6 +136,7 @@ export function AdminBulkEmailForm() {
       }
 
       setResult(data.data);
+      onSent?.();
     } catch {
       setError("Network error while sending. Some emails may still have been delivered — check email logs.");
     } finally {
