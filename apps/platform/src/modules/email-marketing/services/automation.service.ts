@@ -116,10 +116,21 @@ export async function updateAutomation(
     fromName: string;
     replyTo: string | null;
     status: EmailAutomationStatus;
-    steps: { templateId: string; delayMinutes: number; order: number; fromName?: string | null; fromEmail?: string | null }[];
+    steps: {
+      id?: string;
+      templateId: string;
+      delayMinutes: number;
+      order: number;
+      fromName?: string | null;
+      fromEmail?: string | null;
+    }[];
   }>,
 ) {
   const existing = await getAutomation(advertiserId, id);
+
+  if (data.status === "ACTIVE" && !(data.campaignId !== undefined ? data.campaignId : existing.campaignId)) {
+    throw new AppError("VALIDATION_ERROR", "Select a list before activating", 422);
+  }
 
   if (data.steps) {
     if (!data.steps.length) {
@@ -133,17 +144,60 @@ export async function updateAutomation(
         throw new AppError("NOT_FOUND", `Template ${step.templateId} not found`, 404);
       }
     }
-    await prisma.emailAutomationStep.deleteMany({ where: { automationId: id } });
-    await prisma.emailAutomationStep.createMany({
-      data: data.steps.map((s) => ({
-        automationId: id,
-        order: s.order,
-        delayMinutes: s.delayMinutes,
-        templateId: s.templateId,
-        fromName: s.fromName?.trim() || null,
-        fromEmail: s.fromEmail?.trim() || null,
-      })),
+
+    await prisma.$transaction(async (tx) => {
+      const current = await tx.emailAutomationStep.findMany({
+        where: { automationId: id },
+      });
+      const currentById = new Map(current.map((s) => [s.id, s]));
+      const keepIds = new Set(
+        data.steps!
+          .map((s) => s.id)
+          .filter((stepId): stepId is string => Boolean(stepId && currentById.has(stepId))),
+      );
+
+      // Avoid @@unique([automationId, order]) clashes while reordering
+      for (const step of current) {
+        await tx.emailAutomationStep.update({
+          where: { id: step.id },
+          data: { order: step.order + 10_000 },
+        });
+      }
+
+      for (const step of data.steps!) {
+        const payload = {
+          order: step.order,
+          delayMinutes: step.delayMinutes,
+          templateId: step.templateId,
+          fromName: step.fromName?.trim() || null,
+          fromEmail: step.fromEmail?.trim() || null,
+        };
+        if (step.id && currentById.has(step.id)) {
+          await tx.emailAutomationStep.update({
+            where: { id: step.id },
+            data: payload,
+          });
+        } else {
+          await tx.emailAutomationStep.create({
+            data: {
+              automationId: id,
+              ...payload,
+            },
+          });
+        }
+      }
+
+      const deleteIds = current.filter((s) => !keepIds.has(s.id)).map((s) => s.id);
+      if (deleteIds.length) {
+        await tx.emailAutomationStep.deleteMany({
+          where: { id: { in: deleteIds } },
+        });
+      }
     });
+  }
+
+  if (data.status === "PAUSED") {
+    await pauseQueuedSends(id);
   }
 
   return prisma.emailAutomation.update({
@@ -156,6 +210,25 @@ export async function updateAutomation(
       replyTo: data.replyTo !== undefined ? data.replyTo : existing.replyTo,
       status: data.status ?? existing.status,
     },
+    include: {
+      steps: { orderBy: { order: "asc" }, include: { template: true } },
+    },
+  });
+}
+
+async function pauseQueuedSends(automationId: string) {
+  await prisma.emailSend.updateMany({
+    where: { automationId, status: "QUEUED" },
+    data: { status: "FAILED", error: "Automation paused" },
+  });
+}
+
+export async function pauseAutomation(advertiserId: string, id: string) {
+  await getAutomation(advertiserId, id);
+  await pauseQueuedSends(id);
+  return prisma.emailAutomation.update({
+    where: { id },
+    data: { status: "PAUSED" },
     include: {
       steps: { orderBy: { order: "asc" }, include: { template: true } },
     },

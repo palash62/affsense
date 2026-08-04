@@ -8,12 +8,16 @@ export async function GET(request: Request) {
     const { page, limit } = parsePagination(searchParams);
     const search = searchParams.get("search") ?? undefined;
     const status = searchParams.get("status") as EmailContactStatus | null;
+    const listId = searchParams.get("listId") ?? undefined;
+    const sourceCampaignId = searchParams.get("sourceCampaignId") ?? undefined;
 
     const data = await listContacts(session.user.id, {
       page,
       limit,
       search,
       status: status ?? undefined,
+      listId,
+      sourceCampaignId,
     });
     return Response.json({ data });
   }, ["ADVERTISER"]);

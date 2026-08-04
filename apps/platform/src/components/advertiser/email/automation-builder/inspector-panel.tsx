@@ -716,7 +716,14 @@ export function InspectorPanel({ state }: Props) {
                 </Select>
                 {lists.length === 0 ? (
                   <p className="mt-1.5 text-xs text-amber-700">
-                    Create a list under Lists first, then attach this automation to it.
+                    No lists yet.{" "}
+                    <a
+                      href="/advertiser/email/lists"
+                      className="font-medium underline underline-offset-2"
+                    >
+                      Create a list
+                    </a>{" "}
+                    first, then attach this automation to it.
                   </p>
                 ) : !form.campaignId ? (
                   <p className="mt-1.5 text-xs text-slate-500">Required — lists are tied to a campaign.</p>

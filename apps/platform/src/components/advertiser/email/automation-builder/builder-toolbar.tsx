@@ -50,6 +50,7 @@ export function BuilderToolbar({
 }: Props) {
   const {
     form,
+    steps,
     saveStatus,
     undo,
     redo,
@@ -186,7 +187,19 @@ export function BuilderToolbar({
       <Button
         type="button"
         size="sm"
-        disabled={saveStatus === "saving"}
+        disabled={
+          saveStatus === "saving" ||
+          !form.campaignId.trim() ||
+          steps.length < 1 ||
+          issues.some((i) => i.path === "campaignId")
+        }
+        title={
+          !form.campaignId.trim()
+            ? "Select a list before publishing"
+            : steps.length < 1
+              ? "Add at least one email step"
+              : undefined
+        }
         onClick={() => void persist(true)}
       >
         Publish

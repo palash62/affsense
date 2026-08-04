@@ -1,5 +1,5 @@
 export { dispatchLeadEmailAutomations } from "./services/dispatch.service";
-export { listContacts, unsubscribeByToken, suppressContact } from "./services/contact.service";
+export { listContacts, unsubscribeByToken, suppressContact, getContactByUnsubscribeToken, suppressContactByEmail } from "./services/contact.service";
 export {
   listEmailLists,
   createEmailList,
@@ -21,6 +21,7 @@ export {
   createAutomation,
   updateAutomation,
   activateAutomation,
+  pauseAutomation,
   deleteAutomation,
 } from "./services/automation.service";
 export { processEmailSend, sendTestEmail } from "./services/send.service";

@@ -50,28 +50,67 @@ export function AnalyticsPanel() {
         { label: "Analytics" },
       ]}
       stats={[
-        { label: "Delivered", value: stats ? `${deliveryRate}%` : "—", icon: CheckCircle, accent: "green" },
-        { label: "Opens", value: stats ? `${stats.openRate}%` : "—", icon: Mail, variant: "leads" },
-        { label: "Clicks", value: stats ? `${stats.clickRate}%` : "—", icon: MousePointerClick, accent: "purple" },
-        { label: "Bounces", value: stats ? stats.bounced.toLocaleString() : "—", icon: AlertTriangle, accent: "red" },
+        {
+          label: "Delivered",
+          value: stats ? stats.delivered.toLocaleString() : "—",
+          icon: CheckCircle,
+          accent: "green",
+        },
+        {
+          label: "Open rate",
+          value: stats ? `${stats.openRate}%` : "—",
+          icon: Mail,
+          variant: "leads",
+        },
+        {
+          label: "Click rate",
+          value: stats ? `${stats.clickRate}%` : "—",
+          icon: MousePointerClick,
+          accent: "purple",
+        },
+        {
+          label: "Bounced contacts",
+          value: stats ? stats.bounced.toLocaleString() : "—",
+          icon: AlertTriangle,
+          accent: "red",
+        },
       ]}
       showToolbar={false}
     >
       <div className="grid gap-6 lg:grid-cols-2">
-        <LeadsTrendChart title="Open Rate Trend" data={opensTrend} />
-        <PerformanceBarChart title="Clicks by Day" data={clicksBars} />
+        <LeadsTrendChart title="Opens over time" data={opensTrend} />
+        <PerformanceBarChart title="Clicks by day" data={clicksBars} />
       </div>
       <div className="premium-card p-6">
         <div className="mb-4 flex items-center gap-2">
           <BarChart3 className="h-5 w-5 text-[var(--theme-primary)]" />
-          <h3 className="text-base font-semibold text-slate-900">Delivery Overview</h3>
+          <h3 className="text-base font-semibold text-slate-900">Delivery overview</h3>
         </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {[
-            { label: "Delivered", value: stats?.delivered ?? 0, pct: `${deliveryRate}%` },
-            { label: "Opened", value: stats?.opens ?? 0, pct: `${stats?.openRate ?? 0}%` },
-            { label: "Clicked", value: stats?.clicks ?? 0, pct: `${stats?.clickRate ?? 0}%` },
-            { label: "Bounced", value: stats?.bounced ?? 0, pct: stats && stats.delivered > 0 ? `${Math.round((stats.bounced / (stats.delivered + stats.bounced)) * 100)}%` : "0%" },
+            {
+              label: "Delivered (count)",
+              value: stats?.delivered ?? 0,
+              pct: `Est. delivery ${deliveryRate}%`,
+            },
+            {
+              label: "Opens (events)",
+              value: stats?.opens ?? 0,
+              pct: `Open rate ${stats?.openRate ?? 0}%`,
+            },
+            {
+              label: "Clicks (events)",
+              value: stats?.clicks ?? 0,
+              pct: `Click rate ${stats?.clickRate ?? 0}%`,
+            },
+            {
+              label: "Bounced contacts",
+              value: stats?.bounced ?? 0,
+              pct:
+                stats && stats.delivered > 0
+                  ? `${Math.round((stats.bounced / (stats.delivered + stats.bounced)) * 100)}% of delivered+bounced`
+                  : "0%",
+            },
           ].map((item) => (
             <div
               key={item.label}

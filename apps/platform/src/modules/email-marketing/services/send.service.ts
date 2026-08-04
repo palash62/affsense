@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { PLATFORM_EMAILS } from "@/lib/email/addresses";
 import { getResolvedSesConfig } from "@/services/ses-settings.service";
+import { EMAIL_MARKETING_CONFIG_KEY } from "@/lib/email/ses-settings";
+import { parseEmailMarketingConfig } from "../config/platform-config";
 import {
   appendUnsubscribeFooter,
   injectTrackingPixel,
@@ -29,6 +31,13 @@ export async function processEmailSend(sendId: string) {
 
   if (!send) return;
   if (send.status !== "QUEUED" && send.status !== "FAILED") return;
+  if (send.automation?.status === "PAUSED" || send.automation?.status === "DRAFT") {
+    await prisma.emailSend.update({
+      where: { id: sendId },
+      data: { status: "FAILED", error: "Automation is not active" },
+    });
+    return;
+  }
   if (send.contact.status !== "SUBSCRIBED") {
     await prisma.emailSend.update({
       where: { id: sendId },
@@ -49,7 +58,8 @@ export async function processEmailSend(sendId: string) {
   const sesConfig = await getResolvedSesConfig();
   const appUrl = sesConfig.appUrl;
   const token = signTrackingToken(send.id);
-  const unsubscribeUrl = `${appUrl}/unsubscribe/${send.contact.unsubscribeToken}`;
+  const unsubscribePageUrl = `${appUrl}/unsubscribe/${send.contact.unsubscribeToken}`;
+  const listUnsubscribeUrl = `${appUrl}/api/v1/email/unsubscribe/${send.contact.unsubscribeToken}`;
 
   const verifiedIdentity = await prisma.advertiserSendingIdentity.findFirst({
     where: {
@@ -78,7 +88,7 @@ export async function processEmailSend(sendId: string) {
       advertiser?.advertiserProfile?.company ||
       advertiser?.name ||
       "Our Team",
-    unsubscribe_url: unsubscribeUrl,
+    unsubscribe_url: unsubscribePageUrl,
   };
 
   const subject = renderTemplate(send.template.subject, mergeData);
@@ -90,7 +100,7 @@ export async function processEmailSend(sendId: string) {
   html = wrapLinksForTracking(html, send.id, appUrl, token);
   const pixelUrl = `${appUrl}/api/v1/email/track/open/${send.id}/${token}`;
   html = injectTrackingPixel(html, pixelUrl);
-  html = appendUnsubscribeFooter(html, unsubscribeUrl);
+  html = appendUnsubscribeFooter(html, unsubscribePageUrl);
 
   const fromName =
     send.step?.fromName?.trim() ||
@@ -103,6 +113,32 @@ export async function processEmailSend(sendId: string) {
   const replyTo =
     send.automation?.replyTo ?? settings?.replyTo ?? PLATFORM_EMAILS.support ?? advertiser?.email;
 
+  // Daily send cap
+  const platformRow = await prisma.platformSetting.findUnique({
+    where: { key: EMAIL_MARKETING_CONFIG_KEY },
+  });
+  const platformConfig = parseEmailMarketingConfig(platformRow?.value);
+  const dayStart = new Date();
+  dayStart.setHours(0, 0, 0, 0);
+  const sentToday = await prisma.emailSend.count({
+    where: {
+      advertiserId: send.advertiserId,
+      status: { in: ["SENT", "DELIVERED"] },
+      sentAt: { gte: dayStart },
+    },
+  });
+  if (sentToday >= platformConfig.maxSendsPerDay) {
+    await prisma.emailSend.update({
+      where: { id: sendId },
+      data: {
+        status: "FAILED",
+        error: `Daily send limit reached (${platformConfig.maxSendsPerDay})`,
+        attemptCount: send.attemptCount + 1,
+      },
+    });
+    return;
+  }
+
   const result = await sendMarketingEmail({
     to: send.contact.email,
     fromName,
@@ -111,7 +147,7 @@ export async function processEmailSend(sendId: string) {
     subject,
     html,
     text,
-    listUnsubscribeUrl: unsubscribeUrl,
+    listUnsubscribeUrl,
   });
 
   const attemptCount = send.attemptCount + 1;

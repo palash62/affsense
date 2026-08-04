@@ -1,7 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { List, Loader2, Pencil, Plus, Trash2 } from "lucide-react";
+import Link from "next/link";
+import { List, Loader2, Pencil, Plus, Trash2, Users, Zap } from "lucide-react";
+import { ButtonLink } from "@/components/ui/button-link";
 import { PageSection } from "@/components/admin/page-section";
 import { Button } from "@/components/ui/button";
 import {
@@ -232,23 +234,64 @@ export function ListsPanel() {
                 </TableRow>
               ) : rows.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="h-32 text-center text-slate-500">
-                    No lists yet. Create a list and select a campaign.
+                  <TableCell colSpan={4} className="h-40 px-6 text-center">
+                    <p className="text-slate-600">No lists yet.</p>
+                    <p className="mt-1 text-sm text-slate-500">
+                      Create a list tied to a lead campaign, then bind an automation to it.
+                      Subscribers appear when leads are captured on that campaign.
+                    </p>
+                    <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+                      <Button type="button" onClick={openCreate} disabled={campaigns.length === 0}>
+                        <Plus className="mr-2 h-4 w-4" />
+                        Create list
+                      </Button>
+                      <ButtonLink href="/advertiser/email/automations/new" variant="outline">
+                        <Zap className="mr-2 h-4 w-4" />
+                        Create automation
+                      </ButtonLink>
+                    </div>
                   </TableCell>
                 </TableRow>
               ) : (
                 rows.map((list) => (
                   <TableRow key={list.id} className="transition-colors hover:bg-slate-50">
-                    <TableCell className="font-medium">{list.name}</TableCell>
+                    <TableCell className="font-medium">
+                      {list.system ? (
+                        list.name
+                      ) : (
+                        <Link
+                          href={`/advertiser/email/subscribers?listId=${list.id}`}
+                          className="text-[var(--theme-primary)] hover:underline"
+                        >
+                          {list.name}
+                        </Link>
+                      )}
+                    </TableCell>
                     <TableCell className="text-slate-600">
                       {list.system ? "—" : (list.campaignName ?? "—")}
                     </TableCell>
                     <TableCell>{list.subscribers.toLocaleString()}</TableCell>
                     <TableCell className="text-right">
                       {list.system ? (
-                        <span className="text-xs text-slate-400">System</span>
+                        <ButtonLink
+                          href="/advertiser/email/subscribers"
+                          variant="ghost"
+                          className="h-8 gap-1.5 px-2 text-xs"
+                        >
+                          <Users className="h-3.5 w-3.5" />
+                          View
+                        </ButtonLink>
                       ) : (
                         <div className="flex justify-end gap-1">
+                          <ButtonLink
+                            href={`/advertiser/email/subscribers?listId=${list.id}`}
+                            variant="ghost"
+                            className="h-8 gap-1.5 px-2 text-xs"
+                            aria-label={`View subscribers in ${list.name}`}
+                          >
+                            <Users className="h-3.5 w-3.5" />
+                            View
+                          </ButtonLink>
                           <Button
                             type="button"
                             variant="ghost"

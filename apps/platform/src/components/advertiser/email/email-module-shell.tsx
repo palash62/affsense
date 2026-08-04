@@ -30,6 +30,7 @@ export interface EmailModuleShellProps {
   stats?: EmailStatItem[];
   searchPlaceholder?: string;
   filters?: EmailToolbarFilter[];
+  initialFilterValues?: Record<string, string>;
   showHero?: boolean;
   showToolbar?: boolean;
   children: React.ReactNode;
@@ -47,7 +48,7 @@ function EmailModuleShellInner({
   showHero = true,
   showToolbar = true,
   children,
-}: EmailModuleShellProps) {
+}: Omit<EmailModuleShellProps, "initialFilterValues">) {
   const { search, filterValues, setSearch, setFilterValue } = useEmailModuleFilters();
 
   return (
@@ -102,9 +103,9 @@ function EmailModuleShellInner({
   );
 }
 
-export function EmailModuleShell(props: EmailModuleShellProps) {
+export function EmailModuleShell({ initialFilterValues, ...props }: EmailModuleShellProps) {
   return (
-    <EmailModuleFilterProvider>
+    <EmailModuleFilterProvider initialFilterValues={initialFilterValues}>
       <EmailModuleShellInner {...props} />
     </EmailModuleFilterProvider>
   );

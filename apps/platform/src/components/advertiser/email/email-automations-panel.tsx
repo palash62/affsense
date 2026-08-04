@@ -44,15 +44,10 @@ export function EmailAutomationsPanel() {
   }, [load]);
 
   async function toggleStatus(a: Automation) {
-    const next = a.status === "ACTIVE" ? "PAUSED" : "ACTIVE";
-    if (next === "ACTIVE") {
-      await fetch(`/api/v1/advertiser/email/automations/${a.id}/activate`, { method: "POST" });
+    if (a.status === "ACTIVE") {
+      await fetch(`/api/v1/advertiser/email/automations/${a.id}/pause`, { method: "POST" });
     } else {
-      await fetch(`/api/v1/advertiser/email/automations/${a.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "PAUSED" }),
-      });
+      await fetch(`/api/v1/advertiser/email/automations/${a.id}/activate`, { method: "POST" });
     }
     void load();
   }
@@ -73,9 +68,15 @@ export function EmailAutomationsPanel() {
         <div className="rounded-xl border border-dashed border-slate-300 p-12 text-center">
           <Zap className="mx-auto h-10 w-10 text-slate-300" />
           <p className="mt-3 font-medium text-slate-900">No automations yet</p>
-          <ButtonLink href="/advertiser/email/automations/new" className="mt-4">
-            Create welcome sequence
-          </ButtonLink>
+          <p className="mt-1 text-sm text-slate-500">
+            Create a list first, then bind an automation to it. Subscribers come from campaign leads.
+          </p>
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+            <ButtonLink href="/advertiser/email/lists" variant="outline">
+              Create a list
+            </ButtonLink>
+            <ButtonLink href="/advertiser/email/automations/new">Create automation</ButtonLink>
+          </div>
         </div>
       ) : (
         <div className="space-y-3">

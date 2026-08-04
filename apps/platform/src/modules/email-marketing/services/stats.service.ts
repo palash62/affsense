@@ -154,11 +154,22 @@ export async function getRecentActivity(advertiserId: string, limit = 10) {
 
 export async function listSends(
   advertiserId: string,
-  opts: { page: number; limit: number; status?: string },
+  opts: { page: number; limit: number; status?: string; search?: string },
 ) {
+  const search = opts.search?.trim();
   const where = {
     advertiserId,
     ...(opts.status ? { status: opts.status as never } : {}),
+    ...(search
+      ? {
+          OR: [
+            { contact: { email: { contains: search } } },
+            { contact: { firstName: { contains: search } } },
+            { contact: { lastName: { contains: search } } },
+            { template: { subject: { contains: search } } },
+          ],
+        }
+      : {}),
   };
 
   const [items, total] = await Promise.all([
@@ -187,6 +198,7 @@ export async function listSends(
     total,
     page: opts.page,
     limit: opts.limit,
+    totalPages: Math.max(1, Math.ceil(total / opts.limit)),
   };
 }
 

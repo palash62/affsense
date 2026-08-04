@@ -719,6 +719,7 @@ export const emailListUpdateSchema = z.object({
 });
 
 export const emailAutomationStepSchema = z.object({
+  id: z.string().cuid().optional(),
   templateId: z.string().cuid(),
   delayMinutes: z.number().int().min(0).max(525600),
   order: z.number().int().min(0),

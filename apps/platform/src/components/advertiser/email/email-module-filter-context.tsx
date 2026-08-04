@@ -11,9 +11,17 @@ type EmailModuleFilterContextValue = {
 
 const EmailModuleFilterContext = createContext<EmailModuleFilterContextValue | null>(null);
 
-export function EmailModuleFilterProvider({ children }: { children: React.ReactNode }) {
+export function EmailModuleFilterProvider({
+  children,
+  initialFilterValues,
+}: {
+  children: React.ReactNode;
+  initialFilterValues?: Record<string, string>;
+}) {
   const [search, setSearch] = useState("");
-  const [filterValues, setFilterValues] = useState<Record<string, string>>({});
+  const [filterValues, setFilterValues] = useState<Record<string, string>>(
+    () => initialFilterValues ?? {},
+  );
 
   const value = useMemo(
     () => ({

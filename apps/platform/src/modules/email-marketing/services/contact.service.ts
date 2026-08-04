@@ -83,11 +83,31 @@ export async function upsertContactFromLead(input: {
 
 export async function listContacts(
   advertiserId: string,
-  opts: { page: number; limit: number; search?: string; status?: EmailContactStatus },
+  opts: {
+    page: number;
+    limit: number;
+    search?: string;
+    status?: EmailContactStatus;
+    sourceCampaignId?: string;
+    listId?: string;
+  },
 ) {
+  let sourceCampaignId = opts.sourceCampaignId;
+  if (opts.listId && opts.listId !== "all") {
+    const list = await prisma.emailList.findFirst({
+      where: { id: opts.listId, advertiserId },
+      select: { campaignId: true },
+    });
+    if (!list) {
+      return { items: [], total: 0, page: opts.page, limit: opts.limit };
+    }
+    sourceCampaignId = list.campaignId;
+  }
+
   const where = {
     advertiserId,
     ...(opts.status ? { status: opts.status } : {}),
+    ...(sourceCampaignId ? { sourceCampaignId } : {}),
     ...(opts.search
       ? {
           OR: [
@@ -99,17 +119,47 @@ export async function listContacts(
       : {}),
   };
 
-  const [items, total] = await Promise.all([
+  const [items, total, subscribedCount] = await Promise.all([
     prisma.emailContact.findMany({
       where,
       orderBy: { createdAt: "desc" },
       skip: (opts.page - 1) * opts.limit,
       take: opts.limit,
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        status: true,
+        sourceCampaignId: true,
+        createdAt: true,
+      },
     }),
     prisma.emailContact.count({ where }),
+    prisma.emailContact.count({
+      where: { ...where, status: "SUBSCRIBED" },
+    }),
   ]);
 
-  return { items, total, page: opts.page, limit: opts.limit };
+  return {
+    items,
+    total,
+    subscribedCount,
+    page: opts.page,
+    limit: opts.limit,
+  };
+}
+
+export async function getContactByUnsubscribeToken(token: string) {
+  return prisma.emailContact.findUnique({
+    where: { unsubscribeToken: token },
+    select: {
+      id: true,
+      email: true,
+      status: true,
+      unsubscribedAt: true,
+    },
+  });
 }
 
 export async function unsubscribeByToken(token: string) {
@@ -120,6 +170,25 @@ export async function unsubscribeByToken(token: string) {
 
   if (contact.status === "UNSUBSCRIBED") return contact;
 
+  return prisma.emailContact.update({
+    where: { id: contact.id },
+    data: { status: "UNSUBSCRIBED", unsubscribedAt: new Date() },
+  });
+}
+
+/** Mark an existing subscribed contact as unsubscribed (suppression UI). */
+export async function suppressContactByEmail(
+  advertiserId: string,
+  email: string,
+) {
+  const normalized = email.trim().toLowerCase();
+  const contact = await prisma.emailContact.findUnique({
+    where: {
+      advertiserId_email: { advertiserId, email: normalized },
+    },
+  });
+  if (!contact) return null;
+  if (contact.status === "UNSUBSCRIBED") return contact;
   return prisma.emailContact.update({
     where: { id: contact.id },
     data: { status: "UNSUBSCRIBED", unsubscribedAt: new Date() },

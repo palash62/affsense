@@ -3,9 +3,8 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import { Mail, MousePointerClick, Send, UserPlus, Users } from "lucide-react";
+import { List, Mail, MousePointerClick, Send, Users, Zap } from "lucide-react";
 import { PageSection } from "@/components/admin/page-section";
-import { LeadsTrendChart } from "@/components/dashboard/dashboard-charts";
 import { formatUserDateTime } from "@/lib/user-timezone";
 import { EmailModuleShell } from "../email-module-shell";
 import { ButtonLink } from "@/components/ui/button-link";
@@ -15,7 +14,6 @@ type Stats = {
   totalSends: number;
   openRate: number;
   clickRate: number;
-  trend: { date: string; sends: number; opens: number }[];
   activity: { id: string; action: string; detail: string; time: string }[];
 };
 
@@ -30,9 +28,6 @@ export function DashboardPanel() {
       .then((j) => setStats(j.data))
       .catch(() => {});
   }, []);
-
-  const sendsTrend = stats?.trend?.map((t) => ({ date: t.date, count: t.sends })) ?? [];
-  const opensTrend = stats?.trend?.map((t) => ({ date: t.date, count: t.opens })) ?? [];
 
   return (
     <EmailModuleShell
@@ -49,19 +44,17 @@ export function DashboardPanel() {
         { label: "Click Rate", value: stats ? `${stats.clickRate}%` : "—", icon: MousePointerClick, accent: "orange" },
       ]}
       showToolbar={false}
-      primaryAction={{ label: "Create Broadcast", href: "/advertiser/email/campaigns", icon: Send }}
+      primaryAction={{ label: "Create automation", href: "/advertiser/email/automations/new", icon: Zap }}
     >
       <div className="flex flex-wrap gap-3">
-        <ButtonLink href="/advertiser/email/automations/new">Create automation</ButtonLink>
-        <ButtonLink href="/advertiser/email/subscribers" variant="outline">
-          <UserPlus className="mr-2 h-4 w-4" />
-          Add subscriber
+        <ButtonLink href="/advertiser/email/lists">
+          <List className="mr-2 h-4 w-4" />
+          Create a list
         </ButtonLink>
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-2">
-        <LeadsTrendChart title="Emails Sent" data={sendsTrend} />
-        <LeadsTrendChart title="Opens Over Time" data={opensTrend} />
+        <ButtonLink href="/advertiser/email/automations/new" variant="outline">
+          <Zap className="mr-2 h-4 w-4" />
+          Create automation
+        </ButtonLink>
       </div>
 
       {stats?.activity && stats.activity.length > 0 && (
@@ -95,16 +88,16 @@ export function DashboardPanel() {
         <p className="font-semibold text-slate-900">Get started in 3 steps</p>
         <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-slate-600">
           <li>
-            <Link href="/advertiser/email/subscribers" className="text-[var(--theme-primary)] hover:underline">
-              Add or import subscribers
+            <Link href="/advertiser/email/lists" className="text-[var(--theme-primary)] hover:underline">
+              Create a list linked to a lead campaign
             </Link>
           </li>
           <li>
             <Link href="/advertiser/email/automations/new" className="text-[var(--theme-primary)] hover:underline">
-              Build an automation (welcome + follow-ups)
+              Build an automation bound to that list
             </Link>
           </li>
-          <li>Activate it — leads from your campaigns will receive emails automatically</li>
+          <li>Activate it — subscribers come from new leads on that campaign</li>
         </ol>
       </div>
     </EmailModuleShell>

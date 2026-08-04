@@ -338,6 +338,7 @@ export function useAutomationBuilderState({
       fromName: form.fromName.trim(),
       replyTo: form.replyTo.trim() || null,
       steps: steps.map((s, i) => ({
+        ...(s.serverId ? { id: s.serverId } : {}),
         templateId: s.templateId,
         delayMinutes: s.delayMinutes,
         order: i,
@@ -346,6 +347,40 @@ export function useAutomationBuilderState({
       })),
     };
   }, [form, steps]);
+
+  const syncStepsFromServer = useCallback(
+    (
+      serverSteps: Array<{
+        id: string;
+        templateId: string;
+        delayMinutes: number;
+        order: number;
+        fromName?: string | null;
+        fromEmail?: string | null;
+      }>,
+    ) => {
+      skipHistoryRef.current = true;
+      setStepsState((prev) => {
+        const byOrder = [...serverSteps].sort((a, b) => a.order - b.order);
+        return byOrder.map((s, i) => {
+          const prevMatch =
+            prev.find((p) => p.serverId === s.id) ??
+            prev.find((p) => p.templateId === s.templateId && p.order === i);
+          return {
+            clientId: prevMatch?.clientId ?? s.id,
+            serverId: s.id,
+            templateId: s.templateId,
+            delayMinutes: s.delayMinutes,
+            order: i,
+            fromName: s.fromName ?? "",
+            fromEmail: s.fromEmail ?? "",
+          };
+        });
+      });
+      skipHistoryRef.current = false;
+    },
+    [],
+  );
 
   const persist = useCallback(
     async (activate = false) => {
@@ -386,6 +421,9 @@ export function useAutomationBuilderState({
           setAutomationId(id);
           window.history.replaceState(null, "", `/advertiser/email/automations/${id}`);
         }
+        if (Array.isArray(json.data?.steps)) {
+          syncStepsFromServer(json.data.steps);
+        }
         if (activate && id) {
           const act = await fetch(`/api/v1/advertiser/email/automations/${id}/activate`, {
             method: "POST",
@@ -408,7 +446,7 @@ export function useAutomationBuilderState({
         persistInFlight.current = false;
       }
     },
-    [automationId, buildPayload, form, issues, router, steps, templates],
+    [automationId, buildPayload, form, issues, router, steps, syncStepsFromServer, templates],
   );
 
   useEffect(() => {
