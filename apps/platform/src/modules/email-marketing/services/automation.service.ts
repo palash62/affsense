@@ -1,8 +1,80 @@
-import type { AutoresponderTrigger, EmailAutomationStatus } from "@prisma/client";
+import type {
+  AutoresponderTrigger,
+  EmailAutomationStatus,
+  EmailAutomationStepType,
+} from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { AppError } from "@/lib/errors";
 import { EMAIL_MARKETING_CONFIG_KEY } from "@/lib/email/ses-settings";
 import { parseEmailMarketingConfig } from "../config/platform-config";
+
+export type AutomationStepInput = {
+  id?: string;
+  type?: EmailAutomationStepType;
+  templateId?: string | null;
+  tagId?: string | null;
+  delayMinutes: number;
+  order: number;
+  fromName?: string | null;
+  fromEmail?: string | null;
+};
+
+const stepInclude = {
+  orderBy: { order: "asc" as const },
+  include: {
+    template: true,
+    tag: { select: { id: true, name: true, color: true } },
+  },
+};
+
+async function assertStepsValid(
+  advertiserId: string,
+  steps: AutomationStepInput[],
+) {
+  if (!steps.length) {
+    throw new AppError("VALIDATION_ERROR", "At least one step is required", 422);
+  }
+
+  for (const step of steps) {
+    const type = step.type ?? "SEND_EMAIL";
+    if (type !== "SEND_EMAIL") {
+      throw new AppError(
+        "VALIDATION_ERROR",
+        "Only email steps are supported. Add a tag on the email action instead.",
+        422,
+      );
+    }
+    if (!step.templateId) {
+      throw new AppError("VALIDATION_ERROR", "Email steps require a template", 422);
+    }
+    const template = await prisma.emailTemplate.findFirst({
+      where: { id: step.templateId, advertiserId },
+    });
+    if (!template) {
+      throw new AppError("NOT_FOUND", `Template ${step.templateId} not found`, 404);
+    }
+    if (step.tagId) {
+      const tag = await prisma.emailTag.findFirst({
+        where: { id: step.tagId, advertiserId },
+      });
+      if (!tag) {
+        throw new AppError("NOT_FOUND", `Tag ${step.tagId} not found`, 404);
+      }
+    }
+  }
+}
+
+function toStepCreateData(s: AutomationStepInput) {
+  return {
+    order: s.order,
+    type: "SEND_EMAIL" as const,
+    delayMinutes: s.delayMinutes,
+    templateId: s.templateId!,
+    tagId: s.tagId?.trim() || null,
+    fromName: s.fromName?.trim() || null,
+    fromEmail: s.fromEmail?.trim() || null,
+  };
+}
 
 export async function listAutomations(advertiserId: string) {
   return prisma.emailAutomation.findMany({
@@ -11,7 +83,10 @@ export async function listAutomations(advertiserId: string) {
     include: {
       steps: {
         orderBy: { order: "asc" },
-        include: { template: { select: { id: true, name: true, subject: true } } },
+        include: {
+          template: { select: { id: true, name: true, subject: true } },
+          tag: { select: { id: true, name: true, color: true } },
+        },
       },
       _count: { select: { sends: true } },
     },
@@ -22,10 +97,7 @@ export async function getAutomation(advertiserId: string, id: string) {
   const automation = await prisma.emailAutomation.findFirst({
     where: { id, advertiserId },
     include: {
-      steps: {
-        orderBy: { order: "asc" },
-        include: { template: true },
-      },
+      steps: stepInclude,
     },
   });
   if (!automation) throw new AppError("NOT_FOUND", "Automation not found", 404);
@@ -48,7 +120,7 @@ export async function createAutomation(
     campaignId?: string | null;
     fromName: string;
     replyTo?: string | null;
-    steps: { templateId: string; delayMinutes: number; order: number; fromName?: string | null; fromEmail?: string | null }[];
+    steps: AutomationStepInput[];
   },
 ) {
   const count = await prisma.emailAutomation.count({ where: { advertiserId } });
@@ -68,18 +140,7 @@ export async function createAutomation(
     if (!campaign) throw new AppError("NOT_FOUND", "Campaign not found", 404);
   }
 
-  if (!data.steps.length) {
-    throw new AppError("VALIDATION_ERROR", "At least one step is required", 422);
-  }
-
-  for (const step of data.steps) {
-    const template = await prisma.emailTemplate.findFirst({
-      where: { id: step.templateId, advertiserId },
-    });
-    if (!template) {
-      throw new AppError("NOT_FOUND", `Template ${step.templateId} not found`, 404);
-    }
-  }
+  await assertStepsValid(advertiserId, data.steps);
 
   return prisma.emailAutomation.create({
     data: {
@@ -91,17 +152,11 @@ export async function createAutomation(
       replyTo: data.replyTo ?? null,
       status: "DRAFT",
       steps: {
-        create: data.steps.map((s) => ({
-          order: s.order,
-          delayMinutes: s.delayMinutes,
-          templateId: s.templateId,
-          fromName: s.fromName?.trim() || null,
-          fromEmail: s.fromEmail?.trim() || null,
-        })),
+        create: data.steps.map((s) => toStepCreateData(s)),
       },
     },
     include: {
-      steps: { orderBy: { order: "asc" }, include: { template: true } },
+      steps: stepInclude,
     },
   });
 }
@@ -116,14 +171,7 @@ export async function updateAutomation(
     fromName: string;
     replyTo: string | null;
     status: EmailAutomationStatus;
-    steps: {
-      id?: string;
-      templateId: string;
-      delayMinutes: number;
-      order: number;
-      fromName?: string | null;
-      fromEmail?: string | null;
-    }[];
+    steps: AutomationStepInput[];
   }>,
 ) {
   const existing = await getAutomation(advertiserId, id);
@@ -133,17 +181,7 @@ export async function updateAutomation(
   }
 
   if (data.steps) {
-    if (!data.steps.length) {
-      throw new AppError("VALIDATION_ERROR", "At least one step is required", 422);
-    }
-    for (const step of data.steps) {
-      const template = await prisma.emailTemplate.findFirst({
-        where: { id: step.templateId, advertiserId },
-      });
-      if (!template) {
-        throw new AppError("NOT_FOUND", `Template ${step.templateId} not found`, 404);
-      }
-    }
+    await assertStepsValid(advertiserId, data.steps);
 
     await prisma.$transaction(async (tx) => {
       const current = await tx.emailAutomationStep.findMany({
@@ -156,7 +194,6 @@ export async function updateAutomation(
           .filter((stepId): stepId is string => Boolean(stepId && currentById.has(stepId))),
       );
 
-      // Avoid @@unique([automationId, order]) clashes while reordering
       for (const step of current) {
         await tx.emailAutomationStep.update({
           where: { id: step.id },
@@ -165,13 +202,7 @@ export async function updateAutomation(
       }
 
       for (const step of data.steps!) {
-        const payload = {
-          order: step.order,
-          delayMinutes: step.delayMinutes,
-          templateId: step.templateId,
-          fromName: step.fromName?.trim() || null,
-          fromEmail: step.fromEmail?.trim() || null,
-        };
+        const payload = toStepCreateData(step);
         if (step.id && currentById.has(step.id)) {
           await tx.emailAutomationStep.update({
             where: { id: step.id },
@@ -211,7 +242,7 @@ export async function updateAutomation(
       status: data.status ?? existing.status,
     },
     include: {
-      steps: { orderBy: { order: "asc" }, include: { template: true } },
+      steps: stepInclude,
     },
   });
 }
@@ -230,7 +261,7 @@ export async function pauseAutomation(advertiserId: string, id: string) {
     where: { id },
     data: { status: "PAUSED" },
     include: {
-      steps: { orderBy: { order: "asc" }, include: { template: true } },
+      steps: stepInclude,
     },
   });
 }
@@ -243,11 +274,23 @@ export async function activateAutomation(advertiserId: string, id: string) {
   if (!automation.campaignId) {
     throw new AppError("VALIDATION_ERROR", "Select a list before publishing", 422);
   }
+  for (const step of automation.steps) {
+    if (step.type === "SEND_EMAIL" && !step.templateId) {
+      throw new AppError("VALIDATION_ERROR", "Every email step needs a template", 422);
+    }
+    if (step.type !== "SEND_EMAIL") {
+      throw new AppError(
+        "VALIDATION_ERROR",
+        "Remove Apply/Remove tag steps — add an optional tag on each email instead",
+        422,
+      );
+    }
+  }
   return prisma.emailAutomation.update({
     where: { id },
     data: { status: "ACTIVE" },
     include: {
-      steps: { orderBy: { order: "asc" }, include: { template: true } },
+      steps: stepInclude,
     },
   });
 }

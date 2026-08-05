@@ -1,10 +1,17 @@
-import type { AutomationForm, AutomationStep, Template, ValidationIssue } from "./types";
+import type {
+  AutomationForm,
+  AutomationStep,
+  TagOption,
+  Template,
+  ValidationIssue,
+} from "./types";
 import { MAX_STEPS } from "./types";
 
 export function validateAutomation(
   form: AutomationForm,
   steps: AutomationStep[],
   templates: Template[],
+  tags: TagOption[] = [],
 ): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
   const name = form.name.trim();
@@ -21,8 +28,8 @@ export function validateAutomation(
     issues.push({ path: "fromName", message: "From name must be at most 80 characters" });
   }
 
-  if (!form.campaignId.trim()) {
-    issues.push({ path: "campaignId", message: "Select a list" });
+  if (!form.listId.trim()) {
+    issues.push({ path: "listId", message: "Select a list" });
   }
 
   if (form.replyTo.trim()) {
@@ -40,6 +47,7 @@ export function validateAutomation(
   }
 
   const templateIds = new Set(templates.map((t) => t.id));
+  const tagIds = new Set(tags.map((t) => t.id));
   steps.forEach((step, i) => {
     if (!step.templateId) {
       issues.push({
@@ -51,6 +59,13 @@ export function validateAutomation(
       issues.push({
         path: `steps.${i}.templateId`,
         message: `Email ${i + 1}: template not found`,
+        stepClientId: step.clientId,
+      });
+    }
+    if (step.tagId && tagIds.size > 0 && !tagIds.has(step.tagId)) {
+      issues.push({
+        path: `steps.${i}.tagId`,
+        message: `Email ${i + 1}: tag not found`,
         stepClientId: step.clientId,
       });
     }
@@ -66,6 +81,11 @@ export function validateAutomation(
   return issues;
 }
 
-export function canPersist(form: AutomationForm, steps: AutomationStep[], templates: Template[]) {
-  return validateAutomation(form, steps, templates).length === 0;
+export function canPersist(
+  form: AutomationForm,
+  steps: AutomationStep[],
+  templates: Template[],
+  tags: TagOption[] = [],
+) {
+  return validateAutomation(form, steps, templates, tags).length === 0;
 }

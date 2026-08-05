@@ -9,11 +9,19 @@ import type {
   SaveStatus,
   Selection,
   StepStat,
+  TagOption,
   Template,
   TemplateContent,
   Trigger,
 } from "./types";
-import { DEFAULT_EMAIL_HTML, MAX_STEPS, MINUTES_PER_DAY, createEmptyStep, newStepClientId } from "./types";
+import {
+  DEFAULT_EMAIL_HTML,
+  MAX_STEPS,
+  MINUTES_PER_DAY,
+  createEmptyStep,
+  newStepClientId,
+  normalizeServerStepsToEmailOnly,
+} from "./types";
 import { canPersist, validateAutomation } from "./validation";
 
 type Snapshot = {
@@ -85,13 +93,14 @@ export function useAutomationBuilderState({
   const [form, setFormState] = useState<AutomationForm>(() => ({
     name: initialCreate?.name ?? "",
     trigger: initialCreate?.trigger ?? "LEAD_CAPTURED",
-    campaignId: "",
+    listId: "",
     fromName: "",
     replyTo: "",
   }));
   const [steps, setStepsState] = useState<AutomationStep[]>([]);
   const [templateContents, setTemplateContents] = useState<Record<string, TemplateContent>>({});
   const [templates, setTemplates] = useState<Template[]>([]);
+  const [tags, setTags] = useState<TagOption[]>([]);
   const [stats, setStats] = useState<StepStat[]>([]);
   const [selection, setSelection] = useState<Selection>({ kind: "trigger" });
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
@@ -199,8 +208,8 @@ export function useAutomationBuilderState({
   }, []);
 
   const issues = useMemo(
-    () => validateAutomation(form, steps, templates),
-    [form, steps, templates],
+    () => validateAutomation(form, steps, templates, tags),
+    [form, steps, templates, tags],
   );
 
   const invalidStepIds = useMemo(() => {
@@ -231,9 +240,15 @@ export function useAutomationBuilderState({
     Promise.all([
       fetch("/api/v1/advertiser/email/templates").then((r) => r.json()),
       fetch("/api/v1/advertiser/email/settings").then((r) => r.json()),
-    ]).then(([tpl, settings]) => {
+      fetch("/api/v1/advertiser/email/tags").then((r) => r.json()),
+    ]).then(([tpl, settings, tagsRes]) => {
       if (cancelled) return;
       setTemplates(tpl.data ?? []);
+      setTags(
+        ((tagsRes.data ?? []) as Array<{ id: string; name: string; color: string | null }>).map(
+          (t) => ({ id: t.id, name: t.name, color: t.color }),
+        ),
+      );
       if (settings.data && !initialId) {
         setFormState((f) => ({
           ...f,
@@ -260,15 +275,18 @@ export function useAutomationBuilderState({
         setFormState({
           name: a.name,
           trigger: a.trigger,
-          campaignId: a.campaignId ?? "",
+          listId:
+            lists.find((l) => l.campaignId === (a.campaignId ?? ""))?.id ?? "",
           fromName: a.fromName,
           replyTo: a.replyTo ?? "",
         });
         const contents: Record<string, TemplateContent> = {};
-        const mapped = (
+        const rawSteps = (
           a.steps as Array<{
             id: string;
-            templateId: string;
+            type?: string | null;
+            templateId?: string | null;
+            tagId?: string | null;
             delayMinutes: number;
             order: number;
             fromName?: string | null;
@@ -281,20 +299,13 @@ export function useAutomationBuilderState({
               htmlBody: string;
             };
           }>
-        ).map((s) => {
+        );
+        for (const s of rawSteps) {
           if (s.template) {
             contents[s.template.id] = toContent(s.template);
           }
-          return {
-            clientId: s.id,
-            serverId: s.id,
-            templateId: s.templateId,
-            delayMinutes: s.delayMinutes,
-            order: s.order,
-            fromName: s.fromName ?? "",
-            fromEmail: s.fromEmail ?? "",
-          };
-        });
+        }
+        const mapped = normalizeServerStepsToEmailOnly(rawSteps);
         setStepsState(mapped);
         setTemplateContents(contents);
         refreshTemplateList(contents);
@@ -312,7 +323,7 @@ export function useAutomationBuilderState({
     return () => {
       cancelled = true;
     };
-  }, [initialId, refreshTemplateList, captureStepSnapshot]);
+  }, [initialId, lists, refreshTemplateList, captureStepSnapshot]);
 
   useEffect(() => {
     if (!automationId) {
@@ -331,28 +342,34 @@ export function useAutomationBuilderState({
   }, [automationId]);
 
   const buildPayload = useCallback(() => {
+    const campaignId =
+      lists.find((l) => l.id === form.listId)?.campaignId?.trim() ?? "";
     return {
       name: form.name.trim(),
       trigger: form.trigger,
-      campaignId: form.campaignId.trim(),
+      campaignId,
       fromName: form.fromName.trim(),
       replyTo: form.replyTo.trim() || null,
       steps: steps.map((s, i) => ({
         ...(s.serverId ? { id: s.serverId } : {}),
+        type: "SEND_EMAIL" as const,
         templateId: s.templateId,
+        tagId: s.tagId.trim() || null,
         delayMinutes: s.delayMinutes,
         order: i,
         fromName: s.fromName.trim() || null,
         fromEmail: s.fromEmail.trim() || null,
       })),
     };
-  }, [form, steps]);
+  }, [form, lists, steps]);
 
   const syncStepsFromServer = useCallback(
     (
       serverSteps: Array<{
         id: string;
-        templateId: string;
+        type?: string | null;
+        templateId?: string | null;
+        tagId?: string | null;
         delayMinutes: number;
         order: number;
         fromName?: string | null;
@@ -361,19 +378,15 @@ export function useAutomationBuilderState({
     ) => {
       skipHistoryRef.current = true;
       setStepsState((prev) => {
-        const byOrder = [...serverSteps].sort((a, b) => a.order - b.order);
-        return byOrder.map((s, i) => {
+        const normalized = normalizeServerStepsToEmailOnly(serverSteps);
+        return normalized.map((s, i) => {
           const prevMatch =
-            prev.find((p) => p.serverId === s.id) ??
+            prev.find((p) => p.serverId === s.serverId) ??
             prev.find((p) => p.templateId === s.templateId && p.order === i);
           return {
-            clientId: prevMatch?.clientId ?? s.id,
-            serverId: s.id,
-            templateId: s.templateId,
-            delayMinutes: s.delayMinutes,
+            ...s,
+            clientId: prevMatch?.clientId ?? s.clientId,
             order: i,
-            fromName: s.fromName ?? "",
-            fromEmail: s.fromEmail ?? "",
           };
         });
       });
@@ -384,7 +397,7 @@ export function useAutomationBuilderState({
 
   const persist = useCallback(
     async (activate = false) => {
-      if (!canPersist(form, steps, templates)) {
+      if (!canPersist(form, steps, templates, tags)) {
         setSaveStatus("blocked");
         setValidateFlash(true);
         setSaveError("Fix validation issues before saving");
@@ -446,13 +459,13 @@ export function useAutomationBuilderState({
         persistInFlight.current = false;
       }
     },
-    [automationId, buildPayload, form, issues, router, steps, syncStepsFromServer, templates],
+    [automationId, buildPayload, form, issues, router, steps, syncStepsFromServer, tags, templates],
   );
 
   useEffect(() => {
     if (!hydratedRef.current) return;
     if (saveStatus !== "dirty") return;
-    if (!canPersist(form, steps, templates)) {
+    if (!canPersist(form, steps, templates, tags)) {
       setSaveStatus("blocked");
       return;
     }
@@ -460,7 +473,7 @@ export function useAutomationBuilderState({
       void persist(false);
     }, AUTOSAVE_MS);
     return () => window.clearTimeout(t);
-  }, [form, steps, templates, saveStatus, persist]);
+  }, [form, steps, templates, tags, saveStatus, persist]);
 
   const addEmailAt = useCallback(
     async (index: number) => {
@@ -780,6 +793,7 @@ export function useAutomationBuilderState({
     setSteps,
     templateContents,
     templates,
+    tags,
     lists,
     stats,
     selection,
@@ -822,7 +836,7 @@ export function useAutomationBuilderState({
     captureStepSnapshot,
     runValidate,
     persist,
-    canSave: canPersist(form, steps, templates),
+    canSave: canPersist(form, steps, templates, tags),
     maxSteps: MAX_STEPS,
   };
 }

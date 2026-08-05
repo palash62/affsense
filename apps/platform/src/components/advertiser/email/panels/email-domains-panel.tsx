@@ -46,10 +46,10 @@ import {
 import { cn } from "@/lib/utils";
 
 type DnsRecord = {
-  type: "CNAME" | "TXT";
+  type: "CNAME" | "TXT" | "MX";
   name: string;
   value: string;
-  purpose: "DKIM" | "SPF" | "DMARC";
+  purpose: "DKIM" | "SPF" | "DMARC" | "TRACKING" | "MX";
 };
 
 type IdentityRow = {
@@ -60,6 +60,7 @@ type IdentityRow = {
   verificationStatus: string;
   isDefault: boolean;
   dkimTokens: string[];
+  provider?: string;
   ready: boolean;
   dkimReady: boolean;
   spfReady: boolean;
@@ -88,6 +89,7 @@ export function EmailDomainsPanel() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [setupRow, setSetupRow] = useState<IdentityRow | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
+  const [provider, setProvider] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -113,6 +115,10 @@ export function EmailDomainsPanel() {
 
   useEffect(() => {
     void load();
+    fetch("/api/v1/advertiser/email/provider")
+      .then((r) => r.json())
+      .then((d) => setProvider(d.data?.marketingProvider ?? null))
+      .catch(() => setProvider(null));
   }, [load]);
 
   async function handleAdd(e: React.FormEvent) {
@@ -237,6 +243,22 @@ export function EmailDomainsPanel() {
       ]}
       showToolbar={false}
     >
+      {provider === "mailgun" ? (
+        <p className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+          Sending via Mailgun. Add your domain (subdomain recommended, e.g.{" "}
+          <span className="font-mono">mg.yourbrand.com</span>), publish the DNS records, then Refresh
+          until Ready.
+        </p>
+      ) : provider === "ses" ? (
+        <p className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+          Sending via Amazon SES. Add DKIM CNAMEs from the DNS sheet, then Refresh.
+        </p>
+      ) : provider ? (
+        <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          Custom domain verification needs Mailgun or Amazon SES configured by a platform admin.
+        </p>
+      ) : null}
+
       <PageSection title="Domains" icon={Globe} gradient="leads">
         <div className="flex items-center justify-end border-b border-slate-100 px-6 py-3">
           <Button
@@ -378,8 +400,9 @@ export function EmailDomainsPanel() {
           </Table>
         </div>
         <p className="border-t border-slate-100 px-6 py-3 text-xs text-slate-500">
-          SPF and DMARC show as setup guidance. Ready / DKIM update after you add SES DKIM CNAMEs and
-          click refresh.
+          {provider === "mailgun"
+            ? "Add the SPF, DKIM, and tracking records Mailgun shows, then click Refresh. Ready updates after DNS propagates and verification succeeds."
+            : "SPF and DMARC show as setup guidance. Ready / DKIM update after you add the provider DNS records and click Refresh."}
         </p>
       </PageSection>
 
@@ -389,7 +412,8 @@ export function EmailDomainsPanel() {
             <DialogHeader>
               <DialogTitle>Add a Domain</DialogTitle>
               <DialogDescription>
-                Add an existing domain you own for autoresponder sending.
+                Add a domain you own. A subdomain like mg.yourcompany.com is recommended for email
+                sending.
               </DialogDescription>
             </DialogHeader>
 
@@ -406,7 +430,12 @@ export function EmailDomainsPanel() {
               <span>
                 <span className="block font-semibold text-slate-900">Add an existing domain</span>
                 <span className="mt-0.5 block text-sm text-slate-500">
-                  Connect a domain from your DNS provider and verify with SES.
+                  Connect DNS at your registrar, then verify
+                  {provider === "mailgun"
+                    ? " with Mailgun."
+                    : provider === "ses"
+                      ? " with Amazon SES."
+                      : "."}
                 </span>
               </span>
             </button>
@@ -417,7 +446,7 @@ export function EmailDomainsPanel() {
                 id="email-domain"
                 value={domain}
                 onChange={(e) => setDomain(e.target.value)}
-                placeholder="mail.yourcompany.com"
+                placeholder="mg.yourcompany.com"
                 required
                 disabled={saving}
               />
@@ -462,7 +491,8 @@ export function EmailDomainsPanel() {
           <SheetHeader>
             <SheetTitle>DNS setup — {setupRow?.domain}</SheetTitle>
             <SheetDescription>
-              Add these records at your DNS provider, then refresh verification.
+              Add these records at your DNS provider, then click Refresh to verify
+              {provider === "mailgun" ? " with Mailgun" : provider === "ses" ? " with SES" : ""}.
             </SheetDescription>
           </SheetHeader>
 
@@ -490,20 +520,23 @@ export function EmailDomainsPanel() {
                 </Button>
               </div>
 
-              {(["DKIM", "SPF", "DMARC"] as const).map((purpose) => {
+              {(["DKIM", "SPF", "DMARC", "TRACKING", "MX"] as const).map((purpose) => {
                 const records = setupRow.dnsRecords.filter((r) => r.purpose === purpose);
                 if (records.length === 0) return null;
+                const purposeHelp: Record<typeof purpose, string> = {
+                  DKIM: "Required for authentication (DKIM).",
+                  SPF: "Required TXT so receivers trust sends from this domain.",
+                  DMARC: "Recommended policy record for deliverability.",
+                  TRACKING: "Optional CNAME for open/click tracking.",
+                  MX: "Required by Mailgun if shown — used for inbound on this domain.",
+                };
                 return (
                   <div key={purpose} className="space-y-2">
                     <h3 className="text-sm font-semibold text-slate-900">{purpose}</h3>
-                    <p className="text-xs text-slate-500">
-                      {purpose === "DKIM"
-                        ? "Required CNAME records from Amazon SES."
-                        : "Recommended TXT record for deliverability."}
-                    </p>
+                    <p className="text-xs text-slate-500">{purposeHelp[purpose]}</p>
                     <div className="space-y-2">
-                      {records.map((rec) => {
-                        const key = `${rec.purpose}-${rec.name}`;
+                      {records.map((rec, idx) => {
+                        const key = `${rec.purpose}-${rec.name}-${idx}`;
                         return (
                           <div
                             key={key}

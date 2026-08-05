@@ -13,6 +13,7 @@ export default async function NewEmailAutomationPage() {
       id: l.id,
       name: l.name,
       campaignId: l.campaignId!,
+      campaignName: l.campaignName,
     }));
 
   return <NewAutomationExperience lists={lists} />;

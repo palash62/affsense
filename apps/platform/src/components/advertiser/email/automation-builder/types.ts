@@ -1,10 +1,14 @@
 export type Trigger = "LEAD_CAPTURED" | "LEAD_APPROVED";
 
+export type AutomationStepType = "SEND_EMAIL";
+
 /** Managed email list (excludes virtual All Subscribers). */
 export type EmailListOption = {
   id: string;
   name: string;
   campaignId: string;
+  /** Lead campaign that feeds this list (context only). */
+  campaignName?: string | null;
 };
 
 export type Template = {
@@ -12,6 +16,12 @@ export type Template = {
   name: string;
   subject?: string;
   previewText?: string | null;
+};
+
+export type TagOption = {
+  id: string;
+  name: string;
+  color: string | null;
 };
 
 /** Full editable template content for a step. */
@@ -26,7 +36,10 @@ export type TemplateContent = {
 export type AutomationStep = {
   /** Client-stable id for React Flow (not sent to API). */
   clientId: string;
+  type: AutomationStepType;
   templateId: string;
+  /** Optional tag applied to the contact when this email is sent. */
+  tagId: string;
   delayMinutes: number;
   order: number;
   fromName: string;
@@ -38,7 +51,8 @@ export type AutomationStep = {
 export type AutomationForm = {
   name: string;
   trigger: Trigger;
-  campaignId: string;
+  /** UI audience — mapped to campaignId on persist. */
+  listId: string;
   fromName: string;
   replyTo: string;
 };
@@ -112,12 +126,60 @@ export function newStepClientId() {
 export function createEmptyStep(order: number, delayMinutes = 0): AutomationStep {
   return {
     clientId: newStepClientId(),
+    type: "SEND_EMAIL",
     templateId: "",
+    tagId: "",
     delayMinutes,
     order,
     fromName: "",
     fromEmail: "",
   };
+}
+
+/**
+ * Merge legacy APPLY_TAG steps onto the previous email and drop APPLY/REMOVE tag steps.
+ */
+export function normalizeServerStepsToEmailOnly<
+  T extends {
+    id: string;
+    type?: string | null;
+    templateId?: string | null;
+    tagId?: string | null;
+    delayMinutes: number;
+    order: number;
+    fromName?: string | null;
+    fromEmail?: string | null;
+  },
+>(serverSteps: T[]): AutomationStep[] {
+  const sorted = [...serverSteps].sort((a, b) => a.order - b.order);
+  const emails: AutomationStep[] = [];
+
+  for (const s of sorted) {
+    const type = s.type ?? "SEND_EMAIL";
+    if (type === "SEND_EMAIL") {
+      emails.push({
+        clientId: s.id,
+        serverId: s.id,
+        type: "SEND_EMAIL",
+        templateId: s.templateId ?? "",
+        tagId: s.tagId ?? "",
+        delayMinutes: s.delayMinutes,
+        order: emails.length,
+        fromName: s.fromName ?? "",
+        fromEmail: s.fromEmail ?? "",
+      });
+      continue;
+    }
+    if (type === "APPLY_TAG" && s.tagId) {
+      const prev = emails[emails.length - 1];
+      if (prev && !prev.tagId) {
+        prev.tagId = s.tagId;
+      }
+    }
+    // REMOVE_TAG and leftover APPLY_TAG without a prior email: drop
+  }
+
+  return emails.map((s, i) => ({ ...s, order: i }));
 }
 
 export function formatDelay(minutes: number): string {

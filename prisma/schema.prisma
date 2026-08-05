@@ -194,6 +194,12 @@ enum EmailAutomationStatus {
   PAUSED
 }
 
+enum EmailAutomationStepType {
+  SEND_EMAIL
+  APPLY_TAG
+  REMOVE_TAG
+}
+
 enum EmailSendStatus {
   QUEUED
   SENT
@@ -263,6 +269,7 @@ model User {
   emailTemplates           EmailTemplate[]
   emailAutomations         EmailAutomation[]
   emailLists               EmailList[]
+  emailTags                EmailTag[]
   emailSends               EmailSend[]
   emailMarketingSettings   AdvertiserEmailSettings?
   sendingIdentities        AdvertiserSendingIdentity[]
@@ -1002,11 +1009,42 @@ model EmailContact {
   advertiser User        @relation(fields: [advertiserId], references: [id], onDelete: Cascade)
   sourceLead Lead?       @relation(fields: [sourceLeadId], references: [id], onDelete: SetNull)
   sends      EmailSend[]
+  contactTags EmailContactTag[]
 
   @@unique([advertiserId, email])
   @@index([advertiserId])
   @@index([status])
   @@map("email_contacts")
+}
+
+model EmailTag {
+  id           String   @id @default(cuid())
+  advertiserId String   @map("advertiser_id")
+  name         String
+  color        String?
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  advertiser  User                  @relation(fields: [advertiserId], references: [id], onDelete: Cascade)
+  contactTags EmailContactTag[]
+  steps       EmailAutomationStep[]
+
+  @@unique([advertiserId, name])
+  @@index([advertiserId])
+  @@map("email_tags")
+}
+
+model EmailContactTag {
+  contactId String   @map("contact_id")
+  tagId     String   @map("tag_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  contact EmailContact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  tag     EmailTag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([contactId, tagId])
+  @@index([tagId])
+  @@map("email_contact_tags")
 }
 
 model EmailList {
@@ -1066,22 +1104,26 @@ model EmailAutomation {
 }
 
 model EmailAutomationStep {
-  id           String   @id @default(cuid())
-  automationId String   @map("automation_id")
+  id           String                  @id @default(cuid())
+  automationId String                  @map("automation_id")
   order        Int
-  delayMinutes Int      @default(0) @map("delay_minutes")
-  templateId   String   @map("template_id")
-  fromName     String?  @map("from_name")
-  fromEmail    String?  @map("from_email")
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  type         EmailAutomationStepType @default(SEND_EMAIL)
+  delayMinutes Int                     @default(0) @map("delay_minutes")
+  templateId   String?                 @map("template_id")
+  tagId        String?                 @map("tag_id")
+  fromName     String?                 @map("from_name")
+  fromEmail    String?                 @map("from_email")
+  createdAt    DateTime                @default(now()) @map("created_at")
+  updatedAt    DateTime                @updatedAt @map("updated_at")
 
   automation EmailAutomation @relation(fields: [automationId], references: [id], onDelete: Cascade)
-  template   EmailTemplate   @relation(fields: [templateId], references: [id], onDelete: Restrict)
+  template   EmailTemplate?  @relation(fields: [templateId], references: [id], onDelete: Restrict)
+  tag        EmailTag?       @relation(fields: [tagId], references: [id], onDelete: SetNull)
   sends      EmailSend[]
 
   @@unique([automationId, order])
   @@index([automationId])
+  @@index([tagId])
   @@map("email_automation_steps")
 }
 

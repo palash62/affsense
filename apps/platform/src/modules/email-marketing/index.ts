@@ -7,6 +7,14 @@ export {
   deleteEmailList,
 } from "./services/list.service";
 export {
+  listEmailTags,
+  createEmailTag,
+  updateEmailTag,
+  deleteEmailTag,
+  attachTagToContact,
+  detachTagFromContact,
+} from "./services/tag.service";
+export {
   listTemplates,
   getTemplate,
   createTemplate,

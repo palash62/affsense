@@ -718,17 +718,45 @@ export const emailListUpdateSchema = z.object({
   campaignId: z.string().trim().min(1, "Campaign is required").optional(),
 });
 
-export const emailAutomationStepSchema = z.object({
-  id: z.string().cuid().optional(),
-  templateId: z.string().cuid(),
-  delayMinutes: z.number().int().min(0).max(525600),
-  order: z.number().int().min(0),
-  fromName: z
-    .union([z.literal(""), z.string().trim().min(2).max(80)])
+export const emailTagSchema = z.object({
+  name: z.string().trim().min(1).max(40),
+  color: z
+    .union([z.literal(""), z.string().trim().max(40)])
     .optional()
     .nullable(),
-  fromEmail: z.union([z.literal(""), z.string().email()]).optional().nullable(),
 });
+
+export const emailTagUpdateSchema = z.object({
+  name: z.string().trim().min(1).max(40).optional(),
+  color: z
+    .union([z.literal(""), z.string().trim().max(40)])
+    .optional()
+    .nullable(),
+});
+
+export const emailAutomationStepSchema = z
+  .object({
+    id: z.string().cuid().optional(),
+    type: z.literal("SEND_EMAIL").default("SEND_EMAIL"),
+    templateId: z.union([z.string().cuid(), z.literal(""), z.null()]).optional(),
+    tagId: z.union([z.string().cuid(), z.literal(""), z.null()]).optional(),
+    delayMinutes: z.number().int().min(0).max(525600),
+    order: z.number().int().min(0),
+    fromName: z
+      .union([z.literal(""), z.string().trim().min(2).max(80)])
+      .optional()
+      .nullable(),
+    fromEmail: z.union([z.literal(""), z.string().email()]).optional().nullable(),
+  })
+  .superRefine((step, ctx) => {
+    if (!step.templateId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Template is required for email steps",
+        path: ["templateId"],
+      });
+    }
+  });
 
 export const emailAutomationSchema = z.object({
   name: z.string().trim().min(2).max(80),

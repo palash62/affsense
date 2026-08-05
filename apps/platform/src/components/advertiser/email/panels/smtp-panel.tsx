@@ -80,7 +80,7 @@ export function SmtpPanel() {
           </div>
           <p className="text-sm text-slate-500">
             {info?.provider === "mailgun"
-              ? "Email delivery is handled via Mailgun API with SMTP fallback. Marketing emails use the same provider when SES is not configured."
+              ? "Email delivery is handled via Mailgun API with SMTP fallback. Marketing domains can be verified on the Domain tab when using Mailgun."
               : info?.provider === "smtp"
                 ? "Email delivery is handled via direct SMTP connection."
                 : "No email provider is configured. Set MAILGUN_API_KEY or SMTP_HOST in the platform environment."}

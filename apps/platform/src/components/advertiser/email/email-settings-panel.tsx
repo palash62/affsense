@@ -37,15 +37,26 @@ export function EmailSettingsPanel() {
 
   return (
     <div className="space-y-8">
-      {provider && provider !== "ses" && (
+      {provider === "mailgun" ? (
         <div className="flex max-w-2xl gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
           <Info className="mt-0.5 h-4 w-4 shrink-0 text-blue-500" />
           <p>
-            Sending via platform {provider === "mailgun" ? "Mailgun" : "SMTP"}. Custom sending
-            domains require Amazon SES configured by an administrator.
+            Sending via Mailgun. Add and verify your domain on the{" "}
+            <Link href="/advertiser/email/domains" className="font-medium underline underline-offset-2">
+              Domain
+            </Link>{" "}
+            tab (DNS records → Refresh) to send from your brand address.
           </p>
         </div>
-      )}
+      ) : provider && provider !== "ses" ? (
+        <div className="flex max-w-2xl gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+          <Info className="mt-0.5 h-4 w-4 shrink-0 text-blue-500" />
+          <p>
+            Sending via platform {provider.toUpperCase()}. Custom branded domains are available when
+            Mailgun or Amazon SES is configured by an administrator.
+          </p>
+        </div>
+      ) : null}
 
       <div className="max-w-xl space-y-4 rounded-xl border border-slate-200 bg-white p-6">
         <h3 className="font-semibold text-slate-900">Sender details</h3>

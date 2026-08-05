@@ -52,6 +52,7 @@ function FlowInner({ state, flowApiRef }: Props) {
     form,
     steps,
     templates,
+    tags,
     selection,
     selectTrigger,
     selectEmail,
@@ -69,6 +70,7 @@ function FlowInner({ state, flowApiRef }: Props) {
       form,
       steps,
       templates,
+      tags,
       selection,
       maxSteps,
       invalidStepIds,
@@ -97,7 +99,7 @@ function FlowInner({ state, flowApiRef }: Props) {
         },
       })),
     };
-  }, [form, steps, templates, selection, maxSteps, invalidStepIds, openPicker]);
+  }, [form, steps, templates, tags, selection, maxSteps, invalidStepIds, openPicker]);
 
   const autoLayout = useCallback(() => {
     requestAnimationFrame(() => fitView({ padding: 0.28, duration: 300 }));

@@ -5,7 +5,6 @@ import { AuthProvider } from "@/components/providers/auth-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { PublicPageTrackingScripts } from "@/components/tracking/public-page-tracking-scripts";
 import { PlatformPixelRouteTracker } from "@/components/tracking/platform-pixel-route-tracker";
-import { TawkToChat } from "@/components/tracking/tawk-to-chat";
 import { getSession } from "@/lib/session";
 import { getPublicPlatformPixelConfig } from "@/services/platform-pixel-settings.service";
 import "./globals.css";
@@ -41,7 +40,6 @@ export default async function RootLayout({
       <body className="bg-background font-sans antialiased">
         {hasTracking ? <PublicPageTrackingScripts config={pixelConfig} /> : null}
         {pixelConfig.meta ? <PlatformPixelRouteTracker /> : null}
-        <TawkToChat />
         <ThemeProvider>
           <AuthProvider session={session}>
             <TooltipProvider>

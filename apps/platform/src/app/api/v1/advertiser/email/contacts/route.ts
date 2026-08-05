@@ -9,6 +9,7 @@ export async function GET(request: Request) {
     const search = searchParams.get("search") ?? undefined;
     const status = searchParams.get("status") as EmailContactStatus | null;
     const listId = searchParams.get("listId") ?? undefined;
+    const tagId = searchParams.get("tagId") ?? undefined;
     const sourceCampaignId = searchParams.get("sourceCampaignId") ?? undefined;
 
     const data = await listContacts(session.user.id, {
@@ -17,6 +18,7 @@ export async function GET(request: Request) {
       search,
       status: status ?? undefined,
       listId,
+      tagId,
       sourceCampaignId,
     });
     return Response.json({ data });

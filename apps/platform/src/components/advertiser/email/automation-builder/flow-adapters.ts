@@ -1,5 +1,11 @@
 import type { Edge, Node } from "@xyflow/react";
-import type { AutomationForm, AutomationStep, Selection, Template } from "./types";
+import type {
+  AutomationForm,
+  AutomationStep,
+  Selection,
+  TagOption,
+  Template,
+} from "./types";
 import { TRIGGER_LABELS, formatDelay } from "./types";
 
 export const NODE = {
@@ -31,6 +37,7 @@ export type EmailNodeData = {
   clientId: string;
   order: number;
   templateName: string;
+  tagName: string | null;
   hasError: boolean;
   selected: boolean;
 };
@@ -52,11 +59,13 @@ export function stepsToFlow(
   form: AutomationForm,
   steps: AutomationStep[],
   templates: Template[],
+  tags: TagOption[],
   selection: Selection,
   maxSteps: number,
   invalidStepIds: Set<string>,
 ): { nodes: Node[]; edges: Edge[] } {
   const templateMap = new Map(templates.map((t) => [t.id, t.name]));
+  const tagMap = new Map(tags.map((t) => [t.id, t.name]));
   const nodes: Node[] = [
     {
       id: TRIGGER_ID,
@@ -116,6 +125,7 @@ export function stepsToFlow(
         templateName: step.templateId
           ? (templateMap.get(step.templateId) ?? "Unknown template")
           : "No template",
+        tagName: step.tagId ? (tagMap.get(step.tagId) ?? "Tag") : null,
         hasError: invalidStepIds.has(step.clientId),
         selected: selection.kind === "email" && selection.clientId === step.clientId,
       } satisfies EmailNodeData,

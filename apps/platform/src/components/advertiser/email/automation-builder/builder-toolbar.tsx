@@ -189,12 +189,12 @@ export function BuilderToolbar({
         size="sm"
         disabled={
           saveStatus === "saving" ||
-          !form.campaignId.trim() ||
+          !form.listId.trim() ||
           steps.length < 1 ||
-          issues.some((i) => i.path === "campaignId")
+          issues.some((i) => i.path === "listId")
         }
         title={
-          !form.campaignId.trim()
+          !form.listId.trim()
             ? "Select a list before publishing"
             : steps.length < 1
               ? "Add at least one email step"

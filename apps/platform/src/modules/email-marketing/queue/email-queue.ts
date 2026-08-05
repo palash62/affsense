@@ -44,6 +44,37 @@ export async function enqueueEmailSend(sendId: string, scheduledAt: Date) {
   );
 }
 
+export type TagActionJobData = {
+  advertiserId: string;
+  contactId: string;
+  tagId: string;
+  action: "APPLY_TAG" | "REMOVE_TAG";
+  automationId: string;
+  stepId: string;
+  leadId: string;
+};
+
+export async function enqueueTagAction(
+  data: TagActionJobData,
+  scheduledAt: Date,
+) {
+  const delay = Math.max(0, scheduledAt.getTime() - Date.now());
+  const q = getEmailQueue();
+
+  await q.add(
+    "tag-action",
+    data,
+    {
+      jobId: `tag-${data.automationId}-${data.stepId}-${data.leadId}`,
+      delay,
+      attempts: 3,
+      backoff: { type: "exponential", delay: 5000 },
+      removeOnComplete: 1000,
+      removeOnFail: 5000,
+    },
+  );
+}
+
 export async function closeEmailQueue() {
   if (queue) {
     await queue.close();

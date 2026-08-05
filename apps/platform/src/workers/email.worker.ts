@@ -22,6 +22,11 @@ function getRedisConnection() {
 const worker = new Worker(
   QUEUE_NAME,
   async (job) => {
+    // Legacy tag-action jobs are ignored; tags apply on email send now.
+    if (job.name === "tag-action") {
+      return;
+    }
+
     const { sendId } = job.data as { sendId: string };
     await processEmailSend(sendId);
   },
@@ -32,10 +37,12 @@ const worker = new Worker(
 );
 
 worker.on("completed", (job) => {
+  if (job.name === "tag-action") return;
   console.log(`[email-worker] completed send ${job.data.sendId}`);
 });
 
 worker.on("failed", (job, err) => {
+  if (job?.name === "tag-action") return;
   console.error(`[email-worker] failed send ${job?.data?.sendId}:`, err.message);
 });
 

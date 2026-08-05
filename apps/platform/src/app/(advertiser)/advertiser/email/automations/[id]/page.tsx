@@ -16,6 +16,7 @@ export default async function EditEmailAutomationPage({ params }: Props) {
       id: l.id,
       name: l.name,
       campaignId: l.campaignId!,
+      campaignName: l.campaignName,
     }));
 
   return <AutomationBuilderShell automationId={id} lists={lists} />;

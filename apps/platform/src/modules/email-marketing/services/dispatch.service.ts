@@ -67,9 +67,12 @@ export async function dispatchLeadEmailAutomations(input: {
   });
 
   const baseTime = new Date();
+  const advertiserId = lead.campaign.advertiserId;
 
   for (const automation of automations) {
     for (const step of automation.steps) {
+      if (step.type !== "SEND_EMAIL" || !step.templateId) continue;
+
       const scheduledAt = new Date(baseTime.getTime() + step.delayMinutes * 60_000);
 
       const existing = await prisma.emailSend.findFirst({
@@ -84,7 +87,7 @@ export async function dispatchLeadEmailAutomations(input: {
 
       const send = await prisma.emailSend.create({
         data: {
-          advertiserId: lead.campaign.advertiserId,
+          advertiserId,
           contactId: contact.id,
           automationId: automation.id,
           stepId: step.id,

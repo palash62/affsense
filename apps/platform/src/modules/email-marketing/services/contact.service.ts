@@ -90,6 +90,7 @@ export async function listContacts(
     status?: EmailContactStatus;
     sourceCampaignId?: string;
     listId?: string;
+    tagId?: string;
   },
 ) {
   let sourceCampaignId = opts.sourceCampaignId;
@@ -104,10 +105,23 @@ export async function listContacts(
     sourceCampaignId = list.campaignId;
   }
 
-  const where = {
+  if (opts.tagId) {
+    const tag = await prisma.emailTag.findFirst({
+      where: { id: opts.tagId, advertiserId },
+      select: { id: true },
+    });
+    if (!tag) {
+      return { items: [], total: 0, page: opts.page, limit: opts.limit };
+    }
+  }
+
+  const where: Prisma.EmailContactWhereInput = {
     advertiserId,
     ...(opts.status ? { status: opts.status } : {}),
     ...(sourceCampaignId ? { sourceCampaignId } : {}),
+    ...(opts.tagId
+      ? { contactTags: { some: { tagId: opts.tagId } } }
+      : {}),
     ...(opts.search
       ? {
           OR: [
@@ -119,7 +133,7 @@ export async function listContacts(
       : {}),
   };
 
-  const [items, total, subscribedCount] = await Promise.all([
+  const [rows, total, subscribedCount] = await Promise.all([
     prisma.emailContact.findMany({
       where,
       orderBy: { createdAt: "desc" },
@@ -133,6 +147,13 @@ export async function listContacts(
         status: true,
         sourceCampaignId: true,
         createdAt: true,
+        contactTags: {
+          select: {
+            tag: {
+              select: { id: true, name: true, color: true },
+            },
+          },
+        },
       },
     }),
     prisma.emailContact.count({ where }),
@@ -140,6 +161,11 @@ export async function listContacts(
       where: { ...where, status: "SUBSCRIBED" },
     }),
   ]);
+
+  const items = rows.map(({ contactTags, ...contact }) => ({
+    ...contact,
+    tags: contactTags.map((ct) => ct.tag),
+  }));
 
   return {
     items,

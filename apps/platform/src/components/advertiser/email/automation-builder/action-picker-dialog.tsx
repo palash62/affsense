@@ -42,6 +42,8 @@ export function ActionPickerDialog({
     return "wait".includes(q) || "delay".includes(q) || "hold".includes(q) || "days".includes(q);
   }, [q]);
 
+  const noMatch = !showEmail && !showWait;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md" showCloseButton>
@@ -109,7 +111,7 @@ export function ActionPickerDialog({
               </span>
             </button>
           ) : null}
-          {!showEmail && !showWait ? (
+          {noMatch ? (
             <p className="py-6 text-center text-sm text-slate-400">No matching actions</p>
           ) : null}
         </div>
