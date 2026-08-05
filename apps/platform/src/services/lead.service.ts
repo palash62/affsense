@@ -23,10 +23,11 @@ import type { FormJson } from "@/modules/page-builder/types/form-field";
 import { endOfDay, startOfDay } from "date-fns";
 import { calculatePublisherPayout } from "@/lib/platform-settings";
 import { getPlatformSettingsConfig } from "@/lib/platform-settings-server";
-import { shouldCreditPublisherForLead } from "@/lib/publisher-leads";
+import { parseUserAgent, shouldCreditPublisherForLead } from "@/lib/publisher-leads";
 import { resolveLeadEmail, withResolvedLeadEmail } from "@/lib/lead-email";
 import { validateEmailDeliverability } from "@/lib/email-deliverability";
 import { parseCampaignTargeting } from "@/lib/campaign-targeting";
+import { campaignAcceptsDeviceOs } from "@/lib/smart-link-rotation";
 import { loadCpaMetricsByLeadIds } from "@/lib/cpa-lead-metrics";
 
 type LeadValidationField = {
@@ -255,6 +256,16 @@ async function createAndProcessLead(input: {
     typeof input.campaign.targeting === "object" && input.campaign.targeting
       ? (input.campaign.targeting as Record<string, unknown>)
       : {};
+
+  // Fail before create when device/OS targeting does not match a known UA.
+  // Unknown UAs still pass (same policy as smart-link rotation / fraud).
+  const visitor = parseUserAgent(input.userAgent);
+  if (!campaignAcceptsDeviceOs(targeting, visitor)) {
+    throw Errors.validation(
+      `This campaign does not accept ${visitor.device} / ${visitor.os} traffic.`,
+      "device",
+    );
+  }
 
   const validation = validateLead({
     data: leadData,

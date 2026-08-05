@@ -1,6 +1,9 @@
 import { buildPlatformLeadSubmitUrl, getInternalServiceToken } from "@cpl/shared";
 import { errorResponse } from "@/lib/errors";
 import { leadSubmitSchema } from "@/lib/validations";
+import { prisma } from "@/lib/prisma";
+import { parseUserAgent } from "@/lib/parse-user-agent";
+import { campaignAcceptsDeviceOs } from "@/lib/smart-link-rotation";
 
 export async function POST(request: Request) {
   try {
@@ -22,6 +25,38 @@ export async function POST(request: Request) {
       );
     }
 
+    const userAgent = request.headers.get("user-agent") ?? "";
+    const trackingLink = await prisma.trackingLink.findUnique({
+      where: { slug: parsed.data.slug },
+      select: {
+        campaign: {
+          select: { status: true, targeting: true },
+        },
+      },
+    });
+
+    if (!trackingLink || trackingLink.campaign.status !== "ACTIVE") {
+      return Response.json(
+        { error: { code: "NOT_FOUND", message: "Campaign not found", status: 404 } },
+        { status: 404 },
+      );
+    }
+
+    const visitor = parseUserAgent(userAgent);
+    if (!campaignAcceptsDeviceOs(trackingLink.campaign.targeting, visitor)) {
+      return Response.json(
+        {
+          error: {
+            code: "VALIDATION_ERROR",
+            message: `This campaign does not accept ${visitor.device} / ${visitor.os} traffic.`,
+            status: 422,
+            field: "device",
+          },
+        },
+        { status: 422 },
+      );
+    }
+
     const ip =
       request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
       request.headers.get("x-real-ip") ??
@@ -33,7 +68,7 @@ export async function POST(request: Request) {
         "Content-Type": "application/json",
         "X-Service-Token": token,
         "X-Forwarded-For": ip,
-        "User-Agent": request.headers.get("user-agent") ?? "",
+        "User-Agent": userAgent,
       },
       body: JSON.stringify(parsed.data),
     });

@@ -159,11 +159,10 @@ export function AdminCampaignEditForm({ campaign }: AdminCampaignEditFormProps) 
         },
         countries: trafficMode === "allow" ? selectedCountries : [],
         blacklistedCountries: trafficMode === "block" ? blacklistedCountries : [],
-        devices: trafficMode === "allow" ? devices : [],
-        operatingSystems: trafficMode === "allow" ? operatingSystems : [],
-        blacklistedDevices: trafficMode === "block" ? blacklistedDevices : [],
-        blacklistedOperatingSystems:
-          trafficMode === "block" ? blacklistedOperatingSystems : [],
+        devices,
+        operatingSystems,
+        blacklistedDevices,
+        blacklistedOperatingSystems,
         excludeBlockedPublishers,
       });
     }

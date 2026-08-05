@@ -9,9 +9,13 @@ export function parseUserAgent(userAgent?: string | null): {
   }
 
   const ua = userAgent;
-  const isTablet = /ipad|tablet|kindle|playbook/i.test(ua);
+  const isTablet = /ipad|tablet|kindle|playbook|silk/i.test(ua);
+  // Android without "Mobile" (e.g. SamsungBrowser) is still a phone unless tablet.
+  const isAndroidPhone = /android/i.test(ua) && !isTablet;
   const isMobile =
-    isTablet || /mobile|iphone|ipod|android.*mobile|windows phone/i.test(ua);
+    isTablet ||
+    isAndroidPhone ||
+    /mobile|iphone|ipod|windows phone/i.test(ua);
   const device = isTablet ? "Tablet" : isMobile ? "Mobile" : "Desktop";
 
   let os = "Unknown";

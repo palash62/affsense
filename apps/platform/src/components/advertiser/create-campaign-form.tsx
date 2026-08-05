@@ -477,10 +477,10 @@ export function CreateCampaignForm({
       vertical,
       countries: selectedCountries,
       blacklistedCountries,
-      devices: trafficMode === "allow" ? devices : [],
-      operatingSystems: trafficMode === "allow" ? operatingSystems : [],
-      blacklistedDevices: trafficMode === "block" ? blacklistedDevices : [],
-      blacklistedOperatingSystems: trafficMode === "block" ? blacklistedOperatingSystems : [],
+      devices,
+      operatingSystems,
+      blacklistedDevices,
+      blacklistedOperatingSystems,
       excludeBlockedPublishers,
     };
 
