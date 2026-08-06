@@ -5,6 +5,7 @@ import {
   AlertCircle,
   CheckCircle2,
   Circle,
+  Clock,
   Copy,
   Globe,
   Loader2,
@@ -76,6 +77,29 @@ function StatusIcon({ ready, instructional }: { ready: boolean; instructional?: 
     return <CheckCircle2 className="h-5 w-5 text-emerald-600" aria-label="Ready" />;
   }
   return <AlertCircle className="h-5 w-5 text-red-500" aria-label="Not ready" />;
+}
+
+function verificationLabel(status: string): { label: string; className: string; Icon: typeof Clock } {
+  switch (status) {
+    case "VERIFIED":
+      return {
+        label: "Success",
+        className: "border-emerald-200 bg-emerald-50 text-emerald-800",
+        Icon: CheckCircle2,
+      };
+    case "FAILED":
+      return {
+        label: "Failed",
+        className: "border-red-200 bg-red-50 text-red-800",
+        Icon: AlertCircle,
+      };
+    default:
+      return {
+        label: "Pending",
+        className: "border-amber-200 bg-amber-50 text-amber-900",
+        Icon: Clock,
+      };
+  }
 }
 
 export function EmailDomainsPanel() {
@@ -285,6 +309,7 @@ export function EmailDomainsPanel() {
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
+                <TableHead className="text-center">Status</TableHead>
                 <TableHead className="text-center">Ready for use</TableHead>
                 <TableHead className="text-center">DKIM</TableHead>
                 <TableHead className="text-center">SPF</TableHead>
@@ -295,18 +320,21 @@ export function EmailDomainsPanel() {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="h-32 text-center text-slate-500">
+                  <TableCell colSpan={7} className="h-32 text-center text-slate-500">
                     Loading…
                   </TableCell>
                 </TableRow>
               ) : rows.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="h-32 text-center text-slate-500">
+                  <TableCell colSpan={7} className="h-32 text-center text-slate-500">
                     No sending domains yet. Add an existing domain you own.
                   </TableCell>
                 </TableRow>
               ) : (
-                rows.map((row) => (
+                rows.map((row) => {
+                  const status = verificationLabel(row.verificationStatus);
+                  const StatusGlyph = status.Icon;
+                  return (
                   <TableRow key={row.id} className="hover:bg-slate-50">
                     <TableCell>
                       <div className="flex flex-wrap items-center gap-2">
@@ -318,6 +346,15 @@ export function EmailDomainsPanel() {
                         ) : null}
                       </div>
                       <p className="text-xs text-slate-500">{row.fromEmail}</p>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Badge
+                        variant="outline"
+                        className={cn("gap-1 text-xs font-medium", status.className)}
+                      >
+                        <StatusGlyph className="h-3.5 w-3.5" aria-hidden />
+                        {status.label}
+                      </Badge>
                     </TableCell>
                     <TableCell className="text-center">
                       <div className="flex flex-col items-center gap-1">
@@ -394,7 +431,8 @@ export function EmailDomainsPanel() {
                       </div>
                     </TableCell>
                   </TableRow>
-                ))
+                  );
+                })
               )}
             </TableBody>
           </Table>
@@ -499,9 +537,17 @@ export function EmailDomainsPanel() {
           {setupRow ? (
             <div className="mt-6 space-y-6 px-1">
               <div className="flex flex-wrap items-center gap-2">
-                <Badge variant={setupRow.ready ? "default" : "secondary"}>
-                  {setupRow.verificationStatus}
-                </Badge>
+                {(() => {
+                  const sheetStatus = verificationLabel(setupRow.verificationStatus);
+                  return (
+                    <Badge
+                      variant="outline"
+                      className={cn("gap-1 text-xs font-medium", sheetStatus.className)}
+                    >
+                      {sheetStatus.label}
+                    </Badge>
+                  );
+                })()}
                 {setupRow.isDefault ? <Badge variant="outline">Default</Badge> : null}
                 <Button
                   type="button"
