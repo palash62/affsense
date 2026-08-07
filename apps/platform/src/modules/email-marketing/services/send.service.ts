@@ -12,6 +12,7 @@ import {
 import { signTrackingToken } from "../lib/tokens";
 import { sendMarketingEmail, getDefaultFromEmail } from "./ses-sender.service";
 import { MAX_SEND_ATTEMPTS } from "../config/defaults";
+import { refreshBroadcastProgress } from "./broadcast.service";
 
 export async function processEmailSend(sendId: string) {
   const send = await prisma.emailSend.findUnique({
@@ -164,6 +165,9 @@ export async function processEmailSend(sendId: string) {
       },
     });
 
+    if (send.broadcastId) {
+      await refreshBroadcastProgress(send.broadcastId).catch(() => {});
+    }
     return;
   }
 
@@ -176,6 +180,10 @@ export async function processEmailSend(sendId: string) {
       error: result.error,
     },
   });
+
+  if (failed && send.broadcastId) {
+    await refreshBroadcastProgress(send.broadcastId).catch(() => {});
+  }
 
   if (!failed) {
     throw new Error(result.error);

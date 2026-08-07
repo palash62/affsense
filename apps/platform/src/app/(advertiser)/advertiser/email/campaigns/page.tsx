@@ -1,5 +1,5 @@
-import { CampaignsPanel } from "@/components/advertiser/email/panels/campaigns-panel";
+import { redirect } from "next/navigation";
 
-export default function CampaignsPage() {
-  return <CampaignsPanel />;
+export default function AdvertiserEmailCampaignsRedirectPage() {
+  redirect("/advertiser/email/broadcasts");
 }

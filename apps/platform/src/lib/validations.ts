@@ -786,6 +786,95 @@ export const advertiserEmailSettingsSchema = z.object({
   replyTo: z.string().email().optional().or(z.literal("")),
 });
 
+/** Real EmailList cuid, or synthetic "all" from listEmailLists */
+const broadcastListIdSchema = z
+  .string()
+  .refine((v) => v === "all" || z.string().cuid().safeParse(v).success, {
+    message: "Invalid list",
+  });
+
+export const emailBroadcastSchema = z
+  .object({
+    name: z.string().trim().min(2).max(80),
+    audienceType: z.enum(["LIST", "TAGS"]),
+    listId: broadcastListIdSchema.optional().nullable(),
+    tagIds: z.array(z.string().cuid()).max(50).optional().nullable(),
+    templateId: z.string().cuid().optional().nullable(),
+    subject: z.string().trim().min(2).max(200).optional().nullable(),
+    htmlBody: z.string().trim().min(10).max(500_000).optional().nullable(),
+    action: z.enum(["draft", "schedule", "send"]).default("send"),
+    scheduledAt: z
+      .string()
+      .optional()
+      .nullable()
+      .refine((v) => !v || !Number.isNaN(Date.parse(v)), { message: "Invalid schedule date" }),
+  })
+  .superRefine((value, ctx) => {
+    const isDraft = value.action === "draft";
+    if (value.audienceType === "LIST") {
+      if (!isDraft && !value.listId) {
+        ctx.addIssue({ code: "custom", path: ["listId"], message: "Select a list" });
+      }
+      if (value.tagIds && value.tagIds.length > 0) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["tagIds"],
+          message: "Choose a list or tags, not both",
+        });
+      }
+    } else {
+      if (!isDraft && !value.tagIds?.length) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["tagIds"],
+          message: "Select at least one tag",
+        });
+      }
+      if (value.listId) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["listId"],
+          message: "Choose a list or tags, not both",
+        });
+      }
+    }
+    const hasTemplate = Boolean(value.templateId);
+    const hasInline = Boolean(value.subject?.trim() && value.htmlBody?.trim());
+    if (!hasTemplate && !hasInline) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["templateId"],
+        message: "Pick a template or write subject and body",
+      });
+    }
+    if (value.action === "schedule" && !value.scheduledAt) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["scheduledAt"],
+        message: "Pick a schedule date and time",
+      });
+    }
+  });
+
+export const emailBroadcastPreviewSchema = z
+  .object({
+    audienceType: z.enum(["LIST", "TAGS"]),
+    listId: broadcastListIdSchema.optional().nullable(),
+    tagIds: z.array(z.string().cuid()).max(50).optional().nullable(),
+  })
+  .superRefine((value, ctx) => {
+    if (value.audienceType === "LIST" && !value.listId) {
+      ctx.addIssue({ code: "custom", path: ["listId"], message: "Select a list" });
+    }
+    if (value.audienceType === "TAGS" && !value.tagIds?.length) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["tagIds"],
+        message: "Select at least one tag",
+      });
+    }
+  });
+
 export const sendingIdentitySchema = z.object({
   domain: z
     .string()

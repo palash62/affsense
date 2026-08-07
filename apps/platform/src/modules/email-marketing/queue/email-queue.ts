@@ -44,6 +44,19 @@ export async function enqueueEmailSend(sendId: string, scheduledAt: Date) {
   );
 }
 
+export async function removeEmailSendJob(sendId: string) {
+  try {
+    const q = getEmailQueue();
+    const job = await q.getJob(`send-${sendId}`);
+    if (job) await job.remove();
+  } catch (err) {
+    console.error(
+      `[email-queue] remove job send-${sendId}:`,
+      err instanceof Error ? err.message : err,
+    );
+  }
+}
+
 export type TagActionJobData = {
   advertiserId: string;
   contactId: string;

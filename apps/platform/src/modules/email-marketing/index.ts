@@ -34,6 +34,15 @@ export {
 } from "./services/automation.service";
 export { processEmailSend, sendTestEmail } from "./services/send.service";
 export {
+  listBroadcasts,
+  getBroadcast,
+  previewBroadcastAudience,
+  createBroadcast,
+  createAndSendBroadcast,
+  updateBroadcast,
+  refreshBroadcastProgress,
+} from "./services/broadcast.service";
+export {
   getDefaultFromEmail,
   getMarketingProviderName,
 } from "./services/ses-sender.service";

@@ -209,6 +209,19 @@ enum EmailSendStatus {
   FAILED
 }
 
+enum EmailBroadcastAudienceType {
+  LIST
+  TAGS
+}
+
+enum EmailBroadcastStatus {
+  DRAFT
+  QUEUED
+  SENDING
+  SENT
+  FAILED
+}
+
 enum EmailEventType {
   OPEN
   CLICK
@@ -270,6 +283,7 @@ model User {
   emailContacts            EmailContact[]
   emailTemplates           EmailTemplate[]
   emailAutomations         EmailAutomation[]
+  emailBroadcasts          EmailBroadcast[]
   emailLists               EmailList[]
   emailTags                EmailTag[]
   emailSends               EmailSend[]
@@ -1076,6 +1090,7 @@ model EmailList {
 
   advertiser User     @relation(fields: [advertiserId], references: [id], onDelete: Cascade)
   campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  broadcasts EmailBroadcast[]
 
   @@unique([advertiserId, campaignId])
   @@index([advertiserId])
@@ -1096,6 +1111,7 @@ model EmailTemplate {
   advertiser User                  @relation(fields: [advertiserId], references: [id], onDelete: Cascade)
   steps      EmailAutomationStep[]
   sends      EmailSend[]
+  broadcasts EmailBroadcast[]
 
   @@index([advertiserId])
   @@map("email_templates")
@@ -1152,6 +1168,34 @@ model EmailAutomationStep {
   @@map("email_automation_steps")
 }
 
+model EmailBroadcast {
+  id              String                     @id @default(cuid())
+  advertiserId    String                     @map("advertiser_id")
+  name            String
+  templateId      String                     @map("template_id")
+  audienceType    EmailBroadcastAudienceType @map("audience_type")
+  listId          String?                    @map("list_id")
+  tagIds          Json?                      @map("tag_ids")
+  allSubscribers  Boolean                    @default(false) @map("all_subscribers")
+  status          EmailBroadcastStatus       @default(DRAFT)
+  scheduledAt     DateTime?                  @map("scheduled_at")
+  recipientCount  Int                        @default(0) @map("recipient_count")
+  sentCount       Int                        @default(0) @map("sent_count")
+  failedCount     Int                        @default(0) @map("failed_count")
+  createdAt       DateTime                   @default(now()) @map("created_at")
+  updatedAt       DateTime                   @updatedAt @map("updated_at")
+
+  advertiser User          @relation(fields: [advertiserId], references: [id], onDelete: Cascade)
+  template   EmailTemplate @relation(fields: [templateId], references: [id], onDelete: Restrict)
+  list       EmailList?    @relation(fields: [listId], references: [id], onDelete: SetNull)
+  sends      EmailSend[]
+
+  @@index([advertiserId])
+  @@index([advertiserId, status])
+  @@index([listId])
+  @@map("email_broadcasts")
+}
+
 model EmailSend {
   id           String          @id @default(cuid())
   advertiserId String          @map("advertiser_id")
@@ -1159,6 +1203,7 @@ model EmailSend {
   automationId String?         @map("automation_id")
   stepId       String?         @map("step_id")
   leadId       String?         @map("lead_id")
+  broadcastId  String?         @map("broadcast_id")
   templateId   String          @map("template_id")
   status       EmailSendStatus @default(QUEUED)
   scheduledAt  DateTime        @map("scheduled_at")
@@ -1174,6 +1219,7 @@ model EmailSend {
   automation EmailAutomation?     @relation(fields: [automationId], references: [id], onDelete: SetNull)
   step       EmailAutomationStep? @relation(fields: [stepId], references: [id], onDelete: SetNull)
   lead       Lead?                @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  broadcast  EmailBroadcast?      @relation(fields: [broadcastId], references: [id], onDelete: SetNull)
   template   EmailTemplate        @relation(fields: [templateId], references: [id], onDelete: Restrict)
   events     EmailEvent[]
 
@@ -1181,6 +1227,7 @@ model EmailSend {
   @@index([advertiserId])
   @@index([status, scheduledAt])
   @@index([contactId])
+  @@index([broadcastId])
   @@map("email_sends")
 }
 
