@@ -38,9 +38,6 @@ function EmailNodeComponent({ data }: NodeProps) {
         ) : null}
       </div>
       <p className="truncate text-sm font-semibold text-slate-900">{d.templateName}</p>
-      {d.tagName ? (
-        <p className="mt-1 truncate text-[11px] text-amber-700">+ {d.tagName}</p>
-      ) : null}
       <Handle
         type="source"
         position={Position.Bottom}

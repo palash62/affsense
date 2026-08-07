@@ -251,6 +251,78 @@ html {
   box-shadow: 0 0 70px #4d3dff38;
 }
 
+.vslLanding .hero-video {
+  overflow: hidden;
+}
+
+.vslLanding .hero-video-frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 18px;
+  background: #060914;
+}
+
+.vslLanding .hero-video-frame iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+}
+
+.vslLanding .hero-video-poster {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  cursor: pointer;
+  background: #060914;
+  overflow: hidden;
+}
+
+.vslLanding .hero-video-poster-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* Fit subject + full STRATEGY text card (avoid cutting left-side copy) */
+  object-position: 42% 30%;
+  transform: scale(1.08);
+  transform-origin: 42% 30%;
+  display: block;
+}
+
+.vslLanding .hero-video-play {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 68px;
+  height: 68px;
+  border-radius: 999px;
+  color: #fff;
+  background: linear-gradient(135deg, #8b3dff, #008cff);
+  box-shadow: 0 10px 30px #4d6bff66;
+  transform: translate(-50%, -50%);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.vslLanding .hero-video-poster:hover .hero-video-play {
+  transform: translate(-50%, -50%) scale(1.06);
+  box-shadow: 0 14px 36px #4d6bff88;
+}
+
+.vslLanding .hero-video-play svg {
+  margin-left: 3px;
+}
+
 .vslLanding .screen {
   background: #060914;
   border-radius: 20px;

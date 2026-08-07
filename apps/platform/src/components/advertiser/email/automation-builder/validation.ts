@@ -48,6 +48,14 @@ export function validateAutomation(
 
   const templateIds = new Set(templates.map((t) => t.id));
   const tagIds = new Set(tags.map((t) => t.id));
+
+  if (form.openTagId && tagIds.size > 0 && !tagIds.has(form.openTagId)) {
+    issues.push({ path: "openTagId", message: "Open tag not found" });
+  }
+  if (form.clickTagId && tagIds.size > 0 && !tagIds.has(form.clickTagId)) {
+    issues.push({ path: "clickTagId", message: "Click tag not found" });
+  }
+
   steps.forEach((step, i) => {
     if (!step.templateId) {
       issues.push({
@@ -59,13 +67,6 @@ export function validateAutomation(
       issues.push({
         path: `steps.${i}.templateId`,
         message: `Email ${i + 1}: template not found`,
-        stepClientId: step.clientId,
-      });
-    }
-    if (step.tagId && tagIds.size > 0 && !tagIds.has(step.tagId)) {
-      issues.push({
-        path: `steps.${i}.tagId`,
-        message: `Email ${i + 1}: tag not found`,
         stepClientId: step.clientId,
       });
     }

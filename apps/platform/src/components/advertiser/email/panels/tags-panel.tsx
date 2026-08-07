@@ -149,7 +149,7 @@ export function TagsPanel() {
   return (
     <EmailModuleShell
       title="Tags"
-      description="Label subscribers for flexible filtering. Tags are separate from campaign lists."
+      description="Label subscribers for flexible filtering. Tag subscribers manually or via automation open/click — the Subscribers count is how many contacts have each tag."
       breadcrumbs={[
         { label: "Autoresponder", href: "/advertiser/email" },
         { label: "Tags" },
@@ -196,7 +196,9 @@ export function TagsPanel() {
                   <TableCell colSpan={3} className="h-40 px-6 text-center">
                     <p className="text-slate-600">No tags yet.</p>
                     <p className="mt-1 text-sm text-slate-500">
-                      Create a tag, then apply it to subscribers from the Subscribers page.
+                      Create a tag, then connect it as Tag on open / Tag on click in an
+                      automation — or apply it on the Subscribers page. The Subscribers
+                      count rises when contacts receive the tag.
                     </p>
                     <div className="mt-4 flex justify-center">
                       <Button type="button" onClick={openCreate}>

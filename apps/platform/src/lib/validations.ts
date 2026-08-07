@@ -764,6 +764,8 @@ export const emailAutomationSchema = z.object({
   campaignId: z.string().trim().min(1, "Select a list"),
   fromName: z.string().trim().min(2).max(80),
   replyTo: z.string().email().optional().nullable().or(z.literal("")),
+  openTagId: z.union([z.string().cuid(), z.literal(""), z.null()]).optional(),
+  clickTagId: z.union([z.string().cuid(), z.literal(""), z.null()]).optional(),
   steps: z.array(emailAutomationStepSchema).min(1).max(20),
 });
 
@@ -773,6 +775,8 @@ export const emailAutomationUpdateSchema = z.object({
   campaignId: z.string().trim().min(1, "Select a list").optional(),
   fromName: z.string().trim().min(2).max(80).optional(),
   replyTo: z.string().email().optional().nullable().or(z.literal("")),
+  openTagId: z.union([z.string().cuid(), z.literal(""), z.null()]).optional(),
+  clickTagId: z.union([z.string().cuid(), z.literal(""), z.null()]).optional(),
   status: z.enum(["DRAFT", "ACTIVE", "PAUSED"]).optional(),
   steps: z.array(emailAutomationStepSchema).min(1).max(20).optional(),
 });

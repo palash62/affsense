@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { HeroDemoVideo } from "./hero-demo-video";
 
 export function MarketingHero() {
   return (
@@ -23,33 +24,7 @@ export function MarketingHero() {
           </div>
         </div>
 
-        <div className="mockup">
-          <div className="screen">
-            <div className="stats">
-              <div className="stat">
-                <small>Verified Leads</small>
-                <b>8,742</b>
-              </div>
-              <div className="stat">
-                <small>Avg CPL</small>
-                <b>$1.24</b>
-              </div>
-              <div className="stat">
-                <small>Lead Score</small>
-                <b>92%</b>
-              </div>
-              <div className="stat">
-                <small>Campaign ROI</small>
-                <b>248%</b>
-              </div>
-            </div>
-            <div className="chart" />
-            <div className="mini-row">
-              <div className="mini">✅ Tier 1 Targeting</div>
-              <div className="mini">✅ Custom CPL Bidding</div>
-            </div>
-          </div>
-        </div>
+        <HeroDemoVideo />
       </div>
     </section>
   );

@@ -32,7 +32,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import type { AutomationBuilderState } from "./use-automation-builder-state";
 import type { StepStat } from "./types";
-import { DEFAULT_EMAIL_HTML, TRIGGER_LABELS, daysToMinutes, minutesToDays } from "./types";
+import { DEFAULT_EMAIL_HTML, daysToMinutes, minutesToDays } from "./types";
 import { EmailComposeEditor } from "./email-compose-editor";
 
 type Props = {
@@ -179,7 +179,6 @@ function EmailContentForm({ state }: { state: AutomationBuilderState }) {
     steps,
     selection,
     templates,
-    tags,
     templateContents,
     updateStep,
     updateStepTemplate,
@@ -424,72 +423,6 @@ function EmailContentForm({ state }: { state: AutomationBuilderState }) {
           )}
         </PanelSection>
 
-        <PanelSection
-          title="Add tag"
-          description="Optional. Applied to the subscriber when this email is sent."
-        >
-          {tags.length === 0 ? (
-            <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs text-slate-600">
-              No tags yet.{" "}
-              <a
-                href="/advertiser/email/tags"
-                className="font-medium text-[var(--theme-primary)] underline underline-offset-2"
-              >
-                Create a tag
-              </a>{" "}
-              to label contacts from this email.
-            </div>
-          ) : (
-            <div>
-              <FieldLabel>Tag</FieldLabel>
-              <Select
-                value={selectedStep.tagId || "__none__"}
-                onValueChange={(v) => {
-                  if (!v || v === "__none__") {
-                    updateStep(selectedStep.clientId, { tagId: "" });
-                    return;
-                  }
-                  updateStep(selectedStep.clientId, { tagId: v });
-                }}
-              >
-                <SelectTrigger className="mt-1.5 h-10 w-full">
-                  <SelectValue placeholder="No tag">
-                    {selectedStep.tagId
-                      ? (() => {
-                          const selectedTag = tags.find((t) => t.id === selectedStep.tagId);
-                          return selectedTag ? (
-                            <span className="inline-flex items-center gap-2">
-                              <span
-                                className="inline-block size-2 shrink-0 rounded-full"
-                                style={{
-                                  backgroundColor: selectedTag.color ?? "#334155",
-                                }}
-                              />
-                              {selectedTag.name}
-                            </span>
-                          ) : (
-                            "Unknown tag"
-                          );
-                        })()
-                      : "No tag"}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none__">No tag</SelectItem>
-                  {tags.map((t) => (
-                    <SelectItem key={t.id} value={t.id}>
-                      {t.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FieldHint>
-                Tags label the subscriber — they do not change list membership.
-              </FieldHint>
-            </div>
-          )}
-        </PanelSection>
-
         <PanelSection title="Test send" description="Send a preview to your inbox before publishing.">
           <div>
             <FieldLabel>Test email</FieldLabel>
@@ -645,7 +578,7 @@ function WaitContentForm({ state }: { state: AutomationBuilderState }) {
               </Select>
             </div>
             <FieldHint>
-              Measured from the automation trigger before this email sends.
+              Measured from when the lead enters this automation before this email sends.
               {days === 0 ? " Immediate (no delay)." : null}
             </FieldHint>
           </div>
@@ -688,6 +621,7 @@ export function InspectorPanel({ state }: Props) {
     steps,
     selection,
     lists,
+    tags,
     stats,
     validateFlash,
     issues,
@@ -896,7 +830,7 @@ export function InspectorPanel({ state }: Props) {
             >
               <PanelSection
                 title="Flow"
-                description="Name this automation and choose when people enter."
+                description="Name this automation. People enter from the audience list’s campaign."
               >
                 <div>
                   <FieldLabel required>Automation name</FieldLabel>
@@ -907,37 +841,11 @@ export function InspectorPanel({ state }: Props) {
                     placeholder="Welcome sequence"
                   />
                 </div>
-                <div>
-                  <FieldLabel required>Trigger</FieldLabel>
-                  <Select
-                    value={form.trigger}
-                    onValueChange={(v) => {
-                      if (v === "LEAD_CAPTURED" || v === "LEAD_APPROVED") {
-                        setForm({ trigger: v });
-                      }
-                    }}
-                  >
-                    <SelectTrigger className="mt-1.5 h-10 w-full">
-                      <SelectValue>
-                        {TRIGGER_LABELS[form.trigger] ?? form.trigger}
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {(Object.keys(TRIGGER_LABELS) as Array<keyof typeof TRIGGER_LABELS>).map(
-                        (key) => (
-                          <SelectItem key={key} value={key}>
-                            {TRIGGER_LABELS[key]}
-                          </SelectItem>
-                        ),
-                      )}
-                    </SelectContent>
-                  </Select>
-                </div>
               </PanelSection>
 
               <PanelSection
                 title="Audience"
-                description="Connect a list — people who join it enter this flow."
+                description="Connect a list — submitted leads for that list’s campaign enter this flow."
               >
                 <div>
                   <FieldLabel required>Audience list</FieldLabel>
@@ -980,16 +888,106 @@ export function InspectorPanel({ state }: Props) {
                     </FieldHint>
                   ) : !form.listId ? (
                     <FieldHint>
-                      Required — people who join this list enter when the trigger fires.
+                      Required — people who join this list enter when a lead is submitted
+                      for its campaign.
                     </FieldHint>
                   ) : (
                     <FieldHint tone="success">
                       {selectedList?.campaignName?.trim()
                         ? `Feeds from lead campaign: ${selectedList.campaignName.trim()}`
-                        : "Subscribers on this list enter when a matching lead event occurs."}
+                        : "Subscribers on this list enter when a matching lead is submitted."}
                     </FieldHint>
                   )}
                 </div>
+              </PanelSection>
+
+              <PanelSection
+                title="Tags on engagement"
+                description="Optional. Applied when someone opens or clicks an email in this automation."
+              >
+                {tags.length === 0 ? (
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs text-slate-600">
+                    No tags yet.{" "}
+                    <a
+                      href="/advertiser/email/tags"
+                      className="font-medium text-[var(--theme-primary)] underline underline-offset-2"
+                    >
+                      Create a tag
+                    </a>{" "}
+                    to label contacts on open or click.
+                  </div>
+                ) : (
+                  <>
+                    <div>
+                      <FieldLabel>Tag on open</FieldLabel>
+                      <Select
+                        value={form.openTagId || "__none__"}
+                        onValueChange={(v) => {
+                          if (!v || v === "__none__") {
+                            setForm({ openTagId: "" });
+                            return;
+                          }
+                          setForm({ openTagId: v });
+                        }}
+                      >
+                        <SelectTrigger className="mt-1.5 h-10 w-full">
+                          <SelectValue placeholder="No tag">
+                            {form.openTagId
+                              ? (() => {
+                                  const selectedTag = tags.find((t) => t.id === form.openTagId);
+                                  return selectedTag ? selectedTag.name : "Unknown tag";
+                                })()
+                              : "No tag"}
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__none__">No tag</SelectItem>
+                          {tags.map((t) => (
+                            <SelectItem key={t.id} value={t.id}>
+                              {t.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <FieldLabel>Tag on click</FieldLabel>
+                      <Select
+                        value={form.clickTagId || "__none__"}
+                        onValueChange={(v) => {
+                          if (!v || v === "__none__") {
+                            setForm({ clickTagId: "" });
+                            return;
+                          }
+                          setForm({ clickTagId: v });
+                        }}
+                      >
+                        <SelectTrigger className="mt-1.5 h-10 w-full">
+                          <SelectValue placeholder="No tag">
+                            {form.clickTagId
+                              ? (() => {
+                                  const selectedTag = tags.find((t) => t.id === form.clickTagId);
+                                  return selectedTag ? selectedTag.name : "Unknown tag";
+                                })()
+                              : "No tag"}
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__none__">No tag</SelectItem>
+                          {tags.map((t) => (
+                            <SelectItem key={t.id} value={t.id}>
+                              {t.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <FieldHint>
+                      When someone opens or clicks an email in this automation, they receive
+                      that tag — the Tags page Subscribers count goes up.
+                    </FieldHint>
+                  </>
+                )}
               </PanelSection>
 
               <PanelSection
@@ -1026,19 +1024,35 @@ export function InspectorPanel({ state }: Props) {
               className="mt-0 min-h-0 flex-1 overflow-y-auto bg-white px-4 py-4"
             >
               {stats.length > 0 ? (
-                <div className="space-y-4">
-                  <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
-                    Email steps
-                  </p>
-                  {stats.map((s) => (
-                    <div key={s.stepId} className="space-y-2">
-                      <p className="text-xs font-medium text-slate-600">
-                        Step {s.order + 1}
-                      </p>
-                      <StepStatistics stat={s} />
+                (() => {
+                  const sent = stats.reduce((n, s) => n + s.sent, 0);
+                  const opens = stats.reduce((n, s) => n + s.opens, 0);
+                  const clicks = stats.reduce((n, s) => n + s.clicks, 0);
+                  return (
+                    <div className="space-y-3">
+                      <div>
+                        <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
+                          Totals
+                        </p>
+                        <p className="mt-0.5 text-xs text-slate-500">
+                          All emails in this automation
+                        </p>
+                      </div>
+                      <StepStatistics
+                        stat={{
+                          stepId: "totals",
+                          order: 0,
+                          delayMinutes: 0,
+                          sent,
+                          opens,
+                          clicks,
+                          openRate: sent > 0 ? Math.round((opens / sent) * 100) : 0,
+                          clickRate: sent > 0 ? Math.round((clicks / sent) * 100) : 0,
+                        }}
+                      />
                     </div>
-                  ))}
-                </div>
+                  );
+                })()
               ) : (
                 <StatsEmpty
                   icon={BarChart3}

@@ -11,7 +11,6 @@ import {
 } from "../lib/render-template";
 import { signTrackingToken } from "../lib/tokens";
 import { sendMarketingEmail, getDefaultFromEmail } from "./ses-sender.service";
-import { attachTagToContact } from "./tag.service";
 import { MAX_SEND_ATTEMPTS } from "../config/defaults";
 
 export async function processEmailSend(sendId: string) {
@@ -165,17 +164,6 @@ export async function processEmailSend(sendId: string) {
       },
     });
 
-    const tagId = send.step?.tagId;
-    if (tagId) {
-      try {
-        await attachTagToContact(send.advertiserId, tagId, send.contactId);
-      } catch (err) {
-        console.error(
-          `[email-send] apply tag failed send=${sendId} tag=${tagId}:`,
-          err instanceof Error ? err.message : err,
-        );
-      }
-    }
     return;
   }
 

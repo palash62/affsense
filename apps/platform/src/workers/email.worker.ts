@@ -22,7 +22,7 @@ function getRedisConnection() {
 const worker = new Worker(
   QUEUE_NAME,
   async (job) => {
-    // Legacy tag-action jobs are ignored; tags apply on email send now.
+    // Legacy tag-action jobs are ignored; tags apply on open/click via tracking.
     if (job.name === "tag-action") {
       return;
     }

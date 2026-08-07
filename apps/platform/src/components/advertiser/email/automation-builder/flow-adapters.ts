@@ -6,7 +6,7 @@ import type {
   TagOption,
   Template,
 } from "./types";
-import { TRIGGER_LABELS, formatDelay } from "./types";
+import { formatDelay } from "./types";
 
 export const NODE = {
   trigger: "trigger",
@@ -22,8 +22,9 @@ const X = 0;
 const Y_GAP = 110;
 
 export type TriggerNodeData = {
-  trigger: AutomationForm["trigger"];
-  label: string;
+  title: string;
+  openTagName: string | null;
+  clickTagName: string | null;
   selected: boolean;
 };
 
@@ -37,7 +38,6 @@ export type EmailNodeData = {
   clientId: string;
   order: number;
   templateName: string;
-  tagName: string | null;
   hasError: boolean;
   selected: boolean;
 };
@@ -66,14 +66,17 @@ export function stepsToFlow(
 ): { nodes: Node[]; edges: Edge[] } {
   const templateMap = new Map(templates.map((t) => [t.id, t.name]));
   const tagMap = new Map(tags.map((t) => [t.id, t.name]));
+  const openTagName = form.openTagId ? (tagMap.get(form.openTagId) ?? "Tag") : null;
+  const clickTagName = form.clickTagId ? (tagMap.get(form.clickTagId) ?? "Tag") : null;
   const nodes: Node[] = [
     {
       id: TRIGGER_ID,
       type: NODE.trigger,
       position: { x: X, y: 0 },
       data: {
-        trigger: form.trigger,
-        label: TRIGGER_LABELS[form.trigger],
+        title: "Workflow trigger",
+        openTagName,
+        clickTagName,
         selected: selection.kind === "trigger",
       } satisfies TriggerNodeData,
       draggable: false,
@@ -125,7 +128,6 @@ export function stepsToFlow(
         templateName: step.templateId
           ? (templateMap.get(step.templateId) ?? "Unknown template")
           : "No template",
-        tagName: step.tagId ? (tagMap.get(step.tagId) ?? "Tag") : null,
         hasError: invalidStepIds.has(step.clientId),
         selected: selection.kind === "email" && selection.clientId === step.clientId,
       } satisfies EmailNodeData,

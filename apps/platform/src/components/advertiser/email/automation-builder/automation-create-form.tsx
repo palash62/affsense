@@ -5,14 +5,7 @@ import { ArrowRight, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { TRIGGER_LABELS, type Trigger } from "./types";
+import type { Trigger } from "./types";
 
 type Props = {
   onContinue: (values: { name: string; trigger: Trigger }) => void;
@@ -20,7 +13,6 @@ type Props = {
 
 export function AutomationCreateForm({ onContinue }: Props) {
   const [name, setName] = useState("");
-  const [trigger, setTrigger] = useState<Trigger>("LEAD_CAPTURED");
   const [error, setError] = useState("");
 
   function submit(e: React.FormEvent) {
@@ -31,7 +23,7 @@ export function AutomationCreateForm({ onContinue }: Props) {
       return;
     }
     setError("");
-    onContinue({ name: trimmed, trigger });
+    onContinue({ name: trimmed, trigger: "LEAD_CAPTURED" });
   }
 
   return (
@@ -45,7 +37,8 @@ export function AutomationCreateForm({ onContinue }: Props) {
             Create automation
           </h1>
           <p className="mt-1 text-sm text-slate-500">
-            Name it, pick a trigger, then build your email sequence on the canvas.
+            Name it, then build your email sequence on the canvas. Leads enter from the
+            audience list’s campaign.
           </p>
         </div>
 
@@ -60,26 +53,6 @@ export function AutomationCreateForm({ onContinue }: Props) {
               autoFocus
               className="mt-1.5"
             />
-          </div>
-          <div>
-            <Label>Trigger</Label>
-            <Select
-              value={trigger}
-              onValueChange={(v) => {
-                if (v === "LEAD_CAPTURED" || v === "LEAD_APPROVED") setTrigger(v);
-              }}
-            >
-              <SelectTrigger className="mt-1.5 w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {(Object.keys(TRIGGER_LABELS) as Trigger[]).map((key) => (
-                  <SelectItem key={key} value={key}>
-                    {TRIGGER_LABELS[key]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
           </div>
           {error ? <p className="text-sm text-red-600">{error}</p> : null}
           <Button type="submit" className="w-full gap-2">

@@ -96,6 +96,8 @@ export function useAutomationBuilderState({
     listId: "",
     fromName: "",
     replyTo: "",
+    openTagId: "",
+    clickTagId: "",
   }));
   const [steps, setStepsState] = useState<AutomationStep[]>([]);
   const [templateContents, setTemplateContents] = useState<Record<string, TemplateContent>>({});
@@ -274,11 +276,13 @@ export function useAutomationBuilderState({
         skipHistoryRef.current = true;
         setFormState({
           name: a.name,
-          trigger: a.trigger,
+          trigger: "LEAD_CAPTURED",
           listId:
             lists.find((l) => l.campaignId === (a.campaignId ?? ""))?.id ?? "",
           fromName: a.fromName,
           replyTo: a.replyTo ?? "",
+          openTagId: a.openTagId ?? "",
+          clickTagId: a.clickTagId ?? "",
         });
         const contents: Record<string, TemplateContent> = {};
         const rawSteps = (
@@ -286,7 +290,6 @@ export function useAutomationBuilderState({
             id: string;
             type?: string | null;
             templateId?: string | null;
-            tagId?: string | null;
             delayMinutes: number;
             order: number;
             fromName?: string | null;
@@ -346,15 +349,17 @@ export function useAutomationBuilderState({
       lists.find((l) => l.id === form.listId)?.campaignId?.trim() ?? "";
     return {
       name: form.name.trim(),
-      trigger: form.trigger,
+      trigger: "LEAD_CAPTURED" as const,
       campaignId,
       fromName: form.fromName.trim(),
       replyTo: form.replyTo.trim() || null,
+      openTagId: form.openTagId.trim() || null,
+      clickTagId: form.clickTagId.trim() || null,
       steps: steps.map((s, i) => ({
         ...(s.serverId ? { id: s.serverId } : {}),
         type: "SEND_EMAIL" as const,
         templateId: s.templateId,
-        tagId: s.tagId.trim() || null,
+        tagId: null,
         delayMinutes: s.delayMinutes,
         order: i,
         fromName: s.fromName.trim() || null,
@@ -369,7 +374,6 @@ export function useAutomationBuilderState({
         id: string;
         type?: string | null;
         templateId?: string | null;
-        tagId?: string | null;
         delayMinutes: number;
         order: number;
         fromName?: string | null;

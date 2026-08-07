@@ -38,8 +38,6 @@ export type AutomationStep = {
   clientId: string;
   type: AutomationStepType;
   templateId: string;
-  /** Optional tag applied to the contact when this email is sent. */
-  tagId: string;
   delayMinutes: number;
   order: number;
   fromName: string;
@@ -55,6 +53,10 @@ export type AutomationForm = {
   listId: string;
   fromName: string;
   replyTo: string;
+  /** Optional tag applied on first open of emails in this automation. */
+  openTagId: string;
+  /** Optional tag applied on first click of emails in this automation. */
+  clickTagId: string;
 };
 
 export type Selection =
@@ -128,7 +130,6 @@ export function createEmptyStep(order: number, delayMinutes = 0): AutomationStep
     clientId: newStepClientId(),
     type: "SEND_EMAIL",
     templateId: "",
-    tagId: "",
     delayMinutes,
     order,
     fromName: "",
@@ -137,14 +138,13 @@ export function createEmptyStep(order: number, delayMinutes = 0): AutomationStep
 }
 
 /**
- * Merge legacy APPLY_TAG steps onto the previous email and drop APPLY/REMOVE tag steps.
+ * Map server steps to SEND_EMAIL-only builder steps; drop legacy tag action steps.
  */
 export function normalizeServerStepsToEmailOnly<
   T extends {
     id: string;
     type?: string | null;
     templateId?: string | null;
-    tagId?: string | null;
     delayMinutes: number;
     order: number;
     fromName?: string | null;
@@ -156,27 +156,17 @@ export function normalizeServerStepsToEmailOnly<
 
   for (const s of sorted) {
     const type = s.type ?? "SEND_EMAIL";
-    if (type === "SEND_EMAIL") {
-      emails.push({
-        clientId: s.id,
-        serverId: s.id,
-        type: "SEND_EMAIL",
-        templateId: s.templateId ?? "",
-        tagId: s.tagId ?? "",
-        delayMinutes: s.delayMinutes,
-        order: emails.length,
-        fromName: s.fromName ?? "",
-        fromEmail: s.fromEmail ?? "",
-      });
-      continue;
-    }
-    if (type === "APPLY_TAG" && s.tagId) {
-      const prev = emails[emails.length - 1];
-      if (prev && !prev.tagId) {
-        prev.tagId = s.tagId;
-      }
-    }
-    // REMOVE_TAG and leftover APPLY_TAG without a prior email: drop
+    if (type !== "SEND_EMAIL") continue;
+    emails.push({
+      clientId: s.id,
+      serverId: s.id,
+      type: "SEND_EMAIL",
+      templateId: s.templateId ?? "",
+      delayMinutes: s.delayMinutes,
+      order: emails.length,
+      fromName: s.fromName ?? "",
+      fromEmail: s.fromEmail ?? "",
+    });
   }
 
   return emails.map((s, i) => ({ ...s, order: i }));

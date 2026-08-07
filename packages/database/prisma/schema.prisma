@@ -1042,9 +1042,11 @@ model EmailTag {
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
-  advertiser  User                  @relation(fields: [advertiserId], references: [id], onDelete: Cascade)
-  contactTags EmailContactTag[]
-  steps       EmailAutomationStep[]
+  advertiser           User                  @relation(fields: [advertiserId], references: [id], onDelete: Cascade)
+  contactTags          EmailContactTag[]
+  steps                EmailAutomationStep[]
+  automationsOpenTag   EmailAutomation[]     @relation("AutomationOpenTag")
+  automationsClickTag  EmailAutomation[]     @relation("AutomationClickTag")
 
   @@unique([advertiserId, name])
   @@index([advertiserId])
@@ -1108,15 +1110,21 @@ model EmailAutomation {
   status       EmailAutomationStatus @default(DRAFT)
   fromName     String                @map("from_name")
   replyTo      String?               @map("reply_to")
+  openTagId    String?               @map("open_tag_id")
+  clickTagId   String?               @map("click_tag_id")
   createdAt    DateTime              @default(now()) @map("created_at")
   updatedAt    DateTime              @updatedAt @map("updated_at")
 
   advertiser User                  @relation(fields: [advertiserId], references: [id], onDelete: Cascade)
+  openTag    EmailTag?             @relation("AutomationOpenTag", fields: [openTagId], references: [id], onDelete: SetNull)
+  clickTag   EmailTag?             @relation("AutomationClickTag", fields: [clickTagId], references: [id], onDelete: SetNull)
   steps      EmailAutomationStep[]
   sends      EmailSend[]
 
   @@index([advertiserId])
   @@index([advertiserId, status])
+  @@index([openTagId])
+  @@index([clickTagId])
   @@map("email_automations")
 }
 

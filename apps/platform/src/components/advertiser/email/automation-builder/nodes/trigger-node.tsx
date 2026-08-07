@@ -8,6 +8,7 @@ import type { TriggerNodeData } from "../flow-adapters";
 
 function TriggerNodeComponent({ data }: NodeProps) {
   const d = data as TriggerNodeData;
+  const hasTags = Boolean(d.openTagName || d.clickTagName);
   return (
     <div
       className={cn(
@@ -17,15 +18,20 @@ function TriggerNodeComponent({ data }: NodeProps) {
           : "border-slate-200 hover:border-slate-300",
       )}
     >
-      <div className="mb-1.5 flex items-center gap-2">
+      <div className={cn("flex items-center gap-2", hasTags && "mb-1.5")}>
         <span className="flex size-7 items-center justify-center rounded-lg bg-amber-50 text-amber-700">
           <Zap className="size-3.5" />
         </span>
         <span className="text-[11px] font-semibold tracking-wide text-slate-500 uppercase">
-          Trigger
+          {d.title}
         </span>
       </div>
-      <p className="text-sm font-semibold text-slate-900">{d.label}</p>
+      {d.openTagName ? (
+        <p className="truncate text-[11px] text-amber-700">Open: {d.openTagName}</p>
+      ) : null}
+      {d.clickTagName ? (
+        <p className="truncate text-[11px] text-amber-700">Click: {d.clickTagName}</p>
+      ) : null}
       <Handle
         type="source"
         position={Position.Bottom}

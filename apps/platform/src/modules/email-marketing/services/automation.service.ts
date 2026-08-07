@@ -40,7 +40,7 @@ async function assertStepsValid(
     if (type !== "SEND_EMAIL") {
       throw new AppError(
         "VALIDATION_ERROR",
-        "Only email steps are supported. Add a tag on the email action instead.",
+        "Only email steps are supported.",
         422,
       );
     }
@@ -53,13 +53,25 @@ async function assertStepsValid(
     if (!template) {
       throw new AppError("NOT_FOUND", `Template ${step.templateId} not found`, 404);
     }
-    if (step.tagId) {
-      const tag = await prisma.emailTag.findFirst({
-        where: { id: step.tagId, advertiserId },
-      });
-      if (!tag) {
-        throw new AppError("NOT_FOUND", `Tag ${step.tagId} not found`, 404);
-      }
+  }
+}
+
+async function assertEngagementTagsValid(
+  advertiserId: string,
+  openTagId?: string | null,
+  clickTagId?: string | null,
+) {
+  for (const [label, tagId] of [
+    ["open", openTagId],
+    ["click", clickTagId],
+  ] as const) {
+    const id = tagId?.trim();
+    if (!id) continue;
+    const tag = await prisma.emailTag.findFirst({
+      where: { id, advertiserId },
+    });
+    if (!tag) {
+      throw new AppError("NOT_FOUND", `${label} tag not found`, 404);
     }
   }
 }
@@ -70,10 +82,15 @@ function toStepCreateData(s: AutomationStepInput) {
     type: "SEND_EMAIL" as const,
     delayMinutes: s.delayMinutes,
     templateId: s.templateId!,
-    tagId: s.tagId?.trim() || null,
+    tagId: null as string | null,
     fromName: s.fromName?.trim() || null,
     fromEmail: s.fromEmail?.trim() || null,
   };
+}
+
+function normalizeTagId(value?: string | null) {
+  const id = value?.trim();
+  return id ? id : null;
 }
 
 export async function listAutomations(advertiserId: string) {
@@ -120,6 +137,8 @@ export async function createAutomation(
     campaignId?: string | null;
     fromName: string;
     replyTo?: string | null;
+    openTagId?: string | null;
+    clickTagId?: string | null;
     steps: AutomationStepInput[];
   },
 ) {
@@ -141,6 +160,7 @@ export async function createAutomation(
   }
 
   await assertStepsValid(advertiserId, data.steps);
+  await assertEngagementTagsValid(advertiserId, data.openTagId, data.clickTagId);
 
   return prisma.emailAutomation.create({
     data: {
@@ -150,6 +170,8 @@ export async function createAutomation(
       campaignId: data.campaignId ?? null,
       fromName: data.fromName,
       replyTo: data.replyTo ?? null,
+      openTagId: normalizeTagId(data.openTagId),
+      clickTagId: normalizeTagId(data.clickTagId),
       status: "DRAFT",
       steps: {
         create: data.steps.map((s) => toStepCreateData(s)),
@@ -170,6 +192,8 @@ export async function updateAutomation(
     campaignId: string | null;
     fromName: string;
     replyTo: string | null;
+    openTagId: string | null;
+    clickTagId: string | null;
     status: EmailAutomationStatus;
     steps: AutomationStepInput[];
   }>,
@@ -227,6 +251,14 @@ export async function updateAutomation(
     });
   }
 
+  if (data.openTagId !== undefined || data.clickTagId !== undefined) {
+    await assertEngagementTagsValid(
+      advertiserId,
+      data.openTagId !== undefined ? data.openTagId : existing.openTagId,
+      data.clickTagId !== undefined ? data.clickTagId : existing.clickTagId,
+    );
+  }
+
   if (data.status === "PAUSED") {
     await pauseQueuedSends(id);
   }
@@ -239,6 +271,10 @@ export async function updateAutomation(
       campaignId: data.campaignId !== undefined ? data.campaignId : existing.campaignId,
       fromName: data.fromName ?? existing.fromName,
       replyTo: data.replyTo !== undefined ? data.replyTo : existing.replyTo,
+      openTagId:
+        data.openTagId !== undefined ? normalizeTagId(data.openTagId) : existing.openTagId,
+      clickTagId:
+        data.clickTagId !== undefined ? normalizeTagId(data.clickTagId) : existing.clickTagId,
       status: data.status ?? existing.status,
     },
     include: {
@@ -281,7 +317,7 @@ export async function activateAutomation(advertiserId: string, id: string) {
     if (step.type !== "SEND_EMAIL") {
       throw new AppError(
         "VALIDATION_ERROR",
-        "Remove Apply/Remove tag steps — add an optional tag on each email instead",
+        "Only email steps are supported",
         422,
       );
     }
