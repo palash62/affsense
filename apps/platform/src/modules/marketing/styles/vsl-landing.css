@@ -235,6 +235,17 @@ html {
   flex-wrap: wrap;
 }
 
+.vslLanding .hero-visual {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  min-width: 0;
+}
+
+.vslLanding .hero-visual .hero-actions {
+  justify-content: center;
+}
+
 .vslLanding .video-btn {
   padding: 15px 22px;
   border: 1px solid #2c355f;

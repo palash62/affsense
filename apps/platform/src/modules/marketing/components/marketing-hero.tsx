@@ -14,6 +14,10 @@ export function MarketingHero() {
             LeadVix helps advertisers buy 100% verified lead opt-ins from $0.70–$2.50 per lead,
             instead of wasting budget on expensive clicks that may never convert.
           </p>
+        </div>
+
+        <div className="hero-visual">
+          <HeroDemoVideo />
           <div className="hero-actions">
             <Link href="/register" className="btn">
               Join Now →
@@ -23,8 +27,6 @@ export function MarketingHero() {
             </a>
           </div>
         </div>
-
-        <HeroDemoVideo />
       </div>
     </section>
   );
