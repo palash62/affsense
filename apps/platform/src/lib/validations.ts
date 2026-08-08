@@ -896,6 +896,25 @@ export const updateSendingIdentityFromEmailSchema = z.object({
   fromEmail: z.string().trim().min(3).max(254),
 });
 
+export const addSendingMailboxSchema = z.object({
+  action: z.literal("addMailbox"),
+  identityId: z.string().cuid(),
+  fromEmail: z.string().trim().min(3).max(254),
+  fromName: z.string().trim().max(80).optional().nullable(),
+});
+
+export const removeSendingMailboxSchema = z.object({
+  action: z.literal("removeMailbox"),
+  identityId: z.string().cuid(),
+  mailboxId: z.string().cuid(),
+});
+
+export const setDefaultSendingMailboxSchema = z.object({
+  action: z.literal("setDefaultMailbox"),
+  identityId: z.string().cuid(),
+  mailboxId: z.string().cuid(),
+});
+
 export const landingPageCreateSchema = z.object({
   name: z.string().trim().min(2).max(80),
   templateId: z.string().optional(),

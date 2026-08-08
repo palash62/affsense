@@ -9,13 +9,40 @@ import { Label } from "@/components/ui/label";
 
 type Settings = { fromName: string; fromEmail: string; replyTo: string };
 
+type MailboxOption = {
+  id: string;
+  email: string;
+  fromName: string | null;
+  isDefault: boolean;
+};
+
 type IdentityOption = {
   id: string;
   domain: string;
   fromEmail: string;
   verificationStatus: string;
   ready?: boolean;
+  mailboxes?: MailboxOption[];
 };
+
+function flattenVerifiedMailboxes(identities: IdentityOption[]) {
+  return identities
+    .filter((i) => i.verificationStatus === "VERIFIED" || i.ready)
+    .flatMap((i) => {
+      const boxes =
+        i.mailboxes && i.mailboxes.length > 0
+          ? i.mailboxes
+          : [
+              {
+                id: i.id,
+                email: i.fromEmail,
+                fromName: null as string | null,
+                isDefault: true,
+              },
+            ];
+      return boxes.map((m) => ({ ...m, domain: i.domain }));
+    });
+}
 
 export function EmailSettingsPanel() {
   const [settings, setSettings] = useState<Settings>({
@@ -29,9 +56,7 @@ export function EmailSettingsPanel() {
   const [error, setError] = useState("");
   const [provider, setProvider] = useState<string | null>(null);
 
-  const verifiedIdentities = identities.filter(
-    (i) => i.verificationStatus === "VERIFIED" || i.ready,
-  );
+  const verifiedMailboxes = flattenVerifiedMailboxes(identities);
 
   useEffect(() => {
     fetch("/api/v1/advertiser/email/settings")
@@ -108,7 +133,7 @@ export function EmailSettingsPanel() {
         </div>
         <div>
           <Label>Default from email</Label>
-          {verifiedIdentities.length === 0 ? (
+          {verifiedMailboxes.length === 0 ? (
             <p className="mt-1 text-sm text-slate-600">
               No verified sending emails yet.{" "}
               <Link
@@ -127,9 +152,9 @@ export function EmailSettingsPanel() {
               required
             >
               <option value="">Select sending email…</option>
-              {verifiedIdentities.map((i) => (
-                <option key={i.id} value={i.fromEmail}>
-                  {i.fromEmail}
+              {verifiedMailboxes.map((m) => (
+                <option key={m.id} value={m.email}>
+                  {m.email}
                 </option>
               ))}
             </select>
@@ -148,7 +173,7 @@ export function EmailSettingsPanel() {
         </div>
         <Button
           onClick={saveSettings}
-          disabled={saving || verifiedIdentities.length === 0}
+          disabled={saving || verifiedMailboxes.length === 0}
         >
           <Save className="mr-2 h-4 w-4" />
           Save

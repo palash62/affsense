@@ -223,19 +223,74 @@ function mailgunMetaFromDetails(details: MailgunDomainDetails): Prisma.InputJson
   };
 }
 
-export function serializeSendingIdentity<
-  T extends {
+export type SerializedMailbox = {
+  id: string;
+  email: string;
+  fromName: string | null;
+  isDefault: boolean;
+};
+
+type IdentityWithMailboxes = {
+  id: string;
+  domain: string;
+  fromEmail: string;
+  fromName: string;
+  verificationStatus: string;
+  isDefault: boolean;
+  dkimTokens: unknown;
+  createdAt: Date;
+  updatedAt: Date;
+  mailboxes?: Array<{
     id: string;
-    domain: string;
-    fromEmail: string;
-    fromName: string;
-    verificationStatus: string;
+    email: string;
+    fromName: string | null;
     isDefault: boolean;
-    dkimTokens: unknown;
-    createdAt: Date;
-    updatedAt: Date;
-  },
->(identity: T) {
+  }>;
+};
+
+async function loadIdentityWithMailboxes(id: string) {
+  return prisma.advertiserSendingIdentity.findUniqueOrThrow({
+    where: { id },
+    include: {
+      mailboxes: { orderBy: [{ isDefault: "desc" }, { createdAt: "asc" }] },
+    },
+  });
+}
+
+async function ensureAtLeastOneMailbox(
+  identityId: string,
+  advertiserId: string,
+  email: string,
+  fromName: string | null,
+) {
+  const count = await prisma.advertiserSendingMailbox.count({ where: { identityId } });
+  if (count > 0) return;
+  await prisma.advertiserSendingMailbox.create({
+    data: {
+      identityId,
+      advertiserId,
+      email: email.toLowerCase(),
+      fromName,
+      isDefault: true,
+    },
+  });
+}
+
+async function syncIdentityFromDefaultMailbox(identityId: string) {
+  const def = await prisma.advertiserSendingMailbox.findFirst({
+    where: { identityId, isDefault: true },
+  });
+  if (!def) return;
+  await prisma.advertiserSendingIdentity.update({
+    where: { id: identityId },
+    data: {
+      fromEmail: def.email,
+      fromName: def.fromName ?? undefined,
+    },
+  });
+}
+
+export function serializeSendingIdentity(identity: IdentityWithMailboxes) {
   const ready = identity.verificationStatus === "VERIFIED";
   const meta = asStoredMeta(identity.dkimTokens);
   let dnsRecords: DnsRecord[] = [];
@@ -262,19 +317,35 @@ export function serializeSendingIdentity<
 
   const dkimReady =
     provider === "mailgun" ? purposeRecordsReady(dnsRecords, "DKIM", ready) : ready;
-  // Mailgun reports SPF/DMARC (when present) via DNS record valid flags.
-  // When domain is already verified and a purpose has no flagged records (common for DMARC),
-  // fall back to overall ready so the UI matches Mailgun's "done" state.
   const spfReady =
     provider === "mailgun" ? purposeRecordsReady(dnsRecords, "SPF", ready) : false;
   const dmarcReady =
     provider === "mailgun" ? purposeRecordsReady(dnsRecords, "DMARC", ready) : false;
 
+  const mailboxes: SerializedMailbox[] =
+    identity.mailboxes && identity.mailboxes.length > 0
+      ? identity.mailboxes.map((m) => ({
+          id: m.id,
+          email: m.email,
+          fromName: m.fromName,
+          isDefault: m.isDefault,
+        }))
+      : [
+          {
+            id: `legacy-${identity.id}`,
+            email: identity.fromEmail,
+            fromName: identity.fromName,
+            isDefault: true,
+          },
+        ];
+
+  const defaultMailbox = mailboxes.find((m) => m.isDefault) ?? mailboxes[0];
+
   return {
     id: identity.id,
     domain: identity.domain,
-    fromEmail: identity.fromEmail,
-    fromName: identity.fromName,
+    fromEmail: defaultMailbox?.email ?? identity.fromEmail,
+    fromName: defaultMailbox?.fromName ?? identity.fromName,
     verificationStatus: identity.verificationStatus,
     isDefault: identity.isDefault,
     dkimTokens,
@@ -284,6 +355,7 @@ export function serializeSendingIdentity<
     spfReady,
     dmarcReady,
     dnsRecords,
+    mailboxes,
     createdAt: identity.createdAt.toISOString(),
     updatedAt: identity.updatedAt.toISOString(),
   };
@@ -292,9 +364,41 @@ export function serializeSendingIdentity<
 export async function listSendingIdentities(advertiserId: string) {
   const rows = await prisma.advertiserSendingIdentity.findMany({
     where: { advertiserId },
+    include: {
+      mailboxes: { orderBy: [{ isDefault: "desc" }, { createdAt: "asc" }] },
+    },
     orderBy: { createdAt: "desc" },
   });
   return rows.map(serializeSendingIdentity);
+}
+
+/** Verified mailbox for send/settings validation */
+export async function findVerifiedSendingMailbox(advertiserId: string, email: string) {
+  const normalized = email.trim().toLowerCase();
+  if (!normalized) return null;
+  return prisma.advertiserSendingMailbox.findFirst({
+    where: {
+      advertiserId,
+      email: normalized,
+      identity: { verificationStatus: "VERIFIED" },
+    },
+    include: {
+      identity: { select: { id: true, domain: true, fromName: true, verificationStatus: true } },
+    },
+  });
+}
+
+export async function listVerifiedSendingMailboxes(advertiserId: string) {
+  return prisma.advertiserSendingMailbox.findMany({
+    where: {
+      advertiserId,
+      identity: { verificationStatus: "VERIFIED" },
+    },
+    include: {
+      identity: { select: { id: true, domain: true, verificationStatus: true } },
+    },
+    orderBy: [{ isDefault: "desc" }, { createdAt: "asc" }],
+  });
 }
 
 async function upsertLocalIdentity(
@@ -307,6 +411,7 @@ async function upsertLocalIdentity(
 ) {
   const existing = await prisma.advertiserSendingIdentity.findUnique({
     where: { advertiserId_domain: { advertiserId, domain: normalizedDomain } },
+    include: { mailboxes: true },
   });
 
   const fromEmail =
@@ -314,30 +419,59 @@ async function upsertLocalIdentity(
       ? normalizeFromEmailForDomain(fromEmailInput, normalizedDomain)
       : existing?.fromEmail ?? normalizeFromEmailForDomain(null, normalizedDomain);
 
+  let identityId: string;
+
   if (existing) {
-    return prisma.advertiserSendingIdentity.update({
+    const mailboxCount = existing.mailboxes.length;
+    const row = await prisma.advertiserSendingIdentity.update({
       where: { id: existing.id },
       data: {
         dkimTokens,
-        fromName,
-        fromEmail,
+        fromName: fromName || existing.fromName,
         verificationStatus,
+        // Only overwrite identity.fromEmail when no mailboxes yet / intentional first email
+        ...(mailboxCount === 0 || (fromEmailInput?.trim() && mailboxCount === 0)
+          ? { fromEmail }
+          : {}),
       },
     });
+    identityId = row.id;
+    if (mailboxCount === 0) {
+      await ensureAtLeastOneMailbox(row.id, advertiserId, fromEmail, fromName || row.fromName);
+    } else if (fromEmailInput?.trim()) {
+      // Ensure requested email exists as a mailbox (first add path on re-register)
+      const normalized = fromEmail;
+      const has = existing.mailboxes.some((m) => m.email === normalized);
+      if (!has) {
+        await prisma.advertiserSendingMailbox.create({
+          data: {
+            identityId: row.id,
+            advertiserId,
+            email: normalized,
+            fromName: fromName || row.fromName,
+            isDefault: false,
+          },
+        });
+      }
+    }
+  } else {
+    const count = await prisma.advertiserSendingIdentity.count({ where: { advertiserId } });
+    const row = await prisma.advertiserSendingIdentity.create({
+      data: {
+        advertiserId,
+        domain: normalizedDomain,
+        fromEmail,
+        fromName,
+        dkimTokens,
+        verificationStatus,
+        isDefault: count === 0,
+      },
+    });
+    identityId = row.id;
+    await ensureAtLeastOneMailbox(row.id, advertiserId, fromEmail, fromName);
   }
 
-  const count = await prisma.advertiserSendingIdentity.count({ where: { advertiserId } });
-  return prisma.advertiserSendingIdentity.create({
-    data: {
-      advertiserId,
-      domain: normalizedDomain,
-      fromEmail,
-      fromName,
-      dkimTokens,
-      verificationStatus,
-      isDefault: count === 0,
-    },
-  });
+  return loadIdentityWithMailboxes(identityId);
 }
 
 async function requestSesDomainVerification(
@@ -450,15 +584,156 @@ export async function updateIdentityFromEmail(
 ) {
   const identity = await prisma.advertiserSendingIdentity.findFirst({
     where: { id: identityId, advertiserId },
+    include: { mailboxes: true },
   });
   if (!identity) throw new AppError("NOT_FOUND", "Sending identity not found", 404);
 
   const normalized = normalizeFromEmailForDomain(fromEmail, identity.domain);
-  const row = await prisma.advertiserSendingIdentity.update({
+  const existingMailbox = identity.mailboxes.find((m) => m.email === normalized);
+
+  if (existingMailbox) {
+    await prisma.advertiserSendingMailbox.updateMany({
+      where: { identityId },
+      data: { isDefault: false },
+    });
+    await prisma.advertiserSendingMailbox.update({
+      where: { id: existingMailbox.id },
+      data: { isDefault: true, fromName: identity.fromName },
+    });
+  } else if (identity.mailboxes.length === 0) {
+    await prisma.advertiserSendingMailbox.create({
+      data: {
+        identityId,
+        advertiserId,
+        email: normalized,
+        fromName: identity.fromName,
+        isDefault: true,
+      },
+    });
+  } else {
+    // Treat as updating the default mailbox address
+    const def = identity.mailboxes.find((m) => m.isDefault) ?? identity.mailboxes[0];
+    await prisma.advertiserSendingMailbox.update({
+      where: { id: def.id },
+      data: { email: normalized, isDefault: true },
+    });
+    await prisma.advertiserSendingMailbox.updateMany({
+      where: { identityId, id: { not: def.id } },
+      data: { isDefault: false },
+    });
+  }
+
+  await prisma.advertiserSendingIdentity.update({
     where: { id: identity.id },
     data: { fromEmail: normalized },
   });
-  return serializeSendingIdentity(row);
+  return serializeSendingIdentity(await loadIdentityWithMailboxes(identity.id));
+}
+
+export async function addIdentityMailbox(
+  advertiserId: string,
+  identityId: string,
+  fromEmail: string,
+  fromName?: string | null,
+) {
+  const identity = await prisma.advertiserSendingIdentity.findFirst({
+    where: { id: identityId, advertiserId },
+  });
+  if (!identity) throw new AppError("NOT_FOUND", "Sending identity not found", 404);
+  if (identity.verificationStatus !== "VERIFIED") {
+    throw new AppError(
+      "VALIDATION_ERROR",
+      "Verify the domain before adding more sending emails",
+      422,
+    );
+  }
+
+  const normalized = normalizeFromEmailForDomain(fromEmail, identity.domain);
+  const duplicate = await prisma.advertiserSendingMailbox.findFirst({
+    where: { advertiserId, email: normalized },
+  });
+  if (duplicate) {
+    throw new AppError("VALIDATION_ERROR", "That sending email already exists", 422);
+  }
+
+  const count = await prisma.advertiserSendingMailbox.count({ where: { identityId } });
+  await prisma.advertiserSendingMailbox.create({
+    data: {
+      identityId,
+      advertiserId,
+      email: normalized,
+      fromName: fromName?.trim() || identity.fromName,
+      isDefault: count === 0,
+    },
+  });
+  if (count === 0) {
+    await syncIdentityFromDefaultMailbox(identityId);
+  }
+  return serializeSendingIdentity(await loadIdentityWithMailboxes(identityId));
+}
+
+export async function removeIdentityMailbox(
+  advertiserId: string,
+  identityId: string,
+  mailboxId: string,
+) {
+  const identity = await prisma.advertiserSendingIdentity.findFirst({
+    where: { id: identityId, advertiserId },
+    include: { mailboxes: true },
+  });
+  if (!identity) throw new AppError("NOT_FOUND", "Sending identity not found", 404);
+
+  const mailbox = identity.mailboxes.find((m) => m.id === mailboxId);
+  if (!mailbox) throw new AppError("NOT_FOUND", "Sending email not found", 404);
+  if (identity.mailboxes.length <= 1) {
+    throw new AppError("VALIDATION_ERROR", "Keep at least one sending email on the domain", 422);
+  }
+
+  await prisma.advertiserSendingMailbox.delete({ where: { id: mailbox.id } });
+
+  if (mailbox.isDefault) {
+    const next = await prisma.advertiserSendingMailbox.findFirst({
+      where: { identityId },
+      orderBy: { createdAt: "asc" },
+    });
+    if (next) {
+      await prisma.advertiserSendingMailbox.update({
+        where: { id: next.id },
+        data: { isDefault: true },
+      });
+      await syncIdentityFromDefaultMailbox(identityId);
+    }
+  }
+
+  return serializeSendingIdentity(await loadIdentityWithMailboxes(identityId));
+}
+
+export async function setDefaultIdentityMailbox(
+  advertiserId: string,
+  identityId: string,
+  mailboxId: string,
+) {
+  const identity = await prisma.advertiserSendingIdentity.findFirst({
+    where: { id: identityId, advertiserId },
+  });
+  if (!identity) throw new AppError("NOT_FOUND", "Sending identity not found", 404);
+
+  const mailbox = await prisma.advertiserSendingMailbox.findFirst({
+    where: { id: mailboxId, identityId, advertiserId },
+  });
+  if (!mailbox) throw new AppError("NOT_FOUND", "Sending email not found", 404);
+
+  await prisma.advertiserSendingMailbox.updateMany({
+    where: { identityId },
+    data: { isDefault: false },
+  });
+  await prisma.advertiserSendingMailbox.update({
+    where: { id: mailbox.id },
+    data: { isDefault: true },
+  });
+  await syncIdentityFromDefaultMailbox(identityId);
+
+  return serializeSendingIdentity(await loadIdentityWithMailboxes(identityId));
 }
 
 async function refreshSesDomainVerification(
@@ -479,7 +754,7 @@ async function refreshSesDomainVerification(
         dkimTokens: { provider: "ses", tokens } as Prisma.InputJsonValue,
       },
     });
-    return serializeSendingIdentity(row);
+    return serializeSendingIdentity(await loadIdentityWithMailboxes(row.id));
   } catch (error) {
     if (error instanceof AppError) throw error;
     const message = error instanceof Error ? error.message : "Verification check failed";
@@ -513,7 +788,7 @@ async function refreshMailgunDomainVerification(identity: {
       dkimTokens: mailgunMetaFromDetails(details),
     },
   });
-  return serializeSendingIdentity(row);
+  return serializeSendingIdentity(await loadIdentityWithMailboxes(row.id));
 }
 
 export async function refreshDomainVerification(advertiserId: string, identityId: string) {
@@ -553,7 +828,7 @@ export async function setDefaultIdentity(advertiserId: string, identityId: strin
     where: { id: identityId },
     data: { isDefault: true },
   });
-  return serializeSendingIdentity(row);
+  return serializeSendingIdentity(await loadIdentityWithMailboxes(row.id));
 }
 
 export async function deleteSendingIdentity(advertiserId: string, identityId: string) {

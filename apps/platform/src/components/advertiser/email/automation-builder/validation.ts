@@ -56,7 +56,12 @@ export function validateAutomation(
   const verifiedEmails = new Set(
     (options.identities ?? [])
       .filter((i) => i.verificationStatus === "VERIFIED" || i.ready)
-      .map((i) => i.fromEmail.trim().toLowerCase()),
+      .flatMap((i) => {
+        if (i.mailboxes && i.mailboxes.length > 0) {
+          return i.mailboxes.map((m) => m.email.trim().toLowerCase());
+        }
+        return [i.fromEmail.trim().toLowerCase()];
+      }),
   );
   const defaultFrom = (options.defaultFromEmail ?? "").trim().toLowerCase();
 

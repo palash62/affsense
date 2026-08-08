@@ -60,10 +60,15 @@ export {
 export { recordOpen, recordClick, recordSesEvent } from "./services/tracking.service";
 export {
   listSendingIdentities,
+  listVerifiedSendingMailboxes,
+  findVerifiedSendingMailbox,
   requestDomainVerification,
   refreshDomainVerification,
   setDefaultIdentity,
   updateIdentityFromEmail,
+  addIdentityMailbox,
+  removeIdentityMailbox,
+  setDefaultIdentityMailbox,
   deleteSendingIdentity,
 } from "./services/identity.service";
 export { renderTemplate } from "./lib/render-template";

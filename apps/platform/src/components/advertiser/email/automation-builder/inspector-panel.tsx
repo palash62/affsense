@@ -34,7 +34,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import type { AutomationBuilderState } from "./use-automation-builder-state";
 import type { StepStat } from "./types";
-import { DEFAULT_EMAIL_HTML, daysToMinutes, minutesToDays } from "./types";
+import {
+  DEFAULT_EMAIL_HTML,
+  daysToMinutes,
+  flattenVerifiedMailboxes,
+  minutesToDays,
+} from "./types";
 import { EmailComposeEditor } from "./email-compose-editor";
 
 type Props = {
@@ -212,9 +217,7 @@ function EmailContentForm({ state }: { state: AutomationBuilderState }) {
       }
     : null;
 
-  const verifiedIdentities = identities.filter(
-    (i) => i.verificationStatus === "VERIFIED" || i.ready,
-  );
+  const verifiedMailboxes = flattenVerifiedMailboxes(identities);
 
   const [createMode, setCreateMode] = useState<CreateMode>("quick");
   const [libraryId, setLibraryId] = useState("");
@@ -295,7 +298,7 @@ function EmailContentForm({ state }: { state: AutomationBuilderState }) {
           </div>
           <div>
             <FieldLabel required>From email</FieldLabel>
-            {verifiedIdentities.length === 0 ? (
+            {verifiedMailboxes.length === 0 ? (
               <FieldHint tone="amber">
                 No verified sending emails. Add a domain on the Domains tab first.
               </FieldHint>
@@ -304,11 +307,11 @@ function EmailContentForm({ state }: { state: AutomationBuilderState }) {
                 value={selectedStep.fromEmail || "__default__"}
                 onValueChange={(v) => {
                   const next = !v || v === "__default__" ? "" : v;
-                  const match = verifiedIdentities.find((i) => i.fromEmail === next);
+                  const match = verifiedMailboxes.find((m) => m.email === next);
                   updateStep(selectedStep.clientId, {
                     fromEmail: next,
                     ...(match && !selectedStep.fromName.trim()
-                      ? { fromName: match.fromName }
+                      ? { fromName: match.fromName || "" }
                       : {}),
                   });
                 }}
@@ -322,9 +325,9 @@ function EmailContentForm({ state }: { state: AutomationBuilderState }) {
                       ? `Use settings default (${defaultFromEmail})`
                       : "Use default from Settings"}
                   </SelectItem>
-                  {verifiedIdentities.map((i) => (
-                    <SelectItem key={i.id} value={i.fromEmail}>
-                      {i.fromEmail}
+                  {verifiedMailboxes.map((m) => (
+                    <SelectItem key={m.id} value={m.email}>
+                      {m.email}
                     </SelectItem>
                   ))}
                 </SelectContent>

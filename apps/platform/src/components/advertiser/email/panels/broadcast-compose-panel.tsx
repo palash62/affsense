@@ -35,6 +35,13 @@ type BroadcastAction = "draft" | "schedule" | "send";
 type ListOption = { id: string; name: string };
 type TagOption = { id: string; name: string; color: string | null };
 type TemplateOption = { id: string; name: string; subject: string };
+type MailboxOption = {
+  id: string;
+  email: string;
+  fromName: string | null;
+  isDefault: boolean;
+};
+
 type IdentityOption = {
   id: string;
   domain: string;
@@ -42,7 +49,30 @@ type IdentityOption = {
   fromName: string;
   verificationStatus: string;
   ready?: boolean;
+  mailboxes?: MailboxOption[];
 };
+
+function flattenVerifiedMailboxes(identities: IdentityOption[]) {
+  return identities
+    .filter((i) => i.verificationStatus === "VERIFIED" || i.ready)
+    .flatMap((i) => {
+      const boxes =
+        i.mailboxes && i.mailboxes.length > 0
+          ? i.mailboxes
+          : [
+              {
+                id: i.id,
+                email: i.fromEmail,
+                fromName: i.fromName || null,
+                isDefault: true,
+              },
+            ];
+      return boxes.map((m) => ({
+        ...m,
+        fromName: m.fromName ?? i.fromName,
+      }));
+    });
+}
 
 type Props = {
   broadcastId?: string;
@@ -130,9 +160,8 @@ export function BroadcastComposePanel({ broadcastId: initialBroadcastId }: Props
   const [deliveryMode, setDeliveryMode] = useState<DeliveryMode>("now");
   const [scheduleLocal, setScheduleLocal] = useState("");
 
-  const verifiedIdentities = useMemo(
-    () =>
-      identities.filter((i) => i.verificationStatus === "VERIFIED" || i.ready),
+  const verifiedMailboxes = useMemo(
+    () => flattenVerifiedMailboxes(identities),
     [identities],
   );
 
@@ -652,7 +681,7 @@ export function BroadcastComposePanel({ broadcastId: initialBroadcastId }: Props
             </div>
             <div className="space-y-2">
               <Label>From email</Label>
-              {verifiedIdentities.length === 0 ? (
+              {verifiedMailboxes.length === 0 ? (
                 <p className="text-sm text-amber-800">
                   No verified sending emails. Add a domain on the Domains tab first.
                 </p>
@@ -662,8 +691,10 @@ export function BroadcastComposePanel({ broadcastId: initialBroadcastId }: Props
                   onValueChange={(v) => {
                     const next = !v || v === "__default__" ? "" : v;
                     setFromEmail(next);
-                    const match = verifiedIdentities.find((i) => i.fromEmail === next);
-                    if (match && !fromName.trim()) setFromName(match.fromName);
+                    const match = verifiedMailboxes.find((m) => m.email === next);
+                    if (match && !fromName.trim()) {
+                      setFromName(match.fromName || "");
+                    }
                   }}
                 >
                   <SelectTrigger className="max-w-md">
@@ -675,9 +706,9 @@ export function BroadcastComposePanel({ broadcastId: initialBroadcastId }: Props
                         ? `Use settings default (${defaultFromEmail})`
                         : "Use default from Settings"}
                     </SelectItem>
-                    {verifiedIdentities.map((i) => (
-                      <SelectItem key={i.id} value={i.fromEmail}>
-                        {i.fromEmail}
+                    {verifiedMailboxes.map((m) => (
+                      <SelectItem key={m.id} value={m.email}>
+                        {m.email}
                       </SelectItem>
                     ))}
                   </SelectContent>

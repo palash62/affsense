@@ -25,14 +25,14 @@ export async function updateAdvertiserEmailSettings(
   const fromEmailRaw = data.fromEmail?.trim().toLowerCase() || null;
 
   if (fromEmailRaw) {
-    const identity = await prisma.advertiserSendingIdentity.findFirst({
+    const mailbox = await prisma.advertiserSendingMailbox.findFirst({
       where: {
         advertiserId,
-        verificationStatus: "VERIFIED",
-        fromEmail: fromEmailRaw,
+        email: fromEmailRaw,
+        identity: { verificationStatus: "VERIFIED" },
       },
     });
-    if (!identity) {
+    if (!mailbox) {
       throw new AppError(
         "VALIDATION_ERROR",
         "Default from email must be a verified sending address from Domains",

@@ -1,14 +1,20 @@
 import { withAuth } from "@/lib/api-handler";
 import { errorResponse } from "@/lib/errors";
 import {
+  addSendingMailboxSchema,
+  removeSendingMailboxSchema,
   sendingIdentitySchema,
+  setDefaultSendingMailboxSchema,
   updateSendingIdentityFromEmailSchema,
 } from "@/lib/validations";
 import {
+  addIdentityMailbox,
   listSendingIdentities,
   refreshDomainVerification,
+  removeIdentityMailbox,
   requestDomainVerification,
   setDefaultIdentity,
+  setDefaultIdentityMailbox,
   updateIdentityFromEmail,
 } from "@/modules/email-marketing";
 
@@ -82,6 +88,70 @@ export async function PATCH(request: Request) {
           session.user.id,
           parsed.data.identityId,
           parsed.data.fromEmail,
+        );
+        return Response.json({ data });
+      }
+      if (action === "addMailbox") {
+        const parsed = addSendingMailboxSchema.safeParse(body);
+        if (!parsed.success) {
+          return Response.json(
+            {
+              error: {
+                code: "VALIDATION_ERROR",
+                message: parsed.error.issues[0]?.message ?? "Invalid input",
+                status: 422,
+              },
+            },
+            { status: 422 },
+          );
+        }
+        const data = await addIdentityMailbox(
+          session.user.id,
+          parsed.data.identityId,
+          parsed.data.fromEmail,
+          parsed.data.fromName,
+        );
+        return Response.json({ data });
+      }
+      if (action === "removeMailbox") {
+        const parsed = removeSendingMailboxSchema.safeParse(body);
+        if (!parsed.success) {
+          return Response.json(
+            {
+              error: {
+                code: "VALIDATION_ERROR",
+                message: parsed.error.issues[0]?.message ?? "Invalid input",
+                status: 422,
+              },
+            },
+            { status: 422 },
+          );
+        }
+        const data = await removeIdentityMailbox(
+          session.user.id,
+          parsed.data.identityId,
+          parsed.data.mailboxId,
+        );
+        return Response.json({ data });
+      }
+      if (action === "setDefaultMailbox") {
+        const parsed = setDefaultSendingMailboxSchema.safeParse(body);
+        if (!parsed.success) {
+          return Response.json(
+            {
+              error: {
+                code: "VALIDATION_ERROR",
+                message: parsed.error.issues[0]?.message ?? "Invalid input",
+                status: 422,
+              },
+            },
+            { status: 422 },
+          );
+        }
+        const data = await setDefaultIdentityMailbox(
+          session.user.id,
+          parsed.data.identityId,
+          parsed.data.mailboxId,
         );
         return Response.json({ data });
       }

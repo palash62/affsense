@@ -1,9 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { Fragment, useCallback, useEffect, useState } from "react";
 import {
   AlertCircle,
   CheckCircle2,
+  ChevronDown,
+  ChevronRight,
   Circle,
   Clock,
   Copy,
@@ -53,6 +55,13 @@ type DnsRecord = {
   purpose: "DKIM" | "SPF" | "DMARC" | "TRACKING" | "MX";
 };
 
+type MailboxRow = {
+  id: string;
+  email: string;
+  fromName: string | null;
+  isDefault: boolean;
+};
+
 type IdentityRow = {
   id: string;
   domain: string;
@@ -67,6 +76,7 @@ type IdentityRow = {
   spfReady: boolean;
   dmarcReady: boolean;
   dnsRecords: DnsRecord[];
+  mailboxes?: MailboxRow[];
 };
 
 function StatusIcon({ ready, instructional }: { ready: boolean; instructional?: boolean }) {
@@ -102,12 +112,6 @@ function verificationLabel(status: string): { label: string; className: string; 
   }
 }
 
-function localPart(email: string, domain: string) {
-  const at = email.lastIndexOf("@");
-  if (at >= 0) return email.slice(0, at);
-  return email.replace(new RegExp(`@${domain}$`, "i"), "") || "noreply";
-}
-
 export function EmailDomainsPanel() {
   const [rows, setRows] = useState<IdentityRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -115,14 +119,17 @@ export function EmailDomainsPanel() {
   const [domain, setDomain] = useState("");
   const [fromName, setFromName] = useState("");
   const [fromLocal, setFromLocal] = useState("noreply");
-  const [setupFromLocal, setSetupFromLocal] = useState("");
-  const [savingFromEmail, setSavingFromEmail] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [setupRow, setSetupRow] = useState<IdentityRow | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
   const [provider, setProvider] = useState<string | null>(null);
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const [addLocalByIdentity, setAddLocalByIdentity] = useState<Record<string, string>>(
+    {},
+  );
+  const [mailboxBusy, setMailboxBusy] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -137,6 +144,11 @@ export function EmailDomainsPanel() {
         return;
       }
       setRows((json.data ?? []) as IdentityRow[]);
+      setSetupRow((prev) => {
+        if (!prev) return prev;
+        const next = ((json.data ?? []) as IdentityRow[]).find((r) => r.id === prev.id);
+        return next ?? prev;
+      });
       setError(null);
     } catch {
       setError("Unable to load domains");
@@ -183,9 +195,7 @@ export function EmailDomainsPanel() {
       setFromLocal("noreply");
       await load();
       if (json.data) {
-        const row = json.data as IdentityRow;
-        setSetupRow(row);
-        setSetupFromLocal(localPart(row.fromEmail, row.domain));
+        setSetupRow(json.data as IdentityRow);
       }
     } catch {
       setError("Unable to add domain");
@@ -194,41 +204,81 @@ export function EmailDomainsPanel() {
     }
   }
 
-  async function saveSetupFromEmail() {
-    if (!setupRow) return;
-    const local = setupFromLocal.trim().toLowerCase();
+  function toggleExpanded(id: string) {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  async function patchMailbox(body: Record<string, unknown>) {
+    const res = await fetch("/api/v1/advertiser/email/identities", {
+      method: "PATCH",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const json = await res.json().catch(() => null);
+    if (!res.ok) {
+      throw new Error(json?.error?.message ?? "Mailbox update failed");
+    }
+    await load();
+    return json.data as IdentityRow | undefined;
+  }
+
+  async function addMailbox(row: IdentityRow) {
+    const local = (addLocalByIdentity[row.id] ?? "").trim().toLowerCase();
     if (!local) {
-      setError("Enter a sending email local part");
+      setError("Enter a local part for the sending email");
       return;
     }
-    setSavingFromEmail(true);
+    setMailboxBusy(row.id);
     setError(null);
     try {
-      const res = await fetch("/api/v1/advertiser/email/identities", {
-        method: "PATCH",
-        credentials: "same-origin",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "updateFromEmail",
-          identityId: setupRow.id,
-          fromEmail: `${local}@${setupRow.domain}`,
-        }),
+      await patchMailbox({
+        action: "addMailbox",
+        identityId: row.id,
+        fromEmail: `${local}@${row.domain}`,
       });
-      const json = await res.json().catch(() => null);
-      if (!res.ok) {
-        setError(json?.error?.message ?? "Unable to update sending email");
-        return;
-      }
-      await load();
-      if (json.data) {
-        const row = json.data as IdentityRow;
-        setSetupRow(row);
-        setSetupFromLocal(localPart(row.fromEmail, row.domain));
-      }
-    } catch {
-      setError("Unable to update sending email");
+      setAddLocalByIdentity((prev) => ({ ...prev, [row.id]: "" }));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Unable to add sending email");
     } finally {
-      setSavingFromEmail(false);
+      setMailboxBusy(null);
+    }
+  }
+
+  async function removeMailbox(identityId: string, mailboxId: string) {
+    setMailboxBusy(mailboxId);
+    setError(null);
+    try {
+      await patchMailbox({
+        action: "removeMailbox",
+        identityId,
+        mailboxId,
+      });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Unable to remove sending email");
+    } finally {
+      setMailboxBusy(null);
+    }
+  }
+
+  async function setDefaultMailbox(identityId: string, mailboxId: string) {
+    setMailboxBusy(mailboxId);
+    setError(null);
+    try {
+      await patchMailbox({
+        action: "setDefaultMailbox",
+        identityId,
+        mailboxId,
+      });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Unable to set default email");
+    } finally {
+      setMailboxBusy(null);
     }
   }
 
@@ -249,9 +299,7 @@ export function EmailDomainsPanel() {
       }
       await load();
       if (setupRow?.id === id && json.data) {
-        const row = json.data as IdentityRow;
-        setSetupRow(row);
-        setSetupFromLocal(localPart(row.fromEmail, row.domain));
+        setSetupRow(json.data as IdentityRow);
       }
     } catch {
       setError("Verification refresh failed");
@@ -393,112 +441,269 @@ export function EmailDomainsPanel() {
                 rows.map((row) => {
                   const status = verificationLabel(row.verificationStatus);
                   const StatusGlyph = status.Icon;
+                  const isVerified = row.verificationStatus === "VERIFIED" || row.ready;
+                  const expanded = expandedIds.has(row.id);
+                  const mailboxes =
+                    row.mailboxes && row.mailboxes.length > 0
+                      ? row.mailboxes
+                      : [
+                          {
+                            id: `${row.id}-legacy`,
+                            email: row.fromEmail,
+                            fromName: row.fromName,
+                            isDefault: true,
+                          },
+                        ];
                   return (
-                  <TableRow key={row.id} className="hover:bg-slate-50">
-                    <TableCell>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-medium text-slate-900">{row.domain}</span>
-                        {row.isDefault ? (
-                          <Badge variant="outline" className="text-xs">
-                            Default
-                          </Badge>
-                        ) : null}
-                      </div>
-                      <p className="text-xs text-slate-500">{row.fromEmail}</p>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Badge
-                        variant="outline"
-                        className={cn("gap-1 text-xs font-medium", status.className)}
-                      >
-                        <StatusGlyph className="h-3.5 w-3.5" aria-hidden />
-                        {status.label}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <div className="flex flex-col items-center gap-1">
-                        <StatusIcon ready={row.ready} />
-                        <span className="text-xs text-slate-500">{row.ready ? "Yes" : "No"}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <div className="flex justify-center">
-                        <StatusIcon ready={row.dkimReady} />
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <div className="flex justify-center">
-                        <StatusIcon
-                          ready={row.spfReady}
-                          instructional={row.provider !== "mailgun"}
-                        />
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <div className="flex justify-center">
-                        <StatusIcon
-                          ready={row.dmarcReady}
-                          instructional={row.provider !== "mailgun"}
-                        />
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-1">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0"
-                          aria-label={`DNS setup for ${row.domain}`}
-                          onClick={() => {
-                            setSetupRow(row);
-                            setSetupFromLocal(localPart(row.fromEmail, row.domain));
-                          }}
-                        >
-                          <Wrench className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0"
-                          aria-label={`Refresh ${row.domain}`}
-                          disabled={busyId === row.id}
-                          onClick={() => void refreshIdentity(row.id)}
-                        >
-                          {busyId === row.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <RefreshCw className="h-4 w-4" />
-                          )}
-                        </Button>
-                        {row.ready && !row.isDefault ? (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 w-8 p-0"
-                            aria-label={`Set ${row.domain} as default`}
-                            disabled={busyId === row.id}
-                            onClick={() => void setDefault(row.id)}
+                    <Fragment key={row.id}>
+                      <TableRow className="hover:bg-slate-50">
+                        <TableCell>
+                          <div className="flex items-start gap-1.5">
+                            {isVerified ? (
+                              <button
+                                type="button"
+                                className="mt-0.5 rounded p-0.5 text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+                                aria-expanded={expanded}
+                                aria-label={
+                                  expanded
+                                    ? `Collapse sending emails for ${row.domain}`
+                                    : `Expand sending emails for ${row.domain}`
+                                }
+                                onClick={() => toggleExpanded(row.id)}
+                              >
+                                {expanded ? (
+                                  <ChevronDown className="h-4 w-4" />
+                                ) : (
+                                  <ChevronRight className="h-4 w-4" />
+                                )}
+                              </button>
+                            ) : (
+                              <span className="mt-0.5 inline-block w-5" aria-hidden />
+                            )}
+                            <div>
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className="font-medium text-slate-900">{row.domain}</span>
+                                {row.isDefault ? (
+                                  <Badge variant="outline" className="text-xs">
+                                    Default
+                                  </Badge>
+                                ) : null}
+                              </div>
+                              <p className="text-xs text-slate-500">{row.fromEmail}</p>
+                              {isVerified ? (
+                                <p className="mt-0.5 text-[11px] text-slate-400">
+                                  {mailboxes.length} sending email
+                                  {mailboxes.length === 1 ? "" : "s"}
+                                  {!expanded ? " · expand to manage" : ""}
+                                </p>
+                              ) : null}
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Badge
+                            variant="outline"
+                            className={cn("gap-1 text-xs font-medium", status.className)}
                           >
-                            <Star className="h-4 w-4" />
-                          </Button>
-                        ) : null}
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
-                          aria-label={`Remove ${row.domain}`}
-                          disabled={busyId === row.id}
-                          onClick={() => void removeIdentity(row)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
+                            <StatusGlyph className="h-3.5 w-3.5" aria-hidden />
+                            {status.label}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <div className="flex flex-col items-center gap-1">
+                            <StatusIcon ready={row.ready} />
+                            <span className="text-xs text-slate-500">
+                              {row.ready ? "Yes" : "No"}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <div className="flex justify-center">
+                            <StatusIcon ready={row.dkimReady} />
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <div className="flex justify-center">
+                            <StatusIcon
+                              ready={row.spfReady}
+                              instructional={row.provider !== "mailgun"}
+                            />
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <div className="flex justify-center">
+                            <StatusIcon
+                              ready={row.dmarcReady}
+                              instructional={row.provider !== "mailgun"}
+                            />
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-1">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0"
+                              aria-label={`DNS setup for ${row.domain}`}
+                              onClick={() => setSetupRow(row)}
+                            >
+                              <Wrench className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0"
+                              aria-label={`Refresh ${row.domain}`}
+                              disabled={busyId === row.id}
+                              onClick={() => void refreshIdentity(row.id)}
+                            >
+                              {busyId === row.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <RefreshCw className="h-4 w-4" />
+                              )}
+                            </Button>
+                            {row.ready && !row.isDefault ? (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0"
+                                aria-label={`Set ${row.domain} as default`}
+                                disabled={busyId === row.id}
+                                onClick={() => void setDefault(row.id)}
+                              >
+                                <Star className="h-4 w-4" />
+                              </Button>
+                            ) : null}
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                              aria-label={`Remove ${row.domain}`}
+                              disabled={busyId === row.id}
+                              onClick={() => void removeIdentity(row)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                      {isVerified && expanded ? (
+                        <TableRow className="bg-slate-50/80 hover:bg-slate-50/80">
+                          <TableCell colSpan={7} className="px-6 py-4">
+                            <div className="ml-6 space-y-3">
+                              <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                                Sending emails for @{row.domain}
+                              </p>
+                              <ul className="divide-y divide-slate-200 rounded-lg border border-slate-200 bg-white">
+                                {mailboxes.map((m) => (
+                                  <li
+                                    key={m.id}
+                                    className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5 text-sm"
+                                  >
+                                    <div className="flex flex-wrap items-center gap-2">
+                                      <span className="font-mono text-slate-800">{m.email}</span>
+                                      {m.isDefault ? (
+                                        <Badge
+                                          variant="outline"
+                                          className="border-emerald-200 bg-emerald-50 text-emerald-800 text-xs"
+                                        >
+                                          Default
+                                        </Badge>
+                                      ) : null}
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                      {!m.isDefault ? (
+                                        <Button
+                                          type="button"
+                                          variant="ghost"
+                                          size="sm"
+                                          className="h-8 px-2 text-xs"
+                                          disabled={
+                                            mailboxBusy === m.id ||
+                                            mailboxBusy === row.id ||
+                                            m.id.endsWith("-legacy")
+                                          }
+                                          onClick={() =>
+                                            void setDefaultMailbox(row.id, m.id)
+                                          }
+                                        >
+                                          {mailboxBusy === m.id ? (
+                                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                          ) : (
+                                            "Set default"
+                                          )}
+                                        </Button>
+                                      ) : null}
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                                        aria-label={`Remove ${m.email}`}
+                                        disabled={
+                                          mailboxes.length <= 1 ||
+                                          mailboxBusy === m.id ||
+                                          mailboxBusy === row.id ||
+                                          m.id.endsWith("-legacy")
+                                        }
+                                        onClick={() =>
+                                          void removeMailbox(row.id, m.id)
+                                        }
+                                      >
+                                        {mailboxBusy === m.id ? (
+                                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                        ) : (
+                                          <Trash2 className="h-3.5 w-3.5" />
+                                        )}
+                                      </Button>
+                                    </div>
+                                  </li>
+                                ))}
+                              </ul>
+                              <div className="flex flex-wrap items-center gap-2">
+                                <Input
+                                  value={addLocalByIdentity[row.id] ?? ""}
+                                  onChange={(e) =>
+                                    setAddLocalByIdentity((prev) => ({
+                                      ...prev,
+                                      [row.id]: e.target.value
+                                        .replace(/@.*/, "")
+                                        .toLowerCase(),
+                                    }))
+                                  }
+                                  placeholder="hello"
+                                  className="h-9 max-w-[200px] bg-white"
+                                  disabled={mailboxBusy === row.id}
+                                />
+                                <span className="text-sm text-slate-500">@{row.domain}</span>
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  className="h-9 gap-1.5 bg-[var(--theme-primary)] hover:opacity-90"
+                                  disabled={
+                                    mailboxBusy === row.id ||
+                                    !(addLocalByIdentity[row.id] ?? "").trim()
+                                  }
+                                  onClick={() => void addMailbox(row)}
+                                >
+                                  {mailboxBusy === row.id ? (
+                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                  ) : (
+                                    <Plus className="h-3.5 w-3.5" />
+                                  )}
+                                  Add
+                                </Button>
+                              </div>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ) : null}
+                    </Fragment>
                   );
                 })
               )}
@@ -588,7 +793,8 @@ export function EmailDomainsPanel() {
                 </span>
               </div>
               <p className="text-xs text-slate-500">
-                Must use this domain. This address is available in automation email actions.
+                Must use this domain. After verification, expand the domain row to add more
+                sending addresses.
               </p>
             </div>
 
@@ -618,9 +824,6 @@ export function EmailDomainsPanel() {
         open={Boolean(setupRow)}
         onOpenChange={(open) => {
           if (!open) setSetupRow(null);
-          else if (setupRow) {
-            setSetupFromLocal(localPart(setupRow.fromEmail, setupRow.domain));
-          }
         }}
       >
         <SheetContent className="w-full overflow-y-auto sm:max-w-lg">
@@ -629,48 +832,12 @@ export function EmailDomainsPanel() {
             <SheetDescription>
               Add these records at your DNS provider, then click Refresh to verify
               {provider === "mailgun" ? " with Mailgun" : provider === "ses" ? " with SES" : ""}.
+              After the domain is verified, manage sending emails by expanding the domain row.
             </SheetDescription>
           </SheetHeader>
 
           {setupRow ? (
             <div className="mt-6 space-y-6 px-1">
-              <div className="space-y-2 rounded-lg border border-slate-200 bg-slate-50/80 p-3">
-                <Label htmlFor="setup-from-local">Sending email</Label>
-                <div className="flex flex-wrap items-center gap-2">
-                  <Input
-                    id="setup-from-local"
-                    value={setupFromLocal}
-                    onChange={(e) =>
-                      setSetupFromLocal(e.target.value.replace(/@.*/, "").toLowerCase())
-                    }
-                    disabled={savingFromEmail || busyId === setupRow.id}
-                    className="min-w-0 flex-1 bg-white"
-                  />
-                  <span className="shrink-0 text-sm text-slate-500">@{setupRow.domain}</span>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    disabled={
-                      savingFromEmail ||
-                      busyId === setupRow.id ||
-                      !setupFromLocal.trim() ||
-                      `${setupFromLocal.trim().toLowerCase()}@${setupRow.domain}` ===
-                        setupRow.fromEmail.toLowerCase()
-                    }
-                    onClick={() => void saveSetupFromEmail()}
-                  >
-                    {savingFromEmail ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    ) : (
-                      "Save"
-                    )}
-                  </Button>
-                </div>
-                <p className="text-xs text-slate-500">
-                  Addresses on this domain can be selected when composing automation emails.
-                </p>
-              </div>
               <div className="flex flex-wrap items-center gap-2">
                 {(() => {
                   const sheetStatus = verificationLabel(setupRow.verificationStatus);

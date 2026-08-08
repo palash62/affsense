@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { AppError } from "@/lib/errors";
 import { enqueueEmailSend, removeEmailSendJob } from "../queue/email-queue";
 import { createTemplate, updateTemplate } from "./template.service";
+import { findVerifiedSendingMailbox } from "./identity.service";
 
 export type BroadcastAudienceType = "LIST" | "TAGS";
 export type BroadcastAction = "draft" | "schedule" | "send";
@@ -48,14 +49,8 @@ async function resolveBroadcastSenderFields(
   const fromNameRaw = input.fromName?.trim() || null;
 
   if (fromEmailRaw) {
-    const identity = await prisma.advertiserSendingIdentity.findFirst({
-      where: {
-        advertiserId,
-        verificationStatus: "VERIFIED",
-        fromEmail: fromEmailRaw,
-      },
-    });
-    if (!identity) {
+    const mailbox = await findVerifiedSendingMailbox(advertiserId, fromEmailRaw);
+    if (!mailbox) {
       throw new AppError(
         "VALIDATION_ERROR",
         "From email must match a verified sending domain address",
@@ -63,8 +58,8 @@ async function resolveBroadcastSenderFields(
       );
     }
     return {
-      fromEmail: identity.fromEmail,
-      fromName: fromNameRaw || identity.fromName || null,
+      fromEmail: mailbox.email,
+      fromName: fromNameRaw || mailbox.fromName || mailbox.identity.fromName || null,
     };
   }
 
@@ -80,14 +75,8 @@ async function resolveBroadcastSenderFields(
         422,
       );
     }
-    const identity = await prisma.advertiserSendingIdentity.findFirst({
-      where: {
-        advertiserId,
-        verificationStatus: "VERIFIED",
-        fromEmail: settingsFrom,
-      },
-    });
-    if (!identity) {
+    const mailbox = await findVerifiedSendingMailbox(advertiserId, settingsFrom);
+    if (!mailbox) {
       throw new AppError(
         "VALIDATION_ERROR",
         "Default from email on Settings is not a verified domain address",

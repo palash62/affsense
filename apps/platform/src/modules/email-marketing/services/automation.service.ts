@@ -318,11 +318,14 @@ export async function activateAutomation(advertiserId: string, id: string) {
 
   const verifiedEmails = new Set(
     (
-      await prisma.advertiserSendingIdentity.findMany({
-        where: { advertiserId, verificationStatus: "VERIFIED" },
-        select: { fromEmail: true },
+      await prisma.advertiserSendingMailbox.findMany({
+        where: {
+          advertiserId,
+          identity: { verificationStatus: "VERIFIED" },
+        },
+        select: { email: true },
       })
-    ).map((i) => i.fromEmail.toLowerCase()),
+    ).map((m) => m.email.toLowerCase()),
   );
 
   if (defaultFrom && !verifiedEmails.has(defaultFrom)) {

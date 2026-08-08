@@ -13,6 +13,7 @@ import { signTrackingToken } from "../lib/tokens";
 import { sendMarketingEmail } from "./ses-sender.service";
 import { MAX_SEND_ATTEMPTS } from "../config/defaults";
 import { refreshBroadcastProgress } from "./broadcast.service";
+import { findVerifiedSendingMailbox } from "./identity.service";
 
 async function maybeRefreshBroadcast(broadcastId: string | null | undefined) {
   if (!broadcastId) return;
@@ -90,15 +91,12 @@ export async function processEmailSend(sendId: string) {
     return;
   }
 
-  const verifiedIdentity = await prisma.advertiserSendingIdentity.findFirst({
-    where: {
-      advertiserId: send.advertiserId,
-      verificationStatus: "VERIFIED",
-      fromEmail: candidateFromEmail,
-    },
-  });
+  const verifiedMailbox = await findVerifiedSendingMailbox(
+    send.advertiserId,
+    candidateFromEmail,
+  );
 
-  if (!verifiedIdentity) {
+  if (!verifiedMailbox) {
     await prisma.emailSend.update({
       where: { id: sendId },
       data: {
@@ -111,7 +109,7 @@ export async function processEmailSend(sendId: string) {
     return;
   }
 
-  const fromEmail = verifiedIdentity.fromEmail;
+  const fromEmail = verifiedMailbox.email;
 
   const mergeData: Record<string, string> = {
     first_name: send.contact.firstName ?? "",
@@ -146,7 +144,8 @@ export async function processEmailSend(sendId: string) {
     send.broadcast?.fromName?.trim() ||
     send.automation?.fromName ||
     settings?.fromName ||
-    verifiedIdentity.fromName ||
+    verifiedMailbox.fromName ||
+    verifiedMailbox.identity.fromName ||
     advertiser?.advertiserProfile?.company ||
     advertiser?.name ||
     "Team";
@@ -250,17 +249,11 @@ export async function sendTestEmail(
     advertiser?.emailMarketingSettings?.fromEmail?.trim().toLowerCase() ||
     "";
 
-  const identity = candidateFrom
-    ? await prisma.advertiserSendingIdentity.findFirst({
-        where: {
-          advertiserId,
-          verificationStatus: "VERIFIED",
-          fromEmail: candidateFrom,
-        },
-      })
+  const mailbox = candidateFrom
+    ? await findVerifiedSendingMailbox(advertiserId, candidateFrom)
     : null;
 
-  if (!identity) {
+  if (!mailbox) {
     throw new Error(
       "No verified from email. Select a verified domain address or set a default on Email Settings.",
     );
@@ -270,7 +263,8 @@ export async function sendTestEmail(
   const fromName =
     opts?.fromName?.trim() ||
     advertiser?.emailMarketingSettings?.fromName ||
-    identity.fromName ||
+    mailbox.fromName ||
+    mailbox.identity.fromName ||
     advertiser?.advertiserProfile?.company ||
     advertiser?.name ||
     "Team";
@@ -292,7 +286,7 @@ export async function sendTestEmail(
   return sendMarketingEmail({
     to: toEmail,
     fromName,
-    fromEmail: identity.fromEmail,
+    fromEmail: mailbox.email,
     replyTo: advertiser?.emailMarketingSettings?.replyTo ?? PLATFORM_EMAILS.support,
     subject,
     html,

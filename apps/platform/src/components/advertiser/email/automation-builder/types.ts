@@ -24,6 +24,13 @@ export type TagOption = {
   color: string | null;
 };
 
+export type SendingMailboxOption = {
+  id: string;
+  email: string;
+  fromName: string | null;
+  isDefault: boolean;
+};
+
 export type SendingIdentityOption = {
   id: string;
   domain: string;
@@ -31,7 +38,31 @@ export type SendingIdentityOption = {
   fromName: string;
   verificationStatus: string;
   ready?: boolean;
+  mailboxes?: SendingMailboxOption[];
 };
+
+export function flattenVerifiedMailboxes(identities: SendingIdentityOption[]) {
+  return identities
+    .filter((i) => i.verificationStatus === "VERIFIED" || i.ready)
+    .flatMap((i) => {
+      const boxes =
+        i.mailboxes && i.mailboxes.length > 0
+          ? i.mailboxes
+          : [
+              {
+                id: i.id,
+                email: i.fromEmail,
+                fromName: i.fromName || null,
+                isDefault: true,
+              },
+            ];
+      return boxes.map((m) => ({
+        ...m,
+        domain: i.domain,
+        fromName: m.fromName ?? i.fromName,
+      }));
+    });
+}
 
 /** Full editable template content for a step. */
 export type TemplateContent = {

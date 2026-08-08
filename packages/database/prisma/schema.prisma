@@ -289,6 +289,7 @@ model User {
   emailSends               EmailSend[]
   emailMarketingSettings   AdvertiserEmailSettings?
   sendingIdentities        AdvertiserSendingIdentity[]
+  sendingMailboxes         AdvertiserSendingMailbox[]
   advertiserDomains        AdvertiserDomain[]
   landingPages             LandingPage[]
   pageTemplateFavorites    PageTemplateFavorite[]
@@ -1273,11 +1274,32 @@ model AdvertiserSendingIdentity {
   createdAt          DateTime              @default(now()) @map("created_at")
   updatedAt          DateTime              @updatedAt @map("updated_at")
 
-  advertiser User @relation(fields: [advertiserId], references: [id], onDelete: Cascade)
+  advertiser User                       @relation(fields: [advertiserId], references: [id], onDelete: Cascade)
+  mailboxes  AdvertiserSendingMailbox[]
 
   @@unique([advertiserId, domain])
   @@index([advertiserId])
   @@map("advertiser_sending_identities")
+}
+
+model AdvertiserSendingMailbox {
+  id           String   @id @default(cuid())
+  identityId   String   @map("identity_id")
+  advertiserId String   @map("advertiser_id")
+  email        String
+  fromName     String?  @map("from_name")
+  isDefault    Boolean  @default(false) @map("is_default")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  identity   AdvertiserSendingIdentity @relation(fields: [identityId], references: [id], onDelete: Cascade)
+  advertiser User                      @relation(fields: [advertiserId], references: [id], onDelete: Cascade)
+
+  @@unique([identityId, email])
+  @@unique([advertiserId, email])
+  @@index([advertiserId])
+  @@index([identityId])
+  @@map("advertiser_sending_mailboxes")
 }
 
 model LandingPage {
