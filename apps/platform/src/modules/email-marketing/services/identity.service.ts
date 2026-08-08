@@ -417,7 +417,7 @@ export async function listVerifiedSendingMailboxes(advertiserId: string) {
       identity: { verificationStatus: "VERIFIED" },
     },
     include: {
-      identity: { select: { id: true, domain: true, verificationStatus: true } },
+      identity: { select: { id: true, domain: true, fromName: true, verificationStatus: true } },
     },
     orderBy: [{ isDefault: "desc" }, { createdAt: "asc" }],
   });
