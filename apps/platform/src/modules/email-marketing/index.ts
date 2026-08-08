@@ -63,6 +63,7 @@ export {
   requestDomainVerification,
   refreshDomainVerification,
   setDefaultIdentity,
+  updateIdentityFromEmail,
   deleteSendingIdentity,
 } from "./services/identity.service";
 export { renderTemplate } from "./lib/render-template";

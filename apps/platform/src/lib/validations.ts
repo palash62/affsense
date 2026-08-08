@@ -783,6 +783,7 @@ export const emailAutomationUpdateSchema = z.object({
 
 export const advertiserEmailSettingsSchema = z.object({
   fromName: z.string().trim().min(2).max(80).optional(),
+  fromEmail: z.string().trim().email("Select a verified sending email").optional().or(z.literal("")),
   replyTo: z.string().email().optional().or(z.literal("")),
 });
 
@@ -802,6 +803,8 @@ export const emailBroadcastSchema = z
     templateId: z.string().cuid().optional().nullable(),
     subject: z.string().trim().min(2).max(200).optional().nullable(),
     htmlBody: z.string().trim().min(10).max(500_000).optional().nullable(),
+    fromEmail: z.union([z.literal(""), z.string().email()]).optional().nullable(),
+    fromName: z.string().trim().max(80).optional().nullable(),
     action: z.enum(["draft", "schedule", "send"]).default("send"),
     scheduledAt: z
       .string()
@@ -883,6 +886,14 @@ export const sendingIdentitySchema = z.object({
     .max(253)
     .regex(/^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/i),
   fromName: z.string().trim().min(2).max(80),
+  /** Full address or local-part; must match the domain when provided */
+  fromEmail: z.string().trim().max(254).optional().or(z.literal("")),
+});
+
+export const updateSendingIdentityFromEmailSchema = z.object({
+  action: z.literal("updateFromEmail"),
+  identityId: z.string().cuid(),
+  fromEmail: z.string().trim().min(3).max(254),
 });
 
 export const landingPageCreateSchema = z.object({

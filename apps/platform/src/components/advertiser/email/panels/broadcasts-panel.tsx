@@ -70,8 +70,8 @@ export function BroadcastsPanel() {
   const [tags, setTags] = useState<TagOption[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const load = useCallback(async (opts?: { silent?: boolean }) => {
+    if (!opts?.silent) setLoading(true);
     try {
       const [bRes, tRes] = await Promise.all([
         fetch("/api/v1/advertiser/email/broadcasts", { credentials: "same-origin" }),
@@ -84,13 +84,26 @@ export function BroadcastsPanel() {
       setRows((bJson?.data ?? []) as BroadcastRow[]);
       setTags((tJson?.data ?? []) as TagOption[]);
     } finally {
-      setLoading(false);
+      if (!opts?.silent) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
     void load();
   }, [load]);
+
+  const hasInFlight = useMemo(
+    () => rows.some((r) => r.status === "QUEUED" || r.status === "SENDING"),
+    [rows],
+  );
+
+  useEffect(() => {
+    if (!hasInFlight) return;
+    const id = window.setInterval(() => {
+      void load({ silent: true });
+    }, 4000);
+    return () => window.clearInterval(id);
+  }, [hasInFlight, load]);
 
   const tagNameById = useMemo(() => new Map(tags.map((t) => [t.id, t.name])), [tags]);
 
@@ -208,12 +221,12 @@ export function BroadcastsPanel() {
                           : "—"}
                       </TableCell>
                       <TableCell>{row.recipientCount.toLocaleString()}</TableCell>
-                      <TableCell>
-                        {row.sentCount.toLocaleString()}
+                      <TableCell className="whitespace-nowrap text-sm tabular-nums text-slate-700">
+                        {row.sentCount.toLocaleString()}/
+                        {row.recipientCount.toLocaleString()}
                         {row.failedCount > 0 ? (
-                          <span className="text-xs text-red-600">
-                            {" "}
-                            / {row.failedCount} failed
+                          <span className="ml-1 text-xs text-red-600">
+                            ({row.failedCount} failed)
                           </span>
                         ) : null}
                       </TableCell>

@@ -102,12 +102,21 @@ function verificationLabel(status: string): { label: string; className: string; 
   }
 }
 
+function localPart(email: string, domain: string) {
+  const at = email.lastIndexOf("@");
+  if (at >= 0) return email.slice(0, at);
+  return email.replace(new RegExp(`@${domain}$`, "i"), "") || "noreply";
+}
+
 export function EmailDomainsPanel() {
   const [rows, setRows] = useState<IdentityRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [addOpen, setAddOpen] = useState(false);
   const [domain, setDomain] = useState("");
   const [fromName, setFromName] = useState("");
+  const [fromLocal, setFromLocal] = useState("noreply");
+  const [setupFromLocal, setSetupFromLocal] = useState("");
+  const [savingFromEmail, setSavingFromEmail] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -147,7 +156,9 @@ export function EmailDomainsPanel() {
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
-    if (!domain.trim() || fromName.trim().length < 2) return;
+    const normalizedDomain = domain.trim().toLowerCase();
+    const local = fromLocal.trim().toLowerCase() || "noreply";
+    if (!normalizedDomain || fromName.trim().length < 2) return;
     setSaving(true);
     setError(null);
     try {
@@ -156,8 +167,9 @@ export function EmailDomainsPanel() {
         credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          domain: domain.trim().toLowerCase(),
+          domain: normalizedDomain,
           fromName: fromName.trim(),
+          fromEmail: `${local}@${normalizedDomain}`,
         }),
       });
       const json = await res.json().catch(() => null);
@@ -168,12 +180,55 @@ export function EmailDomainsPanel() {
       setAddOpen(false);
       setDomain("");
       setFromName("");
+      setFromLocal("noreply");
       await load();
-      if (json.data) setSetupRow(json.data as IdentityRow);
+      if (json.data) {
+        const row = json.data as IdentityRow;
+        setSetupRow(row);
+        setSetupFromLocal(localPart(row.fromEmail, row.domain));
+      }
     } catch {
       setError("Unable to add domain");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function saveSetupFromEmail() {
+    if (!setupRow) return;
+    const local = setupFromLocal.trim().toLowerCase();
+    if (!local) {
+      setError("Enter a sending email local part");
+      return;
+    }
+    setSavingFromEmail(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/v1/advertiser/email/identities", {
+        method: "PATCH",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "updateFromEmail",
+          identityId: setupRow.id,
+          fromEmail: `${local}@${setupRow.domain}`,
+        }),
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok) {
+        setError(json?.error?.message ?? "Unable to update sending email");
+        return;
+      }
+      await load();
+      if (json.data) {
+        const row = json.data as IdentityRow;
+        setSetupRow(row);
+        setSetupFromLocal(localPart(row.fromEmail, row.domain));
+      }
+    } catch {
+      setError("Unable to update sending email");
+    } finally {
+      setSavingFromEmail(false);
     }
   }
 
@@ -193,7 +248,11 @@ export function EmailDomainsPanel() {
         return;
       }
       await load();
-      if (setupRow?.id === id && json.data) setSetupRow(json.data as IdentityRow);
+      if (setupRow?.id === id && json.data) {
+        const row = json.data as IdentityRow;
+        setSetupRow(row);
+        setSetupFromLocal(localPart(row.fromEmail, row.domain));
+      }
     } catch {
       setError("Verification refresh failed");
     } finally {
@@ -369,12 +428,18 @@ export function EmailDomainsPanel() {
                     </TableCell>
                     <TableCell className="text-center">
                       <div className="flex justify-center">
-                        <StatusIcon ready={false} instructional />
+                        <StatusIcon
+                          ready={row.spfReady}
+                          instructional={row.provider !== "mailgun"}
+                        />
                       </div>
                     </TableCell>
                     <TableCell className="text-center">
                       <div className="flex justify-center">
-                        <StatusIcon ready={false} instructional />
+                        <StatusIcon
+                          ready={row.dmarcReady}
+                          instructional={row.provider !== "mailgun"}
+                        />
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
@@ -385,7 +450,10 @@ export function EmailDomainsPanel() {
                           size="sm"
                           className="h-8 w-8 p-0"
                           aria-label={`DNS setup for ${row.domain}`}
-                          onClick={() => setSetupRow(row)}
+                          onClick={() => {
+                            setSetupRow(row);
+                            setSetupFromLocal(localPart(row.fromEmail, row.domain));
+                          }}
                         >
                           <Wrench className="h-4 w-4" />
                         </Button>
@@ -439,7 +507,7 @@ export function EmailDomainsPanel() {
         </div>
         <p className="border-t border-slate-100 px-6 py-3 text-xs text-slate-500">
           {provider === "mailgun"
-            ? "Add the SPF, DKIM, and tracking records Mailgun shows, then click Refresh. Ready updates after DNS propagates and verification succeeds."
+            ? "Add the SPF, DKIM, and tracking records Mailgun shows, then click Refresh. DKIM / SPF / DMARC ticks update from Mailgun after DNS propagates."
             : "SPF and DMARC show as setup guidance. Ready / DKIM update after you add the provider DNS records and click Refresh."}
         </p>
       </PageSection>
@@ -501,6 +569,28 @@ export function EmailDomainsPanel() {
                 disabled={saving}
               />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="email-from-local">Sending email</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="email-from-local"
+                  value={fromLocal}
+                  onChange={(e) =>
+                    setFromLocal(e.target.value.replace(/@.*/, "").toLowerCase())
+                  }
+                  placeholder="noreply"
+                  required
+                  disabled={saving}
+                  className="min-w-0 flex-1"
+                />
+                <span className="shrink-0 text-sm text-slate-500">
+                  @{domain.trim().toLowerCase() || "your-domain.com"}
+                </span>
+              </div>
+              <p className="text-xs text-slate-500">
+                Must use this domain. This address is available in automation email actions.
+              </p>
+            </div>
 
             <DialogFooter>
               <Button
@@ -524,7 +614,15 @@ export function EmailDomainsPanel() {
         </DialogContent>
       </Dialog>
 
-      <Sheet open={Boolean(setupRow)} onOpenChange={(open) => !open && setSetupRow(null)}>
+      <Sheet
+        open={Boolean(setupRow)}
+        onOpenChange={(open) => {
+          if (!open) setSetupRow(null);
+          else if (setupRow) {
+            setSetupFromLocal(localPart(setupRow.fromEmail, setupRow.domain));
+          }
+        }}
+      >
         <SheetContent className="w-full overflow-y-auto sm:max-w-lg">
           <SheetHeader>
             <SheetTitle>DNS setup — {setupRow?.domain}</SheetTitle>
@@ -536,6 +634,43 @@ export function EmailDomainsPanel() {
 
           {setupRow ? (
             <div className="mt-6 space-y-6 px-1">
+              <div className="space-y-2 rounded-lg border border-slate-200 bg-slate-50/80 p-3">
+                <Label htmlFor="setup-from-local">Sending email</Label>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Input
+                    id="setup-from-local"
+                    value={setupFromLocal}
+                    onChange={(e) =>
+                      setSetupFromLocal(e.target.value.replace(/@.*/, "").toLowerCase())
+                    }
+                    disabled={savingFromEmail || busyId === setupRow.id}
+                    className="min-w-0 flex-1 bg-white"
+                  />
+                  <span className="shrink-0 text-sm text-slate-500">@{setupRow.domain}</span>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    disabled={
+                      savingFromEmail ||
+                      busyId === setupRow.id ||
+                      !setupFromLocal.trim() ||
+                      `${setupFromLocal.trim().toLowerCase()}@${setupRow.domain}` ===
+                        setupRow.fromEmail.toLowerCase()
+                    }
+                    onClick={() => void saveSetupFromEmail()}
+                  >
+                    {savingFromEmail ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      "Save"
+                    )}
+                  </Button>
+                </div>
+                <p className="text-xs text-slate-500">
+                  Addresses on this domain can be selected when composing automation emails.
+                </p>
+              </div>
               <div className="flex flex-wrap items-center gap-2">
                 {(() => {
                   const sheetStatus = verificationLabel(setupRow.verificationStatus);

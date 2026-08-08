@@ -1,6 +1,7 @@
 import type {
   AutomationForm,
   AutomationStep,
+  SendingIdentityOption,
   TagOption,
   Template,
   ValidationIssue,
@@ -12,6 +13,10 @@ export function validateAutomation(
   steps: AutomationStep[],
   templates: Template[],
   tags: TagOption[] = [],
+  options: {
+    defaultFromEmail?: string;
+    identities?: SendingIdentityOption[];
+  } = {},
 ): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
   const name = form.name.trim();
@@ -48,12 +53,36 @@ export function validateAutomation(
 
   const templateIds = new Set(templates.map((t) => t.id));
   const tagIds = new Set(tags.map((t) => t.id));
+  const verifiedEmails = new Set(
+    (options.identities ?? [])
+      .filter((i) => i.verificationStatus === "VERIFIED" || i.ready)
+      .map((i) => i.fromEmail.trim().toLowerCase()),
+  );
+  const defaultFrom = (options.defaultFromEmail ?? "").trim().toLowerCase();
 
   if (form.openTagId && tagIds.size > 0 && !tagIds.has(form.openTagId)) {
     issues.push({ path: "openTagId", message: "Open tag not found" });
   }
   if (form.clickTagId && tagIds.size > 0 && !tagIds.has(form.clickTagId)) {
     issues.push({ path: "clickTagId", message: "Click tag not found" });
+  }
+
+  if (verifiedEmails.size === 0) {
+    issues.push({
+      path: "fromEmail",
+      message: "Add and verify a sending domain before publishing",
+    });
+  } else if (!defaultFrom && steps.some((s) => !s.fromEmail.trim())) {
+    issues.push({
+      path: "fromEmail",
+      message:
+        "Set a default from email in Email Settings, or choose one on every email action",
+    });
+  } else if (defaultFrom && !verifiedEmails.has(defaultFrom)) {
+    issues.push({
+      path: "fromEmail",
+      message: "Default from email must be a verified domain address",
+    });
   }
 
   steps.forEach((step, i) => {
@@ -77,6 +106,21 @@ export function validateAutomation(
         stepClientId: step.clientId,
       });
     }
+    const stepFrom = step.fromEmail.trim().toLowerCase();
+    const resolved = stepFrom || defaultFrom;
+    if (!resolved) {
+      issues.push({
+        path: `steps.${i}.fromEmail`,
+        message: `Email ${i + 1}: select a from email`,
+        stepClientId: step.clientId,
+      });
+    } else if (verifiedEmails.size > 0 && !verifiedEmails.has(resolved)) {
+      issues.push({
+        path: `steps.${i}.fromEmail`,
+        message: `Email ${i + 1}: from email must be a verified domain address`,
+        stepClientId: step.clientId,
+      });
+    }
   });
 
   return issues;
@@ -87,6 +131,10 @@ export function canPersist(
   steps: AutomationStep[],
   templates: Template[],
   tags: TagOption[] = [],
+  options: {
+    defaultFromEmail?: string;
+    identities?: SendingIdentityOption[];
+  } = {},
 ) {
-  return validateAutomation(form, steps, templates, tags).length === 0;
+  return validateAutomation(form, steps, templates, tags, options).length === 0;
 }

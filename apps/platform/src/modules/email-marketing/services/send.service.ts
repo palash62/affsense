@@ -10,9 +10,14 @@ import {
   wrapLinksForTracking,
 } from "../lib/render-template";
 import { signTrackingToken } from "../lib/tokens";
-import { sendMarketingEmail, getDefaultFromEmail } from "./ses-sender.service";
+import { sendMarketingEmail } from "./ses-sender.service";
 import { MAX_SEND_ATTEMPTS } from "../config/defaults";
 import { refreshBroadcastProgress } from "./broadcast.service";
+
+async function maybeRefreshBroadcast(broadcastId: string | null | undefined) {
+  if (!broadcastId) return;
+  await refreshBroadcastProgress(broadcastId).catch(() => {});
+}
 
 export async function processEmailSend(sendId: string) {
   const send = await prisma.emailSend.findUnique({
@@ -22,6 +27,7 @@ export async function processEmailSend(sendId: string) {
       template: true,
       automation: true,
       step: true,
+      broadcast: true,
       lead: {
         include: {
           campaign: { select: { name: true } },
@@ -37,6 +43,7 @@ export async function processEmailSend(sendId: string) {
       where: { id: sendId },
       data: { status: "FAILED", error: "Automation is not active" },
     });
+    await maybeRefreshBroadcast(send.broadcastId);
     return;
   }
   if (send.contact.status !== "SUBSCRIBED") {
@@ -44,6 +51,7 @@ export async function processEmailSend(sendId: string) {
       where: { id: sendId },
       data: { status: "FAILED", error: "Contact not subscribed" },
     });
+    await maybeRefreshBroadcast(send.broadcastId);
     return;
   }
 
@@ -62,19 +70,48 @@ export async function processEmailSend(sendId: string) {
   const unsubscribePageUrl = `${appUrl}/unsubscribe/${send.contact.unsubscribeToken}`;
   const listUnsubscribeUrl = `${appUrl}/api/v1/email/unsubscribe/${send.contact.unsubscribeToken}`;
 
+  const candidateFromEmail =
+    send.step?.fromEmail?.trim().toLowerCase() ||
+    send.broadcast?.fromEmail?.trim().toLowerCase() ||
+    settings?.fromEmail?.trim().toLowerCase() ||
+    "";
+
+  if (!candidateFromEmail) {
+    await prisma.emailSend.update({
+      where: { id: sendId },
+      data: {
+        status: "FAILED",
+        error:
+          "No sending email configured. Set a default on Email Settings or on this broadcast.",
+        attemptCount: send.attemptCount + 1,
+      },
+    });
+    await maybeRefreshBroadcast(send.broadcastId);
+    return;
+  }
+
   const verifiedIdentity = await prisma.advertiserSendingIdentity.findFirst({
     where: {
       advertiserId: send.advertiserId,
       verificationStatus: "VERIFIED",
-      isDefault: true,
+      fromEmail: candidateFromEmail,
     },
   });
 
-  const platformFromEmail = await getDefaultFromEmail();
-  const fromEmail =
-    send.step?.fromEmail?.trim() ||
-    verifiedIdentity?.fromEmail ||
-    platformFromEmail;
+  if (!verifiedIdentity) {
+    await prisma.emailSend.update({
+      where: { id: sendId },
+      data: {
+        status: "FAILED",
+        error: "From email must match a verified sending domain address.",
+        attemptCount: send.attemptCount + 1,
+      },
+    });
+    await maybeRefreshBroadcast(send.broadcastId);
+    return;
+  }
+
+  const fromEmail = verifiedIdentity.fromEmail;
 
   const mergeData: Record<string, string> = {
     first_name: send.contact.firstName ?? "",
@@ -84,6 +121,7 @@ export async function processEmailSend(sendId: string) {
     campaign_name: send.lead?.campaign?.name ?? "",
     company_name:
       send.step?.fromName?.trim() ||
+      send.broadcast?.fromName?.trim() ||
       settings?.fromName ||
       send.automation?.fromName ||
       advertiser?.advertiserProfile?.company ||
@@ -105,8 +143,10 @@ export async function processEmailSend(sendId: string) {
 
   const fromName =
     send.step?.fromName?.trim() ||
+    send.broadcast?.fromName?.trim() ||
     send.automation?.fromName ||
     settings?.fromName ||
+    verifiedIdentity.fromName ||
     advertiser?.advertiserProfile?.company ||
     advertiser?.name ||
     "Team";
@@ -137,6 +177,7 @@ export async function processEmailSend(sendId: string) {
         attemptCount: send.attemptCount + 1,
       },
     });
+    await maybeRefreshBroadcast(send.broadcastId);
     return;
   }
 
@@ -165,9 +206,7 @@ export async function processEmailSend(sendId: string) {
       },
     });
 
-    if (send.broadcastId) {
-      await refreshBroadcastProgress(send.broadcastId).catch(() => {});
-    }
+    await maybeRefreshBroadcast(send.broadcastId);
     return;
   }
 
@@ -181,8 +220,8 @@ export async function processEmailSend(sendId: string) {
     },
   });
 
-  if (failed && send.broadcastId) {
-    await refreshBroadcastProgress(send.broadcastId).catch(() => {});
+  if (failed) {
+    await maybeRefreshBroadcast(send.broadcastId);
   }
 
   if (!failed) {
@@ -194,6 +233,7 @@ export async function sendTestEmail(
   advertiserId: string,
   templateId: string,
   toEmail: string,
+  opts?: { fromEmail?: string | null; fromName?: string | null },
 ) {
   const template = await prisma.emailTemplate.findFirst({
     where: { id: templateId, advertiserId },
@@ -205,19 +245,43 @@ export async function sendTestEmail(
     include: { advertiserProfile: true, emailMarketingSettings: true },
   });
 
+  const candidateFrom =
+    opts?.fromEmail?.trim().toLowerCase() ||
+    advertiser?.emailMarketingSettings?.fromEmail?.trim().toLowerCase() ||
+    "";
+
+  const identity = candidateFrom
+    ? await prisma.advertiserSendingIdentity.findFirst({
+        where: {
+          advertiserId,
+          verificationStatus: "VERIFIED",
+          fromEmail: candidateFrom,
+        },
+      })
+    : null;
+
+  if (!identity) {
+    throw new Error(
+      "No verified from email. Select a verified domain address or set a default on Email Settings.",
+    );
+  }
+
   const sesConfig = await getResolvedSesConfig();
-  const platformFromEmail = await getDefaultFromEmail();
+  const fromName =
+    opts?.fromName?.trim() ||
+    advertiser?.emailMarketingSettings?.fromName ||
+    identity.fromName ||
+    advertiser?.advertiserProfile?.company ||
+    advertiser?.name ||
+    "Team";
+
   const mergeData = {
     first_name: "Test",
     last_name: "User",
     email: toEmail,
     phone: "",
     campaign_name: "Test Campaign",
-    company_name:
-      advertiser?.emailMarketingSettings?.fromName ??
-      advertiser?.advertiserProfile?.company ??
-      advertiser?.name ??
-      "Your Company",
+    company_name: fromName,
     unsubscribe_url: `${sesConfig.appUrl}/unsubscribe/test`,
   };
 
@@ -227,13 +291,9 @@ export async function sendTestEmail(
 
   return sendMarketingEmail({
     to: toEmail,
-    fromName:
-      advertiser?.emailMarketingSettings?.fromName ??
-      advertiser?.advertiserProfile?.company ??
-      advertiser?.name ??
-      "Team",
-    fromEmail: platformFromEmail,
-    replyTo: PLATFORM_EMAILS.support,
+    fromName,
+    fromEmail: identity.fromEmail,
+    replyTo: advertiser?.emailMarketingSettings?.replyTo ?? PLATFORM_EMAILS.support,
     subject,
     html,
     text: template.textBody ? renderTemplate(template.textBody, mergeData) : undefined,

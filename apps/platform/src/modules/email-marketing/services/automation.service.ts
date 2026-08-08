@@ -310,6 +310,29 @@ export async function activateAutomation(advertiserId: string, id: string) {
   if (!automation.campaignId) {
     throw new AppError("VALIDATION_ERROR", "Select a list before publishing", 422);
   }
+
+  const settings = await prisma.advertiserEmailSettings.findUnique({
+    where: { advertiserId },
+  });
+  const defaultFrom = settings?.fromEmail?.trim().toLowerCase() || "";
+
+  const verifiedEmails = new Set(
+    (
+      await prisma.advertiserSendingIdentity.findMany({
+        where: { advertiserId, verificationStatus: "VERIFIED" },
+        select: { fromEmail: true },
+      })
+    ).map((i) => i.fromEmail.toLowerCase()),
+  );
+
+  if (defaultFrom && !verifiedEmails.has(defaultFrom)) {
+    throw new AppError(
+      "VALIDATION_ERROR",
+      "Default from email on Settings is not a verified domain address",
+      422,
+    );
+  }
+
   for (const step of automation.steps) {
     if (step.type === "SEND_EMAIL" && !step.templateId) {
       throw new AppError("VALIDATION_ERROR", "Every email step needs a template", 422);
@@ -318,6 +341,22 @@ export async function activateAutomation(advertiserId: string, id: string) {
       throw new AppError(
         "VALIDATION_ERROR",
         "Only email steps are supported",
+        422,
+      );
+    }
+    const stepFrom = step.fromEmail?.trim().toLowerCase() || "";
+    const resolved = stepFrom || defaultFrom;
+    if (!resolved) {
+      throw new AppError(
+        "VALIDATION_ERROR",
+        "Select a from email on each email action, or set a default on Email Settings",
+        422,
+      );
+    }
+    if (!verifiedEmails.has(resolved)) {
+      throw new AppError(
+        "VALIDATION_ERROR",
+        `From email ${resolved} must match a verified sending domain address`,
         422,
       );
     }

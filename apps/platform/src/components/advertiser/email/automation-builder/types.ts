@@ -24,6 +24,15 @@ export type TagOption = {
   color: string | null;
 };
 
+export type SendingIdentityOption = {
+  id: string;
+  domain: string;
+  fromEmail: string;
+  fromName: string;
+  verificationStatus: string;
+  ready?: boolean;
+};
+
 /** Full editable template content for a step. */
 export type TemplateContent = {
   id: string;
@@ -72,6 +81,8 @@ export type StepStat = {
   order: number;
   delayMinutes: number;
   sent: number;
+  delivered: number;
+  bounced: number;
   opens: number;
   clicks: number;
   openRate: number;

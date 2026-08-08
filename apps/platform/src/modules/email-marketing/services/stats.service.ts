@@ -211,9 +211,15 @@ export async function getAutomationStepStats(advertiserId: string, automationId:
 
   const stepStats = await Promise.all(
     automation.steps.map(async (step) => {
-      const [sent, opens, clicks] = await Promise.all([
+      const [sent, delivered, bounced, opens, clicks] = await Promise.all([
         prisma.emailSend.count({
           where: { stepId: step.id, status: { in: ["SENT", "DELIVERED"] } },
+        }),
+        prisma.emailSend.count({
+          where: { stepId: step.id, status: "DELIVERED" },
+        }),
+        prisma.emailSend.count({
+          where: { stepId: step.id, status: "BOUNCED" },
         }),
         prisma.emailEvent.count({
           where: { type: "OPEN", send: { stepId: step.id } },
@@ -227,6 +233,8 @@ export async function getAutomationStepStats(advertiserId: string, automationId:
         order: step.order,
         delayMinutes: step.delayMinutes,
         sent,
+        delivered,
+        bounced,
         opens,
         clicks,
         openRate: sent > 0 ? Math.round((opens / sent) * 100) : 0,

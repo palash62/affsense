@@ -1,11 +1,15 @@
 import { withAuth } from "@/lib/api-handler";
 import { errorResponse } from "@/lib/errors";
-import { sendingIdentitySchema } from "@/lib/validations";
+import {
+  sendingIdentitySchema,
+  updateSendingIdentityFromEmailSchema,
+} from "@/lib/validations";
 import {
   listSendingIdentities,
   refreshDomainVerification,
   requestDomainVerification,
   setDefaultIdentity,
+  updateIdentityFromEmail,
 } from "@/modules/email-marketing";
 
 export async function GET() {
@@ -36,6 +40,7 @@ export async function POST(request: Request) {
         session.user.id,
         parsed.data.domain,
         parsed.data.fromName,
+        parsed.data.fromEmail || null,
       );
       return Response.json({ data }, { status: 201 });
     } catch (error) {
@@ -57,6 +62,27 @@ export async function PATCH(request: Request) {
       }
       if (action === "setDefault" && identityId) {
         const data = await setDefaultIdentity(session.user.id, identityId);
+        return Response.json({ data });
+      }
+      if (action === "updateFromEmail") {
+        const parsed = updateSendingIdentityFromEmailSchema.safeParse(body);
+        if (!parsed.success) {
+          return Response.json(
+            {
+              error: {
+                code: "VALIDATION_ERROR",
+                message: parsed.error.issues[0]?.message ?? "Invalid input",
+                status: 422,
+              },
+            },
+            { status: 422 },
+          );
+        }
+        const data = await updateIdentityFromEmail(
+          session.user.id,
+          parsed.data.identityId,
+          parsed.data.fromEmail,
+        );
         return Response.json({ data });
       }
 

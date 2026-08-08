@@ -36,6 +36,8 @@ export type DnsRecord = {
   name: string;
   value: string;
   purpose: "DKIM" | "SPF" | "DMARC" | "TRACKING" | "MX";
+  /** Present for Mailgun records when the API reports DNS check status */
+  valid?: boolean;
 };
 
 type StoredDnsMeta =
@@ -65,6 +67,32 @@ function asStoredMeta(value: unknown): StoredDnsMeta | null {
   if (Array.isArray(value)) return value as string[];
   if (typeof value === "object") return value as StoredDnsMeta;
   return null;
+}
+
+/** Normalize a sending address so the host always matches the verified domain. */
+export function normalizeFromEmailForDomain(
+  fromEmail: string | null | undefined,
+  domain: string,
+): string {
+  const normalizedDomain = domain.trim().toLowerCase();
+  const raw = (fromEmail ?? "").trim().toLowerCase();
+  if (!raw) return `noreply@${normalizedDomain}`;
+
+  const at = raw.lastIndexOf("@");
+  const local = at < 0 ? raw : raw.slice(0, at);
+  const host = at < 0 ? normalizedDomain : raw.slice(at + 1);
+
+  if (host !== normalizedDomain) {
+    throw new AppError(
+      "VALIDATION_ERROR",
+      `Sending email must use @${normalizedDomain}`,
+      422,
+    );
+  }
+  if (!local || !/^[a-z0-9._+-]+$/i.test(local)) {
+    throw new AppError("VALIDATION_ERROR", "Enter a valid sending email address", 422);
+  }
+  return `${local}@${normalizedDomain}`;
 }
 
 export function buildSesDnsRecords(domain: string, dkimTokens: string[]): DnsRecord[] {
@@ -104,16 +132,29 @@ function guessMailgunPurpose(
 
   if (type === "MX") return "MX";
   if (name.includes("_dmarc") || value.includes("v=dmarc1")) return "DMARC";
-  if (value.includes("v=spf1") || value.includes("include:mailgun.org")) return "SPF";
-  if (name.includes("_domainkey") || value.includes("dkim") || type === "TXT" && name.includes("k=")) {
+  // SPF is TXT with v=spf1 (do not treat tracking CNAMEs pointing at mailgun.org as SPF)
+  if (value.includes("v=spf1")) return "SPF";
+  if (
+    name.includes("_domainkey") ||
+    value.includes("k=rsa") ||
+    (type === "TXT" && value.includes("p="))
+  ) {
     return "DKIM";
   }
-  if (type === "CNAME" && (name.includes("email") || value.includes("mailgun.org"))) {
-    return "TRACKING";
-  }
-  if (type === "TXT" && value.includes("k=rsa")) return "DKIM";
   if (type === "CNAME") return "TRACKING";
+  if (value.includes("include:mailgun.org") || value.includes("include:mailgun.net")) {
+    return "SPF";
+  }
   return "DKIM";
+}
+
+function mailgunRecordValid(rec: MailgunDnsRecordRaw): boolean | undefined {
+  if (typeof rec.valid !== "string") return undefined;
+  const v = rec.valid.toLowerCase();
+  if (v === "valid") return true;
+  if (v === "invalid") return false;
+  // "unknown" / other — leave unset so callers can fall back to domain state
+  return undefined;
 }
 
 function mapMailgunDnsRecords(details: MailgunDomainDetails): DnsRecord[] {
@@ -126,11 +167,13 @@ function mapMailgunDnsRecords(details: MailgunDomainDetails): DnsRecord[] {
     const name = rec.name?.trim();
     const value = rec.value?.trim();
     if (!name || !value) continue;
+    const valid = mailgunRecordValid(rec);
     mapped.push({
       type,
       name,
       value: rec.priority != null && type === "MX" ? `${rec.priority} ${value}` : value,
       purpose: guessMailgunPurpose(rec),
+      ...(valid !== undefined ? { valid } : {}),
     });
   }
 
@@ -141,15 +184,30 @@ function mapMailgunDnsRecords(details: MailgunDomainDetails): DnsRecord[] {
     const name = rec.name?.trim();
     const value = rec.value?.trim();
     if (!name || !value) continue;
+    const valid = mailgunRecordValid(rec);
     mapped.push({
       type,
       name,
       value: rec.priority != null && type === "MX" ? `${rec.priority} ${value}` : value,
       purpose: type === "MX" ? "MX" : guessMailgunPurpose(rec),
+      ...(valid !== undefined ? { valid } : {}),
     });
   }
 
   return mapped;
+}
+
+/** Prefer Mailgun per-record valid flags; fall back when records are missing or unflagged. */
+function purposeRecordsReady(
+  records: DnsRecord[],
+  purpose: DnsRecord["purpose"],
+  fallback: boolean,
+): boolean {
+  const matching = records.filter((r) => r.purpose === purpose);
+  if (matching.length === 0) return fallback;
+  const flagged = matching.filter((r) => typeof r.valid === "boolean");
+  if (flagged.length === 0) return fallback;
+  return flagged.every((r) => r.valid === true);
 }
 
 function isMailgunDomainReady(state: string): boolean {
@@ -202,8 +260,15 @@ export function serializeSendingIdentity<
     provider = dkimTokens.length ? "ses" : "unknown";
   }
 
-  const hasSpf = dnsRecords.some((r) => r.purpose === "SPF");
-  const hasDmarc = dnsRecords.some((r) => r.purpose === "DMARC");
+  const dkimReady =
+    provider === "mailgun" ? purposeRecordsReady(dnsRecords, "DKIM", ready) : ready;
+  // Mailgun reports SPF/DMARC (when present) via DNS record valid flags.
+  // When domain is already verified and a purpose has no flagged records (common for DMARC),
+  // fall back to overall ready so the UI matches Mailgun's "done" state.
+  const spfReady =
+    provider === "mailgun" ? purposeRecordsReady(dnsRecords, "SPF", ready) : false;
+  const dmarcReady =
+    provider === "mailgun" ? purposeRecordsReady(dnsRecords, "DMARC", ready) : false;
 
   return {
     id: identity.id,
@@ -215,10 +280,9 @@ export function serializeSendingIdentity<
     dkimTokens,
     provider,
     ready,
-    dkimReady: ready,
-    /** SPF/DMARC instructional until live probes exist */
-    spfReady: ready && hasSpf ? false : false,
-    dmarcReady: ready && hasDmarc ? false : false,
+    dkimReady,
+    spfReady,
+    dmarcReady,
     dnsRecords,
     createdAt: identity.createdAt.toISOString(),
     updatedAt: identity.updatedAt.toISOString(),
@@ -239,11 +303,16 @@ async function upsertLocalIdentity(
   fromName: string,
   dkimTokens: Prisma.InputJsonValue,
   verificationStatus: "PENDING" | "VERIFIED" = "PENDING",
+  fromEmailInput?: string | null,
 ) {
-  const fromEmail = `noreply@${normalizedDomain}`;
   const existing = await prisma.advertiserSendingIdentity.findUnique({
     where: { advertiserId_domain: { advertiserId, domain: normalizedDomain } },
   });
+
+  const fromEmail =
+    fromEmailInput != null && fromEmailInput.trim()
+      ? normalizeFromEmailForDomain(fromEmailInput, normalizedDomain)
+      : existing?.fromEmail ?? normalizeFromEmailForDomain(null, normalizedDomain);
 
   if (existing) {
     return prisma.advertiserSendingIdentity.update({
@@ -276,6 +345,7 @@ async function requestSesDomainVerification(
   normalizedDomain: string,
   fromName: string,
   config: Awaited<ReturnType<typeof getResolvedSesConfig>>,
+  fromEmail?: string | null,
 ) {
   const client = getSesClient(config);
   try {
@@ -291,7 +361,14 @@ async function requestSesDomainVerification(
       provider: "ses",
       tokens,
     };
-    const row = await upsertLocalIdentity(advertiserId, normalizedDomain, fromName, payload);
+    const row = await upsertLocalIdentity(
+      advertiserId,
+      normalizedDomain,
+      fromName,
+      payload,
+      "PENDING",
+      fromEmail,
+    );
     return serializeSendingIdentity(row);
   } catch (error) {
     if (error instanceof AppError) throw error;
@@ -304,6 +381,7 @@ async function requestMailgunDomainVerification(
   advertiserId: string,
   normalizedDomain: string,
   fromName: string,
+  fromEmail?: string | null,
 ) {
   const created = await createMailgunDomain(normalizedDomain);
   if (!created.ok) {
@@ -317,6 +395,7 @@ async function requestMailgunDomainVerification(
     fromName,
     mailgunMetaFromDetails(created.data),
     verified ? "VERIFIED" : "PENDING",
+    fromEmail,
   );
   return serializeSendingIdentity(row);
 }
@@ -325,19 +404,36 @@ export async function requestDomainVerification(
   advertiserId: string,
   domain: string,
   fromName: string,
+  fromEmail?: string | null,
 ) {
   const normalizedDomain = domain.trim().toLowerCase();
   if (!normalizedDomain || !normalizedDomain.includes(".")) {
     throw new AppError("VALIDATION_ERROR", "Enter a valid domain", 422);
   }
 
+  // Validate early when provided
+  if (fromEmail?.trim()) {
+    normalizeFromEmailForDomain(fromEmail, normalizedDomain);
+  }
+
   const sesConfig = await getResolvedSesConfig();
   if (sesConfig.enabled) {
-    return requestSesDomainVerification(advertiserId, normalizedDomain, fromName, sesConfig);
+    return requestSesDomainVerification(
+      advertiserId,
+      normalizedDomain,
+      fromName,
+      sesConfig,
+      fromEmail,
+    );
   }
 
   if (isMailgunConfigured()) {
-    return requestMailgunDomainVerification(advertiserId, normalizedDomain, fromName);
+    return requestMailgunDomainVerification(
+      advertiserId,
+      normalizedDomain,
+      fromName,
+      fromEmail,
+    );
   }
 
   throw new AppError(
@@ -345,6 +441,24 @@ export async function requestDomainVerification(
     "Email sending provider is not configured by platform admin.",
     503,
   );
+}
+
+export async function updateIdentityFromEmail(
+  advertiserId: string,
+  identityId: string,
+  fromEmail: string,
+) {
+  const identity = await prisma.advertiserSendingIdentity.findFirst({
+    where: { id: identityId, advertiserId },
+  });
+  if (!identity) throw new AppError("NOT_FOUND", "Sending identity not found", 404);
+
+  const normalized = normalizeFromEmailForDomain(fromEmail, identity.domain);
+  const row = await prisma.advertiserSendingIdentity.update({
+    where: { id: identity.id },
+    data: { fromEmail: normalized },
+  });
+  return serializeSendingIdentity(row);
 }
 
 async function refreshSesDomainVerification(

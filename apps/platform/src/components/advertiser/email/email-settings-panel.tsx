@@ -7,18 +7,45 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-type Settings = { fromName: string; replyTo: string };
+type Settings = { fromName: string; fromEmail: string; replyTo: string };
+
+type IdentityOption = {
+  id: string;
+  domain: string;
+  fromEmail: string;
+  verificationStatus: string;
+  ready?: boolean;
+};
 
 export function EmailSettingsPanel() {
-  const [settings, setSettings] = useState<Settings>({ fromName: "", replyTo: "" });
+  const [settings, setSettings] = useState<Settings>({
+    fromName: "",
+    fromEmail: "",
+    replyTo: "",
+  });
+  const [identities, setIdentities] = useState<IdentityOption[]>([]);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
   const [provider, setProvider] = useState<string | null>(null);
+
+  const verifiedIdentities = identities.filter(
+    (i) => i.verificationStatus === "VERIFIED" || i.ready,
+  );
 
   useEffect(() => {
     fetch("/api/v1/advertiser/email/settings")
       .then((r) => r.json())
-      .then((d) => setSettings(d.data ?? { fromName: "", replyTo: "" }));
+      .then((d) =>
+        setSettings({
+          fromName: d.data?.fromName ?? "",
+          fromEmail: d.data?.fromEmail ?? "",
+          replyTo: d.data?.replyTo ?? "",
+        }),
+      );
+    fetch("/api/v1/advertiser/email/identities")
+      .then((r) => r.json())
+      .then((d) => setIdentities((d.data ?? []) as IdentityOption[]));
     fetch("/api/v1/advertiser/email/provider")
       .then((r) => r.json())
       .then((d) => setProvider(d.data?.marketingProvider ?? null));
@@ -26,13 +53,25 @@ export function EmailSettingsPanel() {
 
   async function saveSettings() {
     setSaving(true);
+    setMessage("");
+    setError("");
+    if (!settings.fromEmail.trim()) {
+      setSaving(false);
+      setError("Select a default from email from a verified domain");
+      return;
+    }
     const res = await fetch("/api/v1/advertiser/email/settings", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(settings),
     });
+    const json = await res.json().catch(() => null);
     setSaving(false);
-    setMessage(res.ok ? "Settings saved" : "Save failed");
+    if (!res.ok) {
+      setError(json?.error?.message ?? "Save failed");
+      return;
+    }
+    setMessage("Settings saved");
   }
 
   return (
@@ -68,6 +107,38 @@ export function EmailSettingsPanel() {
           />
         </div>
         <div>
+          <Label>Default from email</Label>
+          {verifiedIdentities.length === 0 ? (
+            <p className="mt-1 text-sm text-slate-600">
+              No verified sending emails yet.{" "}
+              <Link
+                href="/advertiser/email/domains"
+                className="font-medium underline underline-offset-2"
+              >
+                Add and verify a domain
+              </Link>{" "}
+              first.
+            </p>
+          ) : (
+            <select
+              className="mt-1 flex h-10 w-full rounded-lg border border-input bg-background px-3 text-sm"
+              value={settings.fromEmail}
+              onChange={(e) => setSettings({ ...settings, fromEmail: e.target.value })}
+              required
+            >
+              <option value="">Select sending email…</option>
+              {verifiedIdentities.map((i) => (
+                <option key={i.id} value={i.fromEmail}>
+                  {i.fromEmail}
+                </option>
+              ))}
+            </select>
+          )}
+          <p className="mt-1 text-xs text-slate-500">
+            Automations use this address when an email action does not override the sender.
+          </p>
+        </div>
+        <div>
           <Label>Reply-to email</Label>
           <Input
             type="email"
@@ -75,7 +146,10 @@ export function EmailSettingsPanel() {
             onChange={(e) => setSettings({ ...settings, replyTo: e.target.value })}
           />
         </div>
-        <Button onClick={saveSettings} disabled={saving}>
+        <Button
+          onClick={saveSettings}
+          disabled={saving || verifiedIdentities.length === 0}
+        >
           <Save className="mr-2 h-4 w-4" />
           Save
         </Button>
@@ -108,6 +182,7 @@ export function EmailSettingsPanel() {
         </p>
       </div>
 
+      {error ? <p className="text-sm text-red-600">{error}</p> : null}
       {message ? <p className="text-sm text-green-600">{message}</p> : null}
     </div>
   );

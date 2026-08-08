@@ -10,6 +10,7 @@ import {
   Mail,
   Save,
   Send,
+  User,
   Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -34,6 +35,14 @@ type BroadcastAction = "draft" | "schedule" | "send";
 type ListOption = { id: string; name: string };
 type TagOption = { id: string; name: string; color: string | null };
 type TemplateOption = { id: string; name: string; subject: string };
+type IdentityOption = {
+  id: string;
+  domain: string;
+  fromEmail: string;
+  fromName: string;
+  verificationStatus: string;
+  ready?: boolean;
+};
 
 type Props = {
   broadcastId?: string;
@@ -88,16 +97,22 @@ function SectionCard({
   );
 }
 
-export function BroadcastComposePanel({ broadcastId }: Props) {
+export function BroadcastComposePanel({ broadcastId: initialBroadcastId }: Props) {
   const router = useRouter();
   const { data: session } = useSession();
   const timezone = resolveUserTimezone(session?.user?.timezone);
 
+  const [broadcastId, setBroadcastId] = useState(initialBroadcastId);
   const [lists, setLists] = useState<ListOption[]>([]);
   const [tags, setTags] = useState<TagOption[]>([]);
   const [templates, setTemplates] = useState<TemplateOption[]>([]);
+  const [identities, setIdentities] = useState<IdentityOption[]>([]);
+  const [defaultFromEmail, setDefaultFromEmail] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<BroadcastAction | null>(null);
+  const [testing, setTesting] = useState(false);
+  const [testTo, setTestTo] = useState("");
+  const [testMsg, setTestMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [recipientCount, setRecipientCount] = useState<number | null>(null);
   const [counting, setCounting] = useState(false);
@@ -110,33 +125,58 @@ export function BroadcastComposePanel({ broadcastId }: Props) {
   const [templateId, setTemplateId] = useState("");
   const [subject, setSubject] = useState("");
   const [htmlBody, setHtmlBody] = useState(DEFAULT_HTML);
+  const [fromEmail, setFromEmail] = useState("");
+  const [fromName, setFromName] = useState("");
   const [deliveryMode, setDeliveryMode] = useState<DeliveryMode>("now");
   const [scheduleLocal, setScheduleLocal] = useState("");
+
+  const verifiedIdentities = useMemo(
+    () =>
+      identities.filter((i) => i.verificationStatus === "VERIFIED" || i.ready),
+    [identities],
+  );
+
+  useEffect(() => {
+    if (session?.user?.email && !testTo) {
+      setTestTo(session.user.email);
+    }
+  }, [session?.user?.email, testTo]);
 
   useEffect(() => {
     let cancelled = false;
     void (async () => {
       setLoading(true);
       try {
-        const [lRes, tRes, tplRes, bRes] = await Promise.all([
+        const [lRes, tRes, tplRes, idRes, settingsRes, bRes] = await Promise.all([
           fetch("/api/v1/advertiser/email/lists", { credentials: "same-origin" }),
           fetch("/api/v1/advertiser/email/tags", { credentials: "same-origin" }),
           fetch("/api/v1/advertiser/email/templates", { credentials: "same-origin" }),
-          broadcastId
-            ? fetch(`/api/v1/advertiser/email/broadcasts/${broadcastId}`, {
+          fetch("/api/v1/advertiser/email/identities", { credentials: "same-origin" }),
+          fetch("/api/v1/advertiser/email/settings", { credentials: "same-origin" }),
+          initialBroadcastId
+            ? fetch(`/api/v1/advertiser/email/broadcasts/${initialBroadcastId}`, {
                 credentials: "same-origin",
               })
             : Promise.resolve(null),
         ]);
-        const [lJson, tJson, tplJson] = await Promise.all([
+        const [lJson, tJson, tplJson, idJson, settingsJson] = await Promise.all([
           lRes.json().catch(() => null),
           tRes.json().catch(() => null),
           tplRes.json().catch(() => null),
+          idRes.json().catch(() => null),
+          settingsRes.json().catch(() => null),
         ]);
         if (cancelled) return;
         setLists((lJson?.data ?? []) as ListOption[]);
         setTags((tJson?.data ?? []) as TagOption[]);
         setTemplates((tplJson?.data ?? []) as TemplateOption[]);
+        setIdentities((idJson?.data ?? []) as IdentityOption[]);
+        const settingsFrom =
+          (settingsJson?.data?.fromEmail as string | undefined)?.trim() ?? "";
+        setDefaultFromEmail(settingsFrom);
+        if (!initialBroadcastId) {
+          setFromName((settingsJson?.data?.fromName as string | undefined)?.trim() ?? "");
+        }
 
         if (bRes) {
           const bJson = await bRes.json().catch(() => null);
@@ -151,6 +191,8 @@ export function BroadcastComposePanel({ broadcastId }: Props) {
             tagIds: string[];
             status: string;
             scheduledAt: string | null;
+            fromEmail?: string | null;
+            fromName?: string | null;
             template: { id: string; name: string; subject: string; htmlBody?: string };
           };
           if (b.status !== "DRAFT" && b.status !== "QUEUED") {
@@ -161,12 +203,14 @@ export function BroadcastComposePanel({ broadcastId }: Props) {
           setAudienceType(b.audienceType);
           setListId(b.listId ?? "");
           setTagIds(b.tagIds ?? []);
+          setFromEmail(b.fromEmail ?? "");
+          setFromName(b.fromName ?? settingsJson?.data?.fromName ?? "");
           const isOneOff = b.template.name.startsWith("[Broadcast]");
           if (isOneOff) {
             setContentMode("compose");
             setSubject(b.template.subject);
             setHtmlBody(b.template.htmlBody ?? DEFAULT_HTML);
-            setTemplateId("");
+            setTemplateId(b.template.id);
           } else {
             setContentMode("template");
             setTemplateId(b.template.id);
@@ -185,7 +229,7 @@ export function BroadcastComposePanel({ broadcastId }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [broadcastId, timezone]);
+  }, [initialBroadcastId, timezone]);
 
   useEffect(() => {
     let cancelled = false;
@@ -242,13 +286,22 @@ export function BroadcastComposePanel({ broadcastId }: Props) {
   const hasAudience =
     audienceType === "LIST" ? Boolean(listId) : tagIds.length > 0;
   const hasRecipients = (recipientCount ?? 0) > 0;
+  const hasSender = Boolean(fromEmail.trim() || defaultFromEmail);
 
-  const canDraft = name.trim().length >= 2 && hasContent && !saving;
+  const canDraft = name.trim().length >= 2 && hasContent && !saving && !testing;
   const canPrimary =
     canDraft &&
     hasAudience &&
     hasRecipients &&
+    hasSender &&
     (deliveryMode === "now" || Boolean(scheduleLocal));
+  const canTest =
+    name.trim().length >= 2 &&
+    hasContent &&
+    hasSender &&
+    Boolean(testTo.trim()) &&
+    !saving &&
+    !testing;
 
   function buildBody(action: BroadcastAction) {
     const base = {
@@ -256,6 +309,8 @@ export function BroadcastComposePanel({ broadcastId }: Props) {
       audienceType,
       listId: audienceType === "LIST" ? listId || null : null,
       tagIds: audienceType === "TAGS" ? tagIds : null,
+      fromEmail: fromEmail.trim() || null,
+      fromName: fromName.trim() || null,
       action,
       scheduledAt:
         action === "schedule" && scheduleLocal
@@ -271,6 +326,7 @@ export function BroadcastComposePanel({ broadcastId }: Props) {
   async function submit(action: BroadcastAction) {
     setSaving(action);
     setError(null);
+    setTestMsg(null);
     try {
       const url = broadcastId
         ? `/api/v1/advertiser/email/broadcasts/${broadcastId}`
@@ -288,7 +344,10 @@ export function BroadcastComposePanel({ broadcastId }: Props) {
       }
       if (action === "draft") {
         const id = json?.data?.id as string | undefined;
+        const nextTemplateId = json?.data?.template?.id as string | undefined;
+        if (nextTemplateId) setTemplateId(nextTemplateId);
         if (id && id !== broadcastId) {
+          setBroadcastId(id);
           router.replace(`/advertiser/email/broadcasts/${id}`);
           return;
         }
@@ -300,6 +359,62 @@ export function BroadcastComposePanel({ broadcastId }: Props) {
       setError("Unable to save broadcast");
     } finally {
       setSaving(null);
+    }
+  }
+
+  async function sendTest() {
+    if (!canTest) return;
+    setTesting(true);
+    setError(null);
+    setTestMsg(null);
+    try {
+      // Persist draft so a templateId exists for the test send
+      const url = broadcastId
+        ? `/api/v1/advertiser/email/broadcasts/${broadcastId}`
+        : "/api/v1/advertiser/email/broadcasts";
+      const saveRes = await fetch(url, {
+        method: broadcastId ? "PATCH" : "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(buildBody("draft")),
+      });
+      const saveJson = await saveRes.json().catch(() => null);
+      if (!saveRes.ok) {
+        setError(saveJson?.error?.message ?? "Unable to save draft for test");
+        return;
+      }
+      const id = saveJson?.data?.id as string | undefined;
+      const tplId = saveJson?.data?.template?.id as string | undefined;
+      if (tplId) setTemplateId(tplId);
+      if (id && id !== broadcastId) {
+        setBroadcastId(id);
+        router.replace(`/advertiser/email/broadcasts/${id}`);
+      }
+      if (!tplId) {
+        setError("Unable to prepare template for test send");
+        return;
+      }
+
+      const testRes = await fetch(`/api/v1/advertiser/email/templates/${tplId}/test`, {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: testTo.trim(),
+          fromEmail: fromEmail.trim() || null,
+          fromName: fromName.trim() || null,
+        }),
+      });
+      const testJson = await testRes.json().catch(() => null);
+      if (!testRes.ok) {
+        setError(testJson?.error?.message ?? "Test email failed");
+        return;
+      }
+      setTestMsg(`Test email sent to ${testTo.trim()}`);
+    } catch {
+      setError("Test email failed");
+    } finally {
+      setTesting(false);
     }
   }
 
@@ -517,6 +632,92 @@ export function BroadcastComposePanel({ broadcastId }: Props) {
                 </div>
               </>
             )}
+          </SectionCard>
+
+          <SectionCard
+            icon={User}
+            title="Sender"
+            description="Choose a verified domain address, or use the default from Email Settings."
+          >
+            <div className="space-y-2">
+              <Label htmlFor="broadcast-from-name">From name</Label>
+              <Input
+                id="broadcast-from-name"
+                value={fromName}
+                onChange={(e) => setFromName(e.target.value)}
+                placeholder="Your brand"
+                disabled={Boolean(saving) || testing}
+                className="max-w-md"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>From email</Label>
+              {verifiedIdentities.length === 0 ? (
+                <p className="text-sm text-amber-800">
+                  No verified sending emails. Add a domain on the Domains tab first.
+                </p>
+              ) : (
+                <Select
+                  value={fromEmail || "__default__"}
+                  onValueChange={(v) => {
+                    const next = !v || v === "__default__" ? "" : v;
+                    setFromEmail(next);
+                    const match = verifiedIdentities.find((i) => i.fromEmail === next);
+                    if (match && !fromName.trim()) setFromName(match.fromName);
+                  }}
+                >
+                  <SelectTrigger className="max-w-md">
+                    <SelectValue placeholder="Select from email" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__default__">
+                      {defaultFromEmail
+                        ? `Use settings default (${defaultFromEmail})`
+                        : "Use default from Settings"}
+                    </SelectItem>
+                    {verifiedIdentities.map((i) => (
+                      <SelectItem key={i.id} value={i.fromEmail}>
+                        {i.fromEmail}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              {!hasSender ? (
+                <p className="text-xs text-amber-700">
+                  Set a default on Email Settings or pick an address here before sending.
+                </p>
+              ) : null}
+            </div>
+            <div className="space-y-2 border-t border-slate-100 pt-4">
+              <Label htmlFor="broadcast-test-to">Send test email</Label>
+              <div className="flex flex-wrap items-center gap-2">
+                <Input
+                  id="broadcast-test-to"
+                  type="email"
+                  value={testTo}
+                  onChange={(e) => setTestTo(e.target.value)}
+                  placeholder="you@example.com"
+                  disabled={testing || Boolean(saving)}
+                  className="max-w-xs"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={!canTest}
+                  onClick={() => void sendTest()}
+                  className="gap-2"
+                >
+                  {testing ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4" />
+                  )}
+                  {testing ? "Sending…" : "Send test"}
+                </Button>
+              </div>
+              {testMsg ? <p className="text-sm text-emerald-700">{testMsg}</p> : null}
+            </div>
           </SectionCard>
 
           <SectionCard

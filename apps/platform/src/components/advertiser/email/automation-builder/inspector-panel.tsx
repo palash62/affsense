@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react";
 import {
   AlertCircle,
+  AlertTriangle,
   BarChart3,
+  CheckCircle2,
   Clock,
   List,
   Mail,
@@ -158,6 +160,8 @@ function StepStatistics({ stat }: { stat: StepStat }) {
   return (
     <div className="space-y-2">
       <StatRow icon={Send} label="Sent" value={String(stat.sent)} />
+      <StatRow icon={CheckCircle2} label="Delivered" value={String(stat.delivered)} />
+      <StatRow icon={AlertTriangle} label="Bounce" value={String(stat.bounced)} />
       <StatRow
         icon={MailOpen}
         label="Opened"
@@ -180,6 +184,8 @@ function EmailContentForm({ state }: { state: AutomationBuilderState }) {
     selection,
     templates,
     templateContents,
+    identities,
+    defaultFromEmail,
     updateStep,
     updateStepTemplate,
     removeStep,
@@ -205,6 +211,10 @@ function EmailContentForm({ state }: { state: AutomationBuilderState }) {
         htmlBody: DEFAULT_EMAIL_HTML,
       }
     : null;
+
+  const verifiedIdentities = identities.filter(
+    (i) => i.verificationStatus === "VERIFIED" || i.ready,
+  );
 
   const [createMode, setCreateMode] = useState<CreateMode>("quick");
   const [libraryId, setLibraryId] = useState("");
@@ -269,8 +279,8 @@ function EmailContentForm({ state }: { state: AutomationBuilderState }) {
         </PanelSection>
 
         <PanelSection
-          title="Sender override"
-          description="Leave blank to use this automation’s default from name and domain."
+          title="Sender"
+          description="Choose a verified domain address, or use the default from Email Settings."
         >
           <div>
             <FieldLabel>From name</FieldLabel>
@@ -280,20 +290,51 @@ function EmailContentForm({ state }: { state: AutomationBuilderState }) {
               onChange={(e) =>
                 updateStep(selectedStep.clientId, { fromName: e.target.value })
               }
-              placeholder="From name"
+              placeholder="From name (optional override)"
             />
           </div>
           <div>
-            <FieldLabel>From email</FieldLabel>
-            <Input
-              type="email"
-              className="mt-1.5 h-10"
-              value={selectedStep.fromEmail}
-              onChange={(e) =>
-                updateStep(selectedStep.clientId, { fromEmail: e.target.value })
-              }
-              placeholder="From email"
-            />
+            <FieldLabel required>From email</FieldLabel>
+            {verifiedIdentities.length === 0 ? (
+              <FieldHint tone="amber">
+                No verified sending emails. Add a domain on the Domains tab first.
+              </FieldHint>
+            ) : (
+              <Select
+                value={selectedStep.fromEmail || "__default__"}
+                onValueChange={(v) => {
+                  const next = !v || v === "__default__" ? "" : v;
+                  const match = verifiedIdentities.find((i) => i.fromEmail === next);
+                  updateStep(selectedStep.clientId, {
+                    fromEmail: next,
+                    ...(match && !selectedStep.fromName.trim()
+                      ? { fromName: match.fromName }
+                      : {}),
+                  });
+                }}
+              >
+                <SelectTrigger className="mt-1.5 h-10">
+                  <SelectValue placeholder="Select from email" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__default__">
+                    {defaultFromEmail
+                      ? `Use settings default (${defaultFromEmail})`
+                      : "Use default from Settings"}
+                  </SelectItem>
+                  {verifiedIdentities.map((i) => (
+                    <SelectItem key={i.id} value={i.fromEmail}>
+                      {i.fromEmail}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+            {!defaultFromEmail && !selectedStep.fromEmail ? (
+              <FieldHint tone="amber">
+                Set a default from email in Settings, or pick an address here.
+              </FieldHint>
+            ) : null}
           </div>
         </PanelSection>
 
@@ -1026,6 +1067,8 @@ export function InspectorPanel({ state }: Props) {
               {stats.length > 0 ? (
                 (() => {
                   const sent = stats.reduce((n, s) => n + s.sent, 0);
+                  const delivered = stats.reduce((n, s) => n + s.delivered, 0);
+                  const bounced = stats.reduce((n, s) => n + s.bounced, 0);
                   const opens = stats.reduce((n, s) => n + s.opens, 0);
                   const clicks = stats.reduce((n, s) => n + s.clicks, 0);
                   return (
@@ -1044,6 +1087,8 @@ export function InspectorPanel({ state }: Props) {
                           order: 0,
                           delayMinutes: 0,
                           sent,
+                          delivered,
+                          bounced,
                           opens,
                           clicks,
                           openRate: sent > 0 ? Math.round((opens / sent) * 100) : 0,

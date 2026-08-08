@@ -15,6 +15,8 @@ export type BroadcastInput = {
   templateId?: string | null;
   subject?: string | null;
   htmlBody?: string | null;
+  fromEmail?: string | null;
+  fromName?: string | null;
   action: BroadcastAction;
   scheduledAt?: string | null;
 };
@@ -34,6 +36,67 @@ function assertAudienceXor(input: BroadcastInput) {
   if (input.audienceType === "TAGS" && input.listId) {
     throw new AppError("VALIDATION_ERROR", "Choose a list or tags, not both", 422);
   }
+}
+
+/** Persist override; empty means use Settings default at send time. */
+async function resolveBroadcastSenderFields(
+  advertiserId: string,
+  input: BroadcastInput,
+  requireResolved: boolean,
+): Promise<{ fromEmail: string | null; fromName: string | null }> {
+  const fromEmailRaw = input.fromEmail?.trim().toLowerCase() || null;
+  const fromNameRaw = input.fromName?.trim() || null;
+
+  if (fromEmailRaw) {
+    const identity = await prisma.advertiserSendingIdentity.findFirst({
+      where: {
+        advertiserId,
+        verificationStatus: "VERIFIED",
+        fromEmail: fromEmailRaw,
+      },
+    });
+    if (!identity) {
+      throw new AppError(
+        "VALIDATION_ERROR",
+        "From email must match a verified sending domain address",
+        422,
+      );
+    }
+    return {
+      fromEmail: identity.fromEmail,
+      fromName: fromNameRaw || identity.fromName || null,
+    };
+  }
+
+  if (requireResolved) {
+    const settings = await prisma.advertiserEmailSettings.findUnique({
+      where: { advertiserId },
+    });
+    const settingsFrom = settings?.fromEmail?.trim().toLowerCase() || "";
+    if (!settingsFrom) {
+      throw new AppError(
+        "VALIDATION_ERROR",
+        "Select a from email or set a default on Email Settings",
+        422,
+      );
+    }
+    const identity = await prisma.advertiserSendingIdentity.findFirst({
+      where: {
+        advertiserId,
+        verificationStatus: "VERIFIED",
+        fromEmail: settingsFrom,
+      },
+    });
+    if (!identity) {
+      throw new AppError(
+        "VALIDATION_ERROR",
+        "Default from email on Settings is not a verified domain address",
+        422,
+      );
+    }
+  }
+
+  return { fromEmail: null, fromName: fromNameRaw };
 }
 
 async function resolveAudienceContactIds(
@@ -212,6 +275,8 @@ function serializeBroadcast(b: {
   allSubscribers: boolean;
   list?: { id: string; name: string } | null;
   tagIds: unknown;
+  fromEmail?: string | null;
+  fromName?: string | null;
   status: string;
   scheduledAt: Date | null;
   recipientCount: number;
@@ -233,6 +298,8 @@ function serializeBroadcast(b: {
       b.list?.name ??
       (b.audienceType === "LIST" && b.allSubscribers ? "All Subscribers" : null),
     tagIds: asTagIdArray(b.tagIds),
+    fromEmail: b.fromEmail ?? null,
+    fromName: b.fromName ?? null,
     status: b.status,
     scheduledAt: b.scheduledAt?.toISOString() ?? null,
     recipientCount: b.recipientCount,
@@ -313,6 +380,8 @@ async function queueBroadcastSends(
       });
     }
   }
+
+  await refreshBroadcastProgress(broadcastId).catch(() => {});
 }
 
 async function applyBroadcastAction(
@@ -358,6 +427,7 @@ async function applyBroadcastAction(
   );
 
   const soft = action === "draft";
+  const sender = await resolveBroadcastSenderFields(advertiserId, input, !soft);
   const { contactIds, listId, tagIds, allSubscribers } = await resolveAudienceContactIds(
     advertiserId,
     input.audienceType,
@@ -384,6 +454,8 @@ async function applyBroadcastAction(
       | typeof Prisma.DbNull,
     allSubscribers,
     recipientCount: contactIds.length,
+    fromEmail: sender.fromEmail,
+    fromName: sender.fromName,
   };
 
   if (action === "draft") {

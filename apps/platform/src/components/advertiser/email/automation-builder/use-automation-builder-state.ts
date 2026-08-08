@@ -8,6 +8,7 @@ import type {
   EmailListOption,
   SaveStatus,
   Selection,
+  SendingIdentityOption,
   StepStat,
   TagOption,
   Template,
@@ -103,6 +104,8 @@ export function useAutomationBuilderState({
   const [templateContents, setTemplateContents] = useState<Record<string, TemplateContent>>({});
   const [templates, setTemplates] = useState<Template[]>([]);
   const [tags, setTags] = useState<TagOption[]>([]);
+  const [identities, setIdentities] = useState<SendingIdentityOption[]>([]);
+  const [defaultFromEmail, setDefaultFromEmail] = useState("");
   const [stats, setStats] = useState<StepStat[]>([]);
   const [selection, setSelection] = useState<Selection>({ kind: "trigger" });
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
@@ -209,9 +212,14 @@ export function useAutomationBuilderState({
     setHistoryTick((t) => t + 1);
   }, []);
 
+  const validationOptions = useMemo(
+    () => ({ defaultFromEmail, identities }),
+    [defaultFromEmail, identities],
+  );
+
   const issues = useMemo(
-    () => validateAutomation(form, steps, templates, tags),
-    [form, steps, templates, tags],
+    () => validateAutomation(form, steps, templates, tags, validationOptions),
+    [form, steps, templates, tags, validationOptions],
   );
 
   const invalidStepIds = useMemo(() => {
@@ -243,7 +251,8 @@ export function useAutomationBuilderState({
       fetch("/api/v1/advertiser/email/templates").then((r) => r.json()),
       fetch("/api/v1/advertiser/email/settings").then((r) => r.json()),
       fetch("/api/v1/advertiser/email/tags").then((r) => r.json()),
-    ]).then(([tpl, settings, tagsRes]) => {
+      fetch("/api/v1/advertiser/email/identities").then((r) => r.json()),
+    ]).then(([tpl, settings, tagsRes, identitiesRes]) => {
       if (cancelled) return;
       setTemplates(tpl.data ?? []);
       setTags(
@@ -251,6 +260,9 @@ export function useAutomationBuilderState({
           (t) => ({ id: t.id, name: t.name, color: t.color }),
         ),
       );
+      setIdentities((identitiesRes.data ?? []) as SendingIdentityOption[]);
+      const settingsFrom = (settings.data?.fromEmail as string | undefined)?.trim() ?? "";
+      setDefaultFromEmail(settingsFrom);
       if (settings.data && !initialId) {
         setFormState((f) => ({
           ...f,
@@ -401,7 +413,7 @@ export function useAutomationBuilderState({
 
   const persist = useCallback(
     async (activate = false) => {
-      if (!canPersist(form, steps, templates, tags)) {
+      if (!canPersist(form, steps, templates, tags, validationOptions)) {
         setSaveStatus("blocked");
         setValidateFlash(true);
         setSaveError("Fix validation issues before saving");
@@ -463,7 +475,7 @@ export function useAutomationBuilderState({
         persistInFlight.current = false;
       }
     },
-    [automationId, buildPayload, form, issues, router, steps, syncStepsFromServer, tags, templates],
+    [automationId, buildPayload, form, issues, router, steps, syncStepsFromServer, tags, templates, validationOptions],
   );
 
   useEffect(() => {
@@ -798,6 +810,8 @@ export function useAutomationBuilderState({
     templateContents,
     templates,
     tags,
+    identities,
+    defaultFromEmail,
     lists,
     stats,
     selection,
@@ -840,7 +854,7 @@ export function useAutomationBuilderState({
     captureStepSnapshot,
     runValidate,
     persist,
-    canSave: canPersist(form, steps, templates, tags),
+    canSave: canPersist(form, steps, templates, tags, validationOptions),
     maxSteps: MAX_STEPS,
   };
 }
