@@ -290,6 +290,28 @@ async function syncIdentityFromDefaultMailbox(identityId: string) {
   });
 }
 
+/** Keep Email Settings From address aligned with a verified/default mailbox. */
+async function syncAdvertiserSettingsFromMailbox(
+  advertiserId: string,
+  email: string,
+  fromName: string | null | undefined,
+) {
+  const normalized = email.trim().toLowerCase();
+  if (!normalized) return;
+  await prisma.advertiserEmailSettings.upsert({
+    where: { advertiserId },
+    create: {
+      advertiserId,
+      fromEmail: normalized,
+      fromName: fromName ?? undefined,
+    },
+    update: {
+      fromEmail: normalized,
+      ...(fromName != null && fromName !== "" ? { fromName } : {}),
+    },
+  });
+}
+
 export function serializeSendingIdentity(identity: IdentityWithMailboxes) {
   const ready = identity.verificationStatus === "VERIFIED";
   const meta = asStoredMeta(identity.dkimTokens);
@@ -732,6 +754,11 @@ export async function setDefaultIdentityMailbox(
     data: { isDefault: true },
   });
   await syncIdentityFromDefaultMailbox(identityId);
+  await syncAdvertiserSettingsFromMailbox(
+    advertiserId,
+    mailbox.email,
+    mailbox.fromName ?? identity.fromName,
+  );
 
   return serializeSendingIdentity(await loadIdentityWithMailboxes(identityId));
 }
@@ -798,24 +825,45 @@ export async function refreshDomainVerification(advertiserId: string, identityId
   if (!identity) throw new AppError("NOT_FOUND", "Sending identity not found", 404);
 
   const sesConfig = await getResolvedSesConfig();
+  let serialized;
   if (sesConfig.enabled) {
-    return refreshSesDomainVerification(identity, sesConfig);
+    serialized = await refreshSesDomainVerification(identity, sesConfig);
+  } else if (isMailgunConfigured()) {
+    serialized = await refreshMailgunDomainVerification(identity);
+  } else {
+    throw new AppError(
+      "PROVIDER_NOT_CONFIGURED",
+      "Email sending provider is not configured by platform admin.",
+      503,
+    );
   }
 
-  if (isMailgunConfigured()) {
-    return refreshMailgunDomainVerification(identity);
+  if (serialized.verificationStatus === "VERIFIED") {
+    const settings = await prisma.advertiserEmailSettings.findUnique({
+      where: { advertiserId },
+    });
+    if (!settings?.fromEmail?.trim()) {
+      const def =
+        serialized.mailboxes.find((m) => m.isDefault) ?? serialized.mailboxes[0];
+      if (def) {
+        await syncAdvertiserSettingsFromMailbox(
+          advertiserId,
+          def.email,
+          def.fromName ?? serialized.fromName,
+        );
+      }
+    }
   }
 
-  throw new AppError(
-    "PROVIDER_NOT_CONFIGURED",
-    "Email sending provider is not configured by platform admin.",
-    503,
-  );
+  return serialized;
 }
 
 export async function setDefaultIdentity(advertiserId: string, identityId: string) {
   const identity = await prisma.advertiserSendingIdentity.findFirst({
     where: { id: identityId, advertiserId, verificationStatus: "VERIFIED" },
+    include: {
+      mailboxes: { orderBy: [{ isDefault: "desc" }, { createdAt: "asc" }] },
+    },
   });
   if (!identity) throw new AppError("NOT_FOUND", "Verified identity not found", 404);
 
@@ -828,6 +876,17 @@ export async function setDefaultIdentity(advertiserId: string, identityId: strin
     where: { id: identityId },
     data: { isDefault: true },
   });
+
+  const def =
+    identity.mailboxes.find((m) => m.isDefault) ?? identity.mailboxes[0] ?? null;
+  if (def) {
+    await syncAdvertiserSettingsFromMailbox(
+      advertiserId,
+      def.email,
+      def.fromName ?? identity.fromName,
+    );
+  }
+
   return serializeSendingIdentity(await loadIdentityWithMailboxes(row.id));
 }
 

@@ -13,11 +13,28 @@ import { signTrackingToken } from "../lib/tokens";
 import { sendMarketingEmail } from "./ses-sender.service";
 import { MAX_SEND_ATTEMPTS } from "../config/defaults";
 import { refreshBroadcastProgress } from "./broadcast.service";
-import { findVerifiedSendingMailbox } from "./identity.service";
+import {
+  findVerifiedSendingMailbox,
+  listVerifiedSendingMailboxes,
+} from "./identity.service";
 
 async function maybeRefreshBroadcast(broadcastId: string | null | undefined) {
   if (!broadcastId) return;
   await refreshBroadcastProgress(broadcastId).catch(() => {});
+}
+
+async function resolveVerifiedMailbox(
+  advertiserId: string,
+  candidateFromEmail: string,
+) {
+  if (candidateFromEmail) {
+    const exact = await findVerifiedSendingMailbox(advertiserId, candidateFromEmail);
+    if (exact) return exact;
+  }
+
+  const mailboxes = await listVerifiedSendingMailboxes(advertiserId);
+  if (mailboxes.length === 0) return null;
+  return mailboxes.find((m) => m.isDefault) ?? mailboxes[0];
 }
 
 export async function processEmailSend(sendId: string) {
@@ -77,21 +94,7 @@ export async function processEmailSend(sendId: string) {
     settings?.fromEmail?.trim().toLowerCase() ||
     "";
 
-  if (!candidateFromEmail) {
-    await prisma.emailSend.update({
-      where: { id: sendId },
-      data: {
-        status: "FAILED",
-        error:
-          "No sending email configured. Set a default on Email Settings or on this broadcast.",
-        attemptCount: send.attemptCount + 1,
-      },
-    });
-    await maybeRefreshBroadcast(send.broadcastId);
-    return;
-  }
-
-  const verifiedMailbox = await findVerifiedSendingMailbox(
+  const verifiedMailbox = await resolveVerifiedMailbox(
     send.advertiserId,
     candidateFromEmail,
   );
@@ -101,7 +104,9 @@ export async function processEmailSend(sendId: string) {
       where: { id: sendId },
       data: {
         status: "FAILED",
-        error: "From email must match a verified sending domain address.",
+        error: candidateFromEmail
+          ? "From email must match a verified sending domain address."
+          : "No sending email configured. Set a default on Email Settings or on this broadcast.",
         attemptCount: send.attemptCount + 1,
       },
     });
@@ -249,9 +254,7 @@ export async function sendTestEmail(
     advertiser?.emailMarketingSettings?.fromEmail?.trim().toLowerCase() ||
     "";
 
-  const mailbox = candidateFrom
-    ? await findVerifiedSendingMailbox(advertiserId, candidateFrom)
-    : null;
+  const mailbox = await resolveVerifiedMailbox(advertiserId, candidateFrom);
 
   if (!mailbox) {
     throw new Error(
