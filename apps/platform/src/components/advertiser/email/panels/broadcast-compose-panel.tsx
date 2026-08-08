@@ -144,6 +144,7 @@ export function BroadcastComposePanel({ broadcastId: initialBroadcastId }: Props
   const [testTo, setTestTo] = useState("");
   const [testMsg, setTestMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [resumeFailedNotice, setResumeFailedNotice] = useState(false);
   const [recipientCount, setRecipientCount] = useState<number | null>(null);
   const [counting, setCounting] = useState(false);
 
@@ -219,15 +220,21 @@ export function BroadcastComposePanel({ broadcastId: initialBroadcastId }: Props
             listId: string | null;
             tagIds: string[];
             status: string;
+            sentCount?: number;
             scheduledAt: string | null;
             fromEmail?: string | null;
             fromName?: string | null;
             template: { id: string; name: string; subject: string; htmlBody?: string };
           };
-          if (b.status !== "DRAFT" && b.status !== "QUEUED") {
+          const editable =
+            b.status === "DRAFT" ||
+            b.status === "QUEUED" ||
+            (b.status === "FAILED" && (b.sentCount ?? 0) === 0);
+          if (!editable) {
             setError("This broadcast can no longer be edited.");
             return;
           }
+          setResumeFailedNotice(b.status === "FAILED");
           setName(b.name);
           setAudienceType(b.audienceType);
           setListId(b.listId ?? "");
@@ -467,6 +474,11 @@ export function BroadcastComposePanel({ broadcastId: initialBroadcastId }: Props
         </div>
       ) : (
         <div className="mx-auto max-w-3xl space-y-5 pb-28">
+          {resumeFailedNotice ? (
+            <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+              The previous send failed. Edit the broadcast and send or schedule again.
+            </p>
+          ) : null}
           <SectionCard
             icon={Mail}
             title="Details"

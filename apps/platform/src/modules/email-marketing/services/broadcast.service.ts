@@ -392,18 +392,23 @@ async function applyBroadcastAction(
     id: string;
     status: string;
     templateId: string;
+    sentCount: number;
   } | null = null;
 
   if (broadcastId) {
     existing = await prisma.emailBroadcast.findFirst({
       where: { id: broadcastId, advertiserId },
-      select: { id: true, status: true, templateId: true },
+      select: { id: true, status: true, templateId: true, sentCount: true },
     });
     if (!existing) throw new AppError("NOT_FOUND", "Broadcast not found", 404);
-    if (existing.status !== "DRAFT" && existing.status !== "QUEUED") {
+    const editable =
+      existing.status === "DRAFT" ||
+      existing.status === "QUEUED" ||
+      (existing.status === "FAILED" && existing.sentCount === 0);
+    if (!editable) {
       throw new AppError(
         "VALIDATION_ERROR",
-        "Only draft or scheduled broadcasts can be edited",
+        "Only draft, scheduled, or failed (unsent) broadcasts can be edited",
         422,
       );
     }

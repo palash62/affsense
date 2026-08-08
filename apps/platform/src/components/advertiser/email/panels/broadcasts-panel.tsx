@@ -60,7 +60,11 @@ function statusVariant(
 }
 
 function isEditable(row: BroadcastRow) {
-  return row.status === "DRAFT" || row.status === "QUEUED";
+  return (
+    row.status === "DRAFT" ||
+    row.status === "QUEUED" ||
+    (row.status === "FAILED" && row.sentCount === 0)
+  );
 }
 
 export function BroadcastsPanel() {
