@@ -112,12 +112,12 @@ export function EmailSettingsPanel() {
             tab (DNS records → Refresh) to send from your brand address.
           </p>
         </div>
-      ) : provider && provider !== "ses" ? (
-        <div className="flex max-w-2xl gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
-          <Info className="mt-0.5 h-4 w-4 shrink-0 text-blue-500" />
+      ) : provider && provider !== "none" ? (
+        <div className="flex max-w-2xl gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <Info className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
           <p>
-            Sending via platform {provider.toUpperCase()}. Custom branded domains are available when
-            Mailgun or Amazon SES is configured by an administrator.
+            Marketing email provider is not ready ({provider}). Mailgun must be configured by a
+            platform admin.
           </p>
         </div>
       ) : null}

@@ -16,7 +16,6 @@
     "worker:email": "tsx src/workers/email.worker.ts"
   },
   "dependencies": {
-    "@aws-sdk/client-sesv2": "^3.1077.0",
     "@base-ui/react": "^1.6.0",
     "@cpl/database": "*",
     "@cpl/shared": "*",

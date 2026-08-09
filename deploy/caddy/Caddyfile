@@ -26,6 +26,10 @@ leadvix.io {
 	}
 }
 
+www.leadvix.io {
+	redir https://leadvix.io{uri} permanent
+}
+
 leadgenlink.site {
 	reverse_proxy 127.0.0.1:3001 {
 		transport http {

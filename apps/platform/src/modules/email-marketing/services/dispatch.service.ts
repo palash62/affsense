@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { EMAIL_MARKETING_CONFIG_KEY } from "@/lib/email/ses-settings";
+import { EMAIL_MARKETING_CONFIG_KEY } from "@/lib/email/email-marketing-settings";
 import { parseEmailMarketingConfig } from "../config/platform-config";
 import { upsertContactFromLead } from "./contact.service";
 import { enqueueEmailSend } from "../queue/email-queue";

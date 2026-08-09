@@ -278,11 +278,17 @@ export async function sendViaMailgun(
       };
     }
 
-    return { ok: true, id: parsed.id };
+    return { ok: true, id: normalizeMailgunMessageId(parsed.id) };
   } catch (error) {
     return {
       ok: false,
       error: error instanceof Error ? error.message : "Mailgun request failed",
     };
   }
+}
+
+/** Strip wrapping <> so webhook Message-Id and stored ids match. */
+export function normalizeMailgunMessageId(id: string | null | undefined): string | undefined {
+  if (!id?.trim()) return undefined;
+  return id.trim().replace(/^<|>$/g, "");
 }

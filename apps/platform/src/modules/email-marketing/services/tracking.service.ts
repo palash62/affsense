@@ -3,6 +3,9 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { verifyTrackingToken } from "../lib/tokens";
 import { attachTagToContact } from "./tag.service";
+import { refreshBroadcastProgress } from "./broadcast.service";
+
+const SYNTHETIC_ID_RE = /^(smtp|mailgun|unknown)-/i;
 
 async function applyAutomationEngagementTag(
   sendId: string,
@@ -73,15 +76,30 @@ export async function recordClick(sendId: string, token: string, url: string) {
   return url;
 }
 
-export async function recordSesEvent(
-  sendId: string | null,
+function isMatchableProviderMessageId(id: string): boolean {
+  const raw = id.trim();
+  if (!raw || raw === "unknown") return false;
+  if (SYNTHETIC_ID_RE.test(raw)) return false;
+  return true;
+}
+
+/**
+ * Match a provider message id (Mailgun) to EmailSend.sesMessageId and update status.
+ * Status-changing events (DELIVERY / BOUNCE / COMPLAINT) are idempotent per send.
+ */
+export async function recordProviderEvent(
+  providerMessageId: string | null,
   type: EmailEventType,
   metadata?: Record<string, unknown>,
 ) {
-  if (!sendId) return;
+  if (!providerMessageId || !isMatchableProviderMessageId(providerMessageId)) return;
+
+  const raw = providerMessageId.trim();
+  const normalized = raw.replace(/^<|>$/g, "");
+  const candidates = Array.from(new Set([raw, normalized, `<${normalized}>`]));
 
   const send = await prisma.emailSend.findFirst({
-    where: { sesMessageId: sendId },
+    where: { sesMessageId: { in: candidates } },
   });
   if (!send) return;
 
@@ -110,11 +128,22 @@ export async function recordSesEvent(
     return;
   }
 
-  await prisma.emailEvent.create({
-    data: { sendId: send.id, type, metadata: metadata as Prisma.InputJsonValue | undefined },
+  const existingStatusEvent = await prisma.emailEvent.findFirst({
+    where: { sendId: send.id, type },
   });
+  if (!existingStatusEvent) {
+    await prisma.emailEvent.create({
+      data: {
+        sendId: send.id,
+        type,
+        metadata: metadata as Prisma.InputJsonValue | undefined,
+      },
+    });
+  }
 
-  if (type === "BOUNCE") {
+  let statusChanged = false;
+
+  if (type === "BOUNCE" && send.status !== "BOUNCED") {
     await prisma.emailSend.update({
       where: { id: send.id },
       data: { status: "BOUNCED" },
@@ -123,6 +152,7 @@ export async function recordSesEvent(
       where: { id: send.contactId },
       data: { status: "BOUNCED" },
     });
+    statusChanged = true;
   }
 
   if (type === "COMPLAINT") {
@@ -132,10 +162,18 @@ export async function recordSesEvent(
     });
   }
 
-  if (type === "DELIVERY") {
+  if (type === "DELIVERY" && send.status !== "DELIVERED" && send.status !== "BOUNCED") {
     await prisma.emailSend.update({
       where: { id: send.id },
       data: { status: "DELIVERED" },
     });
+    statusChanged = true;
+  }
+
+  if (statusChanged && send.broadcastId) {
+    await refreshBroadcastProgress(send.broadcastId).catch(() => {});
   }
 }
+
+/** @deprecated Use recordProviderEvent */
+export const recordSesEvent = recordProviderEvent;

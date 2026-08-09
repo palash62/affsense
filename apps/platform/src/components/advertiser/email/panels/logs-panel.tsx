@@ -88,10 +88,14 @@ function LogsContent() {
 
   return (
     <PageSection title={`Delivery History (${total})`} icon={ScrollText} gradient="leads">
-      {provider && provider !== "ses" ? (
+      {provider === "mailgun" ? (
+        <p className="border-b border-slate-100 px-6 py-3 text-sm text-slate-600">
+          Delivery, bounce, and complaint status update from Mailgun webhooks. Opens and clicks use
+          first-party tracking pixels.
+        </p>
+      ) : provider ? (
         <p className="border-b border-slate-100 px-6 py-3 text-sm text-amber-800">
-          Bounce and complaint tracking is most reliable with SES/SNS. Current provider:{" "}
-          <strong>{provider}</strong> — delivery events may be limited.
+          Mailgun is required for delivery webhooks. Current provider: <strong>{provider}</strong>.
         </p>
       ) : null}
       <div className="overflow-x-auto">

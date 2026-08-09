@@ -1231,6 +1231,7 @@ model EmailSend {
   @@index([status, scheduledAt])
   @@index([contactId])
   @@index([broadcastId])
+  @@index([sesMessageId])
   @@map("email_sends")
 }
 

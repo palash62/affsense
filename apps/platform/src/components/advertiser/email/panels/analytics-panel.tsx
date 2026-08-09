@@ -23,6 +23,7 @@ type StatsSource = "all" | "broadcast" | "automation";
 
 type Stats = {
   delivered: number;
+  sent?: number;
   opens: number;
   clicks: number;
   bounced: number;

@@ -58,7 +58,7 @@ const publicPaths = [
   "/api/v1/funnel-events",
   "/api/internal/",
   "/api/v1/email/track/",
-  "/api/v1/webhooks/ses",
+  "/api/v1/webhooks/mailgun",
   "/unsubscribe/",
   "/api/v1/admin/impersonate/start",
   "/api/v1/admin/impersonate/stop",

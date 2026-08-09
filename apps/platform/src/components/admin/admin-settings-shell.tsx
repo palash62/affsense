@@ -7,7 +7,7 @@ import { Cloud, CreditCard, Crosshair, Mail, ScrollText, Settings, UserCog } fro
 import { AdminPreferencesForm } from "@/components/admin/admin-preferences-form";
 import { PlatformSettingsForm } from "@/components/forms/platform-settings-form";
 import { SmtpSettingsForm } from "@/components/forms/smtp-settings-form";
-import { SesSettingsForm } from "@/components/forms/ses-settings-form";
+import { MailgunMarketingInfo } from "@/components/admin/mailgun-marketing-info";
 import { StripeSettingsForm } from "@/components/forms/stripe-settings-form";
 import { PixelSettingsForm } from "@/components/forms/pixel-settings-form";
 import { EmailLogsTable } from "@/components/admin/email-logs-table";
@@ -78,9 +78,9 @@ const SECTIONS: SectionItem[] = [
     id: "email-marketing",
     label: "Email Marketing",
     icon: Cloud,
-    title: "Email Marketing (AWS SES)",
+    title: "Email Marketing (Mailgun)",
     description:
-      "Advertiser autoresponder and drip campaigns only — not used for account verification",
+      "Advertiser broadcasts and automations — delivery webhooks and Mailgun env setup",
     gradient: "leads",
   },
   {
@@ -150,7 +150,7 @@ export function AdminSettingsShell({ initialTimezone }: { initialTimezone: strin
             {activeId === "payments" && <StripeSettingsForm />}
             {activeId === "pixels" && <PixelSettingsForm />}
             {activeId === "email" && <SmtpSettingsForm />}
-            {activeId === "email-marketing" && <SesSettingsForm />}
+            {activeId === "email-marketing" && <MailgunMarketingInfo />}
             {activeId === "email-log" && <EmailLogsTable />}
           </div>
         </PageSection>

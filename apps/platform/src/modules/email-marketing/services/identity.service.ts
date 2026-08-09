@@ -1,13 +1,6 @@
 import type { Prisma } from "@prisma/client";
-import {
-  SESv2Client,
-  CreateEmailIdentityCommand,
-  DeleteEmailIdentityCommand,
-  GetEmailIdentityCommand,
-} from "@aws-sdk/client-sesv2";
 import { prisma } from "@/lib/prisma";
 import { AppError } from "@/lib/errors";
-import { getResolvedSesConfig } from "@/services/ses-settings.service";
 import {
   createMailgunDomain,
   deleteMailgunDomain,
@@ -17,19 +10,6 @@ import {
   type MailgunDomainDetails,
   verifyMailgunDomain,
 } from "@/lib/email/mailgun";
-
-function getSesClient(config: Awaited<ReturnType<typeof getResolvedSesConfig>>) {
-  return new SESv2Client({
-    region: config.region,
-    credentials:
-      config.accessKeyId && config.secretAccessKey
-        ? {
-            accessKeyId: config.accessKeyId,
-            secretAccessKey: config.secretAccessKey,
-          }
-        : undefined,
-  });
-}
 
 export type DnsRecord = {
   type: "CNAME" | "TXT" | "MX";
@@ -95,7 +75,8 @@ export function normalizeFromEmailForDomain(
   return `${local}@${normalizedDomain}`;
 }
 
-export function buildSesDnsRecords(domain: string, dkimTokens: string[]): DnsRecord[] {
+/** Legacy SES DNS hints for identities created before Mailgun-only. */
+function buildLegacySesDnsRecords(domain: string, dkimTokens: string[]): DnsRecord[] {
   const dkim: DnsRecord[] = dkimTokens.map((token) => ({
     type: "CNAME" as const,
     name: `${token}._domainkey.${domain}`,
@@ -119,9 +100,6 @@ export function buildSesDnsRecords(domain: string, dkimTokens: string[]): DnsRec
     },
   ];
 }
-
-/** @deprecated Use buildSesDnsRecords */
-export const buildDnsRecords = buildSesDnsRecords;
 
 function guessMailgunPurpose(
   record: MailgunDnsRecordRaw,
@@ -322,18 +300,18 @@ export function serializeSendingIdentity(identity: IdentityWithMailboxes) {
   if (Array.isArray(meta)) {
     provider = "ses";
     dkimTokens = asDkimTokens(meta);
-    dnsRecords = buildSesDnsRecords(identity.domain, dkimTokens);
+    dnsRecords = buildLegacySesDnsRecords(identity.domain, dkimTokens);
   } else if (meta && typeof meta === "object" && "provider" in meta) {
     provider = meta.provider === "mailgun" ? "mailgun" : "ses";
     if (provider === "mailgun" && Array.isArray(meta.records)) {
       dnsRecords = meta.records;
     } else {
       dkimTokens = asDkimTokens(meta.tokens ?? []);
-      dnsRecords = buildSesDnsRecords(identity.domain, dkimTokens);
+      dnsRecords = buildLegacySesDnsRecords(identity.domain, dkimTokens);
     }
   } else {
     dkimTokens = asDkimTokens(identity.dkimTokens);
-    dnsRecords = buildSesDnsRecords(identity.domain, dkimTokens);
+    dnsRecords = buildLegacySesDnsRecords(identity.domain, dkimTokens);
     provider = dkimTokens.length ? "ses" : "unknown";
   }
 
@@ -496,43 +474,6 @@ async function upsertLocalIdentity(
   return loadIdentityWithMailboxes(identityId);
 }
 
-async function requestSesDomainVerification(
-  advertiserId: string,
-  normalizedDomain: string,
-  fromName: string,
-  config: Awaited<ReturnType<typeof getResolvedSesConfig>>,
-  fromEmail?: string | null,
-) {
-  const client = getSesClient(config);
-  try {
-    const result = await client.send(
-      new CreateEmailIdentityCommand({
-        EmailIdentity: normalizedDomain,
-        DkimSigningAttributes: { NextSigningKeyLength: "RSA_2048_BIT" },
-      }),
-    );
-
-    const tokens = result.DkimAttributes?.Tokens ?? [];
-    const payload: Prisma.InputJsonValue = {
-      provider: "ses",
-      tokens,
-    };
-    const row = await upsertLocalIdentity(
-      advertiserId,
-      normalizedDomain,
-      fromName,
-      payload,
-      "PENDING",
-      fromEmail,
-    );
-    return serializeSendingIdentity(row);
-  } catch (error) {
-    if (error instanceof AppError) throw error;
-    const message = error instanceof Error ? error.message : "Domain verification failed";
-    throw new AppError("SES_ERROR", message, 502);
-  }
-}
-
 async function requestMailgunDomainVerification(
   advertiserId: string,
   normalizedDomain: string,
@@ -572,30 +513,19 @@ export async function requestDomainVerification(
     normalizeFromEmailForDomain(fromEmail, normalizedDomain);
   }
 
-  const sesConfig = await getResolvedSesConfig();
-  if (sesConfig.enabled) {
-    return requestSesDomainVerification(
-      advertiserId,
-      normalizedDomain,
-      fromName,
-      sesConfig,
-      fromEmail,
+  if (!isMailgunConfigured()) {
+    throw new AppError(
+      "PROVIDER_NOT_CONFIGURED",
+      "Mailgun is not configured by platform admin.",
+      503,
     );
   }
 
-  if (isMailgunConfigured()) {
-    return requestMailgunDomainVerification(
-      advertiserId,
-      normalizedDomain,
-      fromName,
-      fromEmail,
-    );
-  }
-
-  throw new AppError(
-    "PROVIDER_NOT_CONFIGURED",
-    "Email sending provider is not configured by platform admin.",
-    503,
+  return requestMailgunDomainVerification(
+    advertiserId,
+    normalizedDomain,
+    fromName,
+    fromEmail,
   );
 }
 
@@ -763,32 +693,6 @@ export async function setDefaultIdentityMailbox(
   return serializeSendingIdentity(await loadIdentityWithMailboxes(identityId));
 }
 
-async function refreshSesDomainVerification(
-  identity: { id: string; domain: string; dkimTokens: unknown },
-  config: Awaited<ReturnType<typeof getResolvedSesConfig>>,
-) {
-  const client = getSesClient(config);
-  try {
-    const result = await client.send(
-      new GetEmailIdentityCommand({ EmailIdentity: identity.domain }),
-    );
-    const verified = result.VerifiedForSendingStatus === true;
-    const tokens = result.DkimAttributes?.Tokens ?? asDkimTokens(identity.dkimTokens);
-    const row = await prisma.advertiserSendingIdentity.update({
-      where: { id: identity.id },
-      data: {
-        verificationStatus: verified ? "VERIFIED" : "PENDING",
-        dkimTokens: { provider: "ses", tokens } as Prisma.InputJsonValue,
-      },
-    });
-    return serializeSendingIdentity(await loadIdentityWithMailboxes(row.id));
-  } catch (error) {
-    if (error instanceof AppError) throw error;
-    const message = error instanceof Error ? error.message : "Verification check failed";
-    throw new AppError("SES_ERROR", message, 502);
-  }
-}
-
 async function refreshMailgunDomainVerification(identity: {
   id: string;
   domain: string;
@@ -824,19 +728,14 @@ export async function refreshDomainVerification(advertiserId: string, identityId
   });
   if (!identity) throw new AppError("NOT_FOUND", "Sending identity not found", 404);
 
-  const sesConfig = await getResolvedSesConfig();
-  let serialized;
-  if (sesConfig.enabled) {
-    serialized = await refreshSesDomainVerification(identity, sesConfig);
-  } else if (isMailgunConfigured()) {
-    serialized = await refreshMailgunDomainVerification(identity);
-  } else {
+  if (!isMailgunConfigured()) {
     throw new AppError(
       "PROVIDER_NOT_CONFIGURED",
-      "Email sending provider is not configured by platform admin.",
+      "Mailgun is not configured by platform admin.",
       503,
     );
   }
+  const serialized = await refreshMailgunDomainVerification(identity);
 
   if (serialized.verificationStatus === "VERIFIED") {
     const settings = await prisma.advertiserEmailSettings.findUnique({
@@ -896,17 +795,7 @@ export async function deleteSendingIdentity(advertiserId: string, identityId: st
   });
   if (!identity) throw new AppError("NOT_FOUND", "Sending identity not found", 404);
 
-  const sesConfig = await getResolvedSesConfig();
-  if (sesConfig.enabled) {
-    try {
-      const client = getSesClient(sesConfig);
-      await client.send(
-        new DeleteEmailIdentityCommand({ EmailIdentity: identity.domain }),
-      );
-    } catch {
-      // Still remove local row if SES identity is already gone
-    }
-  } else if (isMailgunConfigured()) {
+  if (isMailgunConfigured()) {
     await deleteMailgunDomain(identity.domain);
   }
 

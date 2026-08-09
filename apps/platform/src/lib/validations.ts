@@ -688,16 +688,6 @@ export function isValidPhone(phone: string): boolean {
   return /^\+?[\d\s\-()]{10,}$/.test(phone);
 }
 
-export const sesSettingsSchema = z.object({
-  region: z.string().trim().min(1).optional(),
-  accessKeyId: z.string().trim().optional(),
-  secretAccessKey: z.string().optional(),
-  fromDomain: z.string().trim().optional(),
-  fromEmail: z.string().trim().email().optional().or(z.literal("")),
-  configurationSet: z.string().trim().optional(),
-  appUrl: z.string().url().optional().or(z.literal("")),
-});
-
 export const emailTemplateSchema = z.object({
   name: z.string().trim().min(2).max(80),
   subject: z.string().trim().min(1).max(200),

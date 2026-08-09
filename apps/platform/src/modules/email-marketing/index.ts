@@ -45,7 +45,7 @@ export {
 export {
   getDefaultFromEmail,
   getMarketingProviderName,
-} from "./services/ses-sender.service";
+} from "./services/marketing-sender.service";
 export {
   getEmailStats,
   listSends,
@@ -69,7 +69,12 @@ export {
   getAdvertiserEmailSettings,
   updateAdvertiserEmailSettings,
 } from "./services/settings.service";
-export { recordOpen, recordClick, recordSesEvent } from "./services/tracking.service";
+export {
+  recordOpen,
+  recordClick,
+  recordProviderEvent,
+  recordSesEvent,
+} from "./services/tracking.service";
 export {
   listSendingIdentities,
   listVerifiedSendingMailboxes,

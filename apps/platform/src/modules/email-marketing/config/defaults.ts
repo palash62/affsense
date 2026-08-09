@@ -1,5 +1,5 @@
-import type { EmailMarketingPlatformConfig } from "@/lib/email/ses-settings";
-import { DEFAULT_EMAIL_MARKETING_CONFIG } from "@/lib/email/ses-settings";
+import type { EmailMarketingPlatformConfig } from "@/lib/email/email-marketing-settings";
+import { DEFAULT_EMAIL_MARKETING_CONFIG } from "@/lib/email/email-marketing-settings";
 
 export { DEFAULT_EMAIL_MARKETING_CONFIG };
 export type { EmailMarketingPlatformConfig };

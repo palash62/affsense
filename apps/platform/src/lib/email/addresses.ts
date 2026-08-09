@@ -1,6 +1,13 @@
 /** Platform sender/recipient addresses for leadvix.io (overridable via env). */
+function mailgunFromAddress(): string {
+  const raw = process.env.MAILGUN_FROM?.trim();
+  if (!raw) return "noreply@mg.leadvix.io";
+  const match = raw.match(/<([^>]+)>/);
+  return match?.[1]?.trim() || raw;
+}
+
 export const PLATFORM_EMAILS = {
-  noreply: process.env.SES_FROM_EMAIL?.trim() || "noreply@mg.leadvix.io",
+  noreply: mailgunFromAddress(),
   support: process.env.SUPPORT_EMAIL?.trim() || "support@leadvix.io",
   admin: process.env.ADMIN_ALERT_EMAIL?.trim() || "admin@leadvix.io",
   fromDisplay:

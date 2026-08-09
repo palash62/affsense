@@ -1,5 +1,5 @@
-import type { EmailMarketingPlatformConfig } from "@/lib/email/ses-settings";
-import { DEFAULT_EMAIL_MARKETING_CONFIG } from "@/lib/email/ses-settings";
+import type { EmailMarketingPlatformConfig } from "@/lib/email/email-marketing-settings";
+import { DEFAULT_EMAIL_MARKETING_CONFIG } from "@/lib/email/email-marketing-settings";
 
 export function parseEmailMarketingConfig(value: unknown): EmailMarketingPlatformConfig {
   if (!value || typeof value !== "object") return DEFAULT_EMAIL_MARKETING_CONFIG;

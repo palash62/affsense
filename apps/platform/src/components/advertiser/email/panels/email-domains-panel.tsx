@@ -380,13 +380,9 @@ export function EmailDomainsPanel() {
           <span className="font-mono">mg.yourbrand.com</span>), publish the DNS records, then Refresh
           until Ready.
         </p>
-      ) : provider === "ses" ? (
-        <p className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
-          Sending via Amazon SES. Add DKIM CNAMEs from the DNS sheet, then Refresh.
-        </p>
       ) : provider ? (
         <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          Custom domain verification needs Mailgun or Amazon SES configured by a platform admin.
+          Custom domain verification needs Mailgun configured by a platform admin.
         </p>
       ) : null}
 
@@ -742,11 +738,7 @@ export function EmailDomainsPanel() {
                 <span className="block font-semibold text-slate-900">Add an existing domain</span>
                 <span className="mt-0.5 block text-sm text-slate-500">
                   Connect DNS at your registrar, then verify
-                  {provider === "mailgun"
-                    ? " with Mailgun."
-                    : provider === "ses"
-                      ? " with Amazon SES."
-                      : "."}
+                  {provider === "mailgun" ? " with Mailgun." : "."}
                 </span>
               </span>
             </button>
@@ -831,7 +823,7 @@ export function EmailDomainsPanel() {
             <SheetTitle>DNS setup — {setupRow?.domain}</SheetTitle>
             <SheetDescription>
               Add these records at your DNS provider, then click Refresh to verify
-              {provider === "mailgun" ? " with Mailgun" : provider === "ses" ? " with SES" : ""}.
+              {provider === "mailgun" ? " with Mailgun" : ""}.
               After the domain is verified, manage sending emails by expanding the domain row.
             </SheetDescription>
           </SheetHeader>

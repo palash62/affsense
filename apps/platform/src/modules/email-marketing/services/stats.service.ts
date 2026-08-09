@@ -8,6 +8,15 @@ export type StatsScope = {
   automationId?: string;
 };
 
+/** Rates prefer delivered; fall back to accepted (sent) when no deliveries yet. */
+function engagementRates(opens: number, clicks: number, delivered: number, sent: number) {
+  const base = delivered > 0 ? delivered : sent;
+  return {
+    openRate: base > 0 ? Math.round((opens / base) * 100) : 0,
+    clickRate: base > 0 ? Math.round((clicks / base) * 100) : 0,
+  };
+}
+
 function normalizeStatsScope(scope?: StatsScope): StatsScope {
   const source = scope?.source ?? "all";
   if (source === "broadcast") {
@@ -71,7 +80,6 @@ export async function getEmailStats(advertiserId: string, scope?: StatsScope) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const sendWhere = sendScopeWhere(advertiserId, scope);
-  const isScoped = (scope?.source ?? "all") !== "all";
 
   const [
     totalSends,
@@ -80,6 +88,7 @@ export async function getEmailStats(advertiserId: string, scope?: StatsScope) {
     totalContacts,
     opens,
     clicks,
+    sent,
     delivered,
     bounced,
     complained,
@@ -109,13 +118,12 @@ export async function getEmailStats(advertiserId: string, scope?: StatsScope) {
         status: { in: ["SENT", "DELIVERED"] },
       },
     }),
-    isScoped
-      ? prisma.emailSend.count({
-          where: { ...sendWhere, status: "BOUNCED" },
-        })
-      : prisma.emailContact.count({
-          where: { advertiserId, status: "BOUNCED" },
-        }),
+    prisma.emailSend.count({
+      where: { ...sendWhere, status: "DELIVERED" },
+    }),
+    prisma.emailSend.count({
+      where: { ...sendWhere, status: "BOUNCED" },
+    }),
     prisma.emailContact.count({
       where: { advertiserId, status: "COMPLAINED" },
     }),
@@ -128,8 +136,7 @@ export async function getEmailStats(advertiserId: string, scope?: StatsScope) {
     prisma.emailTemplate.count({ where: { advertiserId } }),
   ]);
 
-  const openRate = delivered > 0 ? Math.round((opens / delivered) * 100) : 0;
-  const clickRate = delivered > 0 ? Math.round((clicks / delivered) * 100) : 0;
+  const { openRate, clickRate } = engagementRates(opens, clicks, delivered, sent);
 
   return {
     totalSends,
@@ -138,6 +145,7 @@ export async function getEmailStats(advertiserId: string, scope?: StatsScope) {
     totalContacts,
     opens,
     clicks,
+    sent,
     delivered,
     openRate,
     clickRate,
@@ -222,11 +230,15 @@ export async function getRecentActivity(
         ? "Clicked"
         : lastEvent?.type === "OPEN"
           ? "Opened"
-          : s.status === "SENT" || s.status === "DELIVERED"
+          : s.status === "DELIVERED"
             ? "Delivered"
-            : s.status === "FAILED"
-              ? "Failed"
-              : "Queued";
+            : s.status === "SENT"
+              ? "Sent"
+              : s.status === "BOUNCED"
+                ? "Bounced"
+                : s.status === "FAILED"
+                  ? "Failed"
+                  : "Queued";
 
     return {
       id: s.id,
@@ -323,8 +335,7 @@ export async function getAutomationStepStats(advertiserId: string, automationId:
         bounced,
         opens,
         clicks,
-        openRate: sent > 0 ? Math.round((opens / sent) * 100) : 0,
-        clickRate: sent > 0 ? Math.round((clicks / sent) * 100) : 0,
+        ...engagementRates(opens, clicks, delivered, sent),
       };
     }),
   );
@@ -481,7 +492,7 @@ export async function getBroadcastStats(advertiserId: string, broadcastId: strin
       }),
     ]);
 
-  const rateBase = sent > 0 ? sent : 0;
+  const rates = engagementRates(opens, clicks, delivered, sent);
   return {
     broadcastId: broadcast.id,
     name: broadcast.name,
@@ -498,8 +509,8 @@ export async function getBroadcastStats(advertiserId: string, broadcastId: strin
     opens,
     clicks,
     complaints,
-    openRate: rateBase > 0 ? Math.round((opens / rateBase) * 100) : 0,
-    clickRate: rateBase > 0 ? Math.round((clicks / rateBase) * 100) : 0,
-    bounceRate: rateBase > 0 ? Math.round((bounced / rateBase) * 100) : 0,
+    openRate: rates.openRate,
+    clickRate: rates.clickRate,
+    bounceRate: sent > 0 ? Math.round((bounced / sent) * 100) : 0,
   };
 }

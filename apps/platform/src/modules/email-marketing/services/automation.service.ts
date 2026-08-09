@@ -5,7 +5,7 @@ import type {
 } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { AppError } from "@/lib/errors";
-import { EMAIL_MARKETING_CONFIG_KEY } from "@/lib/email/ses-settings";
+import { EMAIL_MARKETING_CONFIG_KEY } from "@/lib/email/email-marketing-settings";
 import { parseEmailMarketingConfig } from "../config/platform-config";
 
 export type AutomationStepInput = {

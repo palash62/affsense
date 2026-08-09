@@ -94,7 +94,13 @@ async function sendViaSmtp(
 
 export async function sendEmail(
   input: SendEmailInput,
-): Promise<{ sent: boolean; skipped?: boolean; error?: string; provider?: "mailgun" | "smtp" }> {
+): Promise<{
+  sent: boolean;
+  skipped?: boolean;
+  error?: string;
+  provider?: "mailgun" | "smtp";
+  messageId?: string;
+}> {
   const smtpConfig = await getResolvedEmailConfig();
 
   if (isMailgunConfigured()) {
@@ -111,7 +117,7 @@ export async function sendEmail(
 
     if (result.ok) {
       await logEmail(input, "sent");
-      return { sent: true, provider: "mailgun" };
+      return { sent: true, provider: "mailgun", messageId: result.id };
     }
 
     console.error("[email:mailgun-failed]", input.to, input.subject, result.error);

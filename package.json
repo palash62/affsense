@@ -32,7 +32,8 @@
     "postinstall": "npm run generate --workspace @cpl/database"
   },
   "devDependencies": {
-    "csstype": "^3.2.3"
+    "csstype": "^3.2.3",
+    "tsx": "^4.23.11"
   },
   "dependencies": {
     "immer": "^11.1.11",

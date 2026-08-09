@@ -1,7 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { PLATFORM_EMAILS } from "@/lib/email/addresses";
-import { getResolvedSesConfig } from "@/services/ses-settings.service";
-import { EMAIL_MARKETING_CONFIG_KEY } from "@/lib/email/ses-settings";
+import { EMAIL_MARKETING_CONFIG_KEY, getMarketingAppUrl } from "@/lib/email/email-marketing-settings";
 import { parseEmailMarketingConfig } from "../config/platform-config";
 import {
   appendUnsubscribeFooter,
@@ -10,7 +9,7 @@ import {
   wrapLinksForTracking,
 } from "../lib/render-template";
 import { signTrackingToken } from "../lib/tokens";
-import { sendMarketingEmail } from "./ses-sender.service";
+import { sendMarketingEmail } from "./marketing-sender.service";
 import { MAX_SEND_ATTEMPTS } from "../config/defaults";
 import { refreshBroadcastProgress } from "./broadcast.service";
 import {
@@ -94,8 +93,7 @@ export async function processEmailSend(
     include: { advertiserProfile: true },
   });
 
-  const sesConfig = await getResolvedSesConfig();
-  const appUrl = sesConfig.appUrl;
+  const appUrl = getMarketingAppUrl();
   const token = signTrackingToken(send.id);
   const unsubscribePageUrl = `${appUrl}/unsubscribe/${send.contact.unsubscribeToken}`;
   const listUnsubscribeUrl = `${appUrl}/api/v1/email/unsubscribe/${send.contact.unsubscribeToken}`;
@@ -301,7 +299,7 @@ export async function sendTestEmail(
     );
   }
 
-  const sesConfig = await getResolvedSesConfig();
+  const appUrl = getMarketingAppUrl();
   const fromName =
     opts?.fromName?.trim() ||
     advertiser?.emailMarketingSettings?.fromName ||
@@ -318,7 +316,7 @@ export async function sendTestEmail(
     phone: "",
     campaign_name: "Test Campaign",
     company_name: fromName,
-    unsubscribe_url: `${sesConfig.appUrl}/unsubscribe/test`,
+    unsubscribe_url: `${appUrl}/unsubscribe/test`,
   };
 
   const subject = `[TEST] ${renderTemplate(template.subject, mergeData)}`;

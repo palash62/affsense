@@ -1348,8 +1348,18 @@ export function InspectorPanel({ state }: Props) {
                           bounced,
                           opens,
                           clicks,
-                          openRate: sent > 0 ? Math.round((opens / sent) * 100) : 0,
-                          clickRate: sent > 0 ? Math.round((clicks / sent) * 100) : 0,
+                          openRate:
+                            delivered > 0
+                              ? Math.round((opens / delivered) * 100)
+                              : sent > 0
+                                ? Math.round((opens / sent) * 100)
+                                : 0,
+                          clickRate:
+                            delivered > 0
+                              ? Math.round((clicks / delivered) * 100)
+                              : sent > 0
+                                ? Math.round((clicks / sent) * 100)
+                                : 0,
                         }}
                         automationId={automationId}
                         stepId={null}

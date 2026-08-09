@@ -1,6 +1,6 @@
 # Email Marketing (Native Autoresponder)
 
-Platform-owned email marketing for advertisers — welcome emails, drip sequences, and contact management powered by **AWS SES**.
+Platform-owned email marketing for advertisers — welcome emails, drip sequences, broadcasts, and contact management powered by **Mailgun**.
 
 ## Overview
 
@@ -9,38 +9,47 @@ Advertisers can run Mailchimp-style automations without paying for a third-party
 - **Contacts** — auto-synced from captured leads
 - **Templates** — HTML emails with merge tags (`{{first_name}}`, `{{campaign_name}}`, etc.)
 - **Automations** — multi-step drips on `LEAD_CAPTURED` or `LEAD_APPROVED`
-- **Analytics** — sends, opens, clicks, bounces
+- **Broadcasts** — one-off bulk sends to lists/tags
+- **Analytics** — sent, delivered, opens, clicks, bounces, fails
 - **Compliance** — unsubscribe links, bounce/complaint suppression
 
 External integrations (Mailchimp, webhook, etc.) remain available under **Advertiser → Integrations**.
 
 ## Setup (Admin)
 
-1. Go to **Admin → Settings → Email Marketing (AWS SES)**.
-2. Configure:
-   - `AWS_REGION` (e.g. `us-east-1`)
-   - Access key + secret (IAM: `ses:SendEmail`, `ses:CreateEmailIdentity`, `ses:GetEmailIdentity`)
-   - Verified **from domain** (e.g. `mail.yourplatform.com`)
-   - **Configuration set** (optional, for bounce/complaint events)
-   - **App URL** (for tracking pixels and unsubscribe links)
+1. Configure Mailgun in the platform `.env` (see below).
+2. Go to **Admin → Settings → Email Marketing (Mailgun)** for the webhook URL checklist.
+3. In Mailgun, for **each sending domain**, add webhooks pointing to:
+   `https://yourapp.com/api/v1/webhooks/mailgun`
+   for events: **delivered**, **permanent failure**, **complained**.
+4. Set `MAILGUN_WEBHOOK_SIGNING_KEY` from Mailgun → Sending → Webhooks (HTTP webhook signing key).
+5. Redeploy the platform image so the webhook route is live.
 
-Or set environment variables in `.env`:
+Environment variables:
 
 ```
-AWS_REGION=us-east-1
-AWS_ACCESS_KEY_ID=
-AWS_SECRET_ACCESS_KEY=
-SES_FROM_DOMAIN=mail.yourplatform.com
-SES_FROM_EMAIL=noreply@mail.yourplatform.com
-SES_CONFIGURATION_SET=marketing
+MAILGUN_API_KEY=
+MAILGUN_DOMAIN=mg.yourplatform.com
+MAILGUN_FROM=LeadVix <noreply@mg.yourplatform.com>
+MAILGUN_API_BASE=https://api.mailgun.net
+MAILGUN_WEBHOOK_SIGNING_KEY=
 APP_URL=https://yourapp.com
+REDIS_URL=redis://localhost:6379
 ```
 
-3. In AWS SES:
-   - Verify domain + enable DKIM
-   - Create a configuration set → SNS topic for bounces/complaints/delivery
-   - Point SNS subscription to: `https://yourapp.com/api/v1/webhooks/ses`
-   - Request production access (exit sandbox)
+### Stats semantics
+
+| Metric | Meaning |
+|--------|---------|
+| **sent** | Provider accepted (`SENT` or `DELIVERED`) |
+| **delivered** | Mailgun `delivered` webhook (`DELIVERED` only) |
+| **failed** | Local/provider reject (`FAILED`) |
+| **bounced** | Permanent fail / bounce webhook (`BOUNCED`) |
+| **opens / clicks** | First-party tracking pixel / link wrap |
+
+Open/click rates use **delivered** when &gt; 0, otherwise **sent**.
+
+Older sends without a real Mailgun message id cannot receive delivery webhooks.
 
 ## Running the email worker
 
@@ -59,9 +68,11 @@ Set `REDIS_URL=redis://localhost:6379` in `.env`.
 ## Advertiser workflow
 
 1. **Email → Templates** — create or use starter templates
-2. **Email → Automations → Create** — pick trigger, add steps (immediate, 1 day, 3 days, 7 days)
-3. **Activate** — new matching leads receive the sequence
-4. **Email → Settings** — set from name, reply-to; optionally verify a custom domain
+2. **Email → Domains** — add domain, publish DNS, Refresh until verified
+3. **Email → Automations → Create** — pick trigger, add steps
+4. **Activate** — new matching leads receive the sequence
+5. **Email → Broadcasts** — send to lists/tags
+6. **Email → Settings** — from name, default from email, reply-to
 
 ## Merge tags
 
@@ -79,10 +90,9 @@ Set `REDIS_URL=redis://localhost:6379` in `.env`.
 
 | Route | Role |
 |-------|------|
-| `/api/v1/advertiser/email/*` | Templates, automations, contacts, sends, stats, settings |
-| `/api/v1/admin/email/ses` | Platform SES config |
-| `/api/v1/webhooks/ses` | SNS bounce/complaint handler |
-| `/api/v1/email/track/open|click` | Engagement tracking |
+| `/api/v1/advertiser/email/*` | Templates, automations, contacts, broadcasts, sends, stats, settings |
+| `/api/v1/webhooks/mailgun` | Mailgun delivered/bounce/complaint handler |
+| `/api/v1/email/track/open\|click` | Engagement tracking |
 | `/unsubscribe/[token]` | Public unsubscribe page |
 
 ## Module structure
