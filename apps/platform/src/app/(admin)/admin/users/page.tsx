@@ -39,7 +39,8 @@ interface PageProps {
 }
 
 function menuLabels(access: string[]) {
-  const map = new Map(ADMIN_NAV.map((n) => [n.href, n.label]));
+  const items = Array.isArray(ADMIN_NAV) ? ADMIN_NAV : [];
+  const map = new Map(items.map((n) => [n.href, n.label]));
   return access.map((href) => map.get(href) ?? href);
 }
 

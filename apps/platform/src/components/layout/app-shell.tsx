@@ -60,8 +60,8 @@ function AppShellInner({
         open={mobileNavOpen}
         onOpenChange={setMobileNavOpen}
       />
-      <div className="flex min-h-dvh min-w-0 flex-1 flex-col">
-        <div className="sticky top-0 z-20">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+        <div className="sticky top-0 z-20 shrink-0">
           {viewAs ? (
             <ImpersonationBanner userName={viewAs.userName} userRole={viewAs.userRole} />
           ) : null}
@@ -73,7 +73,7 @@ function AppShellInner({
             onOpenMobileNav={() => setMobileNavOpen(true)}
           />
         </div>
-        <main className="relative min-w-0">
+        <main className="relative min-w-0 flex-1">
           <Suspense fallback={null}>
             <NavigationProgressBar />
           </Suspense>

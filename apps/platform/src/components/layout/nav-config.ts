@@ -1,5 +1,3 @@
-"use client";
-
 import type { UserRole } from "@prisma/client";
 import type { LucideIcon } from "lucide-react";
 import {

@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   Activity,
   CalendarRange,
@@ -90,18 +91,67 @@ function AdvertiserSearchSelect({
 }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const rootRef = useRef<HTMLDivElement>(null);
+  const [mounted, setMounted] = useState(false);
+  const [coords, setCoords] = useState<{ top: number; left: number; width: number } | null>(
+    null,
+  );
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const updatePosition = useCallback(() => {
+    const el = triggerRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const width = Math.max(rect.width, 288);
+    let left = rect.left;
+    if (left + width > window.innerWidth - 8) {
+      left = Math.max(8, window.innerWidth - width - 8);
+    }
+    setCoords({
+      top: rect.bottom + 4,
+      left,
+      width,
+    });
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!open) return;
+    updatePosition();
+  }, [open, updatePosition]);
 
   useEffect(() => {
     if (!open) return;
+
     function onPointerDown(event: MouseEvent) {
-      if (!rootRef.current?.contains(event.target as Node)) {
-        setOpen(false);
-      }
+      const target = event.target as Node;
+      if (triggerRef.current?.contains(target)) return;
+      if (panelRef.current?.contains(target)) return;
+      setOpen(false);
     }
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setOpen(false);
+    }
+
+    function onReposition() {
+      updatePosition();
+    }
+
     document.addEventListener("mousedown", onPointerDown);
-    return () => document.removeEventListener("mousedown", onPointerDown);
-  }, [open]);
+    document.addEventListener("keydown", onKeyDown);
+    window.addEventListener("resize", onReposition);
+    window.addEventListener("scroll", onReposition, true);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("resize", onReposition);
+      window.removeEventListener("scroll", onReposition, true);
+    };
+  }, [open, updatePosition]);
 
   const selected = useMemo(
     () => advertisers.find((a) => a.id === value) ?? null,
@@ -124,10 +174,82 @@ function AdvertiserSearchSelect({
     });
   }, [advertisers, search]);
 
+  const panel =
+    open && mounted && coords
+      ? createPortal(
+          <div
+            ref={panelRef}
+            style={{
+              position: "fixed",
+              top: coords.top,
+              left: coords.left,
+              width: coords.width,
+              minWidth: "18rem",
+              maxWidth: "min(22rem, calc(100vw - 16px))",
+            }}
+            className="z-[100] overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg"
+          >
+            <div className="border-b border-slate-100 p-2">
+              <div className="relative">
+                <Search className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+                <input
+                  autoFocus
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search name, company, email…"
+                  className="h-8 w-full rounded-md border border-slate-200 bg-slate-50/80 py-1 pr-2 pl-8 text-sm outline-none focus:border-slate-300 focus:bg-white"
+                />
+              </div>
+            </div>
+            <div className="max-h-56 overflow-y-auto py-1">
+              <button
+                type="button"
+                className={cn(
+                  "flex w-full px-3 py-2 text-left text-sm hover:bg-slate-50",
+                  !value && "bg-sky-50 font-medium text-sky-800",
+                )}
+                onClick={() => {
+                  onChange("");
+                  setSearch("");
+                  setOpen(false);
+                }}
+              >
+                All advertisers
+              </button>
+              {suggestions.length === 0 ? (
+                <p className="px-3 py-3 text-xs text-slate-500">No advertisers match</p>
+              ) : (
+                suggestions.map((advertiser) => (
+                  <button
+                    key={advertiser.id}
+                    type="button"
+                    className={cn(
+                      "flex w-full px-3 py-2 text-left text-sm hover:bg-slate-50",
+                      value === advertiser.id && "bg-sky-50 font-medium text-sky-800",
+                    )}
+                    onClick={() => {
+                      onChange(advertiser.id);
+                      setSearch("");
+                      setOpen(false);
+                    }}
+                  >
+                    <span className="truncate">{formatAdvertiserOptionLabel(advertiser)}</span>
+                  </button>
+                ))
+              )}
+            </div>
+          </div>,
+          document.body,
+        )
+      : null;
+
   return (
-    <div ref={rootRef} className="relative">
+    <div className="relative w-full">
       <button
+        ref={triggerRef}
         type="button"
+        aria-haspopup="listbox"
+        aria-expanded={open}
         onClick={() => setOpen((prev) => !prev)}
         className={cn(
           "flex h-9 w-full items-center justify-between gap-2 rounded-md border border-input bg-white px-3 text-left text-sm shadow-xs outline-none transition-[color,box-shadow]",
@@ -162,63 +284,10 @@ function AdvertiserSearchSelect({
               <X className="h-3.5 w-3.5" />
             </span>
           ) : null}
-          <ChevronDown className="h-4 w-4 text-slate-400" />
+          <ChevronDown className={cn("h-4 w-4 text-slate-400 transition-transform", open && "rotate-180")} />
         </span>
       </button>
-
-      {open ? (
-        <div className="absolute z-30 mt-1 w-full min-w-[18rem] overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg sm:min-w-[22rem]">
-          <div className="border-b border-slate-100 p-2">
-            <div className="relative">
-              <Search className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
-              <input
-                autoFocus
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search name, company, email…"
-                className="h-8 w-full rounded-md border border-slate-200 bg-slate-50/80 py-1 pr-2 pl-8 text-sm outline-none focus:border-slate-300 focus:bg-white"
-              />
-            </div>
-          </div>
-          <div className="max-h-56 overflow-y-auto py-1">
-            <button
-              type="button"
-              className={cn(
-                "flex w-full px-3 py-2 text-left text-sm hover:bg-slate-50",
-                !value && "bg-sky-50 font-medium text-sky-800",
-              )}
-              onClick={() => {
-                onChange("");
-                setSearch("");
-                setOpen(false);
-              }}
-            >
-              All advertisers
-            </button>
-            {suggestions.length === 0 ? (
-              <p className="px-3 py-3 text-xs text-slate-500">No advertisers match</p>
-            ) : (
-              suggestions.map((advertiser) => (
-                <button
-                  key={advertiser.id}
-                  type="button"
-                  className={cn(
-                    "flex w-full px-3 py-2 text-left text-sm hover:bg-slate-50",
-                    value === advertiser.id && "bg-sky-50 font-medium text-sky-800",
-                  )}
-                  onClick={() => {
-                    onChange(advertiser.id);
-                    setSearch("");
-                    setOpen(false);
-                  }}
-                >
-                  <span className="truncate">{formatAdvertiserOptionLabel(advertiser)}</span>
-                </button>
-              ))
-            )}
-          </div>
-        </div>
-      ) : null}
+      {panel}
     </div>
   );
 }
@@ -362,9 +431,9 @@ export function AdminCpaOffersReport({
         />
       </div>
 
-      <div className="overflow-hidden rounded-[18px] border border-slate-200/80 bg-white shadow-sm">
+      <div className="rounded-[18px] border border-slate-200/80 bg-white shadow-sm">
         <div
-          className="flex items-center gap-2 px-5 py-3.5 text-white"
+          className="flex items-center gap-2 rounded-t-[18px] px-5 py-3.5 text-white"
           style={{
             backgroundImage:
               "linear-gradient(135deg, var(--theme-hero-from), var(--theme-hero-to))",
@@ -379,9 +448,9 @@ export function AdminCpaOffersReport({
           </div>
         </div>
 
-        <div className="space-y-3 bg-gradient-to-br from-slate-50/80 to-white p-4">
-          <div className="flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-end">
-            <div className="w-full space-y-1 sm:min-w-[16rem] sm:flex-1 lg:max-w-sm">
+        <div className="bg-gradient-to-br from-slate-50/80 to-white p-4">
+          <div className="grid grid-cols-1 items-end gap-3 sm:grid-cols-2 xl:grid-cols-12">
+            <div className="space-y-1 sm:col-span-2 xl:col-span-3">
               <label className="text-xs font-medium text-slate-500">Advertiser</label>
               <AdvertiserSearchSelect
                 advertisers={advertisers}
@@ -391,39 +460,39 @@ export function AdminCpaOffersReport({
                 }
               />
             </div>
-            <div className="w-full space-y-1 sm:w-48">
+            <div className="space-y-1 xl:col-span-2">
               <label className="text-xs font-medium text-slate-500">From</label>
               <Input
                 type="date"
                 value={draft.from}
                 onChange={(e) => setDraft((prev) => ({ ...prev, from: e.target.value }))}
-                className="bg-white"
+                className="h-9 bg-white"
               />
             </div>
-            <div className="w-full space-y-1 sm:w-48">
+            <div className="space-y-1 xl:col-span-2">
               <label className="text-xs font-medium text-slate-500">To</label>
               <Input
                 type="date"
                 value={draft.to}
                 onChange={(e) => setDraft((prev) => ({ ...prev, to: e.target.value }))}
-                className="bg-white"
+                className="h-9 bg-white"
               />
             </div>
-            <div className="w-full space-y-1 sm:w-52">
+            <div className="space-y-1 xl:col-span-1">
               <label className="text-xs font-medium text-slate-500">Offer ID</label>
               <Input
                 value={draft.offerId}
                 onChange={(e) => setDraft((prev) => ({ ...prev, offerId: e.target.value }))}
                 placeholder="Offer ID"
-                className="bg-white"
+                className="h-9 bg-white"
               />
             </div>
-            <div className="min-w-[12rem] flex-1 space-y-1">
+            <div className="space-y-1 sm:col-span-2 xl:col-span-2">
               <label className="text-xs font-medium text-slate-500">Search</label>
               <div className="relative">
                 <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <Input
-                  className="bg-white pl-9"
+                  className="h-9 bg-white pl-9"
                   value={draft.q}
                   onChange={(e) => setDraft((prev) => ({ ...prev, q: e.target.value }))}
                   placeholder="Offer, advertiser, or click ID"
@@ -433,11 +502,11 @@ export function AdminCpaOffersReport({
                 />
               </div>
             </div>
-            <div className="flex gap-2">
-              <Button type="button" onClick={applyFilters}>
+            <div className="flex flex-wrap gap-2 sm:col-span-2 xl:col-span-2 xl:justify-end">
+              <Button type="button" className="h-9" onClick={applyFilters}>
                 Apply
               </Button>
-              <Button type="button" variant="outline" onClick={clearFilters}>
+              <Button type="button" variant="outline" className="h-9" onClick={clearFilters}>
                 Clear
               </Button>
             </div>
