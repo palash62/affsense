@@ -1,13 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Activity,
   CalendarRange,
+  ChevronDown,
   DollarSign,
   Filter,
   Search,
   Store,
+  X,
 } from "lucide-react";
 import { PageHero } from "@/components/admin/page-hero";
 import {
@@ -26,13 +28,23 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { formatAdvertiserOptionLabel } from "@/lib/deposit";
+import { cn } from "@/lib/utils";
 import type { CpaConversionListResult } from "@/services/cpa-offer.service";
 
 const PAGE_SIZE = 20;
 
+type AdvertiserOption = {
+  id: string;
+  name: string;
+  email: string;
+  advertiserProfile?: { company: string } | null;
+};
+
 type AppliedFilters = {
   q: string;
   offerId: string;
+  advertiserId: string;
   from: string;
   to: string;
 };
@@ -40,6 +52,7 @@ type AppliedFilters = {
 const emptyFilters: AppliedFilters = {
   q: "",
   offerId: "",
+  advertiserId: "",
   from: "",
   to: "",
 };
@@ -66,7 +79,155 @@ function formatRawQuery(raw: unknown) {
   }
 }
 
-export function AdminCpaOffersReport() {
+function AdvertiserSearchSelect({
+  advertisers,
+  value,
+  onChange,
+}: {
+  advertisers: AdvertiserOption[];
+  value: string;
+  onChange: (id: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function onPointerDown(event: MouseEvent) {
+      if (!rootRef.current?.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", onPointerDown);
+    return () => document.removeEventListener("mousedown", onPointerDown);
+  }, [open]);
+
+  const selected = useMemo(
+    () => advertisers.find((a) => a.id === value) ?? null,
+    [advertisers, value],
+  );
+
+  const suggestions = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    if (!term) return advertisers;
+    return advertisers.filter((a) => {
+      const haystack = [
+        a.name,
+        a.email,
+        a.advertiserProfile?.company ?? "",
+        a.id,
+      ]
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(term);
+    });
+  }, [advertisers, search]);
+
+  return (
+    <div ref={rootRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((prev) => !prev)}
+        className={cn(
+          "flex h-9 w-full items-center justify-between gap-2 rounded-md border border-input bg-white px-3 text-left text-sm shadow-xs outline-none transition-[color,box-shadow]",
+          "focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50",
+          open && "border-ring ring-[3px] ring-ring/50",
+        )}
+      >
+        <span className={cn("min-w-0 truncate", !selected && "text-slate-400")}>
+          {selected ? formatAdvertiserOptionLabel(selected) : "All advertisers"}
+        </span>
+        <span className="flex shrink-0 items-center gap-1">
+          {selected ? (
+            <span
+              role="button"
+              tabIndex={0}
+              aria-label="Clear advertiser"
+              className="rounded p-0.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+              onClick={(e) => {
+                e.stopPropagation();
+                onChange("");
+                setSearch("");
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onChange("");
+                  setSearch("");
+                }
+              }}
+            >
+              <X className="h-3.5 w-3.5" />
+            </span>
+          ) : null}
+          <ChevronDown className="h-4 w-4 text-slate-400" />
+        </span>
+      </button>
+
+      {open ? (
+        <div className="absolute z-30 mt-1 w-full min-w-[18rem] overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg sm:min-w-[22rem]">
+          <div className="border-b border-slate-100 p-2">
+            <div className="relative">
+              <Search className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+              <input
+                autoFocus
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search name, company, email…"
+                className="h-8 w-full rounded-md border border-slate-200 bg-slate-50/80 py-1 pr-2 pl-8 text-sm outline-none focus:border-slate-300 focus:bg-white"
+              />
+            </div>
+          </div>
+          <div className="max-h-56 overflow-y-auto py-1">
+            <button
+              type="button"
+              className={cn(
+                "flex w-full px-3 py-2 text-left text-sm hover:bg-slate-50",
+                !value && "bg-sky-50 font-medium text-sky-800",
+              )}
+              onClick={() => {
+                onChange("");
+                setSearch("");
+                setOpen(false);
+              }}
+            >
+              All advertisers
+            </button>
+            {suggestions.length === 0 ? (
+              <p className="px-3 py-3 text-xs text-slate-500">No advertisers match</p>
+            ) : (
+              suggestions.map((advertiser) => (
+                <button
+                  key={advertiser.id}
+                  type="button"
+                  className={cn(
+                    "flex w-full px-3 py-2 text-left text-sm hover:bg-slate-50",
+                    value === advertiser.id && "bg-sky-50 font-medium text-sky-800",
+                  )}
+                  onClick={() => {
+                    onChange(advertiser.id);
+                    setSearch("");
+                    setOpen(false);
+                  }}
+                >
+                  <span className="truncate">{formatAdvertiserOptionLabel(advertiser)}</span>
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+export function AdminCpaOffersReport({
+  advertisers,
+}: {
+  advertisers: AdvertiserOption[];
+}) {
   const [result, setResult] = useState<CpaConversionListResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [draft, setDraft] = useState<AppliedFilters>(emptyFilters);
@@ -80,6 +241,7 @@ export function AdminCpaOffersReport() {
     params.set("limit", String(PAGE_SIZE));
     if (applied.q.trim()) params.set("q", applied.q.trim());
     if (applied.offerId.trim()) params.set("offerId", applied.offerId.trim());
+    if (applied.advertiserId.trim()) params.set("advertiserId", applied.advertiserId.trim());
     if (applied.from.trim()) params.set("from", new Date(applied.from).toISOString());
     if (applied.to.trim()) {
       const end = new Date(applied.to);
@@ -120,6 +282,11 @@ export function AdminCpaOffersReport() {
     return { payoutSum, uniqueOffers, withClickId };
   }, [items]);
 
+  const appliedAdvertiser = useMemo(
+    () => advertisers.find((a) => a.id === applied.advertiserId) ?? null,
+    [advertisers, applied.advertiserId],
+  );
+
   const rangeLabel =
     applied.from || applied.to
       ? [applied.from || "…", applied.to || "…"].join(" → ")
@@ -130,7 +297,7 @@ export function AdminCpaOffersReport() {
       <PageHero
         eyebrow="CPA Offers"
         title="Report"
-        description="Conversion postbacks by offer, click ID, and payout."
+        description="Conversion postbacks by offer, advertiser, click ID, and payout."
         badge={loading ? undefined : `${total} conversions · ${rangeLabel}`}
       />
 
@@ -183,9 +350,14 @@ export function AdminCpaOffersReport() {
           accent="green"
         />
         <NeutralStatCard
-          label="Date range"
-          value={rangeLabel}
-          icon={CalendarRange}
+          label={appliedAdvertiser ? "Advertiser" : "Date range"}
+          value={
+            appliedAdvertiser
+              ? appliedAdvertiser.advertiserProfile?.company?.trim() ||
+                appliedAdvertiser.name
+              : rangeLabel
+          }
+          icon={appliedAdvertiser ? Store : CalendarRange}
           accent="orange"
         />
       </div>
@@ -201,12 +373,24 @@ export function AdminCpaOffersReport() {
           <Filter className="h-4 w-4 text-white/80" />
           <div>
             <p className="text-sm font-semibold">Filters</p>
-            <p className="text-xs text-white/75">Narrow conversions by date, offer, or search</p>
+            <p className="text-xs text-white/75">
+              Narrow conversions by advertiser, date, offer, or search
+            </p>
           </div>
         </div>
 
         <div className="space-y-3 bg-gradient-to-br from-slate-50/80 to-white p-4">
           <div className="flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-end">
+            <div className="w-full space-y-1 sm:min-w-[16rem] sm:flex-1 lg:max-w-sm">
+              <label className="text-xs font-medium text-slate-500">Advertiser</label>
+              <AdvertiserSearchSelect
+                advertisers={advertisers}
+                value={draft.advertiserId}
+                onChange={(advertiserId) =>
+                  setDraft((prev) => ({ ...prev, advertiserId }))
+                }
+              />
+            </div>
             <div className="w-full space-y-1 sm:w-48">
               <label className="text-xs font-medium text-slate-500">From</label>
               <Input
@@ -242,7 +426,7 @@ export function AdminCpaOffersReport() {
                   className="bg-white pl-9"
                   value={draft.q}
                   onChange={(e) => setDraft((prev) => ({ ...prev, q: e.target.value }))}
-                  placeholder="Offer name or click ID"
+                  placeholder="Offer, advertiser, or click ID"
                   onKeyDown={(e) => {
                     if (e.key === "Enter") applyFilters();
                   }}
@@ -282,6 +466,7 @@ export function AdminCpaOffersReport() {
           <TableHeader>
             <TableRow className="bg-slate-50/90 hover:bg-slate-50/90">
               <TableHead>Date</TableHead>
+              <TableHead>Advertiser</TableHead>
               <TableHead>Offer</TableHead>
               <TableHead>Click ID</TableHead>
               <TableHead>Status</TableHead>
@@ -293,13 +478,13 @@ export function AdminCpaOffersReport() {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={7} className="py-12 text-center text-sm text-slate-500">
+                <TableCell colSpan={8} className="py-12 text-center text-sm text-slate-500">
                   Loading conversions…
                 </TableCell>
               </TableRow>
             ) : items.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="py-12 text-center">
+                <TableCell colSpan={8} className="py-12 text-center">
                   <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-50 text-violet-600">
                     <Activity className="h-5 w-5" />
                   </div>
@@ -316,6 +501,20 @@ export function AdminCpaOffersReport() {
                     <span className="rounded-md bg-sky-50 px-2 py-0.5 text-xs font-medium text-sky-800">
                       {formatDateTime(row.createdAt)}
                     </span>
+                  </TableCell>
+                  <TableCell>
+                    {row.advertiserName ? (
+                      <div>
+                        <p className="font-medium text-slate-900">{row.advertiserName}</p>
+                        {row.advertiserId ? (
+                          <p className="font-mono text-[11px] text-slate-400">
+                            #{row.advertiserId.slice(-8)}
+                          </p>
+                        ) : null}
+                      </div>
+                    ) : (
+                      <span className="text-slate-400">—</span>
+                    )}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2.5">

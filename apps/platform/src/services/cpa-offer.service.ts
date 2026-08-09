@@ -996,6 +996,8 @@ export type SerializedCpaConversion = {
   offerId: string;
   offerName: string;
   offerStatus: CpaOfferStatus;
+  advertiserId: string | null;
+  advertiserName: string | null;
   clickId: string | null;
   payout: string;
   revenue: string;
@@ -1021,6 +1023,7 @@ export type CpaConversionListResult = {
 export type CpaConversionListFilters = {
   q?: string;
   offerId?: string;
+  advertiserId?: string;
   from?: string;
   to?: string;
   page?: number;
@@ -1031,6 +1034,7 @@ function serializeCpaConversionRow(
   row: {
     id: string;
     offerId: string;
+    advertiserId: string | null;
     clickId: string | null;
     payout: { toString(): string } | null;
     rawQuery: unknown;
@@ -1041,6 +1045,7 @@ function serializeCpaConversionRow(
       revenue: { toString(): string } | null;
       payout: { toString(): string };
     };
+    advertiser: { name: string } | null;
     clickRecord: {
       ip: string | null;
       userAgent: string | null;
@@ -1057,6 +1062,8 @@ function serializeCpaConversionRow(
     offerId: row.offerId,
     offerName: row.offer.name,
     offerStatus: row.offer.status,
+    advertiserId: row.advertiserId,
+    advertiserName: row.advertiser?.name ?? null,
     clickId: row.clickId,
     payout: row.payout != null ? decimalToString(row.payout) : decimalToString(row.offer.payout),
     revenue: row.offer.revenue != null ? decimalToString(row.offer.revenue) : "0",
@@ -1095,6 +1102,10 @@ export async function listCpaConversionsForAdmin(
   if (offerId) where.offerId = offerId;
   if (offerId) clickWhere.offerId = offerId;
 
+  const advertiserId = filters.advertiserId?.trim();
+  if (advertiserId) where.advertiserId = advertiserId;
+  if (advertiserId) clickWhere.advertiserId = advertiserId;
+
   if (filters.from || filters.to) {
     where.createdAt = {};
     clickWhere.createdAt = {};
@@ -1120,12 +1131,14 @@ export async function listCpaConversionsForAdmin(
       { clickId: { contains: q } },
       { offer: { name: { contains: q } } },
       { offerId: { contains: q } },
+      { advertiser: { name: { contains: q } } },
     ];
 
     clickWhere.OR = [
       { id: { contains: q } },
       { offer: { name: { contains: q } } },
       { offerId: { contains: q } },
+      { advertiser: { name: { contains: q } } },
     ];
   }
 
@@ -1135,6 +1148,7 @@ export async function listCpaConversionsForAdmin(
       where,
       include: {
         offer: { select: { name: true, status: true, revenue: true, payout: true } },
+        advertiser: { select: { name: true } },
         clickRecord: { select: { ip: true, userAgent: true, src: true, subId: true } },
       },
       orderBy: { createdAt: "desc" },
@@ -1251,6 +1265,7 @@ export async function listCpaConversionsForAdvertiser(
       where,
       include: {
         offer: { select: { name: true, status: true, revenue: true, payout: true } },
+        advertiser: { select: { name: true } },
         clickRecord: { select: { ip: true, userAgent: true, src: true, subId: true } },
       },
       orderBy: { createdAt: "desc" },

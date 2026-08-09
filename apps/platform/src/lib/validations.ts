@@ -1208,6 +1208,7 @@ export const cpaOfferListQuerySchema = z.object({
 export const cpaConversionListQuerySchema = z.object({
   q: z.string().trim().optional(),
   offerId: z.string().trim().optional(),
+  advertiserId: z.string().trim().optional(),
   from: z.string().trim().optional(),
   to: z.string().trim().optional(),
   page: z.coerce.number().int().min(1).optional(),
