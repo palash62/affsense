@@ -1,3 +1,4 @@
+import { isAdminPortalRole } from "@/lib/admin-portal";
 import { notFound, redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { AdminCpaOfferForm } from "@/components/admin/admin-cpa-offer-form";
@@ -11,7 +12,7 @@ type PageProps = {
 
 export default async function AdminCpaOfferEditPage({ params }: PageProps) {
   const session = await getSession();
-  if (!session?.user?.id || session.user.role !== "ADMIN") {
+  if (!session?.user?.id || !isAdminPortalRole(session.user.role)) {
     redirect("/login");
   }
 

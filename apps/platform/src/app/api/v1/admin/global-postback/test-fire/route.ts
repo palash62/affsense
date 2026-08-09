@@ -1,4 +1,4 @@
-import { withAuth } from "@/lib/api-handler";
+import { withAuth, ADMIN_PORTAL_ROLES } from "@/lib/api-handler";
 import { errorResponse, AppError } from "@/lib/errors";
 import { fireGlobalPostbackTest } from "@/services/cpa-global-postback-test.service";
 import { z } from "zod";
@@ -26,5 +26,5 @@ export async function POST(request: Request) {
     } catch (error) {
       return errorResponse(error);
     }
-  }, ["ADMIN"]);
+  }, ADMIN_PORTAL_ROLES);
 }

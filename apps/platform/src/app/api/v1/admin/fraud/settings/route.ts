@@ -1,4 +1,4 @@
-import { withAuth } from "@/lib/api-handler";
+import { withAuth, ADMIN_PORTAL_ROLES } from "@/lib/api-handler";
 import { errorResponse } from "@/lib/errors";
 import { getFraudConfig, updateFraudConfig } from "@/modules/fraud";
 
@@ -10,7 +10,7 @@ export async function GET() {
       emailApiConfigured: Boolean(process.env.FRAUD_EMAIL_API_KEY?.trim()),
     };
     return Response.json({ data, providers });
-  }, ["ADMIN"]);
+  }, ADMIN_PORTAL_ROLES);
 }
 
 export async function PATCH(request: Request) {
@@ -22,5 +22,5 @@ export async function PATCH(request: Request) {
     } catch (error) {
       return errorResponse(error);
     }
-  }, ["ADMIN"]);
+  }, ADMIN_PORTAL_ROLES);
 }

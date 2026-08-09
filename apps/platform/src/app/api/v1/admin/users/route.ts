@@ -1,4 +1,4 @@
-import { withAuth, withRealAdmin, parsePagination } from "@/lib/api-handler";
+import { withAuth, withRealAdmin, parsePagination, ADMIN_PORTAL_ROLES } from "@/lib/api-handler";
 import { errorResponse } from "@/lib/errors";
 import { adminCreateAdvertiserSchema, adminCreatePublisherSchema } from "@/lib/validations";
 import {
@@ -26,7 +26,7 @@ export async function GET(request: Request) {
     });
 
     return Response.json(result);
-  }, ["ADMIN"]);
+  }, ADMIN_PORTAL_ROLES);
 }
 
 export async function PATCH(request: Request) {

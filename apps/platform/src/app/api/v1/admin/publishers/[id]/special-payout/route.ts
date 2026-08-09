@@ -1,4 +1,4 @@
-import { withAuth } from "@/lib/api-handler";
+import { withAuth, ADMIN_PORTAL_ROLES } from "@/lib/api-handler";
 import { errorResponse } from "@/lib/errors";
 import { serializePublisherSpecialTierPayouts } from "@/lib/publisher-special-payout";
 import { adminPublisherSpecialPayoutSchema } from "@/lib/validations";
@@ -30,5 +30,5 @@ export async function PATCH(
     } catch (error) {
       return errorResponse(error);
     }
-  }, ["ADMIN"]);
+  }, ADMIN_PORTAL_ROLES);
 }

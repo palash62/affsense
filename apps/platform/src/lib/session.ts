@@ -6,6 +6,9 @@ import { Errors } from "@/lib/errors";
 import { prisma } from "@/lib/prisma";
 import type { UserRole } from "@prisma/client";
 import { parseViewAsCookie, shouldApplyViewAs, VIEW_AS_COOKIE } from "@/lib/view-as";
+import { ADMIN_PORTAL_ROLES, isAdminPortalRole } from "@/lib/admin-portal";
+
+export { ADMIN_PORTAL_ROLES, isAdminPortalRole };
 
 type AppSession = Session & { viewAsMode?: boolean };
 

@@ -544,6 +544,44 @@ export const adminCreateAdvertiserSchema = z.object({
   status: z.enum(["ACTIVE", "PENDING"]).optional(),
 });
 
+const assignableStaffMenuHrefSchema = z.enum([
+  "/admin/profit",
+  "/admin/advertisers",
+  "/admin/publishers",
+  "/admin/campaigns",
+  "/admin/cpa-offers",
+  "/admin/bulk-email",
+  "/admin/leads",
+  "/admin/fraud",
+  "/admin/wallets",
+  "/admin/deposits",
+  "/admin/payouts",
+  "/admin/referrals",
+  "/admin/reports",
+  "/admin/support",
+  "/admin/settings",
+  "/admin/audit-log",
+  "/admin/themes",
+  "/admin/funnel-templates",
+  "/admin/tutorials",
+]);
+
+export const adminCreateStaffUserSchema = z.object({
+  name: z.string().trim().min(2, "Name must be at least 2 characters"),
+  email: z.string().trim().email("Enter a valid email address"),
+  phone: z.string().trim().max(40).optional().nullable(),
+  country: z.string().trim().max(120).optional().nullable(),
+  menuAccess: z.array(assignableStaffMenuHrefSchema).default([]),
+});
+
+export const adminUpdateStaffUserSchema = z.object({
+  name: z.string().trim().min(2).optional(),
+  phone: z.string().trim().max(40).optional().nullable(),
+  country: z.string().trim().max(120).optional().nullable(),
+  menuAccess: z.array(assignableStaffMenuHrefSchema).optional(),
+  status: z.enum(["ACTIVE", "SUSPENDED"]).optional(),
+});
+
 const WEBHOOK_URL_ERROR =
   "Enter a valid webhook URL starting with https:// (not an email address)";
 

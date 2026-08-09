@@ -1,4 +1,4 @@
-import { withAuth, parsePagination } from "@/lib/api-handler";
+import { withAuth, parsePagination, ADMIN_PORTAL_ROLES } from "@/lib/api-handler";
 import { listHighRiskLeads } from "@/modules/fraud";
 
 export async function GET(request: Request) {
@@ -12,5 +12,5 @@ export async function GET(request: Request) {
       minRisk ? parseInt(minRisk, 10) : undefined,
     );
     return Response.json(result);
-  }, ["ADMIN"]);
+  }, ADMIN_PORTAL_ROLES);
 }

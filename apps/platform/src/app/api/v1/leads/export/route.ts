@@ -1,5 +1,6 @@
 import { format } from "date-fns";
 import { withAuth } from "@/lib/api-handler";
+import { isAdminPortalRole } from "@/lib/admin-portal";
 import { defaultCampaignDateFrom, defaultCampaignDateTo } from "@/lib/advertiser-campaigns";
 import { leadsToCsv } from "@/lib/lead-csv";
 import { listLeadsForExport, type AdvertiserLeadSort } from "@/services/lead.service";
@@ -30,7 +31,7 @@ function parseStatus(status: string | null): LeadStatus | undefined {
 export async function GET(request: Request) {
   return withAuth(async (session) => {
     const { searchParams } = new URL(request.url);
-    const isAdmin = session.user.role === "ADMIN";
+    const isAdmin = isAdminPortalRole(session.user.role);
 
     const leads = await listLeadsForExport({
       advertiserId: isAdmin ? (searchParams.get("advertiserId") ?? undefined) : session.user.id,

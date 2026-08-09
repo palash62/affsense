@@ -1,3 +1,4 @@
+import { isAdminPortalRole } from "@/lib/admin-portal";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { getAdminControlCenterData } from "@/services/admin-dashboard.service";
@@ -22,7 +23,7 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminDashboardPage() {
   const session = await getSession();
-  if (!session?.user || session.user.role !== "ADMIN") {
+  if (!session?.user || !isAdminPortalRole(session.user.role)) {
     redirect("/login");
   }
   const data = await getAdminControlCenterData(session.user.id);

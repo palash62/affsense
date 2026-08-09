@@ -1,4 +1,4 @@
-import { withAuth } from "@/lib/api-handler";
+import { withAuth, ADMIN_PORTAL_ROLES } from "@/lib/api-handler";
 import { errorResponse } from "@/lib/errors";
 import { adminTutorialUpdateSchema } from "@/lib/validations";
 import {
@@ -18,7 +18,7 @@ export async function GET(_request: Request, context: RouteContext) {
     } catch (error) {
       return errorResponse(error);
     }
-  }, ["ADMIN"]);
+  }, ADMIN_PORTAL_ROLES);
 }
 
 export async function PATCH(request: Request, context: RouteContext) {
@@ -45,7 +45,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     } catch (error) {
       return errorResponse(error);
     }
-  }, ["ADMIN"]);
+  }, ADMIN_PORTAL_ROLES);
 }
 
 export async function DELETE(_request: Request, context: RouteContext) {
@@ -57,5 +57,5 @@ export async function DELETE(_request: Request, context: RouteContext) {
     } catch (error) {
       return errorResponse(error);
     }
-  }, ["ADMIN"]);
+  }, ADMIN_PORTAL_ROLES);
 }

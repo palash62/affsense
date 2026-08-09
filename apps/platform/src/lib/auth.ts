@@ -2,6 +2,7 @@ import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { parseStaffMenuAccess } from "@/lib/admin-portal";
 import { authConfig } from "@/lib/auth.config";
 import { getLoginBlock } from "@/lib/auth-login-gate";
 import { consumeImpersonationToken } from "@/services/impersonation.service";
@@ -36,7 +37,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         if (!user) return null;
 
-        if (user.role !== "ADMIN") return null;
+        if (user.role !== "ADMIN" && user.role !== "PLATFORM_MANAGER") return null;
 
         const valid = await bcrypt.compare(
           String(credentials.password),
@@ -55,6 +56,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           role: user.role,
           tokenVersion: user.tokenVersion ?? 0,
           timezone: user.timezone ?? "UTC",
+          staffMenuAccess: parseStaffMenuAccess(user.staffMenuAccess),
         };
       },
     }),
@@ -81,7 +83,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         );
 
         if (!user) return null;
-        if (user.role !== "ADMIN" && user.role !== "ADVERTISER" && user.role !== "PUBLISHER") {
+        if (
+          user.role !== "ADMIN" &&
+          user.role !== "PLATFORM_MANAGER" &&
+          user.role !== "ADVERTISER" &&
+          user.role !== "PUBLISHER"
+        ) {
           return null;
         }
         if (getLoginBlock(user)) return null;
@@ -94,6 +101,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           role: user.role,
           tokenVersion: user.tokenVersion ?? 0,
           timezone: user.timezone ?? "UTC",
+          staffMenuAccess: parseStaffMenuAccess(user.staffMenuAccess),
         };
       },
     }),
@@ -116,6 +124,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           role: result.user.role,
           tokenVersion: result.user.tokenVersion ?? 0,
           timezone: result.user.timezone ?? "UTC",
+          staffMenuAccess: [],
           impersonatorId: result.impersonatorId,
         };
       },

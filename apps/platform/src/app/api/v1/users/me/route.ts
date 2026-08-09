@@ -1,5 +1,6 @@
 import { withAuth } from "@/lib/api-handler";
 import { errorResponse } from "@/lib/errors";
+import { isAdminPortalRole } from "@/lib/admin-portal";
 import {
   updateAdminPreferencesSchema,
   updateAdvertiserProfileSchema,
@@ -16,7 +17,7 @@ import {
 
 export async function GET() {
   return withAuth(async (session) => {
-    if (session.user.role === "ADMIN") {
+    if (isAdminPortalRole(session.user.role)) {
       const user = await getAdminSettings(session.user.id);
       return Response.json({ data: user });
     }
@@ -33,7 +34,7 @@ export async function PATCH(request: Request) {
     try {
       const body = await request.json();
 
-      if (session.user.role === "ADMIN") {
+      if (isAdminPortalRole(session.user.role)) {
         const parsed = updateAdminPreferencesSchema.safeParse(body);
         if (!parsed.success) {
           const message = parsed.error.issues[0]?.message ?? "Please check the form and try again";

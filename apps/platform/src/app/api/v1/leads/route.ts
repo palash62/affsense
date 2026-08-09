@@ -1,5 +1,6 @@
 import { AppError, errorResponse } from "@/lib/errors";
 import { withAuth, parsePagination } from "@/lib/api-handler";
+import { isAdminPortalRole } from "@/lib/admin-portal";
 import { listLeads, updateLeadStatus } from "@/services/lead.service";
 
 export async function GET(request: Request) {
@@ -41,7 +42,7 @@ export async function PATCH(request: Request) {
         );
       }
 
-      const isAdmin = session.user.role === "ADMIN";
+      const isAdmin = isAdminPortalRole(session.user.role);
       const statusValue = status as "APPROVED" | "REJECTED";
 
       if (Array.isArray(leadIds)) {

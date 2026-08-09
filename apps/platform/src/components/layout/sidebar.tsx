@@ -12,6 +12,7 @@ interface SidebarProps {
   collapsed?: boolean;
   canAccessCpaOffers?: boolean;
   canAccessAutoresponder?: boolean;
+  staffMenuAccess?: string[];
   className?: string;
 }
 
@@ -20,6 +21,7 @@ export function Sidebar({
   collapsed,
   canAccessCpaOffers,
   canAccessAutoresponder,
+  staffMenuAccess,
   className,
 }: SidebarProps) {
   const { startNavigation } = useNavigationPending();
@@ -51,6 +53,7 @@ export function Sidebar({
         collapsed={collapsed}
         canAccessCpaOffers={canAccessCpaOffers}
         canAccessAutoresponder={canAccessAutoresponder}
+        staffMenuAccess={staffMenuAccess}
       />
       {!collapsed ? <SidebarStatusCard /> : null}
     </aside>

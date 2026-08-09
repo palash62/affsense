@@ -67,14 +67,14 @@ export function Header({ role, title, breadcrumbs, premium, onOpenMobileNav }: H
     .toUpperCase() ?? "U";
 
   const notificationsHref =
-    role === "ADMIN"
+    role === "ADMIN" || role === "PLATFORM_MANAGER"
       ? "/admin/notifications"
       : role === "ADVERTISER"
         ? "/advertiser/notifications"
         : "/publisher/notifications";
 
   const tutorialsHref =
-    role === "ADMIN"
+    role === "ADMIN" || role === "PLATFORM_MANAGER"
       ? "/admin/tutorials"
       : role === "ADVERTISER"
         ? "/advertiser/tutorials"

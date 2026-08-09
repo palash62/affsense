@@ -1,3 +1,4 @@
+import { isAdminPortalRole } from "@/lib/admin-portal";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { AdminCpaOffersDashboard } from "@/components/admin/admin-cpa-offers-dashboard";
@@ -6,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminCpaOffersDashboardPage() {
   const session = await getSession();
-  if (!session?.user?.id || session.user.role !== "ADMIN") {
+  if (!session?.user?.id || !isAdminPortalRole(session.user.role)) {
     redirect("/login");
   }
 

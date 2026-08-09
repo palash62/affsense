@@ -131,6 +131,15 @@ export async function notifyAdvertiserCredentials(user: {
   await notifyAccountCredentials({ ...user, roleLabel: "Advertiser" });
 }
 
+export async function notifyPlatformManagerCredentials(user: {
+  id: string;
+  email: string;
+  name: string;
+  tempPassword: string;
+}) {
+  await notifyAccountCredentials({ ...user, roleLabel: "Platform Manager" });
+}
+
 async function notifyAccountCredentials(user: {
   id: string;
   email: string;

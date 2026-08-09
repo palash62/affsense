@@ -1,5 +1,5 @@
 import { endOfDay, endOfMonth, parseISO, startOfMonth } from "date-fns";
-import { withAuth } from "@/lib/api-handler";
+import { withAuth, ADMIN_PORTAL_ROLES } from "@/lib/api-handler";
 import { errorResponse, Errors } from "@/lib/errors";
 import {
   adminPartnerPaymentCreateSchema,
@@ -42,7 +42,7 @@ export async function GET(request: Request) {
     } catch (error) {
       return errorResponse(error);
     }
-  }, ["ADMIN"]);
+  }, ADMIN_PORTAL_ROLES);
 }
 
 export async function POST(request: Request) {
@@ -77,5 +77,5 @@ export async function POST(request: Request) {
     } catch (error) {
       return errorResponse(error);
     }
-  }, ["ADMIN"]);
+  }, ADMIN_PORTAL_ROLES);
 }

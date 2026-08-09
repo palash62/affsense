@@ -1,4 +1,4 @@
-import { withAuth } from "@/lib/api-handler";
+import { withAuth, ADMIN_PORTAL_ROLES } from "@/lib/api-handler";
 import { adminCpaNetworkPostbackSchema } from "@/lib/validations";
 import {
   getCpaNetworkPostbackSettings,
@@ -9,7 +9,7 @@ export async function GET() {
   return withAuth(async () => {
     const data = await getCpaNetworkPostbackSettings();
     return Response.json({ data });
-  }, ["ADMIN"]);
+  }, ADMIN_PORTAL_ROLES);
 }
 
 export async function PATCH(request: Request) {
@@ -31,5 +31,5 @@ export async function PATCH(request: Request) {
 
     const data = await updateCpaNetworkPostbackSettings(parsed.data, session.user.id);
     return Response.json({ data });
-  }, ["ADMIN"]);
+  }, ADMIN_PORTAL_ROLES);
 }

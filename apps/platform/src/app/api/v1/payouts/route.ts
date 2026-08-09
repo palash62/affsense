@@ -1,4 +1,5 @@
-import { withAuth, parsePagination } from "@/lib/api-handler";
+import { withAuth, parsePagination, ADMIN_PORTAL_ROLES } from "@/lib/api-handler";
+import { isAdminPortalRole } from "@/lib/admin-portal";
 import { errorResponse } from "@/lib/errors";
 import { payoutRequestSchema } from "@/lib/validations";
 import { approvePayout, rejectPayout, listPayouts, requestPayout } from "@/services/payout.service";
@@ -19,7 +20,7 @@ export async function GET(request: Request) {
       return Response.json(result);
     }
 
-    if (session.user.role === "ADMIN") {
+    if (isAdminPortalRole(session.user.role)) {
       const result = await listPayouts({
         publisherId: searchParams.get("publisherId") ?? undefined,
         status: searchParams.get("status") ?? undefined,
@@ -80,5 +81,5 @@ export async function PATCH(request: Request) {
     } catch (error) {
       return errorResponse(error);
     }
-  }, ["ADMIN"]);
+  }, ADMIN_PORTAL_ROLES);
 }

@@ -1,5 +1,8 @@
 import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import { AppShell } from "@/components/layout/app-shell";
+import { getSession } from "@/lib/session";
+import { isAdminPortalRole, parseStaffMenuAccess } from "@/lib/admin-portal";
 
 const FULLSCREEN_ADMIN_FUNNEL =
   /^\/admin\/funnel-templates\/[^/]+\/(edit|preview)(\/|$)/;
@@ -14,5 +17,17 @@ export default async function AdminLayout({
     return children;
   }
 
-  return <AppShell role="ADMIN">{children}</AppShell>;
+  const session = await getSession();
+  if (!session?.user || !isAdminPortalRole(session.user.role)) {
+    redirect("/login");
+  }
+
+  return (
+    <AppShell
+      role={session.user.role}
+      staffMenuAccess={parseStaffMenuAccess(session.user.staffMenuAccess)}
+    >
+      {children}
+    </AppShell>
+  );
 }

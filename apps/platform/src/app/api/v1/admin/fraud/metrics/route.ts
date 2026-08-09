@@ -1,9 +1,9 @@
-import { withAuth } from "@/lib/api-handler";
+import { withAuth, ADMIN_PORTAL_ROLES } from "@/lib/api-handler";
 import { getFraudDashboardMetrics } from "@/modules/fraud";
 
 export async function GET() {
   return withAuth(async () => {
     const data = await getFraudDashboardMetrics();
     return Response.json({ data });
-  }, ["ADMIN"]);
+  }, ADMIN_PORTAL_ROLES);
 }

@@ -15,6 +15,8 @@ export async function withAuth<T>(
   }
 }
 
+export { ADMIN_PORTAL_ROLES } from "@/lib/admin-portal";
+
 /** Admin mutations — always uses the real admin session, never view-as impersonation. */
 export async function withRealAdmin<T>(
   handler: (session: NonNullable<Awaited<ReturnType<typeof requireRealAdmin>>>) => Promise<T>,

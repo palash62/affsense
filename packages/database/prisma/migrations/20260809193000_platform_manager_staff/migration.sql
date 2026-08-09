@@ -1,0 +1,7 @@
+-- AlterEnum
+ALTER TABLE `users` MODIFY COLUMN `role` ENUM('ADMIN', 'ADVERTISER', 'PUBLISHER', 'PLATFORM_MANAGER') NOT NULL;
+
+-- AlterTable
+ALTER TABLE `users` ADD COLUMN `phone` VARCHAR(191) NULL,
+    ADD COLUMN `country` VARCHAR(191) NULL,
+    ADD COLUMN `staff_menu_access` JSON NULL;

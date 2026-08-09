@@ -1,4 +1,4 @@
-import { withAuth } from "@/lib/api-handler";
+import { withAuth, ADMIN_PORTAL_ROLES } from "@/lib/api-handler";
 import { errorResponse } from "@/lib/errors";
 import { adminBulkEmailTestSchema } from "@/lib/validations";
 import { sendAdminBulkEmailTest } from "@/services/admin.service";
@@ -29,5 +29,5 @@ export async function POST(request: Request) {
     } catch (error) {
       return errorResponse(error);
     }
-  }, ["ADMIN"]);
+  }, ADMIN_PORTAL_ROLES);
 }

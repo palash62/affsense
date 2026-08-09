@@ -1,3 +1,4 @@
+import { isAdminPortalRole } from "@/lib/admin-portal";
 import { notFound } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { getOptinFunnelTemplateByAdmin } from "@/services/optin-funnel.service";
@@ -11,7 +12,7 @@ export default async function AdminFunnelTemplateDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const session = await getSession();
-  if (!session || session.user.role !== "ADMIN") notFound();
+  if (!session || !isAdminPortalRole(session.user.role)) notFound();
 
   const { id } = await params;
   let template;

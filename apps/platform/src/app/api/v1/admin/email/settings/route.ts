@@ -1,4 +1,4 @@
-import { withAuth } from "@/lib/api-handler";
+import { withAuth, ADMIN_PORTAL_ROLES } from "@/lib/api-handler";
 import { errorResponse } from "@/lib/errors";
 import { smtpSettingsSchema } from "@/lib/validations";
 import { getSmtpSettingsForAdmin, updateSmtpSettings } from "@/services/smtp-settings.service";
@@ -11,7 +11,7 @@ export async function GET() {
       getEmailProviderStatus(),
     ]);
     return Response.json({ data: { ...data, providerStatus } });
-  }, ["ADMIN"]);
+  }, ADMIN_PORTAL_ROLES);
 }
 
 export async function PATCH(request: Request) {
@@ -34,5 +34,5 @@ export async function PATCH(request: Request) {
     } catch (error) {
       return errorResponse(error);
     }
-  }, ["ADMIN"]);
+  }, ADMIN_PORTAL_ROLES);
 }

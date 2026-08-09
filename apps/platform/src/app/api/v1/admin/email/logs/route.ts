@@ -1,4 +1,4 @@
-import { withAuth, parsePagination } from "@/lib/api-handler";
+import { withAuth, parsePagination, ADMIN_PORTAL_ROLES } from "@/lib/api-handler";
 import { listEmailLogs } from "@/services/email.service";
 
 export async function GET(request: Request) {
@@ -7,5 +7,5 @@ export async function GET(request: Request) {
     const { page, limit } = parsePagination(searchParams);
     const result = await listEmailLogs(page, limit);
     return Response.json(result);
-  }, ["ADMIN"]);
+  }, ADMIN_PORTAL_ROLES);
 }

@@ -1,4 +1,5 @@
 import { withAuth } from "@/lib/api-handler";
+import { isAdminPortalRole } from "@/lib/admin-portal";
 import { errorResponse, Errors } from "@/lib/errors";
 import { getActorId } from "@/lib/session";
 import { adminUpdateCampaignSchema } from "@/lib/validations";
@@ -43,7 +44,7 @@ export async function GET(
       });
     }
 
-    if (session.user.role !== "ADMIN" && session.user.role !== "ADVERTISER") {
+    if (!isAdminPortalRole(session.user.role) && session.user.role !== "ADVERTISER") {
       return errorResponse(Errors.forbidden());
     }
 
@@ -80,7 +81,7 @@ export async function PATCH(
 
       const updated = await updateCampaignByAdmin(id, parsed.data, getActorId(session), {
         baseUrl: resolveRequestBaseUrl(request),
-        actorRole: session.user.role === "ADMIN" ? "ADMIN" : "ADVERTISER",
+        actorRole: isAdminPortalRole(session.user.role) ? "ADMIN" : "ADVERTISER",
       });
       return Response.json({ data: updated });
     } catch (error) {

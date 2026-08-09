@@ -1,4 +1,4 @@
-import { withAuth } from "@/lib/api-handler";
+import { withAuth, ADMIN_PORTAL_ROLES } from "@/lib/api-handler";
 import { errorResponse } from "@/lib/errors";
 import { stripeSettingsSchema } from "@/lib/validations";
 import {
@@ -10,7 +10,7 @@ export async function GET() {
   return withAuth(async () => {
     const data = await getStripeSettingsForAdmin();
     return Response.json({ data });
-  }, ["ADMIN"]);
+  }, ADMIN_PORTAL_ROLES);
 }
 
 export async function PATCH(request: Request) {
@@ -32,5 +32,5 @@ export async function PATCH(request: Request) {
     } catch (error) {
       return errorResponse(error);
     }
-  }, ["ADMIN"]);
+  }, ADMIN_PORTAL_ROLES);
 }

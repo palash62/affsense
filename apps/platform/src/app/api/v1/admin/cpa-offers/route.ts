@@ -1,4 +1,4 @@
-import { withAuth, parsePagination } from "@/lib/api-handler";
+import { withAuth, parsePagination, ADMIN_PORTAL_ROLES } from "@/lib/api-handler";
 import { errorResponse } from "@/lib/errors";
 import {
   adminCpaOfferCreateSchema,
@@ -39,7 +39,7 @@ export async function GET(request: Request) {
 
     const data = await listCpaOffersForAdmin(parsed.data);
     return Response.json({ data });
-  }, ["ADMIN"]);
+  }, ADMIN_PORTAL_ROLES);
 }
 
 export async function POST(request: Request) {
@@ -65,5 +65,5 @@ export async function POST(request: Request) {
     } catch (error) {
       return errorResponse(error);
     }
-  }, ["ADMIN"]);
+  }, ADMIN_PORTAL_ROLES);
 }

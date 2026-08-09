@@ -1,6 +1,7 @@
 import { withAuth } from "@/lib/api-handler";
 import { errorResponse, Errors } from "@/lib/errors";
 import { ticketSchema } from "@/lib/validations";
+import { isAdminPortalRole } from "@/lib/admin-portal";
 import {
   createTicket,
   listTickets,
@@ -13,8 +14,8 @@ export async function GET(request: Request) {
   return withAuth(async (session) => {
     const page = parseInt(new URL(request.url).searchParams.get("page") ?? "1", 10);
     const tickets = await listTickets({
-      userId: session.user.role === "ADMIN" ? undefined : session.user.id,
-      hideInternal: session.user.role !== "ADMIN",
+      userId: isAdminPortalRole(session.user.role) ? undefined : session.user.id,
+      hideInternal: !isAdminPortalRole(session.user.role),
       page,
     });
     return Response.json({ data: tickets });
@@ -23,7 +24,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   return withAuth(async (session) => {
-    if (session.user.role === "ADMIN") {
+    if (isAdminPortalRole(session.user.role)) {
       return Response.json(
         { error: { code: "FORBIDDEN", message: "Admins cannot create support tickets", status: 403 } },
         { status: 403 },
@@ -70,7 +71,7 @@ export async function PATCH(request: Request) {
         );
       }
 
-      const isAdmin = session.user.role === "ADMIN";
+      const isAdmin = isAdminPortalRole(session.user.role);
       const action = body.action as string | undefined;
 
       if (action === "close") {

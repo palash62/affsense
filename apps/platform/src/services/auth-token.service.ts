@@ -154,6 +154,7 @@ export type LoginOtpUser = {
   tokenVersion: number;
   emailVerified: Date | null;
   timezone: string;
+  staffMenuAccess: unknown;
 };
 
 async function findActiveLoginOtp(userId: string) {
@@ -183,12 +184,16 @@ async function validateLoginOtp(
       tokenVersion: true,
       emailVerified: true,
       timezone: true,
+      staffMenuAccess: true,
     },
   });
 
   if (
     !user ||
-    (user.role !== "ADMIN" && user.role !== "ADVERTISER" && user.role !== "PUBLISHER")
+    (user.role !== "ADMIN" &&
+      user.role !== "PLATFORM_MANAGER" &&
+      user.role !== "ADVERTISER" &&
+      user.role !== "PUBLISHER")
   ) {
     return null;
   }

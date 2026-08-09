@@ -1,4 +1,5 @@
 import { withAuth } from "@/lib/api-handler";
+import { isAdminPortalRole } from "@/lib/admin-portal";
 import {
   getAdminDashboardStats,
   getAdvertiserDashboardStats,
@@ -11,6 +12,7 @@ export async function GET() {
 
     switch (session.user.role) {
       case "ADMIN":
+      case "PLATFORM_MANAGER":
         stats = await getAdminDashboardStats();
         break;
       case "ADVERTISER":

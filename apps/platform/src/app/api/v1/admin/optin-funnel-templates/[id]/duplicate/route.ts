@@ -1,4 +1,4 @@
-import { withAuth } from "@/lib/api-handler";
+import { withAuth, ADMIN_PORTAL_ROLES } from "@/lib/api-handler";
 import { errorResponse } from "@/lib/errors";
 import { duplicateOptinFunnelTemplateByAdmin } from "@/services/optin-funnel.service";
 
@@ -13,5 +13,5 @@ export async function POST(_request: Request, context: RouteContext) {
     } catch (error) {
       return errorResponse(error);
     }
-  }, ["ADMIN"]);
+  }, ADMIN_PORTAL_ROLES);
 }

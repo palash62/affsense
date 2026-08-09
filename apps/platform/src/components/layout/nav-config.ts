@@ -27,7 +27,9 @@ import {
   Globe,
   Store,
   Webhook,
+  UserCog,
 } from "lucide-react";
+import { STAFF_USERS_PATH } from "@/lib/admin-portal";
 
 export interface NavItem {
   label: string;
@@ -38,6 +40,7 @@ export interface NavItem {
 
 export const ADMIN_NAV: NavItem[] = [
   { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
+  { label: "Users", href: STAFF_USERS_PATH, icon: UserCog },
   { label: "Profit", href: "/admin/profit", icon: TrendingUp },
   { label: "Advertisers", href: "/admin/advertisers", icon: Users },
   { label: "Publishers", href: "/admin/publishers", icon: Users },
@@ -111,11 +114,23 @@ export const PUBLISHER_NAV: NavItem[] = [
 
 export function getNavForRole(
   role: UserRole,
-  options?: { canAccessCpaOffers?: boolean; canAccessAutoresponder?: boolean },
+  options?: {
+    canAccessCpaOffers?: boolean;
+    canAccessAutoresponder?: boolean;
+    staffMenuAccess?: string[];
+  },
 ): NavItem[] {
   switch (role) {
     case "ADMIN":
       return ADMIN_NAV;
+    case "PLATFORM_MANAGER": {
+      const allowed = new Set(options?.staffMenuAccess ?? []);
+      return ADMIN_NAV.filter((item) => {
+        if (item.href === "/admin") return true;
+        if (item.href === STAFF_USERS_PATH) return false;
+        return allowed.has(item.href);
+      });
+    }
     case "ADVERTISER": {
       let items = ADVERTISER_NAV;
       if (options?.canAccessCpaOffers === false) {

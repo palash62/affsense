@@ -1,4 +1,5 @@
 import { withAuth } from "@/lib/api-handler";
+import { isAdminPortalRole } from "@/lib/admin-portal";
 import { errorResponse, Errors } from "@/lib/errors";
 import { campaignTestLeadSchema } from "@/lib/validations";
 import { submitTestCampaignLead } from "@/services/lead.service";
@@ -34,7 +35,7 @@ export async function POST(request: Request, context: RouteContext) {
         );
       }
 
-      const isAdmin = session.user.role === "ADMIN";
+      const isAdmin = isAdminPortalRole(session.user.role);
       const lead = await submitTestCampaignLead({
         campaignId: id,
         advertiserId: campaign.advertiserId,

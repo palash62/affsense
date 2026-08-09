@@ -20,7 +20,10 @@ export async function POST(request: Request) {
   if (
     !user ||
     user.status !== "ACTIVE" ||
-    (user.role !== "ADMIN" && user.role !== "ADVERTISER" && user.role !== "PUBLISHER")
+    (user.role !== "ADMIN" &&
+      user.role !== "PLATFORM_MANAGER" &&
+      user.role !== "ADVERTISER" &&
+      user.role !== "PUBLISHER")
   ) {
     return Response.json({ error: "user not found" }, { status: 404 });
   }

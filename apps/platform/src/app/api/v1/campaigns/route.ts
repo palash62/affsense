@@ -1,4 +1,5 @@
 import { withAuth, parsePagination } from "@/lib/api-handler";
+import { isAdminPortalRole } from "@/lib/admin-portal";
 import { errorResponse } from "@/lib/errors";
 import { adminCreateCampaignSchema, campaignSchema } from "@/lib/validations";
 import { prisma } from "@/lib/prisma";
@@ -80,7 +81,7 @@ export async function GET(request: Request) {
       return Response.json(result);
     }
 
-    if (session.user.role === "ADMIN") {
+    if (isAdminPortalRole(session.user.role)) {
       const result = await listCampaigns({
         advertiserId: searchParams.get("advertiserId") ?? undefined,
         status: (searchParams.get("status") as never) ?? undefined,
@@ -97,13 +98,13 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   return withAuth(async (session) => {
-    if (session.user.role !== "ADVERTISER" && session.user.role !== "ADMIN") {
+    if (session.user.role !== "ADVERTISER" && !isAdminPortalRole(session.user.role)) {
       return Response.json({ error: { code: "PERMISSION_DENIED", status: 403 } }, { status: 403 });
     }
 
     try {
       const body = await request.json();
-      const isAdmin = session.user.role === "ADMIN";
+      const isAdmin = isAdminPortalRole(session.user.role);
 
       if (isAdmin) {
         const parsed = adminCreateCampaignSchema.safeParse(body);

@@ -1,4 +1,4 @@
-import { withAuth } from "@/lib/api-handler";
+import { withAuth, ADMIN_PORTAL_ROLES } from "@/lib/api-handler";
 import {
   getPlatformSettingsResponse,
   updatePlatformSettings,
@@ -8,7 +8,7 @@ export async function GET() {
   return withAuth(async () => {
     const data = await getPlatformSettingsResponse();
     return Response.json({ data });
-  }, ["ADMIN"]);
+  }, ADMIN_PORTAL_ROLES);
 }
 
 export async function PATCH(request: Request) {
@@ -63,5 +63,5 @@ export async function PATCH(request: Request) {
     await updatePlatformSettings(body, session.user.id);
     const data = await getPlatformSettingsResponse();
     return Response.json({ data });
-  }, ["ADMIN"]);
+  }, ADMIN_PORTAL_ROLES);
 }

@@ -1,4 +1,4 @@
-import { withAuth, parsePagination } from "@/lib/api-handler";
+import { withAuth, parsePagination, ADMIN_PORTAL_ROLES } from "@/lib/api-handler";
 import { errorResponse } from "@/lib/errors";
 import { testSmtpConnection } from "@/services/email.service";
 import { z } from "zod";
@@ -24,5 +24,5 @@ export async function POST(request: Request) {
     } catch (error) {
       return errorResponse(error);
     }
-  }, ["ADMIN"]);
+  }, ADMIN_PORTAL_ROLES);
 }

@@ -2,6 +2,11 @@ import type { NextAuthConfig } from "next-auth";
 import type { UserRole } from "@prisma/client";
 import { parseViewAsCookie, VIEW_AS_COOKIE } from "@/lib/view-as";
 import { isPublicPreviewRequest } from "@/lib/public-preview-paths";
+import {
+  canAccessAdminPath,
+  isAdminPortalRole,
+  parseStaffMenuAccess,
+} from "@/lib/admin-portal";
 
 declare module "next-auth" {
   interface Session {
@@ -11,6 +16,7 @@ declare module "next-auth" {
       name: string;
       role: UserRole;
       timezone: string;
+      staffMenuAccess?: string[];
     };
     impersonatorId?: string;
     viewAsMode?: boolean;
@@ -21,11 +27,13 @@ declare module "next-auth" {
     impersonatorId?: string;
     tokenVersion?: number;
     timezone?: string;
+    staffMenuAccess?: string[];
   }
 }
 
 export const ROLE_ROUTES: Record<UserRole, string> = {
   ADMIN: "/admin",
+  PLATFORM_MANAGER: "/admin",
   ADVERTISER: "/advertiser",
   PUBLISHER: "/publisher",
 };
@@ -78,6 +86,7 @@ export const authConfig = {
         token.name = user.name;
         token.tokenVersion = user.tokenVersion ?? 0;
         token.timezone = user.timezone ?? "UTC";
+        token.staffMenuAccess = parseStaffMenuAccess(user.staffMenuAccess);
         if (user.impersonatorId) {
           token.impersonatorId = user.impersonatorId;
         } else {
@@ -86,12 +95,19 @@ export const authConfig = {
       }
       // Allow client/server to refresh timezone after settings save via update()
       if (trigger === "update" && session && typeof session === "object") {
-        const next = session as { timezone?: string; name?: string };
+        const next = session as {
+          timezone?: string;
+          name?: string;
+          staffMenuAccess?: string[];
+        };
         if (typeof next.timezone === "string" && next.timezone.trim()) {
           token.timezone = next.timezone.trim();
         }
         if (typeof next.name === "string" && next.name.trim()) {
           token.name = next.name.trim();
+        }
+        if (Array.isArray(next.staffMenuAccess)) {
+          token.staffMenuAccess = parseStaffMenuAccess(next.staffMenuAccess);
         }
       }
       return token;
@@ -106,6 +122,7 @@ export const authConfig = {
           typeof token.timezone === "string" && token.timezone.trim()
             ? token.timezone
             : "UTC";
+        session.user.staffMenuAccess = parseStaffMenuAccess(token.staffMenuAccess);
         session.tokenVersion = typeof token.tokenVersion === "number" ? token.tokenVersion : 0;
         if (token.impersonatorId) {
           session.impersonatorId = token.impersonatorId as string;
@@ -170,9 +187,19 @@ export const authConfig = {
       }
 
       if (pathname.startsWith("/admin")) {
-        if (auth?.user?.role !== "ADMIN") {
-          const role = auth?.user?.role ?? viewAs?.role ?? "ADVERTISER";
-          return Response.redirect(new URL(ROLE_ROUTES[role as UserRole], request.nextUrl));
+        const role = auth?.user?.role;
+        if (!role || !isAdminPortalRole(role)) {
+          const fallback = role ?? viewAs?.role ?? "ADVERTISER";
+          return Response.redirect(new URL(ROLE_ROUTES[fallback as UserRole], request.nextUrl));
+        }
+        if (
+          !canAccessAdminPath(
+            pathname,
+            role,
+            auth.user.staffMenuAccess,
+          )
+        ) {
+          return Response.redirect(new URL("/admin", request.nextUrl));
         }
         return true;
       }

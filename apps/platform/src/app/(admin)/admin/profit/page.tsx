@@ -1,3 +1,4 @@
+import { isAdminPortalRole } from "@/lib/admin-portal";
 import { Suspense } from "react";
 import { endOfDay, endOfMonth, parseISO, startOfMonth } from "date-fns";
 import { redirect } from "next/navigation";
@@ -49,7 +50,7 @@ interface PageProps {
 
 export default async function AdminProfitPage({ searchParams }: PageProps) {
   const session = await getSession();
-  if (!session?.user || session.user.role !== "ADMIN") {
+  if (!session?.user || !isAdminPortalRole(session.user.role)) {
     redirect("/login");
   }
 

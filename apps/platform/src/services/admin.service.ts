@@ -25,9 +25,11 @@ import {
   notifyEmailVerification,
   notifyAdvertiserCredentials,
   notifyPublisherCredentials,
+  notifyPlatformManagerCredentials,
   notifyRejected,
   notifyUserById,
 } from "@/services/notify.service";
+import { parseStaffMenuAccess } from "@/lib/admin-portal";
 
 export async function listUsers(filters: {
   role?: UserRole;
@@ -81,6 +83,9 @@ export async function listUsers(filters: {
         role: true,
         status: true,
         emailVerified: true,
+        phone: true,
+        country: true,
+        staffMenuAccess: true,
         createdAt: true,
         advertiserProfile: { select: { company: true } },
         publisherProfile: {
@@ -509,6 +514,155 @@ export async function createAdvertiserAccount(data: {
   })();
 
   return { user, tempPassword };
+}
+
+export async function listPlatformManagers(filters?: {
+  search?: string;
+  status?: UserStatus;
+  page?: number;
+  limit?: number;
+}) {
+  return listUsers({
+    role: "PLATFORM_MANAGER",
+    search: filters?.search,
+    status: filters?.status,
+    page: filters?.page,
+    limit: filters?.limit,
+  });
+}
+
+export async function createPlatformManagerAccount(data: {
+  name: string;
+  email: string;
+  phone?: string | null;
+  country?: string | null;
+  menuAccess?: string[];
+}) {
+  const existing = await prisma.user.findUnique({
+    where: { email: data.email },
+    select: { id: true },
+  });
+
+  if (existing) {
+    throw new AppError("AUTH_EMAIL_EXISTS", "Email already registered", 422);
+  }
+
+  const email = data.email.trim().toLowerCase();
+  const deliverability = await validateEmailDeliverability(email);
+  if (!deliverability.ok) {
+    throw new AppError("VALIDATION_INVALID_EMAIL", deliverability.reason, 422);
+  }
+
+  const menuAccess = parseStaffMenuAccess(data.menuAccess);
+  const tempPassword = generateTempPassword();
+  const passwordHash = await bcrypt.hash(tempPassword, 12);
+
+  const user = await prisma.user.create({
+    data: {
+      name: data.name.trim(),
+      email,
+      passwordHash,
+      role: "PLATFORM_MANAGER",
+      status: "ACTIVE",
+      emailVerified: new Date(),
+      phone: data.phone?.trim() || null,
+      country: data.country?.trim() || null,
+      staffMenuAccess: menuAccess,
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      phone: true,
+      country: true,
+      role: true,
+      status: true,
+      staffMenuAccess: true,
+      createdAt: true,
+    },
+  });
+
+  void notifyPlatformManagerCredentials({
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    tempPassword,
+  });
+
+  return {
+    user: {
+      ...user,
+      staffMenuAccess: parseStaffMenuAccess(user.staffMenuAccess),
+    },
+    tempPassword,
+  };
+}
+
+export async function updatePlatformManager(
+  userId: string,
+  data: {
+    name?: string;
+    phone?: string | null;
+    country?: string | null;
+    menuAccess?: string[];
+    status?: Extract<UserStatus, "ACTIVE" | "SUSPENDED">;
+  },
+) {
+  const existing = await prisma.user.findFirst({
+    where: { id: userId, role: "PLATFORM_MANAGER" },
+    select: { id: true, status: true },
+  });
+  if (!existing) {
+    throw new AppError("NOT_FOUND", "Platform manager not found", 404);
+  }
+
+  const updated = await prisma.user.update({
+    where: { id: userId },
+    data: {
+      ...(data.name !== undefined ? { name: data.name.trim() } : {}),
+      ...(data.phone !== undefined ? { phone: data.phone?.trim() || null } : {}),
+      ...(data.country !== undefined
+        ? { country: data.country?.trim() || null }
+        : {}),
+      ...(data.menuAccess !== undefined
+        ? { staffMenuAccess: parseStaffMenuAccess(data.menuAccess) }
+        : {}),
+      ...(data.status !== undefined ? { status: data.status } : {}),
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      phone: true,
+      country: true,
+      role: true,
+      status: true,
+      staffMenuAccess: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
+
+  if (data.status && data.status !== existing.status) {
+    if (data.status === "SUSPENDED") {
+      void notifyAccountSuspended({
+        id: updated.id,
+        email: updated.email,
+        name: updated.name,
+      });
+    } else if (data.status === "ACTIVE") {
+      void notifyAccountActivated({
+        id: updated.id,
+        email: updated.email,
+        name: updated.name,
+      });
+    }
+  }
+
+  return {
+    ...updated,
+    staffMenuAccess: parseStaffMenuAccess(updated.staffMenuAccess),
+  };
 }
 
 export async function resendAdvertiserVerificationEmail(userId: string, adminId: string) {

@@ -1,4 +1,4 @@
-import { withAuth, parsePagination } from "@/lib/api-handler";
+import { withAuth, parsePagination, ADMIN_PORTAL_ROLES } from "@/lib/api-handler";
 import { errorResponse } from "@/lib/errors";
 import { cpaConversionListQuerySchema } from "@/lib/validations";
 import { listCpaConversionsForAdmin } from "@/services/cpa-offer.service";
@@ -35,5 +35,5 @@ export async function GET(request: Request) {
     } catch (error) {
       return errorResponse(error);
     }
-  }, ["ADMIN"]);
+  }, ADMIN_PORTAL_ROLES);
 }
