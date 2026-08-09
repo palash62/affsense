@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   AlertCircle,
   AlertTriangle,
@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   Clock,
   List,
+  Loader2,
   Mail,
   Minus,
   MousePointerClick,
@@ -21,6 +22,13 @@ import {
   Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -47,6 +55,26 @@ type Props = {
 };
 
 type CreateMode = "quick" | "library";
+
+type AutomationMetric = "sent" | "delivered" | "bounced" | "opened" | "clicked";
+
+type MetricRecipient = {
+  sendId: string;
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+  status: string;
+  sentAt: string | null;
+  lastEventAt: string | null;
+};
+
+const METRIC_LABELS: Record<AutomationMetric, string> = {
+  sent: "Sent",
+  delivered: "Delivered",
+  bounced: "Bounce",
+  opened: "Opened",
+  clicked: "Clicked",
+};
 
 function PanelSection({
   title,
@@ -141,14 +169,22 @@ function StatRow({
   label,
   value,
   detail,
+  onClick,
 }: {
   icon: typeof Send;
   label: string;
   value: string;
   detail?: string;
+  onClick?: () => void;
 }) {
-  return (
-    <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-3">
+  const className =
+    "flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-3 text-left transition";
+  const interactive = onClick
+    ? "cursor-pointer hover:border-slate-300 hover:bg-slate-100/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-primary)]/30"
+    : "";
+
+  const body = (
+    <>
       <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-white text-slate-600 shadow-sm">
         <Icon className="size-4" />
       </span>
@@ -157,32 +193,245 @@ function StatRow({
         <p className="text-lg font-semibold tracking-tight text-slate-900">{value}</p>
         {detail ? <p className="text-xs text-slate-500">{detail}</p> : null}
       </div>
-    </div>
+    </>
   );
+
+  if (onClick) {
+    return (
+      <button type="button" onClick={onClick} className={cn(className, interactive)}>
+        {body}
+      </button>
+    );
+  }
+
+  return <div className={className}>{body}</div>;
 }
 
-function StepStatistics({ stat }: { stat: StepStat }) {
+function formatShortDate(iso: string | null) {
+  if (!iso) return "—";
+  try {
+    return new Date(iso).toLocaleString(undefined, {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    return "—";
+  }
+}
+
+function contactDisplayName(row: MetricRecipient) {
+  const name = [row.firstName, row.lastName].filter(Boolean).join(" ").trim();
+  return name || null;
+}
+
+function StepStatistics({
+  stat,
+  automationId,
+  stepId,
+}: {
+  stat: StepStat;
+  automationId?: string;
+  stepId?: string | null;
+}) {
+  const [open, setOpen] = useState(false);
+  const [metric, setMetric] = useState<AutomationMetric | null>(null);
+  const [page, setPage] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [items, setItems] = useState<MetricRecipient[]>([]);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+
+  const canDrill = Boolean(automationId);
+
+  const loadRecipients = useCallback(
+    async (nextMetric: AutomationMetric, nextPage: number) => {
+      if (!automationId) return;
+      setLoading(true);
+      setError(null);
+      try {
+        const params = new URLSearchParams({
+          metric: nextMetric,
+          page: String(nextPage),
+          limit: "50",
+        });
+        if (stepId) params.set("stepId", stepId);
+        const res = await fetch(
+          `/api/v1/advertiser/email/automations/${automationId}/stats/recipients?${params}`,
+          { credentials: "same-origin" },
+        );
+        const json = await res.json().catch(() => null);
+        if (!res.ok || !json?.data) {
+          setError(json?.error?.message ?? "Failed to load recipients");
+          setItems([]);
+          setTotal(0);
+          setTotalPages(1);
+          return;
+        }
+        setItems((json.data.items ?? []) as MetricRecipient[]);
+        setTotal(json.data.total ?? 0);
+        setTotalPages(json.data.totalPages ?? 1);
+        setPage(json.data.page ?? nextPage);
+      } catch {
+        setError("Failed to load recipients");
+        setItems([]);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [automationId, stepId],
+  );
+
+  function openMetric(next: AutomationMetric) {
+    if (!canDrill) return;
+    setMetric(next);
+    setOpen(true);
+    setPage(1);
+    void loadRecipients(next, 1);
+  }
+
+  useEffect(() => {
+    if (!open) {
+      setMetric(null);
+      setItems([]);
+      setError(null);
+      setPage(1);
+    }
+  }, [open]);
+
   return (
-    <div className="space-y-2">
-      <StatRow icon={Send} label="Sent" value={String(stat.sent)} />
-      <StatRow icon={CheckCircle2} label="Delivered" value={String(stat.delivered)} />
-      <StatRow icon={AlertTriangle} label="Bounce" value={String(stat.bounced)} />
-      <StatRow
-        icon={MailOpen}
-        label="Opened"
-        value={`${stat.openRate}%`}
-        detail={`${stat.opens} opens`}
-      />
-      <StatRow
-        icon={MousePointerClick}
-        label="Clicked"
-        value={`${stat.clickRate}%`}
-        detail={`${stat.clicks} clicks`}
-      />
-    </div>
+    <>
+      <div className="space-y-2">
+        <StatRow
+          icon={Send}
+          label="Sent"
+          value={String(stat.sent)}
+          onClick={canDrill ? () => openMetric("sent") : undefined}
+        />
+        <StatRow
+          icon={CheckCircle2}
+          label="Delivered"
+          value={String(stat.delivered)}
+          onClick={canDrill ? () => openMetric("delivered") : undefined}
+        />
+        <StatRow
+          icon={AlertTriangle}
+          label="Bounce"
+          value={String(stat.bounced)}
+          onClick={canDrill ? () => openMetric("bounced") : undefined}
+        />
+        <StatRow
+          icon={MailOpen}
+          label="Opened"
+          value={`${stat.openRate}%`}
+          detail={`${stat.opens} opens`}
+          onClick={canDrill ? () => openMetric("opened") : undefined}
+        />
+        <StatRow
+          icon={MousePointerClick}
+          label="Clicked"
+          value={`${stat.clickRate}%`}
+          detail={`${stat.clicks} clicks`}
+          onClick={canDrill ? () => openMetric("clicked") : undefined}
+        />
+      </div>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>
+              {metric ? METRIC_LABELS[metric] : "Recipients"}
+              {total > 0 ? (
+                <span className="ml-2 text-sm font-normal text-slate-500">
+                  ({total.toLocaleString()})
+                </span>
+              ) : null}
+            </DialogTitle>
+            <DialogDescription>
+              {stepId
+                ? "Contacts matching this metric for the selected email."
+                : "Contacts matching this metric across all emails in this automation."}
+            </DialogDescription>
+          </DialogHeader>
+
+          {loading ? (
+            <div className="flex items-center justify-center gap-2 py-10 text-sm text-slate-500">
+              <Loader2 className="size-4 animate-spin" />
+              Loading…
+            </div>
+          ) : error ? (
+            <p className="py-8 text-center text-sm text-red-600">{error}</p>
+          ) : items.length === 0 ? (
+            <p className="py-8 text-center text-sm text-slate-500">No recipients</p>
+          ) : (
+            <div className="max-h-[360px] space-y-2 overflow-y-auto pr-1">
+              {items.map((row) => {
+                const name = contactDisplayName(row);
+                const time =
+                  metric === "opened" || metric === "clicked"
+                    ? row.lastEventAt
+                    : row.sentAt;
+                return (
+                  <div
+                    key={row.sendId}
+                    className="rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2.5"
+                  >
+                    <p className="truncate text-sm font-medium text-slate-900">
+                      {row.email}
+                    </p>
+                    <p className="mt-0.5 text-xs text-slate-500">
+                      {name ? `${name} · ` : ""}
+                      {formatShortDate(time)}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {totalPages > 1 && !loading && !error ? (
+            <div className="flex items-center justify-between gap-2 border-t border-slate-100 pt-3">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={page <= 1}
+                onClick={() => {
+                  if (!metric) return;
+                  const next = page - 1;
+                  setPage(next);
+                  void loadRecipients(metric, next);
+                }}
+              >
+                Previous
+              </Button>
+              <span className="text-xs text-slate-500">
+                Page {page} of {totalPages}
+              </span>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={page >= totalPages}
+                onClick={() => {
+                  if (!metric) return;
+                  const next = page + 1;
+                  setPage(next);
+                  void loadRecipients(metric, next);
+                }}
+              >
+                Next
+              </Button>
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
-
 function EmailContentForm({ state }: { state: AutomationBuilderState }) {
   const {
     steps,
@@ -667,6 +916,7 @@ export function InspectorPanel({ state }: Props) {
     lists,
     tags,
     stats,
+    automationId,
     validateFlash,
     issues,
   } = state;
@@ -855,7 +1105,11 @@ export function InspectorPanel({ state }: Props) {
                   <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
                     This email
                   </p>
-                  <StepStatistics stat={stepStat} />
+                  <StepStatistics
+                    stat={stepStat}
+                    automationId={automationId}
+                    stepId={stepStat.stepId}
+                  />
                 </div>
               ) : (
                 <StatsEmpty
@@ -1097,6 +1351,8 @@ export function InspectorPanel({ state }: Props) {
                           openRate: sent > 0 ? Math.round((opens / sent) * 100) : 0,
                           clickRate: sent > 0 ? Math.round((clicks / sent) * 100) : 0,
                         }}
+                        automationId={automationId}
+                        stepId={null}
                       />
                     </div>
                   );

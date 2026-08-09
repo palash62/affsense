@@ -861,11 +861,13 @@ export const emailBroadcastSchema = z
 
 export const emailBroadcastPreviewSchema = z
   .object({
-    audienceType: z.enum(["LIST", "TAGS"]),
+    audienceType: z.enum(["LIST", "TAGS"]).optional().nullable(),
     listId: broadcastListIdSchema.optional().nullable(),
     tagIds: z.array(z.string().cuid()).max(50).optional().nullable(),
+    fromEmail: z.union([z.literal(""), z.string().email()]).optional().nullable(),
   })
   .superRefine((value, ctx) => {
+    if (!value.audienceType) return;
     if (value.audienceType === "LIST" && !value.listId) {
       ctx.addIssue({ code: "custom", path: ["listId"], message: "Select a list" });
     }

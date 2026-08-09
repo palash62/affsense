@@ -50,9 +50,21 @@ export {
   getEmailStats,
   listSends,
   getAutomationStepStats,
+  listAutomationMetricRecipients,
+  getBroadcastStats,
   getSendTrend,
   getRecentActivity,
+  assertStatsScopeOwnership,
 } from "./services/stats.service";
+export type {
+  AutomationMetric,
+  StatsScope,
+  StatsSource,
+} from "./services/stats.service";
+export {
+  getDomainWarmupStatus,
+  type DomainWarmupStatus,
+} from "./services/domain-warmup.service";
 export {
   getAdvertiserEmailSettings,
   updateAdvertiserEmailSettings,

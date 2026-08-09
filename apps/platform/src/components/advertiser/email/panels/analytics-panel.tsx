@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
   BarChart3,
@@ -9,7 +9,17 @@ import {
   MousePointerClick,
 } from "lucide-react";
 import { LeadsTrendChart, PerformanceBarChart } from "@/components/dashboard/dashboard-charts";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { EmailModuleShell } from "../email-module-shell";
+
+type StatsSource = "all" | "broadcast" | "automation";
 
 type Stats = {
   delivered: number;
@@ -21,15 +31,87 @@ type Stats = {
   trend: { date: string; sends: number; opens: number; clicks: number }[];
 };
 
+type NamedOption = { id: string; name: string };
+
 export function AnalyticsPanel() {
   const [stats, setStats] = useState<Stats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [source, setSource] = useState<StatsSource>("all");
+  const [selectedId, setSelectedId] = useState("");
+  const [broadcasts, setBroadcasts] = useState<NamedOption[]>([]);
+  const [automations, setAutomations] = useState<NamedOption[]>([]);
 
   useEffect(() => {
-    fetch("/api/v1/advertiser/email/stats")
-      .then((r) => r.json())
-      .then((j) => setStats(j.data))
-      .catch(() => {});
+    let cancelled = false;
+    void (async () => {
+      try {
+        const [bRes, aRes] = await Promise.all([
+          fetch("/api/v1/advertiser/email/broadcasts", { credentials: "same-origin" }),
+          fetch("/api/v1/advertiser/email/automations", { credentials: "same-origin" }),
+        ]);
+        const [bJson, aJson] = await Promise.all([
+          bRes.json().catch(() => null),
+          aRes.json().catch(() => null),
+        ]);
+        if (cancelled) return;
+        setBroadcasts(
+          ((bJson?.data ?? []) as { id: string; name: string }[]).map((b) => ({
+            id: b.id,
+            name: b.name,
+          })),
+        );
+        setAutomations(
+          ((aJson?.data ?? []) as { id: string; name: string }[]).map((a) => ({
+            id: a.id,
+            name: a.name,
+          })),
+        );
+      } catch {
+        /* ignore */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    const params = new URLSearchParams({ days: "30" });
+    params.set("source", source);
+    if (source === "broadcast" && selectedId) {
+      params.set("broadcastId", selectedId);
+    }
+    if (source === "automation" && selectedId) {
+      params.set("automationId", selectedId);
+    }
+
+    void fetch(`/api/v1/advertiser/email/stats?${params}`, {
+      credentials: "same-origin",
+    })
+      .then((r) => r.json())
+      .then((j) => {
+        if (!cancelled) setStats(j.data ?? null);
+      })
+      .catch(() => {
+        if (!cancelled) setStats(null);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [source, selectedId]);
+
+  const itemOptions = useMemo(
+    () => (source === "broadcast" ? broadcasts : source === "automation" ? automations : []),
+    [source, broadcasts, automations],
+  );
+
+  const bounceLabel = source === "all" ? "Bounced contacts" : "Bounced";
 
   const deliveryRate =
     stats && stats.delivered > 0
@@ -52,31 +134,85 @@ export function AnalyticsPanel() {
       stats={[
         {
           label: "Delivered",
-          value: stats ? stats.delivered.toLocaleString() : "—",
+          value: stats && !loading ? stats.delivered.toLocaleString() : "—",
           icon: CheckCircle,
           accent: "green",
         },
         {
           label: "Open rate",
-          value: stats ? `${stats.openRate}%` : "—",
+          value: stats && !loading ? `${stats.openRate}%` : "—",
           icon: Mail,
           variant: "leads",
         },
         {
           label: "Click rate",
-          value: stats ? `${stats.clickRate}%` : "—",
+          value: stats && !loading ? `${stats.clickRate}%` : "—",
           icon: MousePointerClick,
           accent: "purple",
         },
         {
-          label: "Bounced contacts",
-          value: stats ? stats.bounced.toLocaleString() : "—",
+          label: bounceLabel,
+          value: stats && !loading ? stats.bounced.toLocaleString() : "—",
           icon: AlertTriangle,
           accent: "red",
         },
       ]}
       showToolbar={false}
     >
+      <div className="mb-6 flex flex-wrap items-end gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="space-y-1.5">
+          <Label className="text-xs font-medium text-slate-500">Source</Label>
+          <Select
+            value={source}
+            onValueChange={(v) => {
+              setSource((v as StatsSource) || "all");
+              setSelectedId("");
+            }}
+          >
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="All" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="broadcast">Broadcasts</SelectItem>
+              <SelectItem value="automation">Automations</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {source !== "all" ? (
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium text-slate-500">
+              {source === "broadcast" ? "Broadcast" : "Automation"}
+            </Label>
+            <Select
+              value={selectedId || "__all__"}
+              onValueChange={(v) => {
+                setSelectedId(!v || v === "__all__" ? "" : v);
+              }}
+            >
+              <SelectTrigger className="w-[260px]">
+                <SelectValue
+                  placeholder={
+                    source === "broadcast" ? "All broadcasts" : "All automations"
+                  }
+                />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">
+                  {source === "broadcast" ? "All broadcasts" : "All automations"}
+                </SelectItem>
+                {itemOptions.map((opt) => (
+                  <SelectItem key={opt.id} value={opt.id}>
+                    {opt.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        ) : null}
+      </div>
+
       <div className="grid gap-6 lg:grid-cols-2">
         <LeadsTrendChart title="Opens over time" data={opensTrend} />
         <PerformanceBarChart title="Clicks by day" data={clicksBars} />
@@ -104,7 +240,7 @@ export function AnalyticsPanel() {
               pct: `Click rate ${stats?.clickRate ?? 0}%`,
             },
             {
-              label: "Bounced contacts",
+              label: bounceLabel,
               value: stats?.bounced ?? 0,
               pct:
                 stats && stats.delivered > 0

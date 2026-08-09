@@ -1,9 +1,13 @@
 import { withAuth } from "@/lib/api-handler";
 import {
+  assertStatsScopeOwnership,
   getEmailStats,
   getSendTrend,
   getRecentActivity,
+  type StatsSource,
 } from "@/modules/email-marketing";
+
+const SOURCES = new Set<StatsSource>(["all", "broadcast", "automation"]);
 
 export async function GET(request: Request) {
   return withAuth(async (session) => {
@@ -14,10 +18,40 @@ export async function GET(request: Request) {
       50,
     );
 
+    const sourceRaw = (searchParams.get("source") ?? "all").toLowerCase();
+    const source: StatsSource = SOURCES.has(sourceRaw as StatsSource)
+      ? (sourceRaw as StatsSource)
+      : "all";
+    const broadcastId = searchParams.get("broadcastId")?.trim() || undefined;
+    const automationId = searchParams.get("automationId")?.trim() || undefined;
+
+    const ownership = await assertStatsScopeOwnership(session.user.id, {
+      source,
+      broadcastId,
+      automationId,
+    });
+    if (!ownership.ok) {
+      return Response.json(
+        {
+          error: {
+            code: "NOT_FOUND",
+            message:
+              source === "broadcast"
+                ? "Broadcast not found"
+                : "Automation not found",
+            status: 404,
+          },
+        },
+        { status: 404 },
+      );
+    }
+
+    const scope = ownership.scope;
+
     const [stats, trend, activity] = await Promise.all([
-      getEmailStats(session.user.id),
-      getSendTrend(session.user.id, days),
-      getRecentActivity(session.user.id, activityLimit),
+      getEmailStats(session.user.id, scope),
+      getSendTrend(session.user.id, days, scope),
+      getRecentActivity(session.user.id, activityLimit, scope),
     ]);
 
     return Response.json({ data: { ...stats, trend, activity } });

@@ -12,6 +12,7 @@ import {
   Send,
   User,
   Users,
+  AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,6 +51,18 @@ type IdentityOption = {
   verificationStatus: string;
   ready?: boolean;
   mailboxes?: MailboxOption[];
+};
+
+type WarmupStatus = {
+  domain: string;
+  warmingUp: boolean;
+  day: number;
+  dailyLimit: number | null;
+  sentToday: number;
+  remainingToday: number | null;
+  warmupStartedAt: string | null;
+  daysRemaining: number | null;
+  estimatedDaysToSend: number | null;
 };
 
 function flattenVerifiedMailboxes(identities: IdentityOption[]) {
@@ -146,6 +159,7 @@ export function BroadcastComposePanel({ broadcastId: initialBroadcastId }: Props
   const [error, setError] = useState<string | null>(null);
   const [resumeFailedNotice, setResumeFailedNotice] = useState(false);
   const [recipientCount, setRecipientCount] = useState<number | null>(null);
+  const [warmup, setWarmup] = useState<WarmupStatus | null>(null);
   const [counting, setCounting] = useState(false);
 
   const [name, setName] = useState("");
@@ -269,18 +283,33 @@ export function BroadcastComposePanel({ broadcastId: initialBroadcastId }: Props
 
   useEffect(() => {
     let cancelled = false;
-    const payload =
-      audienceType === "LIST"
-        ? { audienceType, listId: listId || null, tagIds: null }
-        : { audienceType, listId: null, tagIds };
+    const hasAudience =
+      (audienceType === "LIST" && Boolean(listId)) ||
+      (audienceType === "TAGS" && tagIds.length > 0);
 
-    if (audienceType === "LIST" && !listId) {
+    const payload = hasAudience
+      ? audienceType === "LIST"
+        ? {
+            audienceType,
+            listId: listId || null,
+            tagIds: null,
+            fromEmail: fromEmail.trim() || null,
+          }
+        : {
+            audienceType,
+            listId: null,
+            tagIds,
+            fromEmail: fromEmail.trim() || null,
+          }
+      : {
+          audienceType: null,
+          listId: null,
+          tagIds: null,
+          fromEmail: fromEmail.trim() || null,
+        };
+
+    if (!hasAudience) {
       setRecipientCount(null);
-      return;
-    }
-    if (audienceType === "TAGS" && tagIds.length === 0) {
-      setRecipientCount(null);
-      return;
     }
 
     setCounting(true);
@@ -293,10 +322,18 @@ export function BroadcastComposePanel({ broadcastId: initialBroadcastId }: Props
       })
         .then((r) => r.json())
         .then((j) => {
-          if (!cancelled) setRecipientCount(j.data?.recipientCount ?? 0);
+          if (!cancelled) {
+            if (hasAudience) {
+              setRecipientCount(j.data?.recipientCount ?? 0);
+            }
+            setWarmup((j.data?.warmup as WarmupStatus | null) ?? null);
+          }
         })
         .catch(() => {
-          if (!cancelled) setRecipientCount(null);
+          if (!cancelled) {
+            if (hasAudience) setRecipientCount(null);
+            setWarmup(null);
+          }
         })
         .finally(() => {
           if (!cancelled) setCounting(false);
@@ -307,7 +344,7 @@ export function BroadcastComposePanel({ broadcastId: initialBroadcastId }: Props
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [audienceType, listId, tagIds]);
+  }, [audienceType, listId, tagIds, fromEmail, defaultFromEmail]);
 
   const minScheduleLocal = useMemo(
     () => formatInTimeZone(new Date(Date.now() + 60_000), timezone, "yyyy-MM-dd'T'HH:mm"),
@@ -603,6 +640,35 @@ export function BroadcastComposePanel({ broadcastId: initialBroadcastId }: Props
               )}{" "}
               subscribed contacts
             </p>
+            {warmup?.warmingUp && warmup.dailyLimit != null ? (
+              <div className="flex gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-3 text-sm text-amber-950">
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" />
+                <div className="space-y-1">
+                  <p className="font-medium">
+                    Domain warmup for {warmup.domain} — day {warmup.day} of 30
+                  </p>
+                  <p>
+                    New domains can send{" "}
+                    <strong>{warmup.dailyLimit.toLocaleString()}</strong> broadcast
+                    emails today ({warmup.sentToday.toLocaleString()} sent,{" "}
+                    {(warmup.remainingToday ?? 0).toLocaleString()} remaining). Limit
+                    increases 10% each day for 30 days, then unlimited.
+                  </p>
+                  {(recipientCount ?? 0) > (warmup.remainingToday ?? 0) ? (
+                    <p>
+                      This audience exceeds today’s remaining quota. Extra recipients
+                      will continue automatically on following days
+                      {warmup.estimatedDaysToSend != null
+                        ? ` (~${warmup.estimatedDaysToSend} day${
+                            warmup.estimatedDaysToSend === 1 ? "" : "s"
+                          } total)`
+                        : ""}
+                      .
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
           </SectionCard>
 
           <SectionCard

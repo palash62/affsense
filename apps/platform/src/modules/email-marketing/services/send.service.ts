@@ -17,6 +17,14 @@ import {
   findVerifiedSendingMailbox,
   listVerifiedSendingMailboxes,
 } from "./identity.service";
+import {
+  ensureWarmupStarted,
+  shouldDeferBroadcastSend,
+} from "./domain-warmup.service";
+
+export type ProcessEmailSendResult =
+  | { deferred: false }
+  | { deferred: true; until: Date };
 
 async function maybeRefreshBroadcast(broadcastId: string | null | undefined) {
   if (!broadcastId) return;
@@ -37,7 +45,9 @@ async function resolveVerifiedMailbox(
   return mailboxes.find((m) => m.isDefault) ?? mailboxes[0];
 }
 
-export async function processEmailSend(sendId: string) {
+export async function processEmailSend(
+  sendId: string,
+): Promise<ProcessEmailSendResult> {
   const send = await prisma.emailSend.findUnique({
     where: { id: sendId },
     include: {
@@ -54,15 +64,17 @@ export async function processEmailSend(sendId: string) {
     },
   });
 
-  if (!send) return;
-  if (send.status !== "QUEUED" && send.status !== "FAILED") return;
+  if (!send) return { deferred: false };
+  if (send.status !== "QUEUED" && send.status !== "FAILED") {
+    return { deferred: false };
+  }
   if (send.automation?.status === "PAUSED" || send.automation?.status === "DRAFT") {
     await prisma.emailSend.update({
       where: { id: sendId },
       data: { status: "FAILED", error: "Automation is not active" },
     });
     await maybeRefreshBroadcast(send.broadcastId);
-    return;
+    return { deferred: false };
   }
   if (send.contact.status !== "SUBSCRIBED") {
     await prisma.emailSend.update({
@@ -70,7 +82,7 @@ export async function processEmailSend(sendId: string) {
       data: { status: "FAILED", error: "Contact not subscribed" },
     });
     await maybeRefreshBroadcast(send.broadcastId);
-    return;
+    return { deferred: false };
   }
 
   const settings = await prisma.advertiserEmailSettings.findUnique({
@@ -111,10 +123,30 @@ export async function processEmailSend(sendId: string) {
       },
     });
     await maybeRefreshBroadcast(send.broadcastId);
-    return;
+    return { deferred: false };
   }
 
   const fromEmail = verifiedMailbox.email;
+
+  // Domain warmup: defer excess broadcast sends to the next day
+  if (send.broadcastId) {
+    const deferCheck = await shouldDeferBroadcastSend(
+      send.advertiserId,
+      verifiedMailbox.identity.domain,
+    );
+    if (deferCheck.defer) {
+      await prisma.emailSend.update({
+        where: { id: sendId },
+        data: {
+          status: "QUEUED",
+          scheduledAt: deferCheck.until,
+          error: null,
+        },
+      });
+      await maybeRefreshBroadcast(send.broadcastId);
+      return { deferred: true, until: deferCheck.until };
+    }
+  }
 
   const mergeData: Record<string, string> = {
     first_name: send.contact.firstName ?? "",
@@ -182,7 +214,7 @@ export async function processEmailSend(sendId: string) {
       },
     });
     await maybeRefreshBroadcast(send.broadcastId);
-    return;
+    return { deferred: false };
   }
 
   const result = await sendMarketingEmail({
@@ -199,19 +231,24 @@ export async function processEmailSend(sendId: string) {
   const attemptCount = send.attemptCount + 1;
 
   if (result.ok) {
+    const sentAt = new Date();
     await prisma.emailSend.update({
       where: { id: sendId },
       data: {
         status: "SENT",
-        sentAt: new Date(),
+        sentAt,
         sesMessageId: result.messageId,
         attemptCount,
         error: null,
       },
     });
 
+    if (send.broadcastId) {
+      await ensureWarmupStarted(verifiedMailbox.identity.id, sentAt);
+    }
+
     await maybeRefreshBroadcast(send.broadcastId);
-    return;
+    return { deferred: false };
   }
 
   const failed = attemptCount >= MAX_SEND_ATTEMPTS;
@@ -231,6 +268,8 @@ export async function processEmailSend(sendId: string) {
   if (!failed) {
     throw new Error(result.error);
   }
+
+  return { deferred: false };
 }
 
 export async function sendTestEmail(

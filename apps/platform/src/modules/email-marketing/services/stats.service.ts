@@ -1,8 +1,77 @@
 import { prisma } from "@/lib/prisma";
 
-export async function getEmailStats(advertiserId: string) {
+export type StatsSource = "all" | "broadcast" | "automation";
+
+export type StatsScope = {
+  source?: StatsSource;
+  broadcastId?: string;
+  automationId?: string;
+};
+
+function normalizeStatsScope(scope?: StatsScope): StatsScope {
+  const source = scope?.source ?? "all";
+  if (source === "broadcast") {
+    return {
+      source,
+      broadcastId: scope?.broadcastId || undefined,
+      automationId: undefined,
+    };
+  }
+  if (source === "automation") {
+    return {
+      source,
+      automationId: scope?.automationId || undefined,
+      broadcastId: undefined,
+    };
+  }
+  return { source: "all" };
+}
+
+/** Send-level filter for scoped analytics (excludes global-only contact metrics). */
+function sendScopeWhere(advertiserId: string, scope?: StatsScope) {
+  const s = normalizeStatsScope(scope);
+  const base: {
+    advertiserId: string;
+    broadcastId?: string | { not: null };
+    automationId?: string | { not: null };
+  } = { advertiserId };
+
+  if (s.source === "broadcast") {
+    base.broadcastId = s.broadcastId ? s.broadcastId : { not: null };
+  } else if (s.source === "automation") {
+    base.automationId = s.automationId ? s.automationId : { not: null };
+  }
+
+  return base;
+}
+
+export async function assertStatsScopeOwnership(
+  advertiserId: string,
+  scope?: StatsScope,
+): Promise<{ ok: true; scope: StatsScope } | { ok: false }> {
+  const s = normalizeStatsScope(scope);
+  if (s.source === "broadcast" && s.broadcastId) {
+    const row = await prisma.emailBroadcast.findFirst({
+      where: { id: s.broadcastId, advertiserId },
+      select: { id: true },
+    });
+    if (!row) return { ok: false };
+  }
+  if (s.source === "automation" && s.automationId) {
+    const row = await prisma.emailAutomation.findFirst({
+      where: { id: s.automationId, advertiserId },
+      select: { id: true },
+    });
+    if (!row) return { ok: false };
+  }
+  return { ok: true, scope: s };
+}
+
+export async function getEmailStats(advertiserId: string, scope?: StatsScope) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+  const sendWhere = sendScopeWhere(advertiserId, scope);
+  const isScoped = (scope?.source ?? "all") !== "all";
 
   const [
     totalSends,
@@ -18,9 +87,9 @@ export async function getEmailStats(advertiserId: string) {
     failed,
     totalTemplates,
   ] = await Promise.all([
-    prisma.emailSend.count({ where: { advertiserId } }),
+    prisma.emailSend.count({ where: sendWhere }),
     prisma.emailSend.count({
-      where: { advertiserId, sentAt: { gte: today } },
+      where: { ...sendWhere, sentAt: { gte: today } },
     }),
     prisma.emailAutomation.count({
       where: { advertiserId, status: "ACTIVE" },
@@ -29,17 +98,24 @@ export async function getEmailStats(advertiserId: string) {
       where: { advertiserId, status: "SUBSCRIBED" },
     }),
     prisma.emailEvent.count({
-      where: { type: "OPEN", send: { advertiserId } },
+      where: { type: "OPEN", send: sendWhere },
     }),
     prisma.emailEvent.count({
-      where: { type: "CLICK", send: { advertiserId } },
+      where: { type: "CLICK", send: sendWhere },
     }),
     prisma.emailSend.count({
-      where: { advertiserId, status: { in: ["SENT", "DELIVERED"] } },
+      where: {
+        ...sendWhere,
+        status: { in: ["SENT", "DELIVERED"] },
+      },
     }),
-    prisma.emailContact.count({
-      where: { advertiserId, status: "BOUNCED" },
-    }),
+    isScoped
+      ? prisma.emailSend.count({
+          where: { ...sendWhere, status: "BOUNCED" },
+        })
+      : prisma.emailContact.count({
+          where: { advertiserId, status: "BOUNCED" },
+        }),
     prisma.emailContact.count({
       where: { advertiserId, status: "COMPLAINED" },
     }),
@@ -47,7 +123,7 @@ export async function getEmailStats(advertiserId: string) {
       where: { advertiserId, status: "UNSUBSCRIBED" },
     }),
     prisma.emailSend.count({
-      where: { advertiserId, status: "FAILED" },
+      where: { ...sendWhere, status: "FAILED" },
     }),
     prisma.emailTemplate.count({ where: { advertiserId } }),
   ]);
@@ -73,18 +149,23 @@ export async function getEmailStats(advertiserId: string) {
   };
 }
 
-export async function getSendTrend(advertiserId: string, days = 30) {
+export async function getSendTrend(
+  advertiserId: string,
+  days = 30,
+  scope?: StatsScope,
+) {
   const since = new Date();
   since.setDate(since.getDate() - days);
   since.setHours(0, 0, 0, 0);
+  const sendWhere = sendScopeWhere(advertiserId, scope);
 
   const sends = await prisma.emailSend.findMany({
-    where: { advertiserId, createdAt: { gte: since } },
+    where: { ...sendWhere, createdAt: { gte: since } },
     select: { createdAt: true, status: true },
   });
 
   const events = await prisma.emailEvent.findMany({
-    where: { send: { advertiserId }, createdAt: { gte: since } },
+    where: { send: sendWhere, createdAt: { gte: since } },
     select: { createdAt: true, type: true },
   });
 
@@ -116,9 +197,14 @@ export async function getSendTrend(advertiserId: string, days = 30) {
   }));
 }
 
-export async function getRecentActivity(advertiserId: string, limit = 10) {
+export async function getRecentActivity(
+  advertiserId: string,
+  limit = 10,
+  scope?: StatsScope,
+) {
+  const sendWhere = sendScopeWhere(advertiserId, scope);
   const sends = await prisma.emailSend.findMany({
-    where: { advertiserId },
+    where: sendWhere,
     orderBy: { createdAt: "desc" },
     take: limit,
     include: {
@@ -244,4 +330,176 @@ export async function getAutomationStepStats(advertiserId: string, automationId:
   );
 
   return { automationId, steps: stepStats };
+}
+
+export type AutomationMetric =
+  | "sent"
+  | "delivered"
+  | "bounced"
+  | "opened"
+  | "clicked";
+
+export async function listAutomationMetricRecipients(
+  advertiserId: string,
+  automationId: string,
+  opts: {
+    metric: AutomationMetric;
+    stepId?: string | null;
+    page: number;
+    limit: number;
+  },
+) {
+  const automation = await prisma.emailAutomation.findFirst({
+    where: { id: automationId, advertiserId },
+    select: {
+      id: true,
+      name: true,
+      steps: { select: { id: true } },
+    },
+  });
+  if (!automation) return null;
+
+  if (opts.stepId) {
+    const belongs = automation.steps.some((s) => s.id === opts.stepId);
+    if (!belongs) return null;
+  }
+
+  const baseWhere = {
+    advertiserId,
+    automationId,
+    ...(opts.stepId ? { stepId: opts.stepId } : {}),
+  };
+
+  const eventType =
+    opts.metric === "opened" ? ("OPEN" as const) : opts.metric === "clicked" ? ("CLICK" as const) : null;
+
+  const where =
+    opts.metric === "sent"
+      ? { ...baseWhere, status: { in: ["SENT" as const, "DELIVERED" as const] } }
+      : opts.metric === "delivered"
+        ? { ...baseWhere, status: "DELIVERED" as const }
+        : opts.metric === "bounced"
+          ? { ...baseWhere, status: "BOUNCED" as const }
+          : {
+              ...baseWhere,
+              events: { some: { type: eventType! } },
+            };
+
+  const [rows, total] = await Promise.all([
+    prisma.emailSend.findMany({
+      where,
+      orderBy: [{ sentAt: "desc" }, { createdAt: "desc" }],
+      skip: (opts.page - 1) * opts.limit,
+      take: opts.limit,
+      select: {
+        id: true,
+        status: true,
+        sentAt: true,
+        createdAt: true,
+        contact: {
+          select: { email: true, firstName: true, lastName: true },
+        },
+        ...(eventType != null
+          ? {
+              events: {
+                where: { type: eventType },
+                orderBy: { createdAt: "desc" as const },
+                take: 1,
+                select: { createdAt: true, type: true },
+              },
+            }
+          : {}),
+      },
+    }),
+    prisma.emailSend.count({ where }),
+  ]);
+
+  return {
+    automationId: automation.id,
+    automationName: automation.name,
+    metric: opts.metric,
+    stepId: opts.stepId ?? null,
+    items: rows.map((row) => {
+      const events =
+        "events" in row && Array.isArray(row.events) ? row.events : [];
+      const lastEvent = events[0] as { createdAt: Date } | undefined;
+      return {
+        sendId: row.id,
+        email: row.contact.email,
+        firstName: row.contact.firstName,
+        lastName: row.contact.lastName,
+        status: row.status,
+        sentAt: row.sentAt?.toISOString() ?? null,
+        lastEventAt: lastEvent?.createdAt.toISOString() ?? null,
+      };
+    }),
+    total,
+    page: opts.page,
+    limit: opts.limit,
+    totalPages: Math.max(1, Math.ceil(total / opts.limit)),
+  };
+}
+
+export async function getBroadcastStats(advertiserId: string, broadcastId: string) {
+  const broadcast = await prisma.emailBroadcast.findFirst({
+    where: { id: broadcastId, advertiserId },
+    select: {
+      id: true,
+      name: true,
+      status: true,
+      recipientCount: true,
+      sentCount: true,
+      failedCount: true,
+      scheduledAt: true,
+      createdAt: true,
+    },
+  });
+  if (!broadcast) return null;
+
+  const [sent, delivered, bounced, failed, opens, clicks, complaints] =
+    await Promise.all([
+      prisma.emailSend.count({
+        where: { broadcastId, status: { in: ["SENT", "DELIVERED"] } },
+      }),
+      prisma.emailSend.count({
+        where: { broadcastId, status: "DELIVERED" },
+      }),
+      prisma.emailSend.count({
+        where: { broadcastId, status: "BOUNCED" },
+      }),
+      prisma.emailSend.count({
+        where: { broadcastId, status: "FAILED" },
+      }),
+      prisma.emailEvent.count({
+        where: { type: "OPEN", send: { broadcastId } },
+      }),
+      prisma.emailEvent.count({
+        where: { type: "CLICK", send: { broadcastId } },
+      }),
+      prisma.emailEvent.count({
+        where: { type: "COMPLAINT", send: { broadcastId } },
+      }),
+    ]);
+
+  const rateBase = sent > 0 ? sent : 0;
+  return {
+    broadcastId: broadcast.id,
+    name: broadcast.name,
+    status: broadcast.status,
+    recipientCount: broadcast.recipientCount,
+    sentCount: broadcast.sentCount,
+    failedCount: broadcast.failedCount,
+    scheduledAt: broadcast.scheduledAt,
+    createdAt: broadcast.createdAt,
+    sent,
+    delivered,
+    bounced,
+    failed,
+    opens,
+    clicks,
+    complaints,
+    openRate: rateBase > 0 ? Math.round((opens / rateBase) * 100) : 0,
+    clickRate: rateBase > 0 ? Math.round((clicks / rateBase) * 100) : 0,
+    bounceRate: rateBase > 0 ? Math.round((bounced / rateBase) * 100) : 0,
+  };
 }

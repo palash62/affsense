@@ -4,6 +4,11 @@ import { AppError } from "@/lib/errors";
 import { enqueueEmailSend, removeEmailSendJob } from "../queue/email-queue";
 import { createTemplate, updateTemplate } from "./template.service";
 import { findVerifiedSendingMailbox } from "./identity.service";
+import {
+  domainFromEmail,
+  getDomainWarmupStatus,
+  type DomainWarmupStatus,
+} from "./domain-warmup.service";
 
 export type BroadcastAudienceType = "LIST" | "TAGS";
 export type BroadcastAction = "draft" | "schedule" | "send";
@@ -547,18 +552,51 @@ export async function getBroadcast(advertiserId: string, id: string) {
   return serializeBroadcast(b);
 }
 
+export type BroadcastAudiencePreviewInput = {
+  audienceType?: BroadcastAudienceType | null;
+  listId?: string | null;
+  tagIds?: string[] | null;
+  fromEmail?: string | null;
+};
+
 export async function previewBroadcastAudience(
   advertiserId: string,
-  input: Pick<BroadcastInput, "audienceType" | "listId" | "tagIds">,
+  input: BroadcastAudiencePreviewInput,
 ) {
-  const { contactIds } = await resolveAudienceContactIds(
-    advertiserId,
-    input.audienceType,
-    input.listId,
-    input.tagIds,
-    { soft: true },
-  );
-  return { recipientCount: contactIds.length };
+  let recipientCount = 0;
+  if (input.audienceType === "LIST" || input.audienceType === "TAGS") {
+    const { contactIds } = await resolveAudienceContactIds(
+      advertiserId,
+      input.audienceType,
+      input.listId,
+      input.tagIds,
+      { soft: true },
+    );
+    recipientCount = contactIds.length;
+  }
+
+  let warmup: DomainWarmupStatus | null = null;
+  const fromEmailRaw = input.fromEmail?.trim().toLowerCase() || "";
+  let resolvedFrom = fromEmailRaw;
+  if (!resolvedFrom) {
+    const settings = await prisma.advertiserEmailSettings.findUnique({
+      where: { advertiserId },
+      select: { fromEmail: true },
+    });
+    resolvedFrom = settings?.fromEmail?.trim().toLowerCase() || "";
+  }
+
+  if (resolvedFrom) {
+    const mailbox = await findVerifiedSendingMailbox(advertiserId, resolvedFrom);
+    const domain = mailbox?.identity.domain ?? domainFromEmail(resolvedFrom);
+    if (domain) {
+      warmup = await getDomainWarmupStatus(advertiserId, domain, {
+        recipientCount,
+      });
+    }
+  }
+
+  return { recipientCount, warmup };
 }
 
 export async function createBroadcast(advertiserId: string, input: BroadcastInput) {

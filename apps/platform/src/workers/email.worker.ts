@@ -1,4 +1,4 @@
-import { Worker } from "bullmq";
+import { DelayedError, Worker } from "bullmq";
 import { processEmailSend } from "@/modules/email-marketing/services/send.service";
 import { QUEUE_NAME } from "@/modules/email-marketing/config/defaults";
 
@@ -28,7 +28,11 @@ const worker = new Worker(
     }
 
     const { sendId } = job.data as { sendId: string };
-    await processEmailSend(sendId);
+    const result = await processEmailSend(sendId);
+    if (result.deferred) {
+      await job.moveToDelayed(result.until.getTime(), job.token);
+      throw new DelayedError();
+    }
   },
   {
     connection: getRedisConnection(),
@@ -43,6 +47,7 @@ worker.on("completed", (job) => {
 
 worker.on("failed", (job, err) => {
   if (job?.name === "tag-action") return;
+  if (err?.message === "DelayedError" || err?.name === "DelayedError") return;
   console.error(`[email-worker] failed send ${job?.data?.sendId}:`, err.message);
 });
 

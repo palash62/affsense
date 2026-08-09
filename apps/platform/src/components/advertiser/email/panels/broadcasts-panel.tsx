@@ -3,10 +3,27 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { Mail, Plus, Send } from "lucide-react";
+import {
+  AlertTriangle,
+  CheckCircle2,
+  Mail,
+  MailOpen,
+  MousePointerClick,
+  Plus,
+  Send,
+  ShieldAlert,
+  XCircle,
+} from "lucide-react";
 import { PageSection } from "@/components/admin/page-section";
 import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button-link";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Table,
   TableBody,
@@ -36,6 +53,23 @@ type BroadcastRow = {
 };
 
 type TagOption = { id: string; name: string };
+
+type BroadcastStats = {
+  broadcastId: string;
+  name: string;
+  status: string;
+  recipientCount: number;
+  sent: number;
+  delivered: number;
+  bounced: number;
+  failed: number;
+  opens: number;
+  clicks: number;
+  complaints: number;
+  openRate: number;
+  clickRate: number;
+  bounceRate: number;
+};
 
 function statusLabel(row: BroadcastRow) {
   if (row.status === "DRAFT") return "draft";
@@ -67,12 +101,41 @@ function isEditable(row: BroadcastRow) {
   );
 }
 
+function StatRow({
+  icon: Icon,
+  label,
+  value,
+  detail,
+}: {
+  icon: typeof Send;
+  label: string;
+  value: string;
+  detail?: string;
+}) {
+  return (
+    <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-3">
+      <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-white text-slate-600 shadow-sm">
+        <Icon className="size-4" />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="text-xs font-medium text-slate-500">{label}</p>
+        <p className="text-lg font-semibold tracking-tight text-slate-900">{value}</p>
+        {detail ? <p className="text-xs text-slate-500">{detail}</p> : null}
+      </div>
+    </div>
+  );
+}
+
 export function BroadcastsPanel() {
   const { data: session } = useSession();
   const timezone = session?.user?.timezone;
   const [rows, setRows] = useState<BroadcastRow[]>([]);
   const [tags, setTags] = useState<TagOption[]>([]);
   const [loading, setLoading] = useState(true);
+  const [statsOpen, setStatsOpen] = useState(false);
+  const [statsLoading, setStatsLoading] = useState(false);
+  const [statsError, setStatsError] = useState<string | null>(null);
+  const [stats, setStats] = useState<BroadcastStats | null>(null);
 
   const load = useCallback(async (opts?: { silent?: boolean }) => {
     if (!opts?.silent) setLoading(true);
@@ -117,6 +180,28 @@ export function BroadcastsPanel() {
     }
     const names = row.tagIds.map((id) => tagNameById.get(id) ?? id.slice(0, 6));
     return names.length ? `Tags: ${names.join(", ")}` : "Tags";
+  }
+
+  async function openStats(row: BroadcastRow) {
+    setStatsOpen(true);
+    setStatsLoading(true);
+    setStatsError(null);
+    setStats(null);
+    try {
+      const res = await fetch(`/api/v1/advertiser/email/broadcasts/${row.id}/stats`, {
+        credentials: "same-origin",
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok || !json?.data) {
+        setStatsError(json?.error?.message ?? "Failed to load stats");
+        return;
+      }
+      setStats(json.data as BroadcastStats);
+    } catch {
+      setStatsError("Failed to load stats");
+    } finally {
+      setStatsLoading(false);
+    }
   }
 
   return (
@@ -203,7 +288,13 @@ export function BroadcastsPanel() {
                             {row.name}
                           </Link>
                         ) : (
-                          row.name
+                          <button
+                            type="button"
+                            onClick={() => void openStats(row)}
+                            className="text-left text-[var(--theme-primary)] hover:underline"
+                          >
+                            {row.name}
+                          </button>
                         )}
                       </TableCell>
                       <TableCell className="max-w-[200px] truncate text-sm text-slate-600">
@@ -249,6 +340,73 @@ export function BroadcastsPanel() {
           </Table>
         </div>
       </PageSection>
+
+      <Dialog
+        open={statsOpen}
+        onOpenChange={(open) => {
+          setStatsOpen(open);
+          if (!open) {
+            setStats(null);
+            setStatsError(null);
+          }
+        }}
+      >
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{stats?.name ?? "Broadcast statistics"}</DialogTitle>
+            <DialogDescription>
+              Open, click, bounce, and delivery stats for this broadcast.
+            </DialogDescription>
+          </DialogHeader>
+          {statsLoading ? (
+            <p className="py-8 text-center text-sm text-slate-500">Loading stats…</p>
+          ) : statsError ? (
+            <p className="py-8 text-center text-sm text-red-600">{statsError}</p>
+          ) : stats ? (
+            <div className="grid gap-2 sm:grid-cols-2">
+              <StatRow
+                icon={Send}
+                label="Sent"
+                value={stats.sent.toLocaleString()}
+                detail={`${stats.recipientCount.toLocaleString()} recipients`}
+              />
+              <StatRow
+                icon={CheckCircle2}
+                label="Delivered"
+                value={stats.delivered.toLocaleString()}
+              />
+              <StatRow
+                icon={AlertTriangle}
+                label="Bounced"
+                value={stats.bounced.toLocaleString()}
+                detail={`${stats.bounceRate}% bounce rate`}
+              />
+              <StatRow
+                icon={XCircle}
+                label="Failed"
+                value={stats.failed.toLocaleString()}
+              />
+              <StatRow
+                icon={MailOpen}
+                label="Opened"
+                value={`${stats.openRate}%`}
+                detail={`${stats.opens.toLocaleString()} opens`}
+              />
+              <StatRow
+                icon={MousePointerClick}
+                label="Clicked"
+                value={`${stats.clickRate}%`}
+                detail={`${stats.clicks.toLocaleString()} clicks`}
+              />
+              <StatRow
+                icon={ShieldAlert}
+                label="Complaints"
+                value={stats.complaints.toLocaleString()}
+              />
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
     </EmailModuleShell>
   );
 }
