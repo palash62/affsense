@@ -20,6 +20,7 @@ import {
   ensureWarmupStarted,
   shouldDeferBroadcastSend,
 } from "./domain-warmup.service";
+import { debitForSend, hasEmailSendFunds } from "./email-wallet.service";
 
 export type ProcessEmailSendResult =
   | { deferred: false }
@@ -215,6 +216,20 @@ export async function processEmailSend(
     return { deferred: false };
   }
 
+  const funds = await hasEmailSendFunds(send.advertiserId, platformConfig.emailsPerDollar);
+  if (!funds.ok) {
+    await prisma.emailSend.update({
+      where: { id: sendId },
+      data: {
+        status: "FAILED",
+        error: "Insufficient Autoresponder wallet balance — top up to continue sending",
+        attemptCount: send.attemptCount + 1,
+      },
+    });
+    await maybeRefreshBroadcast(send.broadcastId);
+    return { deferred: false };
+  }
+
   const result = await sendMarketingEmail({
     to: send.contact.email,
     fromName,
@@ -229,6 +244,12 @@ export async function processEmailSend(
   const attemptCount = send.attemptCount + 1;
 
   if (result.ok) {
+    try {
+      await debitForSend(send.advertiserId, sendId);
+    } catch (error) {
+      console.error("[email-marketing] wallet debit failed after send:", sendId, error);
+    }
+
     const sentAt = new Date();
     await prisma.emailSend.update({
       where: { id: sendId },

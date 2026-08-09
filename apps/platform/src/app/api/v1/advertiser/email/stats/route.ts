@@ -5,6 +5,7 @@ import {
   getSendTrend,
   getRecentActivity,
   type StatsSource,
+  getEmailWalletSnapshot,
 } from "@/modules/email-marketing";
 
 const SOURCES = new Set<StatsSource>(["all", "broadcast", "automation"]);
@@ -48,12 +49,22 @@ export async function GET(request: Request) {
 
     const scope = ownership.scope;
 
-    const [stats, trend, activity] = await Promise.all([
+    const [stats, trend, activity, wallet] = await Promise.all([
       getEmailStats(session.user.id, scope),
       getSendTrend(session.user.id, days, scope),
       getRecentActivity(session.user.id, activityLimit, scope),
+      getEmailWalletSnapshot(session.user.id),
     ]);
 
-    return Response.json({ data: { ...stats, trend, activity } });
+    return Response.json({
+      data: {
+        ...stats,
+        trend,
+        activity,
+        emailsRemaining: wallet.emailsRemaining,
+        emailWalletBalance: wallet.balance,
+        emailsPerDollar: wallet.emailsPerDollar,
+      },
+    });
   }, ["ADVERTISER"]);
 }

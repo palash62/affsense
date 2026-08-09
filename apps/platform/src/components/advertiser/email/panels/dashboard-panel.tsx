@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import { List, Mail, MousePointerClick, Send, Users, Zap } from "lucide-react";
+import { List, Mail, Send, Users, Wallet, Zap } from "lucide-react";
 import { PageSection } from "@/components/admin/page-section";
 import { formatUserDateTime } from "@/lib/user-timezone";
 import { EmailModuleShell } from "../email-module-shell";
@@ -14,6 +14,9 @@ type Stats = {
   totalSends: number;
   openRate: number;
   clickRate: number;
+  emailsRemaining?: number;
+  emailWalletBalance?: number;
+  emailsPerDollar?: number;
   activity: { id: string; action: string; detail: string; time: string }[];
 };
 
@@ -38,18 +41,46 @@ export function DashboardPanel() {
         { label: "Dashboard" },
       ]}
       stats={[
-        { label: "Total Subscribers", value: stats ? stats.totalContacts.toLocaleString() : "—", icon: Users, accent: "purple" },
-        { label: "Emails Sent", value: stats ? stats.totalSends.toLocaleString() : "—", icon: Send, variant: "leads" },
-        { label: "Open Rate", value: stats ? `${stats.openRate}%` : "—", icon: Mail, accent: "green" },
-        { label: "Click Rate", value: stats ? `${stats.clickRate}%` : "—", icon: MousePointerClick, accent: "orange" },
+        {
+          label: "Total Subscribers",
+          value: stats ? stats.totalContacts.toLocaleString() : "—",
+          icon: Users,
+          accent: "purple",
+        },
+        {
+          label: "Emails Sent",
+          value: stats ? stats.totalSends.toLocaleString() : "—",
+          icon: Send,
+          variant: "leads",
+        },
+        {
+          label: "Open Rate",
+          value: stats ? `${stats.openRate}%` : "—",
+          icon: Mail,
+          accent: "green",
+        },
+        {
+          label: "Emails you can send",
+          value: stats ? (stats.emailsRemaining ?? 0).toLocaleString() : "—",
+          icon: Wallet,
+          accent: "orange",
+        },
       ]}
       showToolbar={false}
-      primaryAction={{ label: "Create automation", href: "/advertiser/email/automations/new", icon: Zap }}
+      primaryAction={{
+        label: "Create automation",
+        href: "/advertiser/email/automations/new",
+        icon: Zap,
+      }}
     >
       <div className="flex flex-wrap gap-3">
         <ButtonLink href="/advertiser/email/lists">
           <List className="mr-2 h-4 w-4" />
           Create a list
+        </ButtonLink>
+        <ButtonLink href="/advertiser/email/wallet" variant="outline">
+          <Wallet className="mr-2 h-4 w-4" />
+          Top up wallet
         </ButtonLink>
         <ButtonLink href="/advertiser/email/automations/new" variant="outline">
           <Zap className="mr-2 h-4 w-4" />
@@ -58,7 +89,12 @@ export function DashboardPanel() {
       </div>
 
       {stats?.activity && stats.activity.length > 0 && (
-        <PageSection title="Recent Activity" description="Latest email events" icon={Mail} gradient="leads">
+        <PageSection
+          title="Recent Activity"
+          description="Latest email events"
+          icon={Mail}
+          gradient="leads"
+        >
           <ul className="divide-y divide-slate-100">
             {stats.activity.map((item) => (
               <li
@@ -88,12 +124,18 @@ export function DashboardPanel() {
         <p className="font-semibold text-slate-900">Get started in 3 steps</p>
         <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-slate-600">
           <li>
-            <Link href="/advertiser/email/lists" className="text-[var(--theme-primary)] hover:underline">
+            <Link
+              href="/advertiser/email/lists"
+              className="text-[var(--theme-primary)] hover:underline"
+            >
               Create a list linked to a lead campaign
             </Link>
           </li>
           <li>
-            <Link href="/advertiser/email/automations/new" className="text-[var(--theme-primary)] hover:underline">
+            <Link
+              href="/advertiser/email/automations/new"
+              className="text-[var(--theme-primary)] hover:underline"
+            >
               Build an automation bound to that list
             </Link>
           </li>

@@ -16,6 +16,7 @@ import {
   Settings,
   Tags,
   Users,
+  Wallet,
   Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -29,6 +30,7 @@ type NavItem = {
 
 const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", href: "/advertiser/email", icon: LayoutDashboard, exact: true },
+  { label: "Wallet", href: "/advertiser/email/wallet", icon: Wallet },
   { label: "Subscribers", href: "/advertiser/email/subscribers", icon: Users },
   { label: "Lists", href: "/advertiser/email/lists", icon: List },
   { label: "Tags", href: "/advertiser/email/tags", icon: Tags },

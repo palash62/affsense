@@ -34,6 +34,16 @@ export {
 } from "./services/automation.service";
 export { processEmailSend, sendTestEmail } from "./services/send.service";
 export {
+  getEmailWalletSnapshot,
+  topUpFromMainWallet,
+  emailCostUsd,
+  emailsRemaining,
+} from "./services/email-wallet.service";
+export {
+  getEmailMarketingPlatformConfig,
+  updateEmailMarketingPlatformConfig,
+} from "./services/email-marketing-config.service";
+export {
   listBroadcasts,
   getBroadcast,
   previewBroadcastAudience,

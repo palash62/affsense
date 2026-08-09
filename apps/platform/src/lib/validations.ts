@@ -815,6 +815,20 @@ export const advertiserEmailSettingsSchema = z.object({
   replyTo: z.string().email().optional().or(z.literal("")),
 });
 
+export const emailMarketingPlatformConfigSchema = z.object({
+  enabled: z.boolean().optional(),
+  maxAutomationsPerAdvertiser: z.coerce.number().int().min(1).max(10_000).optional(),
+  maxSendsPerDay: z.coerce.number().int().min(1).max(1_000_000).optional(),
+  emailsPerDollar: z.coerce.number().positive().max(1_000_000),
+});
+
+export const emailWalletTopUpSchema = z.object({
+  amount: z.coerce
+    .number()
+    .positive("Enter an amount greater than zero")
+    .max(1_000_000, "Amount is too large"),
+});
+
 /** Real EmailList cuid, or synthetic "all" from listEmailLists */
 const broadcastListIdSchema = z
   .string()

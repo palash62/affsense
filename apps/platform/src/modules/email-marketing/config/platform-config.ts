@@ -4,6 +4,10 @@ import { DEFAULT_EMAIL_MARKETING_CONFIG } from "@/lib/email/email-marketing-sett
 export function parseEmailMarketingConfig(value: unknown): EmailMarketingPlatformConfig {
   if (!value || typeof value !== "object") return DEFAULT_EMAIL_MARKETING_CONFIG;
   const raw = value as Record<string, unknown>;
+  const emailsPerDollarRaw =
+    typeof raw.emailsPerDollar === "number"
+      ? raw.emailsPerDollar
+      : DEFAULT_EMAIL_MARKETING_CONFIG.emailsPerDollar;
   return {
     enabled: typeof raw.enabled === "boolean" ? raw.enabled : DEFAULT_EMAIL_MARKETING_CONFIG.enabled,
     maxAutomationsPerAdvertiser:
@@ -14,5 +18,9 @@ export function parseEmailMarketingConfig(value: unknown): EmailMarketingPlatfor
       typeof raw.maxSendsPerDay === "number"
         ? raw.maxSendsPerDay
         : DEFAULT_EMAIL_MARKETING_CONFIG.maxSendsPerDay,
+    emailsPerDollar:
+      Number.isFinite(emailsPerDollarRaw) && emailsPerDollarRaw > 0
+        ? emailsPerDollarRaw
+        : DEFAULT_EMAIL_MARKETING_CONFIG.emailsPerDollar,
   };
 }
