@@ -42,10 +42,9 @@ const nextConfig: NextConfig = {
     ];
   },
   async headers() {
-    const securityHeaders = [
+    const baseHeaders = [
       { key: "X-Content-Type-Options", value: "nosniff" },
       { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-      { key: "X-Frame-Options", value: "SAMEORIGIN" },
       {
         key: "Permissions-Policy",
         value: "camera=(), microphone=(), geolocation=()",
@@ -53,13 +52,31 @@ const nextConfig: NextConfig = {
     ];
 
     if (process.env.NODE_ENV === "production") {
-      securityHeaders.push({
+      baseHeaders.push({
         key: "Strict-Transport-Security",
         value: "max-age=31536000; includeSubDomains",
       });
     }
 
-    return [{ source: "/:path*", headers: securityHeaders }];
+    // Optin funnels (/o) and custom-domain landings must be iframe-embeddable
+    // for traffic exchanges (smart-link redirect targets).
+    const embeddableHeaders = [
+      ...baseHeaders,
+      { key: "Content-Security-Policy", value: "frame-ancestors *" },
+    ];
+
+    // Login, admin, dashboards stay clickjacking-protected.
+    const lockedHeaders = [
+      ...baseHeaders,
+      { key: "X-Frame-Options", value: "SAMEORIGIN" },
+    ];
+
+    return [
+      // Negative lookahead: all paths except /o and /domains
+      { source: "/((?!o(?:/|$)|domains(?:/|$)).*)", headers: lockedHeaders },
+      { source: "/o/:path*", headers: embeddableHeaders },
+      { source: "/domains/:path*", headers: embeddableHeaders },
+    ];
   },
 };
 

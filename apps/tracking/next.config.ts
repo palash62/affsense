@@ -20,10 +20,9 @@ const nextConfig: NextConfig = {
     return config;
   },
   async headers() {
-    const securityHeaders = [
+    const baseHeaders = [
       { key: "X-Content-Type-Options", value: "nosniff" },
       { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-      { key: "X-Frame-Options", value: "SAMEORIGIN" },
       {
         key: "Permissions-Policy",
         value: "camera=(), microphone=(), geolocation=()",
@@ -31,13 +30,31 @@ const nextConfig: NextConfig = {
     ];
 
     if (process.env.NODE_ENV === "production") {
-      securityHeaders.push({
+      baseHeaders.push({
         key: "Strict-Transport-Security",
         value: "max-age=31536000; includeSubDomains",
       });
     }
 
-    return [{ source: "/:path*", headers: securityHeaders }];
+    // Smart-link entry (/s) and lead forms (/t) must be iframe-embeddable for
+    // traffic exchanges — omit X-Frame-Options and allow any frame ancestor.
+    const embeddableHeaders = [
+      ...baseHeaders,
+      { key: "Content-Security-Policy", value: "frame-ancestors *" },
+    ];
+
+    // Everything else stays clickjacking-protected.
+    const lockedHeaders = [
+      ...baseHeaders,
+      { key: "X-Frame-Options", value: "SAMEORIGIN" },
+    ];
+
+    return [
+      // Negative lookahead: all paths except /s and /t
+      { source: "/((?!s(?:/|$)|t(?:/|$)).*)", headers: lockedHeaders },
+      { source: "/s/:path*", headers: embeddableHeaders },
+      { source: "/t/:path*", headers: embeddableHeaders },
+    ];
   },
 };
 
