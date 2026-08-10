@@ -243,9 +243,9 @@ function SubscribersContent({
         icon={Users}
         gradient="approved"
       >
-        <p className="border-b border-slate-100 px-6 py-3 text-sm text-slate-600">
+        <p className="border-b border-border px-6 py-3 text-sm text-muted-foreground">
           Subscribed in view:{" "}
-          <span className="font-medium text-slate-900">
+          <span className="font-medium text-foreground">
             {subscribedCount.toLocaleString()}
           </span>
           {" · "}
@@ -277,20 +277,20 @@ function SubscribersContent({
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="h-32 text-center text-slate-500">
+                  <TableCell colSpan={5} className="h-32 text-center text-muted-foreground">
                     Loading...
                   </TableCell>
                 </TableRow>
               ) : contacts.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="h-32 text-center text-slate-500">
+                  <TableCell colSpan={5} className="h-32 text-center text-muted-foreground">
                     No subscribers yet. New leads on a list&apos;s campaign appear here
                     automatically.
                   </TableCell>
                 </TableRow>
               ) : (
                 contacts.map((c) => (
-                  <TableRow key={c.id} className="transition-colors hover:bg-slate-50">
+                  <TableRow key={c.id} className="transition-colors hover:bg-muted">
                     <TableCell className="font-medium">{c.email}</TableCell>
                     <TableCell>
                       {[c.firstName, c.lastName].filter(Boolean).join(" ") || "—"}
@@ -300,7 +300,7 @@ function SubscribersContent({
                         {c.tags.map((tag) => (
                           <span
                             key={tag.id}
-                            className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-1.5 py-0.5 text-xs text-slate-700"
+                            className="inline-flex items-center gap-1 rounded-md bg-muted px-1.5 py-0.5 text-xs text-foreground"
                           >
                             <span
                               className="inline-block size-1.5 rounded-full"
@@ -313,7 +313,7 @@ function SubscribersContent({
                           type="button"
                           variant="ghost"
                           size="sm"
-                          className="h-6 gap-1 px-1.5 text-xs text-slate-500"
+                          className="h-6 gap-1 px-1.5 text-xs text-muted-foreground"
                           onClick={() => setManageContact(c)}
                         >
                           <Plus className="size-3" />
@@ -326,7 +326,7 @@ function SubscribersContent({
                         {c.status.toLowerCase()}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-slate-500">
+                    <TableCell className="text-muted-foreground">
                       {formatUserDateTime(c.createdAt, timezone, "MMM d, yyyy")}
                     </TableCell>
                   </TableRow>
@@ -352,7 +352,7 @@ function SubscribersContent({
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div>
-              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500">
+              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 Applied
               </p>
               {manageContact && manageContact.tags.length > 0 ? (
@@ -363,7 +363,7 @@ function SubscribersContent({
                       type="button"
                       disabled={pendingTagId === tag.id}
                       onClick={() => void detachTag(manageContact, tag.id)}
-                      className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 hover:border-red-200 hover:bg-red-50"
+                      className="inline-flex items-center gap-1 rounded-md border border-border bg-card px-2 py-1 text-xs text-foreground hover:border-red-200 hover:bg-red-50"
                     >
                       <span
                         className="inline-block size-1.5 rounded-full"
@@ -373,21 +373,21 @@ function SubscribersContent({
                       {pendingTagId === tag.id ? (
                         <Loader2 className="size-3 animate-spin" />
                       ) : (
-                        <X className="size-3 text-slate-400" />
+                        <X className="size-3 text-muted-foreground" />
                       )}
                     </button>
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-slate-500">No tags on this subscriber.</p>
+                <p className="text-sm text-muted-foreground">No tags on this subscriber.</p>
               )}
             </div>
             <div>
-              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500">
+              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 Add tag
               </p>
               {tagOptions.length === 0 ? (
-                <p className="text-sm text-slate-500">
+                <p className="text-sm text-muted-foreground">
                   No tags yet.{" "}
                   <Link
                     href="/advertiser/email/tags"
@@ -398,7 +398,7 @@ function SubscribersContent({
                   .
                 </p>
               ) : availableToAdd.length === 0 ? (
-                <p className="text-sm text-slate-500">All tags are already applied.</p>
+                <p className="text-sm text-muted-foreground">All tags are already applied.</p>
               ) : (
                 <div className="flex flex-wrap gap-1.5">
                   {availableToAdd.map((tag) => (
@@ -409,7 +409,7 @@ function SubscribersContent({
                       onClick={() =>
                         manageContact && void attachTag(manageContact, tag.id)
                       }
-                      className="inline-flex items-center gap-1 rounded-md border border-dashed border-slate-300 bg-slate-50 px-2 py-1 text-xs text-slate-700 hover:border-[var(--theme-primary)] hover:bg-[var(--theme-primary-soft)]"
+                      className="inline-flex items-center gap-1 rounded-md border border-dashed border-border bg-muted px-2 py-1 text-xs text-foreground hover:border-[var(--theme-primary)] hover:bg-[var(--theme-primary-soft)]"
                     >
                       <span
                         className="inline-block size-1.5 rounded-full"
@@ -419,7 +419,7 @@ function SubscribersContent({
                       {pendingTagId === tag.id ? (
                         <Loader2 className="size-3 animate-spin" />
                       ) : (
-                        <Plus className="size-3 text-slate-400" />
+                        <Plus className="size-3 text-muted-foreground" />
                       )}
                     </button>
                   ))}

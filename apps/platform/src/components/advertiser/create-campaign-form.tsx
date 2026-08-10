@@ -125,12 +125,12 @@ function SectionCard({
   return (
     <div className="premium-card overflow-hidden">
       <div className="h-1" style={{ background: SECTION_ACCENTS[accentIndex % SECTION_ACCENTS.length] }} />
-      <div className="flex items-center gap-3 border-b border-slate-100 bg-[var(--theme-primary-soft)] px-5 py-4">
-        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-sm font-bold text-[var(--theme-primary)] shadow-sm">
+      <div className="flex items-center gap-3 border-b border-border bg-[var(--theme-primary-soft)] px-5 py-4">
+        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-card text-sm font-bold text-[var(--theme-primary)] shadow-sm">
           {step}
         </span>
         <Icon className="h-4 w-4 text-[var(--theme-primary)]" />
-        <h2 className="text-sm font-semibold text-slate-900">{title}</h2>
+        <h2 className="text-sm font-semibold text-foreground">{title}</h2>
       </div>
       <div className="space-y-4 p-5">{children}</div>
     </div>
@@ -138,7 +138,7 @@ function SectionCard({
 }
 
 function FieldHint({ children }: { children: React.ReactNode }) {
-  return <p className="text-xs text-slate-500">{children}</p>;
+  return <p className="text-xs text-muted-foreground">{children}</p>;
 }
 
 function CurrencyInput({
@@ -165,12 +165,12 @@ function CurrencyInput({
   return (
     <div
       className={cn(
-        "flex h-10 w-full items-stretch overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm",
+        "flex h-10 w-full items-stretch overflow-hidden rounded-lg border border-border bg-card shadow-sm",
         "transition-colors focus-within:border-[var(--theme-primary)] focus-within:ring-2 focus-within:ring-[var(--theme-primary)]/15",
         disabled && "opacity-60",
       )}
     >
-      <span className="flex w-10 shrink-0 items-center justify-center border-r border-slate-200 bg-slate-50 text-sm font-semibold text-slate-600">
+      <span className="flex w-10 shrink-0 items-center justify-center border-r border-border bg-muted text-sm font-semibold text-muted-foreground">
         $
       </span>
       <input
@@ -184,9 +184,9 @@ function CurrencyInput({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="min-w-0 flex-1 border-0 bg-white px-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 disabled:cursor-not-allowed disabled:bg-slate-50 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+        className="min-w-0 flex-1 border-0 bg-card px-3 text-sm text-foreground outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:bg-muted [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
       />
-      <span className="flex w-12 shrink-0 items-center justify-center border-l border-slate-200 bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+      <span className="flex w-12 shrink-0 items-center justify-center border-l border-border bg-muted text-xs font-semibold uppercase tracking-wide text-muted-foreground">
         USD
       </span>
     </div>
@@ -207,7 +207,7 @@ function RadioOption({
   label: string;
 }) {
   return (
-    <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-700">
+    <label className="flex cursor-pointer items-center gap-2 text-sm text-foreground">
       <input
         type="radio"
         name={name}
@@ -710,7 +710,7 @@ export function CreateCampaignForm({
             <div className="space-y-2">
               <Label htmlFor="optinPageId">Optin funnel*</Label>
               {loadingOptinPages ? (
-                <div className="flex h-11 items-center rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm text-slate-500">
+                <div className="flex h-11 items-center rounded-lg border border-border bg-muted px-3 text-sm text-muted-foreground">
                   Loading optin pages...
                 </div>
               ) : optinPages.length === 0 ? (
@@ -736,7 +736,7 @@ export function CreateCampaignForm({
                   >
                     <SelectTrigger id="optinPageId" className="h-11 w-full bg-white">
                       {selectedOptinPage ? (
-                        <span className="truncate text-left text-sm text-slate-900">
+                        <span className="truncate text-left text-sm text-foreground">
                           {formatOptinPageLabel(selectedOptinPage)}
                         </span>
                       ) : (
@@ -754,7 +754,7 @@ export function CreateCampaignForm({
                   {selectedOptinPage && (
                     <FieldHint>
                       Optin landing URL:{" "}
-                      <span className="font-mono text-slate-700">
+                      <span className="font-mono text-foreground">
                         {siteOrigin
                           ? `${siteOrigin}/o/${selectedOptinPage.slug}`
                           : `/o/${selectedOptinPage.slug}`}
@@ -773,8 +773,8 @@ export function CreateCampaignForm({
           <div className={cn(!canEditField("targeting") && "pointer-events-none opacity-60")}>
           <SectionCard step={2} title="Scheduling" icon={CalendarClock} accentIndex={1}>
             <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/40 p-4">
-                <p className="text-sm font-medium text-slate-800">Start Date</p>
+              <div className="space-y-3 rounded-xl border border-border bg-muted/40 p-4">
+                <p className="text-sm font-medium text-foreground">Start Date</p>
                 <RadioOption
                   name="startMode"
                   value="now"
@@ -799,8 +799,8 @@ export function CreateCampaignForm({
                 <FieldHint>Date Format: yyyy-mm-dd</FieldHint>
               </div>
 
-              <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/40 p-4">
-                <p className="text-sm font-medium text-slate-800">End Date</p>
+              <div className="space-y-3 rounded-xl border border-border bg-muted/40 p-4">
+                <p className="text-sm font-medium text-foreground">End Date</p>
                 <RadioOption
                   name="endMode"
                   value="forever"
@@ -832,7 +832,7 @@ export function CreateCampaignForm({
               <Label htmlFor="vertical">Vertical</Label>
               <div
                 id="vertical"
-                className="flex h-9 w-full items-center rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm font-medium text-slate-800"
+                className="flex h-9 w-full items-center rounded-lg border border-border bg-muted px-3 text-sm font-medium text-foreground"
               >
                 {DEFAULT_VERTICAL}
               </div>
@@ -840,7 +840,7 @@ export function CreateCampaignForm({
             </div>
 
             <Tabs value={trafficMode} onValueChange={(v) => v && setTrafficMode(v as TrafficMode)}>
-              <TabsList className="w-full justify-start bg-slate-100">
+              <TabsList className="w-full justify-start bg-muted">
                 <TabsTrigger value="allow" className="flex-1">
                   Allow Traffic
                 </TabsTrigger>
@@ -981,7 +981,7 @@ export function CreateCampaignForm({
             </div>
 
             <div className="grid gap-5 sm:grid-cols-2">
-              <div className="space-y-2 rounded-xl border border-slate-100 bg-slate-50/30 p-4">
+              <div className="space-y-2 rounded-xl border border-border bg-muted/30 p-4">
                 <Label htmlFor="totalBudget" className="leading-snug">
                   Total Budget
                 </Label>
@@ -1000,7 +1000,7 @@ export function CreateCampaignForm({
                   />
                 </div>
               </div>
-              <div className="space-y-2 rounded-xl border border-slate-100 bg-slate-50/30 p-4">
+              <div className="space-y-2 rounded-xl border border-border bg-muted/30 p-4">
                 <Label htmlFor="dailyBudget" className="leading-snug">
                   Daily Budget
                 </Label>
@@ -1038,8 +1038,8 @@ export function CreateCampaignForm({
                     <CampaignTrackingPixelPanel pixelToken={createdPixelToken} />
                   </div>
                 ) : (
-                  <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/60 px-4 py-5 text-sm text-slate-600">
-                    <p className="font-medium text-slate-800">Auto-generated on save</p>
+                  <div className="rounded-xl border border-dashed border-border bg-muted/60 px-4 py-5 text-sm text-muted-foreground">
+                    <p className="font-medium text-foreground">Auto-generated on save</p>
                     <p className="mt-1">
                       A unique tracking pixel will be created when you save this campaign. Use it on
                       your thank-you or conversion page to track confirmed sales.
@@ -1081,9 +1081,9 @@ export function CreateCampaignForm({
 
           <TierPayoutInfoPanel payoutTiers={payoutTiers} />
 
-          <div className="rounded-[18px] border border-slate-200/80 bg-white p-5 shadow-sm">
-            <div className="mb-4 flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2">
-              <span className="text-xs text-slate-500">
+          <div className="rounded-[18px] border border-border bg-card p-5 shadow-sm">
+            <div className="mb-4 flex items-center justify-between rounded-lg bg-muted px-3 py-2">
+              <span className="text-xs text-muted-foreground">
                 {isAdmin ? "Advertiser wallet" : "Wallet balance"}
               </span>
               <span className="text-sm font-bold text-[var(--theme-primary)]">
@@ -1159,7 +1159,7 @@ export function CreateCampaignForm({
               </ButtonLink>
             )}
             {!canSubmitForm && !error && (
-              <p className="mt-3 text-center text-xs text-slate-500">
+              <p className="mt-3 text-center text-xs text-muted-foreground">
                 {isAdmin
                   ? "Select an advertiser and fill required fields to continue"
                   : "Fill required fields to save or submit your campaign"}

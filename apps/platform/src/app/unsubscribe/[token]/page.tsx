@@ -28,11 +28,11 @@ export default async function UnsubscribePage({ params, searchParams }: Props) {
 
   if (!contact) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50 p-6">
-        <div className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-8 text-center shadow-sm">
-          <XCircle className="mx-auto h-12 w-12 text-slate-400" />
-          <h1 className="mt-4 text-xl font-semibold text-slate-900">Invalid link</h1>
-          <p className="mt-2 text-sm text-slate-600">
+      <div className="flex min-h-screen items-center justify-center bg-muted p-6">
+        <div className="w-full max-w-md rounded-xl border border-border bg-card p-8 text-center shadow-sm">
+          <XCircle className="mx-auto h-12 w-12 text-muted-foreground" />
+          <h1 className="mt-4 text-xl font-semibold text-foreground">Invalid link</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
             This unsubscribe link is invalid or expired.
           </p>
           <Link href="/" className="mt-6 inline-block text-sm text-[var(--theme-primary)] hover:underline">
@@ -47,11 +47,11 @@ export default async function UnsubscribePage({ params, searchParams }: Props) {
 
   if (showSuccess) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50 p-6">
-        <div className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+      <div className="flex min-h-screen items-center justify-center bg-muted p-6">
+        <div className="w-full max-w-md rounded-xl border border-border bg-card p-8 text-center shadow-sm">
           <CheckCircle2 className="mx-auto h-12 w-12 text-green-500" />
-          <h1 className="mt-4 text-xl font-semibold text-slate-900">You&apos;re unsubscribed</h1>
-          <p className="mt-2 text-sm text-slate-600">
+          <h1 className="mt-4 text-xl font-semibold text-foreground">You&apos;re unsubscribed</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
             <strong>{contact.email}</strong> will no longer receive marketing emails from this
             sender.
           </p>
@@ -64,11 +64,11 @@ export default async function UnsubscribePage({ params, searchParams }: Props) {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 p-6">
-      <div className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-8 text-center shadow-sm">
-        <MailX className="mx-auto h-12 w-12 text-slate-400" />
-        <h1 className="mt-4 text-xl font-semibold text-slate-900">Unsubscribe?</h1>
-        <p className="mt-2 text-sm text-slate-600">
+    <div className="flex min-h-screen items-center justify-center bg-muted p-6">
+      <div className="w-full max-w-md rounded-xl border border-border bg-card p-8 text-center shadow-sm">
+        <MailX className="mx-auto h-12 w-12 text-muted-foreground" />
+        <h1 className="mt-4 text-xl font-semibold text-foreground">Unsubscribe?</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
           Stop marketing emails to <strong>{contact.email}</strong>? Confirm below — opening this
           page alone does not unsubscribe you.
         </p>
@@ -81,7 +81,7 @@ export default async function UnsubscribePage({ params, searchParams }: Props) {
             Confirm unsubscribe
           </button>
         </form>
-        <Link href="/" className="mt-4 inline-block text-sm text-slate-500 hover:underline">
+        <Link href="/" className="mt-4 inline-block text-sm text-muted-foreground hover:underline">
           Keep receiving emails
         </Link>
       </div>

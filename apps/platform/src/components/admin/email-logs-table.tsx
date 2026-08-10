@@ -50,7 +50,7 @@ export function EmailLogsTable() {
   }, [page, loadPage]);
 
   if (loading && logs.length === 0) {
-    return <p className="text-sm text-slate-500">Loading email log...</p>;
+    return <p className="text-sm text-muted-foreground">Loading email log...</p>;
   }
 
   if (error && logs.length === 0) {
@@ -58,14 +58,14 @@ export function EmailLogsTable() {
   }
 
   if (!loading && logs.length === 0) {
-    return <p className="text-sm text-slate-500">No emails logged yet.</p>;
+    return <p className="text-sm text-muted-foreground">No emails logged yet.</p>;
   }
 
   return (
     <div className="space-y-3">
-      <div className="overflow-x-auto rounded-xl border border-slate-200">
+      <div className="overflow-x-auto rounded-xl border border-border">
         <table className="min-w-full text-sm">
-          <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
+          <thead className="bg-muted text-left text-xs uppercase text-muted-foreground">
             <tr>
               <th className="px-4 py-3">Time</th>
               <th className="px-4 py-3">To</th>
@@ -76,8 +76,8 @@ export function EmailLogsTable() {
           </thead>
           <tbody>
             {logs.map((log) => (
-              <tr key={log.id} className="border-t border-slate-100">
-                <td className="px-4 py-3 whitespace-nowrap text-slate-600">
+              <tr key={log.id} className="border-t border-border">
+                <td className="px-4 py-3 whitespace-nowrap text-muted-foreground">
                   {formatUserDateTime(log.createdAt, timezone, "MMM d, yyyy HH:mm")}
                 </td>
                 <td className="px-4 py-3">{log.to}</td>
@@ -110,7 +110,7 @@ export function EmailLogsTable() {
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-muted-foreground">
           Page {page} of {totalPages}
           {total > 0 ? ` · ${total} total` : ""}
           {loading ? " · Loading..." : ""}

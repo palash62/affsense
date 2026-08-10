@@ -97,13 +97,13 @@ function FieldRow({
   children: React.ReactNode;
 }) {
   return (
-    <div className="grid gap-2 border-b border-slate-100 py-5 last:border-b-0 sm:grid-cols-[220px_minmax(0,1fr)] sm:gap-6">
+    <div className="grid gap-2 border-b border-border py-5 last:border-b-0 sm:grid-cols-[220px_minmax(0,1fr)] sm:gap-6">
       <div className="sm:pt-2">
-        <Label className="text-sm font-semibold text-slate-800">
+        <Label className="text-sm font-semibold text-foreground">
           {label}
           {required ? <span className="ml-0.5 text-red-500">*</span> : null}
         </Label>
-        {help ? <p className="mt-1 text-xs leading-relaxed text-slate-500">{help}</p> : null}
+        {help ? <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{help}</p> : null}
       </div>
       <div className="min-w-0">{children}</div>
     </div>
@@ -191,7 +191,7 @@ export function AdminCpaOfferForm({ mode, offer }: AdminCpaOfferFormProps) {
       }
 
       toast.success(mode === "edit" ? "Offer updated" : "Offer created");
-      router.push("/admin/cpa-offers/offers");
+      router.push("/admin/offer-network");
       router.refresh();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Save failed");
@@ -204,26 +204,26 @@ export function AdminCpaOfferForm({ mode, offer }: AdminCpaOfferFormProps) {
     <div className="mx-auto max-w-4xl space-y-6 pb-28">
       <div>
         <Link
-          href="/admin/cpa-offers/offers"
-          className="mb-4 inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800"
+          href="/admin/offer-network"
+          className="mb-4 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
           All Offers
         </Link>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">
           {mode === "edit" ? "Edit Offer" : "Create Offer"}
         </h1>
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="mt-1 text-sm text-muted-foreground">
           {mode === "edit"
             ? "Update marketplace offer details and payout."
             : "Add a CPA offer for the advertiser marketplace."}
         </p>
       </div>
 
-      <section className="rounded-2xl border border-slate-200 bg-white px-5 sm:px-6">
-        <div className="border-b border-slate-100 py-4">
-          <h2 className="text-base font-semibold text-slate-900">Basic Details</h2>
-          <p className="text-xs text-slate-500">Required offer identity and targeting.</p>
+      <section className="rounded-2xl border border-border bg-card px-5 sm:px-6">
+        <div className="border-b border-border py-4">
+          <h2 className="text-base font-semibold text-foreground">Basic Details</h2>
+          <p className="text-xs text-muted-foreground">Required offer identity and targeting.</p>
         </div>
 
         <FieldRow label="Title" required help="Enter the name or title of the offer.">
@@ -283,7 +283,7 @@ export function AdminCpaOfferForm({ mode, offer }: AdminCpaOfferFormProps) {
                       ? "border-emerald-500 bg-emerald-50 text-emerald-800"
                       : selected
                         ? "border-slate-800 bg-slate-900 text-white"
-                        : "border-slate-200 bg-white text-slate-600 hover:border-slate-300",
+                        : "border-border bg-card text-muted-foreground hover:border-border",
                   )}
                 >
                   {option.label}
@@ -330,10 +330,10 @@ export function AdminCpaOfferForm({ mode, offer }: AdminCpaOfferFormProps) {
         </FieldRow>
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white px-5 sm:px-6">
-        <div className="border-b border-slate-100 py-4">
-          <h2 className="text-base font-semibold text-slate-900">Payout</h2>
-          <p className="text-xs text-slate-500">Revenue from advertiser and payout to affiliates.</p>
+      <section className="rounded-2xl border border-border bg-card px-5 sm:px-6">
+        <div className="border-b border-border py-4">
+          <h2 className="text-base font-semibold text-foreground">Payout</h2>
+          <p className="text-xs text-muted-foreground">Revenue from advertiser and payout to affiliates.</p>
         </div>
 
         <div className="grid gap-0 sm:grid-cols-2 sm:gap-8">
@@ -450,13 +450,13 @@ export function AdminCpaOfferForm({ mode, offer }: AdminCpaOfferFormProps) {
         </div>
       </section>
 
-      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-slate-200 bg-white/95 backdrop-blur">
+      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-white/95 backdrop-blur">
         <div className="mx-auto flex max-w-4xl items-center justify-end gap-2 px-4 py-3">
           <Button
             type="button"
             variant="outline"
             disabled={saving}
-            onClick={() => router.push("/admin/cpa-offers/offers")}
+            onClick={() => router.push("/admin/offer-network")}
           >
             Cancel
           </Button>

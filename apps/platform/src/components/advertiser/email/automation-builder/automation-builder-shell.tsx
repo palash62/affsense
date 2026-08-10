@@ -90,14 +90,14 @@ export function AutomationBuilderShell({
 
   if (state.loading) {
     return (
-      <div className="flex h-[min(720px,calc(100vh-8rem))] items-center justify-center rounded-2xl border border-slate-200 bg-white">
-        <p className="text-sm text-slate-500">Loading automation…</p>
+      <div className="flex h-[min(720px,calc(100vh-8rem))] items-center justify-center rounded-2xl border border-border bg-card">
+        <p className="text-sm text-muted-foreground">Loading automation…</p>
       </div>
     );
   }
 
   return (
-    <div className="flex h-[min(780px,calc(100vh-6.5rem))] min-h-[560px] flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+    <div className="flex h-[min(780px,calc(100vh-6.5rem))] min-h-[560px] flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
       <BuilderKeyboardShortcuts state={state} />
       <BuilderToolbar
         state={state}
@@ -124,7 +124,7 @@ export function AutomationBuilderShell({
       />
 
       {state.addingStep ? (
-        <div className="border-t border-slate-100 bg-slate-50 px-4 py-2 text-sm text-slate-600">
+        <div className="border-t border-border bg-muted px-4 py-2 text-sm text-muted-foreground">
           Creating email…
         </div>
       ) : null}

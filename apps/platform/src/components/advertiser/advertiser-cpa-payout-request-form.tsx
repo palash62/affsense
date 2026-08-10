@@ -146,7 +146,7 @@ export function AdvertiserCpaPayoutRequestForm({
               required
               disabled={!canSubmit}
             />
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-muted-foreground">
               Minimum payout for this method: {formatCurrency(minPayoutAmount)}
             </p>
           </div>
@@ -185,11 +185,11 @@ export function AdvertiserCpaPayoutRequestForm({
             <Clock className="h-5 w-5 text-[var(--theme-primary)]" />
           </div>
           <div>
-            <h3 className="text-base font-semibold text-slate-900">Payout timeline</h3>
-            <p className="text-sm text-slate-500">What to expect after requesting</p>
+            <h3 className="text-base font-semibold text-foreground">Payout timeline</h3>
+            <p className="text-sm text-muted-foreground">What to expect after requesting</p>
           </div>
         </div>
-        <ul className="mt-4 space-y-3 text-sm text-slate-600">
+        <ul className="mt-4 space-y-3 text-sm text-muted-foreground">
           <li>1. Your withdrawal request is submitted from your CPA wallet</li>
           <li>2. Our team reviews CPA payouts (1–3 business days)</li>
           <li>3. Approved payouts are processed to your selected method</li>

@@ -7,11 +7,11 @@
 
 ## Design Philosophy
 
-Premium SaaS aesthetic inspired by HubSpot CRM, Stripe Dashboard, and GoHighLevel.
+Premium SaaS aesthetic inspired by Affsense admin dashboards (deep navy + indigo), with HubSpot/Stripe clarity.
 
-**Goals:** Modern · Clean · Fast · Professional · Enterprise-ready · Mobile Responsive
+**Goals:** Modern · Clean · Fast · Professional · Affiliate-friendly · Mobile Responsive
 
-**Avoid:** Dark heavy UI · Too many colors · Cluttered dashboards
+**Avoid:** Dark heavy content areas · Too many colors · Cluttered dashboards
 
 ---
 
@@ -19,41 +19,47 @@ Premium SaaS aesthetic inspired by HubSpot CRM, Stripe Dashboard, and GoHighLeve
 
 | Token | Value | CSS Variable | Usage |
 |-------|-------|--------------|-------|
-| Primary | `#2563EB` | `--primary` | CTAs, active nav, links |
-| Secondary | `#14B8A6` | `--secondary` | Accents, badges |
-| Success | `#22C55E` | `--success` | Approved, positive metrics |
+| Primary | `#4F46F5` | `--primary` / `--theme-primary` | CTAs, links, focus rings |
+| Accent purple | `#713BFF` | `--theme-accent-purple` / `--chart-4` | Gradients, chart tertiary |
+| Success | `#12A150` | `--success` / `--theme-success` | Approved, positive metrics |
 | Warning | `#F59E0B` | `--warning` | Pending, caps nearing |
 | Danger | `#EF4444` | `--destructive` | Rejected, errors, destructive |
-| Background | `#F8FAFC` | `--background` | Page background |
+| Background | `#F7F9FC` | `--background` / `--theme-bg` | Page background |
 | Card | `#FFFFFF` | `--card` | Cards, modals |
-| Text Primary | `#0F172A` | `--foreground` | Primary text |
-| Text Secondary | `#64748B` | `--muted-foreground` | Secondary text |
-| Border | `#E2E8F0` | `--border` | Dividers, inputs |
+| Text Primary | `#111827` | `--foreground` | Primary text |
+| Text Secondary | `#667085` | `--muted-foreground` | Secondary text |
+| Border | `#E7EAF0` | `--border` / `--input` | Dividers, inputs |
+| Sidebar | `#07162D` | `--sidebar` / `--theme-sidebar-*` | Deep navy shell (solid) |
+| Active nav | `#4F46F5` → `#713BFF` | `--theme-sidebar-active-*` | Indigo→purple gradient |
+
+Default pack is Affsense (`slate-pro`). Chart accents: `#4F46F5`, `#12A150`, `#F59E0B`, `#713BFF`, `#EF4444`.
 
 ### Shadcn CSS Variables (`globals.css`)
 
 ```css
-:root {
-  --background: 210 40% 98%;
-  --foreground: 222 47% 11%;
-  --card: 0 0% 100%;
-  --card-foreground: 222 47% 11%;
-  --primary: 221 83% 53%;
-  --primary-foreground: 210 40% 98%;
-  --secondary: 173 80% 40%;
-  --secondary-foreground: 210 40% 98%;
-  --muted: 210 40% 96%;
-  --muted-foreground: 215 16% 47%;
-  --accent: 210 40% 96%;
-  --accent-foreground: 222 47% 11%;
-  --destructive: 0 84% 60%;
-  --destructive-foreground: 210 40% 98%;
-  --border: 214 32% 91%;
-  --input: 214 32% 91%;
-  --ring: 221 83% 53%;
-  --radius: 0.5rem;
-  --success: 142 71% 45%;
-  --warning: 38 92% 50%;
+:root,
+[data-theme="slate-pro"] {
+  --background: #F7F9FC;
+  --foreground: #111827;
+  --card: #FFFFFF;
+  --primary: #4F46F5;
+  --primary-foreground: #FFFFFF;
+  --secondary: #07162D;
+  --muted-foreground: #667085;
+  --accent: #EEF2FF;
+  --destructive: #EF4444;
+  --border: #E7EAF0;
+  --ring: #4F46F5;
+  --radius: 0.5rem; /* 8px controls */
+  --radius-card: 0.875rem; /* 14px cards */
+  --success: #12A150;
+  --warning: #F59E0B;
+  --theme-sidebar-from: #07162D;
+  --theme-sidebar-to: #07162D;
+  --theme-sidebar-active-from: #4F46F5;
+  --theme-sidebar-active-to: #713BFF;
+  --theme-primary: #4F46F5;
+  --theme-accent-purple: #713BFF;
 }
 ```
 
@@ -65,9 +71,9 @@ Premium SaaS aesthetic inspired by HubSpot CRM, Stripe Dashboard, and GoHighLeve
 
 | Level | Size | Weight | Tailwind Class |
 |-------|------|--------|----------------|
-| H1 | 30px / 1.875rem | 700 | `text-3xl font-bold` |
-| H2 | 24px | 600 | `text-2xl font-semibold` |
-| H3 | 20px | 600 | `text-xl font-semibold` |
+| Page title | 24px | 700 | `text-2xl font-bold` |
+| H2 | 20px | 600 | `text-xl font-semibold` |
+| Card title | 16px | 600 | `text-base font-semibold` |
 | Body | 14px | 400 | `text-sm` |
 | Small | 12px | 400 | `text-xs` |
 | Label | 14px | 500 | `text-sm font-medium` |
@@ -79,13 +85,14 @@ Premium SaaS aesthetic inspired by HubSpot CRM, Stripe Dashboard, and GoHighLeve
 | Element | Value |
 |---------|-------|
 | Sidebar width | 256px (collapsed: 64px icon-only) |
-| Header height | 64px |
+| Header height | ~72px admin / 64px default |
 | Content max-width | 1280px (dashboard); full-width for tables |
-| Card padding | 24px (`p-6`) |
-| Border radius (cards) | 8px (`rounded-lg`) |
-| Border radius (buttons/inputs) | 6px (`rounded-md`) |
-| Default shadow | `shadow-sm` |
-| Interactive card hover | `shadow-md` |
+| Spacing system | 8px base (`gap-2`, `p-4`, `p-5`, `p-6`) |
+| Card padding | 20–24px (`p-5` / `p-6`) |
+| Border radius (cards) | 14px (`--radius-card`) |
+| Border radius (buttons/inputs) | 8px (`rounded-md` / `--radius`) |
+| Default shadow | `--shadow-card` (subtle) |
+| Interactive card hover | `--shadow-card-hover` |
 
 ### Global Shell Layout
 

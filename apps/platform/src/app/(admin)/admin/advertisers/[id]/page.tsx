@@ -127,24 +127,24 @@ export default async function AdminAdvertiserDetailPage({ params }: PageProps) {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-[18px] border border-slate-200 bg-white p-5 shadow-sm">
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Wallet balance</p>
+        <div className="rounded-[18px] border border-border bg-card p-5 shadow-sm">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Wallet balance</p>
           <p className="mt-2 text-2xl font-bold text-emerald-600">{formatCurrency(balance)}</p>
         </div>
-        <div className="rounded-[18px] border border-slate-200 bg-white p-5 shadow-sm">
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Campaigns</p>
-          <p className="mt-2 text-2xl font-bold text-slate-900">{advertiser._count.campaigns}</p>
+        <div className="rounded-[18px] border border-border bg-card p-5 shadow-sm">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Campaigns</p>
+          <p className="mt-2 text-2xl font-bold text-foreground">{advertiser._count.campaigns}</p>
         </div>
-        <div className="rounded-[18px] border border-slate-200 bg-white p-5 shadow-sm">
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Status</p>
+        <div className="rounded-[18px] border border-border bg-card p-5 shadow-sm">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Status</p>
           <div className="mt-2 flex flex-col gap-1.5">
             <UserStatusBadge status={advertiser.status} />
             <EmailVerifiedBadge verified={!!advertiser.emailVerified} />
           </div>
         </div>
-        <div className="rounded-[18px] border border-slate-200 bg-white p-5 shadow-sm">
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Joined</p>
-          <p className="mt-2 text-sm font-semibold text-slate-900">
+        <div className="rounded-[18px] border border-border bg-card p-5 shadow-sm">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Joined</p>
+          <p className="mt-2 text-sm font-semibold text-foreground">
             {formatUserDateTime(advertiser.createdAt, tz, "MMM d, yyyy")}
           </p>
         </div>
@@ -153,60 +153,60 @@ export default async function AdminAdvertiserDetailPage({ params }: PageProps) {
       <PageSection title="Profile" description="Advertiser account details" icon={Building2} gradient="revenue">
         <div className="grid gap-4 px-6 py-5 sm:grid-cols-2">
           <div className="flex items-start gap-3">
-            <Mail className="mt-0.5 h-4 w-4 text-slate-400" />
+            <Mail className="mt-0.5 h-4 w-4 text-muted-foreground" />
             <div>
-              <p className="text-xs text-slate-500">Email</p>
-              <p className="text-sm font-medium text-slate-900">{advertiser.email}</p>
+              <p className="text-xs text-muted-foreground">Email</p>
+              <p className="text-sm font-medium text-foreground">{advertiser.email}</p>
             </div>
           </div>
           <div className="flex items-start gap-3">
-            <Building2 className="mt-0.5 h-4 w-4 text-slate-400" />
+            <Building2 className="mt-0.5 h-4 w-4 text-muted-foreground" />
             <div>
-              <p className="text-xs text-slate-500">Company</p>
-              <p className="text-sm font-medium text-slate-900">{company}</p>
+              <p className="text-xs text-muted-foreground">Company</p>
+              <p className="text-sm font-medium text-foreground">{company}</p>
             </div>
           </div>
           {advertiser.advertiserProfile?.industry && (
             <div className="flex items-start gap-3">
-              <Calendar className="mt-0.5 h-4 w-4 text-slate-400" />
+              <Calendar className="mt-0.5 h-4 w-4 text-muted-foreground" />
               <div>
-                <p className="text-xs text-slate-500">Industry</p>
-                <p className="text-sm font-medium text-slate-900">
+                <p className="text-xs text-muted-foreground">Industry</p>
+                <p className="text-sm font-medium text-foreground">
                   {advertiser.advertiserProfile.industry}
                 </p>
               </div>
             </div>
           )}
           <div className="flex items-start gap-3">
-            <Gift className="mt-0.5 h-4 w-4 text-slate-400" />
+            <Gift className="mt-0.5 h-4 w-4 text-muted-foreground" />
             <div>
-              <p className="text-xs text-slate-500">Referral code</p>
-              <p className="text-sm font-medium text-slate-900">
+              <p className="text-xs text-muted-foreground">Referral code</p>
+              <p className="text-sm font-medium text-foreground">
                 {advertiser.referralCode ?? "—"}
               </p>
             </div>
           </div>
           <div className="flex items-start gap-3">
-            <Users className="mt-0.5 h-4 w-4 text-slate-400" />
+            <Users className="mt-0.5 h-4 w-4 text-muted-foreground" />
             <div>
-              <p className="text-xs text-slate-500">Referred by</p>
+              <p className="text-xs text-muted-foreground">Referred by</p>
               {advertiser.referredBy ? (
                 <div>
                   <Link
                     href={`/admin/advertisers/${advertiser.referredBy.id}`}
-                    className="text-sm font-medium text-slate-900 hover:underline"
+                    className="text-sm font-medium text-foreground hover:underline"
                   >
                     {advertiser.referredBy.name}
                   </Link>
-                  <p className="text-xs text-slate-500">{advertiser.referredBy.email}</p>
+                  <p className="text-xs text-muted-foreground">{advertiser.referredBy.email}</p>
                   {advertiser.referredBy.referralCode && (
-                    <p className="text-xs text-slate-400">
+                    <p className="text-xs text-muted-foreground">
                       Code: {advertiser.referredBy.referralCode}
                     </p>
                   )}
                 </div>
               ) : (
-                <p className="text-sm font-medium text-slate-900">—</p>
+                <p className="text-sm font-medium text-foreground">—</p>
               )}
             </div>
           </div>
@@ -227,7 +227,7 @@ export default async function AdminAdvertiserDetailPage({ params }: PageProps) {
             gradient="approved"
           >
             {advertiser.campaigns.length === 0 ? (
-              <p className="px-6 py-8 text-sm text-slate-500">No campaigns yet.</p>
+              <p className="px-6 py-8 text-sm text-muted-foreground">No campaigns yet.</p>
             ) : (
               <Table>
                 <TableHeader>
@@ -275,15 +275,15 @@ export default async function AdminAdvertiserDetailPage({ params }: PageProps) {
             icon={Wallet}
             gradient="revenue"
           >
-            <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
-              <p className="text-sm text-slate-600">
+            <div className="flex items-center justify-between border-b border-border px-6 py-4">
+              <p className="text-sm text-muted-foreground">
                 Current balance:{" "}
                 <span className="font-semibold text-emerald-600">{formatCurrency(balance)}</span>
               </p>
               <AdminManualDepositDialog userId={advertiser.id} userName={advertiser.name} />
             </div>
             {advertiser.deposits.length === 0 ? (
-              <p className="px-6 py-8 text-sm text-slate-500">No deposits recorded.</p>
+              <p className="px-6 py-8 text-sm text-muted-foreground">No deposits recorded.</p>
             ) : (
               <Table>
                 <TableHeader>
@@ -297,7 +297,7 @@ export default async function AdminAdvertiserDetailPage({ params }: PageProps) {
                 <TableBody>
                   {advertiser.deposits.map((d) => (
                     <TableRow key={d.id}>
-                      <TableCell className="px-6 text-sm text-slate-600">
+                      <TableCell className="px-6 text-sm text-muted-foreground">
                         {formatUserDateTime(d.createdAt, tz, "MMM d, yyyy HH:mm")}
                       </TableCell>
                       <TableCell>{formatDepositMethod(d.method)}</TableCell>

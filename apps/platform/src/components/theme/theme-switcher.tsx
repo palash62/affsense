@@ -16,9 +16,10 @@ import { cn } from "@/lib/utils";
 
 const swatches: Record<ThemeId, string[]> = {
   "enterprise-blue": ["#1E3A8A", "#4338CA", "#2563EB", "#22C55E"],
+  "marketing-saas": ["#0A0A0A", "#141414", "#FF5A1F", "#FAF8F5"],
   "performance-green": ["#0F3D2E", "#166534", "#059669", "#2563EB"],
   "marketplace-purple": ["#4C1D95", "#7C3AED", "#A855F7", "#10B981"],
-  "slate-pro": ["#0F172A", "#1E293B", "#3B82F6", "#06B6D4"],
+  "slate-pro": ["#07162D", "#4F46F5", "#713BFF", "#12A150"],
 };
 
 interface ThemeSwitcherProps {
@@ -40,8 +41,8 @@ export function ThemeSwitcher({ variant = "dropdown", className }: ThemeSwitcher
             className={cn(
               "flex items-center gap-2 rounded-xl border px-3 py-2 text-left text-sm transition-all duration-200",
               theme === t.id
-                ? "border-[var(--theme-primary)] bg-white shadow-md ring-2 ring-[var(--theme-primary)]/20"
-                : "border-slate-200 bg-white/80 hover:border-slate-300 hover:shadow-sm",
+                ? "border-[var(--theme-primary)] bg-card shadow-md ring-2 ring-[var(--theme-primary)]/20"
+                : "border-border bg-card/80 hover:border-border hover:shadow-sm",
             )}
           >
             <span className="flex gap-0.5">
@@ -53,7 +54,7 @@ export function ThemeSwitcher({ variant = "dropdown", className }: ThemeSwitcher
                 />
               ))}
             </span>
-            <span className="font-medium text-slate-800">{t.name}</span>
+            <span className="font-medium text-foreground">{t.name}</span>
             {theme === t.id && <Check className="ml-1 h-4 w-4 text-[var(--theme-primary)]" />}
           </button>
         ))}
@@ -69,7 +70,7 @@ export function ThemeSwitcher({ variant = "dropdown", className }: ThemeSwitcher
             variant="outline"
             size="sm"
             className={cn(
-              "h-10 gap-2 rounded-xl border-slate-200 bg-white shadow-sm",
+              "h-10 gap-2 rounded-xl border-border bg-card shadow-sm",
               className,
             )}
           />

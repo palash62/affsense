@@ -42,7 +42,7 @@ export function TimezoneSelect({
           ))}
         </SelectContent>
       </Select>
-      <p className="text-xs text-slate-500">
+      <p className="text-xs text-muted-foreground">
         Dates and times across your panel (leads, reports, wallets) use this timezone.
       </p>
     </div>

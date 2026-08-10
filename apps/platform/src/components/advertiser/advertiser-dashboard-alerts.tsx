@@ -44,13 +44,13 @@ export function AdvertiserDashboardAlerts({ alerts }: { alerts: AdvertiserAlertI
             <Link
               href={alertHref(alert.type)}
               className={cn(
-                "flex gap-2 rounded-xl border border-amber-100 bg-white/80 px-3 py-2.5 transition hover:border-amber-300 hover:bg-white",
+                "flex gap-2 rounded-xl border border-amber-100 bg-card/80 px-3 py-2.5 transition hover:border-amber-300 hover:bg-white",
               )}
             >
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
               <div className="min-w-0">
-                <p className="text-sm font-medium text-slate-900">{alert.title}</p>
-                <p className="mt-0.5 line-clamp-2 text-xs text-slate-600">{alert.body}</p>
+                <p className="text-sm font-medium text-foreground">{alert.title}</p>
+                <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{alert.body}</p>
               </div>
             </Link>
           </li>

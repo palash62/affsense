@@ -15,8 +15,8 @@ const inter = Inter({
 });
 
 export const metadata = {
-  title: "LeadVix",
-  description: "Cost Per Lead marketplace for advertisers and publishers",
+  title: "Affsense",
+  description: "Affiliate and CPL marketplace for advertisers and publishers",
 };
 
 export const viewport = {

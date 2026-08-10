@@ -18,7 +18,13 @@ import {
 const cardClass =
   "premium-card p-6";
 
-const PIE_COLORS = ["#22C55E", "#F97316", "#EF4444", "var(--theme-chart-1)", "var(--theme-chart-2)"];
+const PIE_COLORS = [
+  "var(--theme-success)",
+  "var(--warning)",
+  "var(--destructive)",
+  "var(--theme-chart-1)",
+  "var(--theme-chart-4)",
+];
 
 interface TrendChartProps {
   title: string;
@@ -31,15 +37,15 @@ export function LeadsTrendChart({ title, data, embedded }: TrendChartProps) {
     <>
       {!embedded && (
         <div className="mb-4">
-          <h3 className="text-base font-semibold text-slate-900">{title}</h3>
+          <h3 className="text-base font-semibold text-foreground">{title}</h3>
         </div>
       )}
       <ResponsiveContainer width="100%" height={240}>
         <LineChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" vertical={false} />
-          <XAxis dataKey="date" tick={{ fontSize: 11, fill: "#94A3B8" }} tickFormatter={(v) => v.slice(5)} axisLine={false} tickLine={false} />
-          <YAxis tick={{ fontSize: 11, fill: "#94A3B8" }} axisLine={false} tickLine={false} />
-          <Tooltip contentStyle={{ borderRadius: "12px", border: "1px solid #E2E8F0" }} />
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+          <XAxis dataKey="date" tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} tickFormatter={(v) => v.slice(5)} axisLine={false} tickLine={false} />
+          <YAxis tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} />
+          <Tooltip contentStyle={{ borderRadius: "12px", border: "1px solid var(--border)" }} />
           <Line type="monotone" dataKey="count" stroke="var(--theme-chart-1)" strokeWidth={2.5} dot={false} />
         </LineChart>
       </ResponsiveContainer>
@@ -60,14 +66,14 @@ export function PerformanceBarChart({ title, data }: BarChartProps) {
   return (
     <div className={cardClass}>
       <div className="mb-4">
-        <h3 className="text-base font-semibold text-slate-900">{title}</h3>
+        <h3 className="text-base font-semibold text-foreground">{title}</h3>
       </div>
       <ResponsiveContainer width="100%" height={240}>
         <BarChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" vertical={false} />
-          <XAxis dataKey="name" tick={{ fontSize: 11, fill: "#94A3B8" }} axisLine={false} tickLine={false} />
-          <YAxis tick={{ fontSize: 11, fill: "#94A3B8" }} axisLine={false} tickLine={false} />
-          <Tooltip contentStyle={{ borderRadius: "12px", border: "1px solid #E2E8F0" }} />
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+          <XAxis dataKey="name" tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} />
+          <YAxis tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} />
+          <Tooltip contentStyle={{ borderRadius: "12px", border: "1px solid var(--border)" }} />
           <Bar dataKey="value" fill="var(--theme-chart-1)" radius={[6, 6, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
@@ -84,7 +90,7 @@ export function DonutChart({ title, data }: DonutChartProps) {
   return (
     <div className={cardClass}>
       <div className="mb-4">
-        <h3 className="text-base font-semibold text-slate-900">{title}</h3>
+        <h3 className="text-base font-semibold text-foreground">{title}</h3>
       </div>
       <ResponsiveContainer width="100%" height={240}>
         <PieChart>
@@ -101,7 +107,7 @@ export function DonutChart({ title, data }: DonutChartProps) {
               <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
             ))}
           </Pie>
-          <Tooltip contentStyle={{ borderRadius: "12px", border: "1px solid #E2E8F0" }} />
+          <Tooltip contentStyle={{ borderRadius: "12px", border: "1px solid var(--border)" }} />
         </PieChart>
       </ResponsiveContainer>
     </div>

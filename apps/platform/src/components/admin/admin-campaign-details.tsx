@@ -74,8 +74,8 @@ function DetailCell({
 }) {
   return (
     <div className={className}>
-      <p className="text-xs text-slate-500">{label}</p>
-      <div className="mt-0.5 text-sm font-medium text-slate-900">{value}</div>
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <div className="mt-0.5 text-sm font-medium text-foreground">{value}</div>
     </div>
   );
 }
@@ -90,25 +90,25 @@ export function AdminCampaignDetails({
   return (
     <>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-[18px] border border-slate-200 bg-white p-5 shadow-sm">
-          <p className="text-xs text-slate-500">CPL bid</p>
+        <div className="rounded-[18px] border border-border bg-card p-5 shadow-sm">
+          <p className="text-xs text-muted-foreground">CPL bid</p>
           <p className="mt-1 text-xl font-bold text-[var(--theme-primary)]">
             {formatCurrency(campaign.cpl)}
           </p>
         </div>
-        <div className="rounded-[18px] border border-slate-200 bg-white p-5 shadow-sm">
-          <p className="text-xs text-slate-500">Budget / spent</p>
-          <p className="mt-1 text-xl font-bold text-slate-900">
+        <div className="rounded-[18px] border border-border bg-card p-5 shadow-sm">
+          <p className="text-xs text-muted-foreground">Budget / spent</p>
+          <p className="mt-1 text-xl font-bold text-foreground">
             {formatCurrency(campaign.spent)} /{" "}
             {campaign.budget == null ? "Unlimited" : formatCurrency(campaign.budget)}
           </p>
         </div>
-        <div className="rounded-[18px] border border-slate-200 bg-white p-5 shadow-sm">
-          <p className="text-xs text-slate-500">Leads</p>
-          <p className="mt-1 text-xl font-bold text-slate-900">{campaign.leadCount}</p>
+        <div className="rounded-[18px] border border-border bg-card p-5 shadow-sm">
+          <p className="text-xs text-muted-foreground">Leads</p>
+          <p className="mt-1 text-xl font-bold text-foreground">{campaign.leadCount}</p>
         </div>
-        <div className="rounded-[18px] border border-slate-200 bg-white p-5 shadow-sm">
-          <p className="text-xs text-slate-500">Status</p>
+        <div className="rounded-[18px] border border-border bg-card p-5 shadow-sm">
+          <p className="text-xs text-muted-foreground">Status</p>
           <div className="mt-2">
             <CampaignStatusWithPauseReason
               status={campaign.status}
@@ -146,7 +146,7 @@ export function AdminCampaignDetails({
           {campaign.description && (
             <DetailCell
               label="Description"
-              value={<span className="font-normal text-slate-700">{campaign.description}</span>}
+              value={<span className="font-normal text-foreground">{campaign.description}</span>}
               className="sm:col-span-2"
             />
           )}
@@ -292,7 +292,7 @@ export function AdminCampaignDetails({
                 <Badge key={field.fieldName} variant="outline" className="gap-1.5 py-1.5">
                   <span>{field.label}</span>
                   {field.required && <span className="text-red-500">*</span>}
-                  <span className="text-xs font-normal text-slate-500">({field.fieldType})</span>
+                  <span className="text-xs font-normal text-muted-foreground">({field.fieldType})</span>
                 </Badge>
               ))}
             </div>
@@ -317,15 +317,15 @@ export function AdminCampaignDetails({
                 className="flex flex-wrap items-center justify-between gap-2 py-3"
               >
                 <div>
-                  <p className="text-sm font-medium text-slate-900">{join.publisher.name}</p>
-                  <p className="text-xs text-slate-500">{join.publisher.email}</p>
+                  <p className="text-sm font-medium text-foreground">{join.publisher.name}</p>
+                  <p className="text-xs text-muted-foreground">{join.publisher.email}</p>
                 </div>
                 <div className="text-right">
                   <Badge variant="outline" className="capitalize">
                     {join.status.toLowerCase()}
                   </Badge>
                   {join.approvedAt && (
-                    <p className="mt-1 text-xs text-slate-500">
+                    <p className="mt-1 text-xs text-muted-foreground">
                       Approved {formatUserDateTime(join.approvedAt, timezone, "MMM d, yyyy")}
                     </p>
                   )}

@@ -67,7 +67,7 @@ function parseSort(sort?: string): AdvertiserLeadSort {
 }
 
 function riskBadge(score: number | null) {
-  if (score === null) return <span className="text-slate-400">—</span>;
+  if (score === null) return <span className="text-muted-foreground">—</span>;
   const cls =
     score > 50
       ? "bg-red-100 text-red-700"
@@ -128,7 +128,7 @@ export default async function AdvertiserLeadDetailsPage({ searchParams }: PagePr
       />
 
       <div
-        className="flex gap-3 rounded-xl border px-4 py-3 text-sm text-slate-700"
+        className="flex gap-3 rounded-xl border px-4 py-3 text-sm text-foreground"
         style={{
           borderColor: "color-mix(in srgb, var(--theme-primary) 20%, transparent)",
           background: "var(--theme-primary-soft)",
@@ -154,7 +154,7 @@ export default async function AdvertiserLeadDetailsPage({ searchParams }: PagePr
         icon={FileText}
         gradient="leads"
       >
-        <Suspense fallback={<div className="px-6 py-4 text-sm text-slate-500">Loading filters...</div>}>
+        <Suspense fallback={<div className="px-6 py-4 text-sm text-muted-foreground">Loading filters...</div>}>
           <AdvertiserLeadDetailsFilters campaigns={campaigns} />
         </Suspense>
 
@@ -165,34 +165,34 @@ export default async function AdvertiserLeadDetailsPage({ searchParams }: PagePr
                 className="border-none hover:bg-transparent"
                 style={{ background: "var(--theme-primary-soft)" }}
               >
-                <TableHead className="h-11 whitespace-nowrap px-4 text-slate-600">
+                <TableHead className="h-11 whitespace-nowrap px-4 text-muted-foreground">
                   <Suspense fallback={<span>Date / Time</span>}>
                     <AdvertiserLeadsSortHeader field="at" label="Date / Time" />
                   </Suspense>
                 </TableHead>
-                <TableHead className="h-11 whitespace-nowrap px-4 text-slate-600">Lead ID</TableHead>
-                <TableHead className="h-11 whitespace-nowrap px-4 text-slate-600">
+                <TableHead className="h-11 whitespace-nowrap px-4 text-muted-foreground">Lead ID</TableHead>
+                <TableHead className="h-11 whitespace-nowrap px-4 text-muted-foreground">
                   <Suspense fallback={<span>Campaign</span>}>
                     <AdvertiserLeadsSortHeader field="campaign" label="Campaign" />
                   </Suspense>
                 </TableHead>
-                <TableHead className="h-11 whitespace-nowrap px-4 text-slate-600">Publisher ID</TableHead>
-                <TableHead className="h-11 whitespace-nowrap px-4 text-slate-600">Lead Data</TableHead>
-                <TableHead className="h-11 whitespace-nowrap px-4 text-slate-600">Country</TableHead>
-                <TableHead className="h-11 whitespace-nowrap px-4 text-slate-600">IP</TableHead>
-                <TableHead className="h-11 whitespace-nowrap px-4 text-slate-600">Device</TableHead>
-                <TableHead className="h-11 whitespace-nowrap px-4 text-slate-600">OS</TableHead>
-                <TableHead className="h-11 whitespace-nowrap px-4 text-right text-slate-600">CPL</TableHead>
-                <TableHead className="h-11 whitespace-nowrap px-4 text-right text-slate-600">Sales</TableHead>
-                <TableHead className="h-11 whitespace-nowrap px-4 text-right text-slate-600">Revenue</TableHead>
-                <TableHead className="h-11 whitespace-nowrap px-4 text-slate-600">CTA</TableHead>
-                <TableHead className="h-11 whitespace-nowrap px-4 text-slate-600">Risk</TableHead>
-                <TableHead className="h-11 whitespace-nowrap px-4 text-slate-600">
+                <TableHead className="h-11 whitespace-nowrap px-4 text-muted-foreground">Publisher ID</TableHead>
+                <TableHead className="h-11 whitespace-nowrap px-4 text-muted-foreground">Lead Data</TableHead>
+                <TableHead className="h-11 whitespace-nowrap px-4 text-muted-foreground">Country</TableHead>
+                <TableHead className="h-11 whitespace-nowrap px-4 text-muted-foreground">IP</TableHead>
+                <TableHead className="h-11 whitespace-nowrap px-4 text-muted-foreground">Device</TableHead>
+                <TableHead className="h-11 whitespace-nowrap px-4 text-muted-foreground">OS</TableHead>
+                <TableHead className="h-11 whitespace-nowrap px-4 text-right text-muted-foreground">CPL</TableHead>
+                <TableHead className="h-11 whitespace-nowrap px-4 text-right text-muted-foreground">Sales</TableHead>
+                <TableHead className="h-11 whitespace-nowrap px-4 text-right text-muted-foreground">Revenue</TableHead>
+                <TableHead className="h-11 whitespace-nowrap px-4 text-muted-foreground">CTA</TableHead>
+                <TableHead className="h-11 whitespace-nowrap px-4 text-muted-foreground">Risk</TableHead>
+                <TableHead className="h-11 whitespace-nowrap px-4 text-muted-foreground">
                   <Suspense fallback={<span>Status</span>}>
                     <AdvertiserLeadsSortHeader field="status" label="Status" />
                   </Suspense>
                 </TableHead>
-                <TableHead className="h-11 min-w-[160px] whitespace-nowrap px-4 text-slate-600">
+                <TableHead className="h-11 min-w-[160px] whitespace-nowrap px-4 text-muted-foreground">
                   Notes
                 </TableHead>
               </TableRow>
@@ -201,8 +201,8 @@ export default async function AdvertiserLeadDetailsPage({ searchParams }: PagePr
               {leads.length === 0 ? (
                 <TableRow className="hover:bg-transparent">
                   <TableCell colSpan={16} className="h-48 px-6 py-16 text-center">
-                    <p className="text-base font-medium text-slate-500">No leads found</p>
-                    <p className="mt-1 text-sm text-slate-400">
+                    <p className="text-base font-medium text-muted-foreground">No leads found</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
                       Try adjusting the campaign filter or date range.
                     </p>
                   </TableCell>
@@ -227,12 +227,12 @@ export default async function AdvertiserLeadDetailsPage({ searchParams }: PagePr
                   return (
                     <TableRow
                       key={lead.id}
-                      className="border-slate-100 transition-colors hover:bg-blue-50/40"
+                      className="border-border transition-colors hover:bg-blue-50/40"
                     >
-                      <TableCell className="whitespace-nowrap px-4 py-4 text-sm text-slate-600">
+                      <TableCell className="whitespace-nowrap px-4 py-4 text-sm text-muted-foreground">
                         {formatUserDateTime(lead.createdAt, tz, "MMM d, yyyy HH:mm:ss")}
                       </TableCell>
-                      <TableCell className="whitespace-nowrap px-4 py-4 font-mono text-xs text-slate-500">
+                      <TableCell className="whitespace-nowrap px-4 py-4 font-mono text-xs text-muted-foreground">
                         <span className="inline-flex items-center gap-2">
                           {shortLeadId(lead.id)}
                           {lead.isTest ? (
@@ -242,38 +242,38 @@ export default async function AdvertiserLeadDetailsPage({ searchParams }: PagePr
                           ) : null}
                         </span>
                       </TableCell>
-                      <TableCell className="max-w-[140px] px-4 py-4 text-sm font-medium text-slate-800">
+                      <TableCell className="max-w-[140px] px-4 py-4 text-sm font-medium text-foreground">
                         <span className="line-clamp-2" title={lead.campaign.name}>
                           {lead.campaign.name}
                         </span>
                       </TableCell>
-                      <TableCell className="whitespace-nowrap px-4 py-4 font-mono text-xs text-slate-600">
+                      <TableCell className="whitespace-nowrap px-4 py-4 font-mono text-xs text-muted-foreground">
                         {shortPublisherId(lead.publisherId)}
                       </TableCell>
-                      <TableCell className="max-w-[220px] px-4 py-4 text-sm text-slate-700">
+                      <TableCell className="max-w-[220px] px-4 py-4 text-sm text-foreground">
                         <span className="line-clamp-2" title={leadData}>
                           {leadData}
                         </span>
                       </TableCell>
-                      <TableCell className="whitespace-nowrap px-4 py-4 text-sm text-slate-600">
+                      <TableCell className="whitespace-nowrap px-4 py-4 text-sm text-muted-foreground">
                         {country}
                       </TableCell>
-                      <TableCell className="whitespace-nowrap px-4 py-4 font-mono text-xs text-slate-600">
+                      <TableCell className="whitespace-nowrap px-4 py-4 font-mono text-xs text-muted-foreground">
                         {formatLeadIp(lead.ip)}
                       </TableCell>
-                      <TableCell className="whitespace-nowrap px-4 py-4 text-sm text-slate-600">
+                      <TableCell className="whitespace-nowrap px-4 py-4 text-sm text-muted-foreground">
                         {device}
                       </TableCell>
-                      <TableCell className="whitespace-nowrap px-4 py-4 text-sm text-slate-600">
+                      <TableCell className="whitespace-nowrap px-4 py-4 text-sm text-muted-foreground">
                         {os}
                       </TableCell>
-                      <TableCell className="whitespace-nowrap px-4 py-4 text-right text-sm text-slate-700">
+                      <TableCell className="whitespace-nowrap px-4 py-4 text-right text-sm text-foreground">
                         {cpl}
                       </TableCell>
-                      <TableCell className="whitespace-nowrap px-4 py-4 text-right text-sm text-slate-700">
+                      <TableCell className="whitespace-nowrap px-4 py-4 text-right text-sm text-foreground">
                         {formatLeadSaleLabel(lead.salesCount)}
                       </TableCell>
-                      <TableCell className="whitespace-nowrap px-4 py-4 text-right text-sm text-slate-700">
+                      <TableCell className="whitespace-nowrap px-4 py-4 text-right text-sm text-foreground">
                         {formatLeadRevenue(lead.revenue)}
                       </TableCell>
                       <TableCell className="whitespace-nowrap px-4 py-4">
@@ -282,7 +282,7 @@ export default async function AdvertiserLeadDetailsPage({ searchParams }: PagePr
                             Yes
                           </span>
                         ) : (
-                          <span className="rounded-full bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-500 ring-1 ring-slate-200">
+                          <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground ring-1 ring-slate-200">
                             No
                           </span>
                         )}
@@ -291,7 +291,7 @@ export default async function AdvertiserLeadDetailsPage({ searchParams }: PagePr
                       <TableCell className="px-4 py-4">
                         <LeadStatusBadge status={lead.status} />
                       </TableCell>
-                      <TableCell className="max-w-[180px] px-4 py-4 text-sm text-slate-600">
+                      <TableCell className="max-w-[180px] px-4 py-4 text-sm text-muted-foreground">
                         <span className="line-clamp-2" title={notes}>
                           {notes}
                         </span>

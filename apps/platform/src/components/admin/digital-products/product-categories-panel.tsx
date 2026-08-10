@@ -1,0 +1,153 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
+import { toast } from "sonner";
+import {
+  DashboardCard,
+  DashboardCardTitle,
+} from "@/components/admin/affsense-dashboard/dashboard-card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
+import {
+  deleteMockProductCategory,
+  loadMockProductCategories,
+  saveMockProductCategory,
+  type ProductCategoryItem,
+} from "./mock-data";
+
+export function ProductCategoriesPanel() {
+  const [categories, setCategories] = useState<ProductCategoryItem[]>([]);
+  const [name, setName] = useState("");
+
+  useEffect(() => {
+    setCategories(loadMockProductCategories());
+  }, []);
+
+  function refresh() {
+    setCategories(loadMockProductCategories());
+  }
+
+  function handleAdd() {
+    const trimmed = name.trim();
+    if (trimmed.length < 2) {
+      toast.error("Enter a category name");
+      return;
+    }
+    const id = trimmed
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "")
+      .slice(0, 40);
+    if (categories.some((c) => c.id === id || c.name.toLowerCase() === trimmed.toLowerCase())) {
+      toast.error("Category already exists");
+      return;
+    }
+    saveMockProductCategory({
+      id: id || `cat-${Date.now()}`,
+      name: trimmed,
+      status: "Active",
+      productCount: 0,
+    });
+    setName("");
+    refresh();
+    toast.success("Category added");
+  }
+
+  function handleDelete(id: string) {
+    deleteMockProductCategory(id);
+    refresh();
+    toast.success("Category removed");
+  }
+
+  return (
+    <div className="space-y-5">
+      <DashboardCard>
+        <DashboardCardTitle>Add Category</DashboardCardTitle>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Category name"
+            className="h-10 max-w-sm flex-1 rounded-md"
+            onKeyDown={(e) => e.key === "Enter" && handleAdd()}
+          />
+          <Button
+            type="button"
+            onClick={handleAdd}
+            className="h-10 gap-2 rounded-md bg-[var(--theme-primary)] px-4 hover:opacity-90"
+          >
+            <Plus className="h-4 w-4" />
+            Add Category
+          </Button>
+        </div>
+      </DashboardCard>
+
+      <DashboardCard className="overflow-hidden p-0">
+        <div className="border-b border-border px-5 py-4">
+          <DashboardCardTitle>Product Categories</DashboardCardTitle>
+          <p className="mt-0.5 text-sm text-muted-foreground">
+            {categories.length} categor{categories.length === 1 ? "y" : "ies"}
+          </p>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[560px] text-left text-sm">
+            <thead className="bg-muted/60 text-xs uppercase tracking-wide text-muted-foreground">
+              <tr>
+                <th className="px-5 py-3 font-semibold">Category</th>
+                <th className="px-5 py-3 font-semibold">Products</th>
+                <th className="px-5 py-3 font-semibold">Status</th>
+                <th className="px-5 py-3 font-semibold text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {categories.map((cat) => (
+                <tr key={cat.id} className="border-t border-border">
+                  <td className="px-5 py-3 font-medium text-foreground">{cat.name}</td>
+                  <td className="px-5 py-3 text-muted-foreground">{cat.productCount}</td>
+                  <td className="px-5 py-3">
+                    <span
+                      className={cn(
+                        "inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold",
+                        cat.status === "Active"
+                          ? "bg-[color-mix(in_srgb,var(--theme-success)_14%,white)] text-[var(--theme-success)]"
+                          : "bg-muted text-muted-foreground",
+                      )}
+                    >
+                      {cat.status}
+                    </span>
+                  </td>
+                  <td className="px-5 py-3">
+                    <div className="flex justify-end gap-1.5">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon-sm"
+                        className="rounded-md"
+                        onClick={() => toast.message("Edit coming soon")}
+                        aria-label={`Edit ${cat.name}`}
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon-sm"
+                        className="rounded-md text-destructive hover:bg-destructive/10"
+                        onClick={() => handleDelete(cat.id)}
+                        aria-label={`Delete ${cat.name}`}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </DashboardCard>
+    </div>
+  );
+}

@@ -65,12 +65,12 @@ export function StripeSettingsForm() {
   }
 
   if (!settings) {
-    return <p className="text-sm text-slate-500">Loading Stripe settings...</p>;
+    return <p className="text-sm text-muted-foreground">Loading Stripe settings...</p>;
   }
 
   return (
     <div className="space-y-6">
-      <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
+      <p className="rounded-lg border border-border bg-muted px-3 py-2 text-sm text-muted-foreground">
         {SOURCE_LABELS[settings.source]}
       </p>
 
@@ -85,7 +85,7 @@ export function StripeSettingsForm() {
               placeholder="pk_test_..."
               className="font-mono text-sm"
             />
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-muted-foreground">
               From Stripe Dashboard → Developers → API keys
             </p>
           </div>
@@ -114,7 +114,7 @@ export function StripeSettingsForm() {
               }
               className="font-mono text-sm"
             />
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-muted-foreground">
               Optional for now. Card payments verify on the server after checkout.
             </p>
           </div>
@@ -137,7 +137,7 @@ export function StripeSettingsForm() {
         </Button>
       </form>
 
-      <div className="rounded-lg border border-slate-200 bg-slate-50/80 p-4 text-sm text-slate-600">
+      <div className="rounded-lg border border-border bg-muted/80 p-4 text-sm text-muted-foreground">
         <div className="flex items-start gap-2">
           <CreditCard className="mt-0.5 h-4 w-4 shrink-0 text-[var(--theme-primary)]" />
           <p>

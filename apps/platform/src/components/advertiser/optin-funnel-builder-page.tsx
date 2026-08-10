@@ -220,11 +220,11 @@ export function OptinFunnelBuilderPage({ funnelId }: { funnelId: string }) {
 
   if (loadError) {
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-3 px-6 text-center text-sm text-slate-600">
+      <div className="flex h-full flex-col items-center justify-center gap-3 px-6 text-center text-sm text-muted-foreground">
         <p>{loadError}</p>
         <button
           type="button"
-          className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-slate-700 hover:bg-slate-50"
+          className="rounded-lg border border-border bg-card px-4 py-2 text-foreground hover:bg-muted"
           onClick={() => window.location.reload()}
         >
           Reload
@@ -235,7 +235,7 @@ export function OptinFunnelBuilderPage({ funnelId }: { funnelId: string }) {
 
   if (!funnel || !optinCraft || !thankYouCraft) {
     return (
-      <div className="flex h-full items-center justify-center gap-2 text-sm text-slate-500">
+      <div className="flex h-full items-center justify-center gap-2 text-sm text-muted-foreground">
         <div className="h-5 w-5 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
         Loading funnel builder...
       </div>

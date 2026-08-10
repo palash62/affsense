@@ -96,9 +96,9 @@ export function BlocklistManager() {
       </form>
 
       {loading ? (
-        <p className="text-sm text-slate-500">Loading blocklist…</p>
+        <p className="text-sm text-muted-foreground">Loading blocklist…</p>
       ) : rows.length === 0 ? (
-        <p className="text-sm text-slate-500">No blocked IPs yet.</p>
+        <p className="text-sm text-muted-foreground">No blocked IPs yet.</p>
       ) : (
         <Table>
           <TableHeader>
@@ -113,8 +113,8 @@ export function BlocklistManager() {
             {rows.map((row) => (
               <TableRow key={row.id}>
                 <TableCell className="font-mono text-sm">{row.ip}</TableCell>
-                <TableCell className="text-sm text-slate-600">{row.reason ?? "—"}</TableCell>
-                <TableCell className="text-sm text-slate-500">
+                <TableCell className="text-sm text-muted-foreground">{row.reason ?? "—"}</TableCell>
+                <TableCell className="text-sm text-muted-foreground">
                   {formatUserDateTime(row.createdAt, session?.user?.timezone, "MMM d, yyyy")}
                 </TableCell>
                 <TableCell>

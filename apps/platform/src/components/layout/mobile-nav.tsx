@@ -5,9 +5,11 @@ import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import type { UserRole } from "@prisma/client";
 import { PlatformLogo } from "@/components/brand/platform-logo";
+import { isAdminPortalRole } from "@/lib/admin-portal";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { SidebarNavList, SidebarStatusCard } from "./sidebar-nav-list";
 import { useNavigationPending } from "./navigation-pending";
+import { cn } from "@/lib/utils";
 
 export function MobileNav({
   role,
@@ -26,6 +28,7 @@ export function MobileNav({
 }) {
   const pathname = usePathname();
   const { startNavigation } = useNavigationPending();
+  const affsenseChrome = isAdminPortalRole(role);
 
   useEffect(() => {
     onOpenChange(false);
@@ -38,17 +41,31 @@ export function MobileNav({
       <SheetContent
         side="left"
         showCloseButton
-        className="w-[min(100%,20rem)] gap-0 border-0 p-0 text-white [&_[data-slot=sheet-close]]:text-white sm:max-w-xs"
-        style={{
-          backgroundImage:
-            "linear-gradient(to bottom, var(--theme-sidebar-from), var(--theme-sidebar-to))",
-        }}
+        className={cn(
+          "w-[min(100%,20rem)] gap-0 border-0 p-0 text-white [&_[data-slot=sheet-close]]:text-white sm:max-w-xs",
+          affsenseChrome && "bg-[var(--theme-sidebar-from)]",
+        )}
+        style={
+          affsenseChrome
+            ? undefined
+            : {
+                backgroundImage:
+                  "linear-gradient(to bottom, var(--theme-sidebar-from), var(--theme-sidebar-to))",
+              }
+        }
       >
         <SheetTitle className="sr-only">Navigation menu</SheetTitle>
         <div className="flex h-full min-h-0 flex-col">
-          <div className="flex h-16 shrink-0 items-center border-b border-white/10 px-4 pr-12">
+          <div
+            className={cn(
+              "flex shrink-0 items-center px-4 pr-12",
+              affsenseChrome
+                ? "h-18 border-b border-white/5"
+                : "h-16 border-b border-white/10",
+            )}
+          >
             <Link
-              href="/"
+              href={affsenseChrome ? "/admin" : "/"}
               prefetch={true}
               onClick={() => {
                 startNavigation();
@@ -56,7 +73,7 @@ export function MobileNav({
               }}
               className="flex items-center"
             >
-              <PlatformLogo variant="sidebar" />
+              <PlatformLogo variant="sidebar" adminPanel={affsenseChrome} />
             </Link>
           </div>
           <SidebarNavList

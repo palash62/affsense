@@ -38,7 +38,7 @@ export default async function AdvertiserSettingsPage() {
       />
 
       <div
-        className="flex gap-3 rounded-xl border px-4 py-3 text-sm text-slate-700"
+        className="flex gap-3 rounded-xl border px-4 py-3 text-sm text-foreground"
         style={{
           borderColor: "color-mix(in srgb, var(--theme-primary) 20%, transparent)",
           background: "var(--theme-primary-soft)",
@@ -63,8 +63,8 @@ export default async function AdvertiserSettingsPage() {
               </AvatarFallback>
             </Avatar>
             <div>
-              <h2 className="text-xl font-bold text-slate-900">{user.name}</h2>
-              <p className="text-sm text-slate-500">{user.email}</p>
+              <h2 className="text-xl font-bold text-foreground">{user.name}</h2>
+              <p className="text-sm text-muted-foreground">{user.email}</p>
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 <UserStatusBadge status={user.status} />
                 <Badge variant="outline" className="border-indigo-200 bg-indigo-50 text-indigo-700 capitalize">
@@ -74,13 +74,13 @@ export default async function AdvertiserSettingsPage() {
             </div>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
-            <div className="rounded-xl border border-slate-200 bg-slate-50/60 px-4 py-3">
-              <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Company</p>
-              <p className="mt-1 text-sm font-semibold text-slate-900">{company || "—"}</p>
+            <div className="rounded-xl border border-border bg-muted/60 px-4 py-3">
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Company</p>
+              <p className="mt-1 text-sm font-semibold text-foreground">{company || "—"}</p>
             </div>
-            <div className="rounded-xl border border-slate-200 bg-slate-50/60 px-4 py-3">
-              <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Member since</p>
-              <p className="mt-1 text-sm font-semibold text-slate-900">{memberSince}</p>
+            <div className="rounded-xl border border-border bg-muted/60 px-4 py-3">
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Member since</p>
+              <p className="mt-1 text-sm font-semibold text-foreground">{memberSince}</p>
             </div>
           </div>
         </div>
@@ -107,8 +107,8 @@ export default async function AdvertiserSettingsPage() {
               <Plug className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="font-semibold text-slate-900">Autoresponder integrations</h3>
-              <p className="text-sm text-slate-500">
+              <h3 className="font-semibold text-foreground">Autoresponder integrations</h3>
+              <p className="text-sm text-muted-foreground">
                 Send campaign leads to Mailchimp, AWeber, GetResponse, or a custom webhook.
               </p>
             </div>

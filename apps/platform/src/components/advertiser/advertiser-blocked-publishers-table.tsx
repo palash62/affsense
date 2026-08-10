@@ -47,7 +47,7 @@ export function AdvertiserBlockedPublishersTable({
 
   if (blockedPublishers.length === 0) {
     return (
-      <p className="px-6 py-10 text-center text-sm text-slate-500">
+      <p className="px-6 py-10 text-center text-sm text-muted-foreground">
         No blocked publishers. Block a publisher from the report above.
       </p>
     );
@@ -61,21 +61,21 @@ export function AdvertiserBlockedPublishersTable({
             className="border-none hover:bg-transparent"
             style={{ background: "var(--theme-primary-soft)" }}
           >
-            <TableHead className="h-11 px-6 text-slate-600">Publisher ID</TableHead>
-            <TableHead className="h-11 px-4 text-slate-600">Blocked on</TableHead>
-            <TableHead className="h-11 px-6 text-right text-slate-600">Action</TableHead>
+            <TableHead className="h-11 px-6 text-muted-foreground">Publisher ID</TableHead>
+            <TableHead className="h-11 px-4 text-muted-foreground">Blocked on</TableHead>
+            <TableHead className="h-11 px-6 text-right text-muted-foreground">Action</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {blockedPublishers.map((block) => (
             <TableRow
               key={block.publisherId}
-              className="border-slate-100 transition-colors hover:bg-blue-50/40"
+              className="border-border transition-colors hover:bg-blue-50/40"
             >
-              <TableCell className="px-6 py-4 font-mono text-sm font-medium text-slate-800">
+              <TableCell className="px-6 py-4 font-mono text-sm font-medium text-foreground">
                 {shortPublisherId(block.publisherId)}
               </TableCell>
-              <TableCell className="px-4 py-4 text-sm text-slate-600">
+              <TableCell className="px-4 py-4 text-sm text-muted-foreground">
                 {formatUserDateTime(block.createdAt, timezone, "MMM d, yyyy HH:mm")}
               </TableCell>
               <TableCell className="px-6 py-4 text-right">

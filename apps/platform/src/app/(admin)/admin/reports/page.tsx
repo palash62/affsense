@@ -164,8 +164,8 @@ export default async function AdminReportsPage({ searchParams }: PageProps) {
       <div className="premium-card p-5">
         <div className="mb-4 flex items-start justify-between gap-3">
           <div>
-            <h3 className="text-base font-semibold text-slate-900">Fraud snapshot</h3>
-            <p className="mt-0.5 text-sm text-slate-500">
+            <h3 className="text-base font-semibold text-foreground">Fraud snapshot</h3>
+            <p className="mt-0.5 text-sm text-muted-foreground">
               {fromStr} to {toStr}
             </p>
           </div>
@@ -192,11 +192,11 @@ export default async function AdminReportsPage({ searchParams }: PageProps) {
         icon={BarChart3}
         gradient="leads"
       >
-        <Suspense fallback={<div className="px-6 py-4 text-sm text-slate-500">Loading filters...</div>}>
+        <Suspense fallback={<div className="px-6 py-4 text-sm text-muted-foreground">Loading filters...</div>}>
           <AdminReportsFilters />
         </Suspense>
 
-        <div className="flex justify-end border-b border-slate-100 px-4 py-3 sm:px-6">
+        <div className="flex justify-end border-b border-border px-4 py-3 sm:px-6">
           <AdminEntityExportButton
             rows={rows}
             mode={mode}
@@ -231,9 +231,9 @@ export default async function AdminReportsPage({ searchParams }: PageProps) {
 
 function FraudStat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-slate-100 bg-slate-50/80 px-4 py-3">
-      <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</p>
-      <p className="mt-1 text-xl font-bold text-slate-900">{value}</p>
+    <div className="rounded-xl border border-border bg-muted/80 px-4 py-3">
+      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
+      <p className="mt-1 text-xl font-bold text-foreground">{value}</p>
     </div>
   );
 }

@@ -17,11 +17,11 @@ import {
 import { LeadExportButton } from "@/components/leads/lead-export-button";
 
 const SELECT_TRIGGER_CLASS =
-  "h-8 !w-full min-w-0 bg-white text-xs *:data-[slot=select-value]:line-clamp-none";
+  "h-8 !w-full min-w-0 bg-card text-xs *:data-[slot=select-value]:line-clamp-none";
 
 const SELECT_MENU_CLASS = "z-200 !w-[22rem] max-w-[calc(100vw-2rem)]";
 
-const LABEL_CLASS = "text-xs font-medium text-slate-500";
+const LABEL_CLASS = "text-xs font-medium text-muted-foreground";
 
 type CampaignOption = { id: string; name: string };
 type AdvertiserOption = { id: string; name: string };
@@ -164,7 +164,7 @@ export function AdminLeadDetailsFilters({
     (searchParams.has("page") && searchParams.get("page") !== "1");
 
   return (
-    <div className="border-b border-slate-100 bg-slate-50/80 px-4 py-2.5">
+    <div className="border-b border-border bg-muted/80 px-4 py-2.5">
       <div className="flex w-full flex-wrap items-end gap-2">
         <div className="min-w-[180px] flex-1 space-y-1">
           <label className={LABEL_CLASS}>Advertiser</label>
@@ -268,7 +268,7 @@ export function AdminLeadDetailsFilters({
               type="date"
               value={dateFrom}
               onChange={(e) => setDateFrom(e.target.value)}
-              className="h-8 w-[132px] rounded-md border-slate-200 bg-white text-xs"
+              className="h-8 w-[132px] rounded-md border-border bg-card text-xs"
             />
           </div>
           <div className="space-y-1">
@@ -277,7 +277,7 @@ export function AdminLeadDetailsFilters({
               type="date"
               value={dateTo}
               onChange={(e) => setDateTo(e.target.value)}
-              className="h-8 w-[132px] rounded-md border-slate-200 bg-white text-xs"
+              className="h-8 w-[132px] rounded-md border-border bg-card text-xs"
             />
           </div>
         </div>
@@ -297,7 +297,7 @@ export function AdminLeadDetailsFilters({
               variant="outline"
               onClick={clearFilters}
               disabled={isPending}
-              className="h-8 gap-1 rounded-md border-slate-200 bg-white px-2.5 text-xs"
+              className="h-8 gap-1 rounded-md border-border bg-card px-2.5 text-xs"
             >
               <FilterX className="h-3 w-3" />
               Clear

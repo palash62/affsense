@@ -34,11 +34,13 @@ export function NavPrefetch({
     const prefetchNav = () => {
       if (cancelled) return;
       const [cpa, autoresponder, menus] = accessKey.split(":");
-      for (const item of getNavForRole(role, {
+      for (const entry of getNavForRole(role, {
         canAccessCpaOffers: cpa === "1",
         canAccessAutoresponder: autoresponder === "1",
         staffMenuAccess: menus ? menus.split(",").filter(Boolean) : [],
       })) {
+        if (entry.kind !== "item") continue;
+        const item = entry.item;
         safePrefetch(router, item.href);
         for (const child of item.children ?? []) {
           safePrefetch(router, child.href);

@@ -109,9 +109,9 @@ export function OptinFunnelsGallery({
 
           <div>
 
-            <h2 className="text-lg font-semibold text-slate-900">Your Optin Funnels</h2>
+            <h2 className="text-lg font-semibold text-foreground">Your Optin Funnels</h2>
 
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-sm text-muted-foreground">
 
               Edit optin and thank-you pages in the drag-and-drop builder.
 
@@ -133,11 +133,11 @@ export function OptinFunnelsGallery({
 
         {funnels.length === 0 ? (
 
-          <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 py-14 text-center">
+          <div className="rounded-2xl border border-dashed border-border bg-muted/50 py-14 text-center">
 
-            <p className="text-sm text-slate-500">No funnels yet.</p>
+            <p className="text-sm text-muted-foreground">No funnels yet.</p>
 
-            <p className="mt-1 text-sm text-slate-400">Start from a template below or create a blank funnel.</p>
+            <p className="mt-1 text-sm text-muted-foreground">Start from a template below or create a blank funnel.</p>
 
           </div>
 
@@ -171,9 +171,9 @@ export function OptinFunnelsGallery({
 
         <div className="mb-5">
 
-          <h2 className="text-lg font-semibold text-slate-900">Template Funnels</h2>
+          <h2 className="text-lg font-semibold text-foreground">Template Funnels</h2>
 
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-muted-foreground">
 
             Pick a high-converting layout, then customize it in the page builder. Add an optional thank-you page
 

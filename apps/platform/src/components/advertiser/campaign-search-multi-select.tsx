@@ -54,12 +54,12 @@ export function CampaignSearchMultiSelect({
   return (
     <div className="space-y-2">
       <Label>{label}</Label>
-      {hint && <p className="text-xs text-slate-500">{hint}</p>}
+      {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
 
       <div className="relative">
         <div
           className={cn(
-            "flex min-h-10 flex-wrap items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2 py-1.5",
+            "flex min-h-10 flex-wrap items-center gap-1.5 rounded-lg border border-border bg-card px-2 py-1.5",
             open && !showAsChips && "ring-2 ring-[var(--theme-primary)]/15",
           )}
         >
@@ -67,7 +67,7 @@ export function CampaignSearchMultiSelect({
             <Badge
               key={value}
               variant="outline"
-              className="gap-1 border-slate-200 bg-slate-50 pr-1 text-xs font-normal text-slate-700"
+              className="gap-1 border-border bg-muted pr-1 text-xs font-normal text-foreground"
             >
               {value}
               <button
@@ -91,23 +91,23 @@ export function CampaignSearchMultiSelect({
               onFocus={() => setOpen(true)}
               onBlur={() => setTimeout(() => setOpen(false), 150)}
               placeholder={selected.length === 0 ? searchPlaceholder : ""}
-              className="min-w-[140px] flex-1 border-0 bg-transparent px-1 py-1 text-sm outline-none placeholder:text-slate-400"
+              className="min-w-[140px] flex-1 border-0 bg-transparent px-1 py-1 text-sm outline-none placeholder:text-muted-foreground"
             />
           )}
           {showAsChips && selected.length === 0 && (
-            <span className="px-1 text-sm text-slate-400">{searchPlaceholder}</span>
+            <span className="px-1 text-sm text-muted-foreground">{searchPlaceholder}</span>
           )}
         </div>
 
         {!showAsChips && open && suggestions.length > 0 && (
-          <div className="absolute z-20 mt-1 max-h-48 w-full overflow-y-auto rounded-lg border border-slate-200 bg-white py-1 shadow-lg">
+          <div className="absolute z-20 mt-1 max-h-48 w-full overflow-y-auto rounded-lg border border-border bg-card py-1 shadow-lg">
             {suggestions.map((value) => (
               <button
                 key={value}
                 type="button"
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => addValue(value)}
-                className="flex w-full px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
+                className="flex w-full px-3 py-2 text-left text-sm text-foreground hover:bg-muted"
               >
                 {value}
               </button>
@@ -129,7 +129,7 @@ export function CampaignSearchMultiSelect({
                   "rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors",
                   active
                     ? "border-[var(--theme-primary)] bg-[var(--theme-primary-soft)] text-[var(--theme-primary)]"
-                    : "border-slate-200 text-slate-600 hover:bg-slate-50",
+                    : "border-border text-muted-foreground hover:bg-muted",
                 )}
               >
                 {option}

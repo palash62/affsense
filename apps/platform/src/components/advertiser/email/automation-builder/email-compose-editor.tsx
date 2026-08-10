@@ -66,14 +66,14 @@ const FONT_FAMILIES = [
 const FONT_SIZES = ["12px", "14px", "16px", "18px", "20px", "24px", "28px", "32px"] as const;
 
 const TEXT_COLORS = [
-  "#0f172a",
+  "var(--theme-sidebar-from)",
   "#334155",
-  "#64748b",
+  "var(--muted-foreground)",
   "#dc2626",
   "#ea580c",
   "#ca8a04",
   "#16a34a",
-  "#2563eb",
+  "var(--theme-primary)",
   "#7c3aed",
   "#db2777",
   "#ffffff",
@@ -86,7 +86,7 @@ const HIGHLIGHT_COLORS = [
   "#fecaca",
   "#e9d5ff",
   "#fed7aa",
-  "#e2e8f0",
+  "var(--border)",
 ] as const;
 
 const FontFamily = Extension.create({
@@ -162,8 +162,8 @@ function ToolbarBtn({
       onMouseDown={(e) => e.preventDefault()}
       onClick={onClick}
       className={cn(
-        "flex size-7 items-center justify-center rounded-md text-slate-600 transition hover:bg-slate-100 disabled:opacity-40",
-        active && "bg-slate-200 text-slate-900",
+        "flex size-7 items-center justify-center rounded-md text-muted-foreground transition hover:bg-muted disabled:opacity-40",
+        active && "bg-slate-200 text-foreground",
       )}
     >
       {children}
@@ -191,7 +191,7 @@ function ToolbarSelect({
       onMouseDown={(e) => e.stopPropagation()}
       onChange={(e) => onChange(e.target.value)}
       className={cn(
-        "h-7 max-w-[110px] rounded-md border border-slate-200 bg-white px-1.5 text-[11px] text-slate-700 outline-none focus:border-slate-400",
+        "h-7 max-w-[110px] rounded-md border border-border bg-card px-1.5 text-[11px] text-foreground outline-none focus:border-slate-400",
         className,
       )}
     >
@@ -247,10 +247,10 @@ function ComposeToolbar({ editor }: { editor: Editor }) {
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-0.5 border-b border-slate-200 bg-slate-50/80 px-1.5 py-1.5">
+    <div className="flex flex-wrap items-center gap-0.5 border-b border-border bg-muted/80 px-1.5 py-1.5">
       <DropdownMenu>
         <DropdownMenuTrigger
-          className="flex size-7 items-center justify-center rounded-md text-slate-600 transition hover:bg-slate-100"
+          className="flex size-7 items-center justify-center rounded-md text-muted-foreground transition hover:bg-muted"
           title="Insert merge tag"
         >
           <Tags className="size-3.5" />
@@ -359,7 +359,7 @@ function ComposeToolbar({ editor }: { editor: Editor }) {
 
       <DropdownMenu>
         <DropdownMenuTrigger
-          className="flex size-7 items-center justify-center rounded-md text-slate-600 transition hover:bg-slate-100"
+          className="flex size-7 items-center justify-center rounded-md text-muted-foreground transition hover:bg-muted"
           title="Text color"
         >
           <span className="relative text-[11px] font-bold">
@@ -369,7 +369,7 @@ function ComposeToolbar({ editor }: { editor: Editor }) {
               style={{
                 backgroundColor:
                   (editor.getAttributes("textStyle").color as string | undefined) ||
-                  "#0f172a",
+                  "var(--theme-sidebar-from)",
               }}
             />
           </span>
@@ -382,7 +382,7 @@ function ComposeToolbar({ editor }: { editor: Editor }) {
               onClick={() => chain().setColor(c).run()}
             >
               <span
-                className="size-4 rounded-full border border-slate-200"
+                className="size-4 rounded-full border border-border"
                 style={{ backgroundColor: c }}
               />
             </DropdownMenuItem>
@@ -398,7 +398,7 @@ function ComposeToolbar({ editor }: { editor: Editor }) {
 
       <DropdownMenu>
         <DropdownMenuTrigger
-          className="flex size-7 items-center justify-center rounded-md text-slate-600 transition hover:bg-slate-100"
+          className="flex size-7 items-center justify-center rounded-md text-muted-foreground transition hover:bg-muted"
           title="Highlight"
         >
           <Highlighter className="size-3.5" />
@@ -411,7 +411,7 @@ function ComposeToolbar({ editor }: { editor: Editor }) {
               onClick={() => chain().toggleHighlight({ color: c }).run()}
             >
               <span
-                className="size-4 rounded-full border border-slate-200"
+                className="size-4 rounded-full border border-border"
                 style={{ backgroundColor: c }}
               />
             </DropdownMenuItem>
@@ -578,17 +578,17 @@ export function EmailComposeEditor({ value, onChange, className }: Props) {
 
   if (!editor) {
     return (
-      <div className={cn("rounded-lg border border-slate-200 bg-white", className)}>
-        <div className="h-[220px] animate-pulse bg-slate-50" />
+      <div className={cn("rounded-lg border border-border bg-card", className)}>
+        <div className="h-[220px] animate-pulse bg-muted" />
       </div>
     );
   }
 
   return (
-    <div className={cn("overflow-hidden rounded-lg border border-slate-200 bg-white", className)}>
+    <div className={cn("overflow-hidden rounded-lg border border-border bg-card", className)}>
       <ComposeToolbar editor={editor} />
       <EditorContent editor={editor} />
-      <div className="flex items-center justify-end border-t border-slate-100 px-3 py-1.5 text-[11px] text-slate-500">
+      <div className="flex items-center justify-end border-t border-border px-3 py-1.5 text-[11px] text-muted-foreground">
         {counts.characters} characters · {counts.words} words
       </div>
     </div>

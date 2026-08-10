@@ -77,25 +77,25 @@ export default async function AdminReferralsPage({ searchParams }: PageProps) {
           <AdminReferralsFilters />
         </Suspense>
 
-        <div className="overflow-x-auto rounded-xl border border-slate-200">
+        <div className="overflow-x-auto rounded-xl border border-border">
           <Table>
             <TableHeader>
               <TableRow
                 className="border-none hover:bg-transparent"
                 style={{ background: "var(--theme-primary-soft)" }}
               >
-                <TableHead className="h-11 px-6 text-slate-600">Referrer</TableHead>
-                <TableHead className="h-11 px-4 text-slate-600">Referred</TableHead>
-                <TableHead className="h-11 px-4 text-slate-600">Joined</TableHead>
-                <TableHead className="h-11 px-4 text-slate-600">Status</TableHead>
-                <TableHead className="h-11 px-4 text-right text-slate-600">Ad Spend</TableHead>
-                <TableHead className="h-11 px-4 text-right text-slate-600">Commission</TableHead>
+                <TableHead className="h-11 px-6 text-muted-foreground">Referrer</TableHead>
+                <TableHead className="h-11 px-4 text-muted-foreground">Referred</TableHead>
+                <TableHead className="h-11 px-4 text-muted-foreground">Joined</TableHead>
+                <TableHead className="h-11 px-4 text-muted-foreground">Status</TableHead>
+                <TableHead className="h-11 px-4 text-right text-muted-foreground">Ad Spend</TableHead>
+                <TableHead className="h-11 px-4 text-right text-muted-foreground">Commission</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {report.rows.length === 0 ? (
                 <TableRow className="hover:bg-transparent">
-                  <TableCell colSpan={6} className="px-6 py-16 text-center text-slate-500">
+                  <TableCell colSpan={6} className="px-6 py-16 text-center text-muted-foreground">
                     No referral relationships found.
                   </TableCell>
                 </TableRow>
@@ -103,19 +103,19 @@ export default async function AdminReferralsPage({ searchParams }: PageProps) {
                 report.rows.map((row) => (
                   <TableRow
                     key={row.referredId}
-                    className="border-slate-100 transition-colors hover:bg-blue-50/40"
+                    className="border-border transition-colors hover:bg-blue-50/40"
                   >
                     <TableCell className="px-6 py-4">
                       <div>
                         <Link
                           href={`/admin/advertisers/${row.referrerId}`}
-                          className="font-medium text-slate-900 hover:underline"
+                          className="font-medium text-foreground hover:underline"
                         >
                           {row.referrerName}
                         </Link>
-                        <p className="text-xs text-slate-500">{row.referrerEmail}</p>
+                        <p className="text-xs text-muted-foreground">{row.referrerEmail}</p>
                         {row.referrerCode && (
-                          <p className="mt-1 text-xs font-medium text-slate-400">
+                          <p className="mt-1 text-xs font-medium text-muted-foreground">
                             Code: {row.referrerCode}
                           </p>
                         )}
@@ -125,14 +125,14 @@ export default async function AdminReferralsPage({ searchParams }: PageProps) {
                       <div>
                         <Link
                           href={`/admin/advertisers/${row.referredId}`}
-                          className="font-medium text-slate-900 hover:underline"
+                          className="font-medium text-foreground hover:underline"
                         >
                           {row.referredName}
                         </Link>
-                        <p className="text-xs text-slate-500">{row.referredEmail}</p>
+                        <p className="text-xs text-muted-foreground">{row.referredEmail}</p>
                       </div>
                     </TableCell>
-                    <TableCell className="px-4 py-4 text-sm text-slate-600">
+                    <TableCell className="px-4 py-4 text-sm text-muted-foreground">
                       {formatUserDateTime(row.joinedAt, tz, "MMM d, yyyy")}
                     </TableCell>
                     <TableCell className="px-4 py-4">
@@ -140,7 +140,7 @@ export default async function AdminReferralsPage({ searchParams }: PageProps) {
                         status={row.referredStatus as "ACTIVE" | "PENDING" | "SUSPENDED"}
                       />
                     </TableCell>
-                    <TableCell className="px-4 py-4 text-right text-sm font-medium tabular-nums text-slate-700">
+                    <TableCell className="px-4 py-4 text-right text-sm font-medium tabular-nums text-foreground">
                       {formatCurrency(row.adSpend)}
                     </TableCell>
                     <TableCell className="px-4 py-4 text-right text-sm font-semibold tabular-nums text-emerald-600">
@@ -154,7 +154,7 @@ export default async function AdminReferralsPage({ searchParams }: PageProps) {
         </div>
 
         {params.q && report.rows.length > 0 && (
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-muted-foreground">
             Filtered totals: {formatCurrency(report.stats.filteredAdSpend)} ad spend,{" "}
             {formatCurrency(report.stats.filteredCommission)} commission
           </p>

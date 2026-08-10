@@ -6,11 +6,11 @@ import { Check, Copy, Loader2, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ADMIN_NAV } from "@/components/layout/nav-config";
+import { ADMIN_LEGACY_NAV } from "@/components/layout/nav-config";
 import { ASSIGNABLE_STAFF_MENU_HREFS } from "@/lib/admin-portal";
 import { cn } from "@/lib/utils";
 
-const MENU_OPTIONS = ADMIN_NAV.filter((item) =>
+const MENU_OPTIONS = ADMIN_LEGACY_NAV.filter((item) =>
   (ASSIGNABLE_STAFF_MENU_HREFS as readonly string[]).includes(item.href),
 ).map((item) => ({ href: item.href, label: item.label }));
 
@@ -102,12 +102,12 @@ export function AdminCreateStaffUserForm({
         </p>
       ) : null}
       {tempPassword ? (
-        <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+        <div className="rounded-lg border border-border bg-muted px-3 py-2">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Temporary password
           </p>
           <div className="mt-2 flex flex-wrap items-center gap-2">
-            <span className="rounded-md bg-white px-3 py-1 text-sm font-semibold text-slate-900 shadow-sm">
+            <span className="rounded-md bg-card px-3 py-1 text-sm font-semibold text-foreground shadow-sm">
               {tempPassword}
             </span>
             <Button type="button" variant="outline" size="sm" onClick={copyPassword} className="gap-1">
@@ -183,15 +183,15 @@ export function AdminCreateStaffUserForm({
             {allSelected ? "Clear all" : "Select all"}
           </Button>
         </div>
-        <div className="grid max-h-56 gap-2 overflow-y-auto rounded-xl border border-slate-200 bg-slate-50/60 p-3 sm:grid-cols-2">
+        <div className="grid max-h-56 gap-2 overflow-y-auto rounded-xl border border-border bg-muted/60 p-3 sm:grid-cols-2">
           {MENU_OPTIONS.map((opt) => {
             const checked = menuAccess.includes(opt.href);
             return (
               <label
                 key={opt.href}
                 className={cn(
-                  "flex cursor-pointer items-center gap-2 rounded-lg border bg-white px-3 py-2 text-sm",
-                  checked ? "border-emerald-300" : "border-slate-200",
+                  "flex cursor-pointer items-center gap-2 rounded-lg border bg-card px-3 py-2 text-sm",
+                  checked ? "border-emerald-300" : "border-border",
                 )}
               >
                 <input
@@ -205,7 +205,7 @@ export function AdminCreateStaffUserForm({
             );
           })}
         </div>
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-muted-foreground">
           Users menu is admin-only and cannot be granted. Managers sign in with the same login page.
         </p>
       </div>

@@ -12,7 +12,7 @@ function Card({
       data-slot="card"
       data-size={size}
       className={cn(
-        "group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-[18px] border border-slate-200/80 bg-white py-(--card-spacing) text-sm text-card-foreground shadow-sm [--card-spacing:--spacing(4)] has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:[--card-spacing:--spacing(3)] data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl transition-shadow duration-300 hover:shadow-md",
+        "group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-[var(--radius-card,0.875rem)] border border-border bg-card py-(--card-spacing) text-sm text-card-foreground shadow-[var(--shadow-card)] [--card-spacing:--spacing(4)] has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:[--card-spacing:--spacing(3)] data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-[var(--radius-card,0.875rem)] *:[img:last-child]:rounded-b-[var(--radius-card,0.875rem)] transition-shadow duration-300 hover:shadow-[var(--shadow-card-hover)]",
         className
       )}
       {...props}

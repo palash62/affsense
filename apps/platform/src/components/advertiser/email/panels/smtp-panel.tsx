@@ -66,19 +66,19 @@ export function SmtpPanel() {
       <PageSection title="Provider Status" icon={Server} gradient="leads">
         <div className="space-y-4 px-6 pb-6">
           <div className="flex items-center gap-3">
-            <span className="text-sm font-medium text-slate-700">Transactional Provider:</span>
+            <span className="text-sm font-medium text-foreground">Transactional Provider:</span>
             <Badge variant={info?.configured ? "default" : "destructive"}>
               {info ? PROVIDER_LABELS[info.provider] ?? info.provider : "Loading..."}
             </Badge>
             {info?.configured && <CheckCircle className="h-4 w-4 text-green-500" />}
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-sm font-medium text-slate-700">Marketing Provider:</span>
+            <span className="text-sm font-medium text-foreground">Marketing Provider:</span>
             <Badge variant="default">
               {info ? PROVIDER_LABELS[info.marketingProvider] ?? info.marketingProvider : "Loading..."}
             </Badge>
           </div>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-muted-foreground">
             {info?.provider === "mailgun"
               ? "Email delivery is handled via Mailgun API with SMTP fallback. Marketing domains can be verified on the Domain tab when using Mailgun."
               : info?.provider === "smtp"

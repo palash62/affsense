@@ -109,7 +109,7 @@ export function AdminSettingsShell({ initialTimezone }: { initialTimezone: strin
       <nav aria-label="Settings sections" className="shrink-0 lg:sticky lg:top-6 lg:w-56">
         <div className="mb-2 flex items-center gap-2 px-1 lg:mb-3">
           <Settings className="h-4 w-4 text-[var(--theme-primary)]" />
-          <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             Sections
           </span>
         </div>
@@ -125,7 +125,7 @@ export function AdminSettingsShell({ initialTimezone }: { initialTimezone: strin
                   "flex shrink-0 items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                   activeSection
                     ? "bg-[var(--theme-primary-soft)] text-[var(--theme-primary)]"
-                    : "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
                 )}
               >
                 <Icon className="h-4 w-4 shrink-0" />
@@ -154,7 +154,7 @@ export function AdminSettingsShell({ initialTimezone }: { initialTimezone: strin
             {activeId === "email-marketing" && (
               <div className="space-y-10">
                 <EmailMarketingConfigForm />
-                <div className="border-t border-slate-100 pt-8">
+                <div className="border-t border-border pt-8">
                   <MailgunMarketingInfo />
                 </div>
               </div>

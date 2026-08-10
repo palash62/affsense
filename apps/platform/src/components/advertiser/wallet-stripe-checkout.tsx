@@ -73,8 +73,8 @@ function StripeCheckoutForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 rounded-xl border border-slate-200 bg-white p-4">
-      <p className="text-sm text-slate-600">
+    <form onSubmit={handleSubmit} className="space-y-4 rounded-xl border border-border bg-card p-4">
+      <p className="text-sm text-muted-foreground">
         Pay <strong>${amount.toFixed(2)}</strong> securely with your credit or debit card.
       </p>
       <PaymentElement />

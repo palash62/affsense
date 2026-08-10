@@ -100,7 +100,7 @@ export function NeutralStatCard({
   return (
     <div
       className={cn(
-        "group rounded-[18px] border border-slate-200/80 border-t-[3px] bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md",
+        "group rounded-[18px] border border-border border-t-[3px] bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md",
         styles.border,
         className,
       )}
@@ -127,8 +127,8 @@ export function NeutralStatCard({
         )}
       </div>
       <div className="mt-4">
-        <p className="text-sm font-medium text-slate-500">{label}</p>
-        <p className="mt-1 text-2xl font-bold tracking-tight text-slate-900">{value}</p>
+        <p className="text-sm font-medium text-muted-foreground">{label}</p>
+        <p className="mt-1 text-2xl font-bold tracking-tight text-foreground">{value}</p>
       </div>
     </div>
   );

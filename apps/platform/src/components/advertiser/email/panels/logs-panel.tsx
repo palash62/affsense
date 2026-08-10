@@ -89,12 +89,12 @@ function LogsContent() {
   return (
     <PageSection title={`Delivery History (${total})`} icon={ScrollText} gradient="leads">
       {provider === "mailgun" ? (
-        <p className="border-b border-slate-100 px-6 py-3 text-sm text-slate-600">
+        <p className="border-b border-border px-6 py-3 text-sm text-muted-foreground">
           Delivery, bounce, and complaint status update from Mailgun webhooks. Opens and clicks use
           first-party tracking pixels.
         </p>
       ) : provider ? (
-        <p className="border-b border-slate-100 px-6 py-3 text-sm text-amber-800">
+        <p className="border-b border-border px-6 py-3 text-sm text-amber-800">
           Mailgun is required for delivery webhooks. Current provider: <strong>{provider}</strong>.
         </p>
       ) : null}
@@ -113,21 +113,21 @@ function LogsContent() {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={6} className="h-32 text-center text-slate-500">
+                <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
                   Loading...
                 </TableCell>
               </TableRow>
             ) : rows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="h-32 text-center text-slate-500">
+                <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
                   No email sends found
                 </TableCell>
               </TableRow>
             ) : (
               rows.map((row) => (
-                <TableRow key={row.id} className="transition-colors hover:bg-slate-50">
+                <TableRow key={row.id} className="transition-colors hover:bg-muted">
                   <TableCell className="font-medium">{row.contact.email}</TableCell>
-                  <TableCell className="text-slate-600">{row.template.subject}</TableCell>
+                  <TableCell className="text-muted-foreground">{row.template.subject}</TableCell>
                   <TableCell>
                     <Badge variant={STATUS_VARIANT[row.status] ?? "outline"}>
                       {row.status.toLowerCase()}
@@ -135,7 +135,7 @@ function LogsContent() {
                   </TableCell>
                   <TableCell>{row.hasOpen ? "Yes" : "—"}</TableCell>
                   <TableCell>{row.hasClick ? "Yes" : "—"}</TableCell>
-                  <TableCell className="text-slate-500">
+                  <TableCell className="text-muted-foreground">
                     {row.sentAt
                       ? formatUserDateTime(row.sentAt, timezone, "MMM d, yyyy HH:mm")
                       : "—"}
@@ -146,8 +146,8 @@ function LogsContent() {
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center justify-between border-t border-slate-100 px-6 py-3">
-        <p className="text-sm text-slate-500">
+      <div className="flex items-center justify-between border-t border-border px-6 py-3">
+        <p className="text-sm text-muted-foreground">
           Page {page} of {totalPages}
         </p>
         <div className="flex gap-2">

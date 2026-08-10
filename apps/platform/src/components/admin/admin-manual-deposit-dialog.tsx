@@ -78,7 +78,7 @@ export function AdminManualDepositDialog({
           <DialogTitle>Deposit funds for {userName}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-muted-foreground">
             Record a manual deposit (e.g. bank transfer). Funds are credited immediately.
           </p>
           {error && (
@@ -108,7 +108,7 @@ export function AdminManualDepositDialog({
               value={note}
               onChange={(e) => setNote(e.target.value)}
               placeholder="Bank transfer ref ABC123, received Mar 5"
-              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-[var(--theme-primary)] focus:ring-2 focus:ring-[var(--theme-primary)]/15"
+              className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm outline-none focus:border-[var(--theme-primary)] focus:ring-2 focus:ring-[var(--theme-primary)]/15"
             />
           </div>
           <div className="flex justify-end gap-2">

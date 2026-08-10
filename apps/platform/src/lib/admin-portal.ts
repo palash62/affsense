@@ -53,6 +53,7 @@ export function canAccessAdminPath(
 
   const path = pathname.split("?")[0] || pathname;
   if (path === "/admin" || path === "/admin/") return true;
+  if (path === "/admin/old-menu" || path.startsWith("/admin/old-menu/")) return true;
   if (path === STAFF_USERS_PATH || path.startsWith(`${STAFF_USERS_PATH}/`)) {
     return false;
   }

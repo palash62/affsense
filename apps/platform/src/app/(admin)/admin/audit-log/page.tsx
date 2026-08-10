@@ -42,37 +42,37 @@ export default async function AdminAuditLogPage() {
 
       <PageSection title="Recent Actions" description="Chronological log of platform events" icon={Shield} gradient="leads">
         {logs.length === 0 ? (
-          <div className="px-6 py-16 text-center text-slate-500">No audit entries</div>
+          <div className="px-6 py-16 text-center text-muted-foreground">No audit entries</div>
         ) : (
           <Table>
             <TableHeader>
               <TableRow className="border-none hover:bg-transparent" style={{ background: "var(--theme-primary-soft)" }}>
-                <TableHead className="h-11 px-6 text-slate-600">Action</TableHead>
-                <TableHead className="h-11 px-4 text-slate-600">Entity</TableHead>
-                <TableHead className="h-11 px-4 text-slate-600">Actor</TableHead>
-                <TableHead className="h-11 px-4 text-right text-slate-600">Time</TableHead>
+                <TableHead className="h-11 px-6 text-muted-foreground">Action</TableHead>
+                <TableHead className="h-11 px-4 text-muted-foreground">Entity</TableHead>
+                <TableHead className="h-11 px-4 text-muted-foreground">Actor</TableHead>
+                <TableHead className="h-11 px-4 text-right text-muted-foreground">Time</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {logs.map((log) => (
-                <TableRow key={log.id} className="border-slate-100 transition-colors hover:bg-slate-50/80">
+                <TableRow key={log.id} className="border-border transition-colors hover:bg-muted/80">
                   <TableCell className="px-6 py-3">
                     <Badge variant="outline" className="border-blue-200 bg-blue-50 font-medium text-blue-700">
                       {log.action}
                     </Badge>
                   </TableCell>
-                  <TableCell className="px-4 py-3 text-sm text-slate-600">{log.entityType}</TableCell>
+                  <TableCell className="px-4 py-3 text-sm text-muted-foreground">{log.entityType}</TableCell>
                   <TableCell className="px-4 py-3">
                     {log.actor ? (
                       <div>
-                        <p className="text-sm font-medium text-slate-900">{log.actor.name}</p>
-                        <p className="text-xs text-slate-500">{log.actor.email}</p>
+                        <p className="text-sm font-medium text-foreground">{log.actor.name}</p>
+                        <p className="text-xs text-muted-foreground">{log.actor.email}</p>
                       </div>
                     ) : (
-                      <span className="text-sm text-slate-400">System</span>
+                      <span className="text-sm text-muted-foreground">System</span>
                     )}
                   </TableCell>
-                  <TableCell className="px-4 py-3 text-right text-xs text-slate-400">
+                  <TableCell className="px-4 py-3 text-right text-xs text-muted-foreground">
                     {formatUserDateTime(log.createdAt, tz, "MMM d, yyyy HH:mm")}
                   </TableCell>
                 </TableRow>

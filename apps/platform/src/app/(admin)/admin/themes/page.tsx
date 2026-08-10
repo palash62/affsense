@@ -19,32 +19,34 @@ export default function ThemePreviewPage() {
             href="/admin"
             variant="ghost"
             size="sm"
-            className="mb-3 -ml-2 gap-1.5 text-slate-600"
+            className="mb-3 -ml-2 gap-1.5 text-muted-foreground"
           >
             <ArrowLeft className="h-4 w-4" />
             Back to Dashboard
           </ButtonLink>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">
             Compare Color Themes
           </h1>
-          <p className="mt-1 max-w-2xl text-sm text-slate-500">
-            Pick a theme below to apply it across the entire site. Each preview shows sidebar,
-            hero, KPI cards, and chart colors inspired by CPA network & premium SaaS designs.
+          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+            Pick a theme below to apply it across the entire site — including the new
+            Marketing SaaS black + orange pack. Each preview shows sidebar, hero, KPI cards,
+            and chart colors. Your choice is saved automatically in localStorage.
           </p>
         </div>
         <ThemeSwitcher variant="bar" className="max-w-full" />
       </div>
 
-      <div className="rounded-[18px] border border-slate-200/80 bg-white p-4 shadow-sm">
-        <p className="mb-3 text-sm font-medium text-slate-700">
+      <div className="rounded-[18px] border border-border bg-card p-4 shadow-sm">
+        <p className="mb-3 text-sm font-medium text-foreground">
           Live site theme:{" "}
           <span className="text-[var(--theme-primary)]">
             {THEMES.find((t) => t.id === theme)?.name}
           </span>
         </p>
-        <p className="text-xs text-slate-500">
-          Click any preview card or use the buttons above to switch. Your choice is saved
-          automatically.
+        <p className="text-xs text-muted-foreground">
+          Click any preview card or use the buttons above to switch. Your choice is saved to{" "}
+          <code className="rounded bg-muted px-1 py-0.5 text-[11px]">cpl-theme</code> in
+          localStorage.
         </p>
       </div>
 
@@ -61,8 +63,8 @@ export default function ThemePreviewPage() {
         ))}
       </div>
 
-      <div className="rounded-[18px] border border-dashed border-slate-300 bg-slate-50/80 p-6 text-center">
-        <p className="text-sm text-slate-600">
+      <div className="rounded-[18px] border border-dashed border-border bg-muted/80 p-6 text-center">
+        <p className="text-sm text-muted-foreground">
           After choosing, go to{" "}
           <Link href="/admin" className="font-medium text-[var(--theme-primary)] hover:underline">
             Admin Dashboard

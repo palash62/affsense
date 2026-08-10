@@ -75,7 +75,7 @@ export function AdminDeleteUserDialog({
         <DialogHeader>
           <DialogTitle>Delete {roleLabel} account</DialogTitle>
           <DialogDescription>
-            Permanently remove <span className="font-medium text-slate-900">{userName}</span>.
+            Permanently remove <span className="font-medium text-foreground">{userName}</span>.
             This cannot be undone.
           </DialogDescription>
         </DialogHeader>

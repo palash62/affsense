@@ -99,12 +99,12 @@ export function PublisherSmartLinkPanel({
         }}
       >
         <div className="flex items-start gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-card shadow-sm">
             <Sparkles className="h-5 w-5 text-[var(--theme-primary)]" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-slate-900">One link, all campaigns</p>
-            <p className="mt-1 text-sm text-slate-600">
+            <p className="text-sm font-semibold text-foreground">One link, all campaigns</p>
+            <p className="mt-1 text-sm text-muted-foreground">
               Share your Smart Link anywhere. Traffic rotates automatically across active campaigns.
               Add a platform tag to track where your leads come from.
             </p>
@@ -112,16 +112,16 @@ export function PublisherSmartLinkPanel({
         </div>
       </div>
 
-      <div className="rounded-[18px] border border-slate-200/80 border-t-[3px] border-t-violet-500 bg-white p-6 shadow-sm">
+      <div className="rounded-[18px] border border-border border-t-[3px] border-t-violet-500 bg-white p-6 shadow-sm">
         <div className="mb-4 flex items-center gap-2">
           <Link2 className="h-4 w-4 text-violet-600" />
-          <h3 className="text-sm font-semibold text-slate-900">Your Smart Link</h3>
+          <h3 className="text-sm font-semibold text-foreground">Your Smart Link</h3>
         </div>
         <div className="flex flex-col gap-3 sm:flex-row">
           <input
             readOnly
             value={baseUrl}
-            className="h-11 min-w-0 flex-1 rounded-lg border border-slate-200 bg-slate-50 px-4 font-mono text-sm text-slate-700"
+            className="h-11 min-w-0 flex-1 rounded-lg border border-border bg-muted px-4 font-mono text-sm text-foreground"
           />
           <Button
             onClick={() => copyUrl("base", baseUrl)}
@@ -131,17 +131,17 @@ export function PublisherSmartLinkPanel({
             {copiedKey === "base" ? "Copied!" : "Copy Link"}
           </Button>
         </div>
-        <p className="mt-3 text-xs text-slate-500">
+        <p className="mt-3 text-xs text-muted-foreground">
           {activeCampaignCount} active campaign{activeCampaignCount === 1 ? "" : "s"} in rotation
         </p>
       </div>
 
-      <div className="rounded-[18px] border border-slate-200/80 border-t-[3px] border-t-indigo-500 bg-white p-6 shadow-sm">
+      <div className="rounded-[18px] border border-border border-t-[3px] border-t-indigo-500 bg-white p-6 shadow-sm">
         <div className="mb-4 flex items-center gap-2">
           <Globe className="h-4 w-4 text-indigo-600" />
-          <h3 className="text-sm font-semibold text-slate-900">Your global fallback link</h3>
+          <h3 className="text-sm font-semibold text-foreground">Your global fallback link</h3>
         </div>
-        <p className="mb-4 text-sm text-slate-600">
+        <p className="mb-4 text-sm text-muted-foreground">
           When no campaigns match rotation rules for a visitor, they are redirected here instead of
           seeing an empty page. Leave blank to use the platform default.
         </p>
@@ -158,9 +158,9 @@ export function PublisherSmartLinkPanel({
             />
           </div>
           {!globalLinkUrl.trim() && platformGlobalLinkUrl && (
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-muted-foreground">
               Platform default:{" "}
-              <span className="font-mono text-slate-600">{platformGlobalLinkUrl}</span>
+              <span className="font-mono text-muted-foreground">{platformGlobalLinkUrl}</span>
             </p>
           )}
           {activeFallback && (
@@ -200,9 +200,9 @@ export function PublisherSmartLinkPanel({
         </form>
       </div>
 
-      <div className="rounded-[18px] border border-slate-200/80 border-t-[3px] border-t-sky-500 bg-white p-6 shadow-sm">
-        <h3 className="mb-4 text-sm font-semibold text-slate-900">Platform links</h3>
-        <p className="mb-4 text-sm text-slate-600">
+      <div className="rounded-[18px] border border-border border-t-[3px] border-t-sky-500 bg-white p-6 shadow-sm">
+        <h3 className="mb-4 text-sm font-semibold text-foreground">Platform links</h3>
+        <p className="mb-4 text-sm text-muted-foreground">
           Copy a tagged link for each channel you promote on.
         </p>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -232,8 +232,8 @@ export function PublisherSmartLinkPanel({
         </div>
       </div>
 
-      <div className="rounded-[18px] border border-slate-200/80 border-t-[3px] border-t-amber-500 bg-white p-6 shadow-sm">
-        <h3 className="mb-4 text-sm font-semibold text-slate-900">Custom tracking</h3>
+      <div className="rounded-[18px] border border-border border-t-[3px] border-t-amber-500 bg-white p-6 shadow-sm">
+        <h3 className="mb-4 text-sm font-semibold text-foreground">Custom tracking</h3>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="custom-src">Source tag (?src=)</Label>
@@ -260,7 +260,7 @@ export function PublisherSmartLinkPanel({
           <input
             readOnly
             value={customUrl}
-            className="h-10 min-w-0 flex-1 rounded-lg border border-slate-200 bg-slate-50 px-3 font-mono text-xs text-slate-600"
+            className="h-10 min-w-0 flex-1 rounded-lg border border-border bg-muted px-3 font-mono text-xs text-muted-foreground"
           />
           <Button
             variant="outline"
@@ -272,12 +272,12 @@ export function PublisherSmartLinkPanel({
             Copy custom link
           </Button>
         </div>
-        <p className="mt-2 text-xs text-slate-500">Letters, numbers, underscores, and hyphens only (max 32 chars).</p>
+        <p className="mt-2 text-xs text-muted-foreground">Letters, numbers, underscores, and hyphens only (max 32 chars).</p>
       </div>
 
       {sourceBreakdown.length > 0 && (
-        <div className="rounded-[18px] border border-slate-200/80 border-t-[3px] border-t-emerald-500 bg-white p-6 shadow-sm">
-          <h3 className="mb-4 text-sm font-semibold text-slate-900">Performance by source</h3>
+        <div className="rounded-[18px] border border-border border-t-[3px] border-t-emerald-500 bg-white p-6 shadow-sm">
+          <h3 className="mb-4 text-sm font-semibold text-foreground">Performance by source</h3>
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>

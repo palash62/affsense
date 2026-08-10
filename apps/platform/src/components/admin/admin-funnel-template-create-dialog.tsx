@@ -96,11 +96,11 @@ export function AdminFunnelTemplateCreateDialog({
             onClick={() => setMode("blank")}
             className={cn(
               "rounded-xl border-2 p-4 text-left transition",
-              mode === "blank" ? "border-blue-600 bg-blue-50/50" : "border-slate-200 hover:border-slate-300",
+              mode === "blank" ? "border-blue-600 bg-blue-50/50" : "border-border hover:border-border",
             )}
           >
-            <div className="mb-3 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-3">
-              <Label className="text-xs text-slate-500">Template name *</Label>
+            <div className="mb-3 rounded-lg border border-dashed border-border bg-muted p-3">
+              <Label className="text-xs text-muted-foreground">Template name *</Label>
               <Input
                 value={name}
                 onChange={(e) => {
@@ -108,12 +108,12 @@ export function AdminFunnelTemplateCreateDialog({
                   setName(e.target.value);
                 }}
                 placeholder="e.g. Lead Capture Template"
-                className="mt-1 h-9 border-slate-200 bg-white"
+                className="mt-1 h-9 border-border bg-white"
                 onClick={(e) => e.stopPropagation()}
               />
             </div>
-            <p className="font-semibold text-slate-900">From blank</p>
-            <p className="mt-1 text-xs text-slate-500">Design from scratch using the funnel builder.</p>
+            <p className="font-semibold text-foreground">From blank</p>
+            <p className="mt-1 text-xs text-muted-foreground">Design from scratch using the funnel builder.</p>
           </button>
 
           <button
@@ -121,23 +121,23 @@ export function AdminFunnelTemplateCreateDialog({
             onClick={() => setMode("templates")}
             className={cn(
               "rounded-xl border-2 p-4 text-left transition",
-              mode === "templates" ? "border-blue-600 bg-blue-50/50" : "border-slate-200 hover:border-slate-300",
+              mode === "templates" ? "border-blue-600 bg-blue-50/50" : "border-border hover:border-border",
             )}
           >
-            <div className="mb-3 flex h-24 items-center justify-center gap-1 rounded-lg bg-slate-100">
+            <div className="mb-3 flex h-24 items-center justify-center gap-1 rounded-lg bg-muted">
               <div className="h-14 w-10 rounded bg-blue-200" />
               <div className="h-14 w-10 rounded bg-teal-200" />
               <div className="h-14 w-10 rounded bg-violet-200" />
             </div>
-            <p className="font-semibold text-slate-900">From templates</p>
-            <p className="mt-1 text-xs text-slate-500">Jump start with an awesome prebuilt funnel.</p>
+            <p className="font-semibold text-foreground">From templates</p>
+            <p className="mt-1 text-xs text-muted-foreground">Jump start with an awesome prebuilt funnel.</p>
           </button>
         </div>
 
         {mode === "templates" && (
           <div className="grid max-h-[420px] gap-4 overflow-y-auto sm:grid-cols-2">
             {templates.length === 0 && (
-              <div className="col-span-2 rounded-lg border border-dashed border-slate-200 p-4 text-sm text-slate-500">
+              <div className="col-span-2 rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
                 No templates available yet. Create a blank template first.
               </div>
             )}
@@ -158,7 +158,7 @@ export function AdminFunnelTemplateCreateDialog({
           </div>
         )}
 
-        <div className="flex justify-end gap-2 border-t border-slate-100 pt-4">
+        <div className="flex justify-end gap-2 border-t border-border pt-4">
           <Button variant="ghost" onClick={() => handleClose(false)}>
             Cancel
           </Button>

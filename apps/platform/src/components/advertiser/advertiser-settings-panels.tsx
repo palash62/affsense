@@ -92,7 +92,7 @@ export function AdvertiserProfileForm({
           <div className="space-y-2">
             <Label htmlFor="profile-company">Company</Label>
             <div className="relative">
-              <Building2 className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Building2 className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 id="profile-company"
                 value={company}
@@ -107,8 +107,8 @@ export function AdvertiserProfileForm({
 
         <div className="space-y-2">
           <Label htmlFor="profile-email">Email</Label>
-          <Input id="profile-email" value={email} disabled className="bg-slate-50 text-slate-500" />
-          <p className="text-xs text-slate-500">Email cannot be changed here. Contact support if needed.</p>
+          <Input id="profile-email" value={email} disabled className="bg-muted text-muted-foreground" />
+          <p className="text-xs text-muted-foreground">Email cannot be changed here. Contact support if needed.</p>
         </div>
 
         <TimezoneSelect value={timezone} onChange={setTimezone} disabled={saving} />

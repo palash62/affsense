@@ -127,12 +127,12 @@ export function AutoresponderConnectionsPanel({ campaigns }: { campaigns: Campai
         }}
       >
         <div className="flex items-start gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-card shadow-sm">
             <Megaphone className="h-5 w-5 text-[var(--theme-primary)]" />
           </div>
           <div>
-            <p className="font-semibold text-slate-900">Applies to your campaigns and opt-in pages</p>
-            <p className="mt-1 text-sm text-slate-600">
+            <p className="font-semibold text-foreground">Applies to your campaigns and opt-in pages</p>
+            <p className="mt-1 text-sm text-muted-foreground">
               Leads from publisher traffic and your opt-in pages are sent to your connected lists.
               Scope each connection to all campaigns or a single campaign.
             </p>
@@ -156,10 +156,10 @@ export function AutoresponderConnectionsPanel({ campaigns }: { campaigns: Campai
       <div className="premium-card">
         <div className="h-1" style={{ background: "var(--theme-gradient-leads)" }} />
         <div className="p-6">
-          <h3 className="mb-1 text-lg font-semibold text-slate-900">
+          <h3 className="mb-1 text-lg font-semibold text-foreground">
             {editing ? "Edit integration" : "Add integration"}
           </h3>
-          <p className="mb-6 text-sm text-slate-500">
+          <p className="mb-6 text-sm text-muted-foreground">
             {editing
               ? "Update connection settings, then save changes."
                 : "Connect GetResponse, Systeme.io, or a custom webhook."}
@@ -183,19 +183,19 @@ export function AutoresponderConnectionsPanel({ campaigns }: { campaigns: Campai
       </div>
 
       <div>
-        <h3 className="mb-4 text-lg font-semibold text-slate-900">Your connections</h3>
+        <h3 className="mb-4 text-lg font-semibold text-foreground">Your connections</h3>
         {loading ? (
-          <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-8 text-sm text-slate-500">
+          <div className="flex items-center gap-2 rounded-xl border border-border bg-card px-5 py-8 text-sm text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" />
             Loading connections…
           </div>
         ) : connections.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50/50 px-6 py-12 text-center">
+          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-muted/50 px-6 py-12 text-center">
             <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-indigo-50">
               <Plug className="h-6 w-6 text-indigo-500" />
             </div>
-            <p className="font-medium text-slate-900">No integrations yet</p>
-            <p className="mt-1 max-w-sm text-sm text-slate-500">
+            <p className="font-medium text-foreground">No integrations yet</p>
+            <p className="mt-1 max-w-sm text-sm text-muted-foreground">
               Add a connection above to automatically send campaign leads to your email list.
             </p>
           </div>
@@ -204,19 +204,19 @@ export function AutoresponderConnectionsPanel({ campaigns }: { campaigns: Campai
             {connections.map((conn) => (
               <li
                 key={conn.id}
-                className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md"
+                className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-border bg-card p-4 shadow-sm transition-shadow hover:shadow-md"
               >
                 <div className="flex items-center gap-3">
                   <div
                     className={cn(
                       "flex h-11 w-11 items-center justify-center rounded-xl",
-                      conn.isEnabled ? "bg-indigo-50 text-indigo-600" : "bg-slate-100 text-slate-400",
+                      conn.isEnabled ? "bg-indigo-50 text-indigo-600" : "bg-muted text-muted-foreground",
                     )}
                   >
                     <Plug className="h-5 w-5" />
                   </div>
                   <div>
-                    <p className="font-medium text-slate-900">{conn.name}</p>
+                    <p className="font-medium text-foreground">{conn.name}</p>
                     <div className="mt-1.5 flex flex-wrap gap-1.5">
                       <Badge variant="outline" className="font-normal">
                         {PROVIDER_LABELS[conn.provider] ?? conn.provider}

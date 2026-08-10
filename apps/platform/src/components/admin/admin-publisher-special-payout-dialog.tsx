@@ -134,18 +134,18 @@ export function AdminPublisherSpecialPayoutDialog({
         </DialogHeader>
 
         <div className="space-y-4">
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-muted-foreground">
             Set a different minimum publisher payout per country tier for Smart Link rotation.
             This filters which campaigns appear in the publisher&apos;s Smart Link — it does not
             change the amount credited when a lead is paid.
           </p>
 
-          <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-700">
+          <label className="flex cursor-pointer items-center gap-2 text-sm text-foreground">
             <input
               type="checkbox"
               checked={enabled}
               onChange={(e) => setEnabled(e.target.checked)}
-              className="h-4 w-4 rounded border-slate-300 accent-[var(--theme-primary)]"
+              className="h-4 w-4 rounded border-border accent-[var(--theme-primary)]"
             />
             Enable tier special payouts
           </label>
@@ -154,13 +154,13 @@ export function AdminPublisherSpecialPayoutDialog({
             {TIER_FIELDS.map(({ key, row }) => (
               <div
                 key={key}
-                className="rounded-xl border border-slate-200 bg-slate-50/50 p-4"
+                className="rounded-xl border border-border bg-muted/50 p-4"
               >
-                <p className="mb-2 text-sm font-semibold text-slate-900">
+                <p className="mb-2 text-sm font-semibold text-foreground">
                   {row.label} — {row.countries}
                 </p>
                 <div className="space-y-1.5">
-                  <Label className="text-xs text-slate-500">Minimum payout (USD per lead)</Label>
+                  <Label className="text-xs text-muted-foreground">Minimum payout (USD per lead)</Label>
                   <Input
                     type="number"
                     min={0}
@@ -171,7 +171,7 @@ export function AdminPublisherSpecialPayoutDialog({
                     placeholder="e.g. 1.50"
                   />
                   {settings[key] != null && (
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-muted-foreground">
                       Current: {formatCurrency(settings[key]!)}
                     </p>
                   )}

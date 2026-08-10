@@ -118,18 +118,18 @@ export function AdminPublisherReviewDialog({ publisher }: { publisher: Publisher
         Review
       </DialogTrigger>
       <DialogContent className="flex max-h-[min(90vh,880px)] w-full max-w-[calc(100%-2rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl">
-        <DialogHeader className="shrink-0 border-b border-slate-200 px-5 py-4 pr-12">
+        <DialogHeader className="shrink-0 border-b border-border px-5 py-4 pr-12">
           <DialogTitle>Publisher Review</DialogTitle>
-          <p className="text-sm text-slate-500">{publisher.name} · {publisher.email}</p>
+          <p className="text-sm text-muted-foreground">{publisher.name} · {publisher.email}</p>
         </DialogHeader>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
           <div className="space-y-4">
-            <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
+            <div className="rounded-xl border border-border bg-muted/60 p-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <p className="text-sm font-semibold text-slate-900">{publisher.name}</p>
-                  <p className="text-xs text-slate-500">{publisher.email}</p>
+                  <p className="text-sm font-semibold text-foreground">{publisher.name}</p>
+                  <p className="text-xs text-muted-foreground">{publisher.email}</p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge variant="outline" className="capitalize">
@@ -143,23 +143,23 @@ export function AdminPublisherReviewDialog({ publisher }: { publisher: Publisher
                 </div>
               </div>
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
-                  <p className="text-xs text-slate-500">Joined</p>
-                  <p className="text-sm font-medium text-slate-900">
+                <div className="rounded-lg border border-border bg-card px-3 py-2">
+                  <p className="text-xs text-muted-foreground">Joined</p>
+                  <p className="text-sm font-medium text-foreground">
                     {formatUserDateTime(publisher.createdAt, session?.user?.timezone, "MMM d, yyyy")}
                   </p>
                 </div>
-                <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
-                  <p className="text-xs text-slate-500">Traffic source</p>
-                  <p className="text-sm font-medium text-slate-900">{profile?.trafficSource || "—"}</p>
+                <div className="rounded-lg border border-border bg-card px-3 py-2">
+                  <p className="text-xs text-muted-foreground">Traffic source</p>
+                  <p className="text-sm font-medium text-foreground">{profile?.trafficSource || "—"}</p>
                 </div>
-                <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
-                  <p className="text-xs text-slate-500">Website</p>
-                  <p className="break-all text-sm font-medium text-slate-900">{profile?.website || "—"}</p>
+                <div className="rounded-lg border border-border bg-card px-3 py-2">
+                  <p className="text-xs text-muted-foreground">Website</p>
+                  <p className="break-all text-sm font-medium text-foreground">{profile?.website || "—"}</p>
                 </div>
-                <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
-                  <p className="text-xs text-slate-500">Country</p>
-                  <p className="text-sm font-medium text-slate-900">{profile?.country || "—"}</p>
+                <div className="rounded-lg border border-border bg-card px-3 py-2">
+                  <p className="text-xs text-muted-foreground">Country</p>
+                  <p className="text-sm font-medium text-foreground">{profile?.country || "—"}</p>
                 </div>
               </div>
             </div>
@@ -167,42 +167,42 @@ export function AdminPublisherReviewDialog({ publisher }: { publisher: Publisher
             <div
               className={cn(
                 "rounded-xl border p-4",
-                highSpam ? "border-red-200 bg-red-50/70" : "border-slate-200 bg-white",
+                highSpam ? "border-red-200 bg-red-50/70" : "border-border bg-white",
               )}
             >
-              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 <ShieldAlert className={cn("h-4 w-4", highSpam ? "text-red-600" : "text-[var(--theme-primary)]")} />
                 Spam & quality signals (30 days)
               </div>
               <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                <div className="rounded-lg border border-slate-200 bg-slate-50/60 px-3 py-2">
-                  <p className="text-xs text-slate-500">Spam score</p>
+                <div className="rounded-lg border border-border bg-muted/60 px-3 py-2">
+                  <p className="text-xs text-muted-foreground">Spam score</p>
                   <div className="mt-1">
                     <SpamScoreBadge score={spamScore} />
                   </div>
-                  <p className="mt-1 text-[11px] text-slate-500">Avg lead risk (0 safe, 100 risky)</p>
+                  <p className="mt-1 text-[11px] text-muted-foreground">Avg lead risk (0 safe, 100 risky)</p>
                 </div>
-                <div className="rounded-lg border border-slate-200 bg-slate-50/60 px-3 py-2">
-                  <p className="text-xs text-slate-500">Quality score</p>
-                  <p className="text-sm font-semibold text-slate-900">
+                <div className="rounded-lg border border-border bg-muted/60 px-3 py-2">
+                  <p className="text-xs text-muted-foreground">Quality score</p>
+                  <p className="text-sm font-semibold text-foreground">
                     {profile?.qualityScore != null ? `${profile.qualityScore}%` : "—"}
                   </p>
-                  <p className="mt-1 text-[11px] text-slate-500">Lead approval rate</p>
+                  <p className="mt-1 text-[11px] text-muted-foreground">Lead approval rate</p>
                 </div>
-                <div className="rounded-lg border border-slate-200 bg-slate-50/60 px-3 py-2">
-                  <p className="text-xs text-slate-500">Fraud flags</p>
-                  <p className="text-sm font-semibold text-slate-900">{profile?.fraudFlags ?? 0}</p>
-                  <p className="mt-1 text-[11px] text-slate-500">Quality warnings triggered</p>
+                <div className="rounded-lg border border-border bg-muted/60 px-3 py-2">
+                  <p className="text-xs text-muted-foreground">Fraud flags</p>
+                  <p className="text-sm font-semibold text-foreground">{profile?.fraudFlags ?? 0}</p>
+                  <p className="mt-1 text-[11px] text-muted-foreground">Quality warnings triggered</p>
                 </div>
               </div>
               {highSpam && (
-                <p className="mt-3 rounded-lg border border-red-200 bg-white px-3 py-2 text-sm text-red-700">
+                <p className="mt-3 rounded-lg border border-red-200 bg-card px-3 py-2 text-sm text-red-700">
                   Spam score is {spamScore}/100 (high risk). Consider rejecting this publisher or
                   reviewing their recent leads before approval.
                 </p>
               )}
               {spamScore === null && (
-                <p className="mt-3 text-sm text-slate-500">
+                <p className="mt-3 text-sm text-muted-foreground">
                   No scored leads yet — spam score will appear after the publisher submits traffic.
                 </p>
               )}
@@ -211,37 +211,37 @@ export function AdminPublisherReviewDialog({ publisher }: { publisher: Publisher
               </div>
             </div>
 
-            <div className="rounded-xl border border-slate-200 bg-white p-4">
-              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <div className="rounded-xl border border-border bg-card p-4">
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 <MapPin className="h-4 w-4 text-[var(--theme-primary)]" />
                 Address details
               </div>
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                <div className="rounded-lg border border-slate-200 bg-slate-50/60 px-3 py-2">
-                  <p className="text-xs text-slate-500">Address line 1</p>
-                  <p className="text-sm font-medium text-slate-900">{profile?.addressLine1 || "—"}</p>
+                <div className="rounded-lg border border-border bg-muted/60 px-3 py-2">
+                  <p className="text-xs text-muted-foreground">Address line 1</p>
+                  <p className="text-sm font-medium text-foreground">{profile?.addressLine1 || "—"}</p>
                 </div>
-                <div className="rounded-lg border border-slate-200 bg-slate-50/60 px-3 py-2">
-                  <p className="text-xs text-slate-500">Address line 2</p>
-                  <p className="text-sm font-medium text-slate-900">{profile?.addressLine2 || "—"}</p>
+                <div className="rounded-lg border border-border bg-muted/60 px-3 py-2">
+                  <p className="text-xs text-muted-foreground">Address line 2</p>
+                  <p className="text-sm font-medium text-foreground">{profile?.addressLine2 || "—"}</p>
                 </div>
-                <div className="rounded-lg border border-slate-200 bg-slate-50/60 px-3 py-2">
-                  <p className="text-xs text-slate-500">City</p>
-                  <p className="text-sm font-medium text-slate-900">{profile?.city || "—"}</p>
+                <div className="rounded-lg border border-border bg-muted/60 px-3 py-2">
+                  <p className="text-xs text-muted-foreground">City</p>
+                  <p className="text-sm font-medium text-foreground">{profile?.city || "—"}</p>
                 </div>
-                <div className="rounded-lg border border-slate-200 bg-slate-50/60 px-3 py-2">
-                  <p className="text-xs text-slate-500">State</p>
-                  <p className="text-sm font-medium text-slate-900">{profile?.state || "—"}</p>
+                <div className="rounded-lg border border-border bg-muted/60 px-3 py-2">
+                  <p className="text-xs text-muted-foreground">State</p>
+                  <p className="text-sm font-medium text-foreground">{profile?.state || "—"}</p>
                 </div>
-                <div className="rounded-lg border border-slate-200 bg-slate-50/60 px-3 py-2">
-                  <p className="text-xs text-slate-500">Postal code</p>
-                  <p className="text-sm font-medium text-slate-900">{profile?.postalCode || "—"}</p>
+                <div className="rounded-lg border border-border bg-muted/60 px-3 py-2">
+                  <p className="text-xs text-muted-foreground">Postal code</p>
+                  <p className="text-sm font-medium text-foreground">{profile?.postalCode || "—"}</p>
                 </div>
               </div>
             </div>
 
-            <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
-              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <div className="rounded-xl border border-border bg-muted/60 p-4">
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 <Users className="h-4 w-4 text-[var(--theme-primary)]" />
                 Approval decision
               </div>
@@ -262,11 +262,11 @@ export function AdminPublisherReviewDialog({ publisher }: { publisher: Publisher
                   placeholder="Rejection note (required if rejecting)"
                   rows={2}
                   className={cn(
-                    "w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none",
+                    "w-full rounded-lg border border-border bg-card px-3 py-2 text-sm outline-none",
                     "focus:border-[var(--theme-primary)] focus:ring-2 focus:ring-[var(--theme-primary)]/15",
                   )}
                 />
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-muted-foreground">
                   Rejecting sets the account to Suspended and shows the note on the publisher settings
                   page.
                 </p>
@@ -275,7 +275,7 @@ export function AdminPublisherReviewDialog({ publisher }: { publisher: Publisher
           </div>
         </div>
 
-        <DialogFooter className="shrink-0 gap-2 border-t border-slate-200 bg-slate-50/80 px-5 py-4 sm:flex-row sm:justify-between">
+        <DialogFooter className="shrink-0 gap-2 border-t border-border bg-muted/80 px-5 py-4 sm:flex-row sm:justify-between">
           <DialogClose render={<Button type="button" variant="outline" className="gap-1" />}>
             <X className="h-4 w-4" />
             Close

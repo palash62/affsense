@@ -16,7 +16,7 @@ import {
 import { LeadExportButton } from "@/components/leads/lead-export-button";
 
 const SELECT_TRIGGER_CLASS =
-  "h-8 !w-full min-w-0 bg-white text-xs *:data-[slot=select-value]:line-clamp-none";
+  "h-8 !w-full min-w-0 bg-card text-xs *:data-[slot=select-value]:line-clamp-none";
 
 const SELECT_MENU_CLASS = "z-200 !w-[22rem] max-w-[calc(100vw-2rem)]";
 
@@ -95,13 +95,13 @@ function EmailSearchDropdown({
 
   if (value) {
     return (
-      <div className="flex h-8 min-w-[200px] items-center gap-1 rounded-md border border-slate-200 bg-white px-2 text-xs">
-        <Mail className="h-3 w-3 shrink-0 text-slate-400" />
-        <span className="truncate text-slate-700">{value}</span>
+      <div className="flex h-8 min-w-[200px] items-center gap-1 rounded-md border border-border bg-card px-2 text-xs">
+        <Mail className="h-3 w-3 shrink-0 text-muted-foreground" />
+        <span className="truncate text-foreground">{value}</span>
         <button
           type="button"
           onClick={clearEmail}
-          className="ml-auto shrink-0 rounded p-0.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+          className="ml-auto shrink-0 rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-muted-foreground"
         >
           <X className="h-3 w-3" />
         </button>
@@ -117,29 +117,29 @@ function EmailSearchDropdown({
         value={query}
         onChange={(e) => handleInputChange(e.target.value)}
         onFocus={() => setOpen(true)}
-        className="h-8 rounded-md border-slate-200 bg-white text-xs"
+        className="h-8 rounded-md border-border bg-card text-xs"
       />
       {open && (
-        <div className="absolute left-0 top-full z-50 mt-1 w-[22rem] max-w-[calc(100vw-2rem)] rounded-md border border-slate-200 bg-white shadow-lg">
+        <div className="absolute left-0 top-full z-50 mt-1 w-[22rem] max-w-[calc(100vw-2rem)] rounded-md border border-border bg-card shadow-lg">
           <div className="max-h-[240px] overflow-y-auto py-1">
             <button
               type="button"
               onClick={() => { onChange(""); setOpen(false); setQuery(""); }}
-              className="w-full px-3 py-1.5 text-left text-xs text-slate-500 hover:bg-slate-50"
+              className="w-full px-3 py-1.5 text-left text-xs text-muted-foreground hover:bg-muted"
             >
               All emails
             </button>
             {loading ? (
-              <div className="px-3 py-2 text-xs text-slate-400">Searching...</div>
+              <div className="px-3 py-2 text-xs text-muted-foreground">Searching...</div>
             ) : results.length === 0 ? (
-              <div className="px-3 py-2 text-xs text-slate-400">No emails found</div>
+              <div className="px-3 py-2 text-xs text-muted-foreground">No emails found</div>
             ) : (
               results.map((email) => (
                 <button
                   key={email}
                   type="button"
                   onClick={() => selectEmail(email)}
-                  className="w-full truncate px-3 py-1.5 text-left text-xs text-slate-700 hover:bg-slate-50"
+                  className="w-full truncate px-3 py-1.5 text-left text-xs text-foreground hover:bg-muted"
                 >
                   {email}
                 </button>
@@ -233,7 +233,7 @@ export function AdvertiserLeadDetailsFilters({ campaigns }: { campaigns: Campaig
     (searchParams.has("page") && searchParams.get("page") !== "1");
 
   return (
-    <div className="border-b border-slate-100 bg-slate-50/80 px-4 py-2.5">
+    <div className="border-b border-border bg-muted/80 px-4 py-2.5">
       <div className="flex w-full flex-wrap items-center gap-2">
         <div className="min-w-[200px] flex-1">
           <Select
@@ -293,14 +293,14 @@ export function AdvertiserLeadDetailsFilters({ campaigns }: { campaigns: Campaig
             type="date"
             value={dateFrom}
             onChange={(e) => setDateFrom(e.target.value)}
-            className="h-8 w-[132px] rounded-md border-slate-200 bg-white text-xs"
+            className="h-8 w-[132px] rounded-md border-border bg-card text-xs"
           />
-          <span className="text-xs text-slate-400">to</span>
+          <span className="text-xs text-muted-foreground">to</span>
           <Input
             type="date"
             value={dateTo}
             onChange={(e) => setDateTo(e.target.value)}
-            className="h-8 w-[132px] rounded-md border-slate-200 bg-white text-xs"
+            className="h-8 w-[132px] rounded-md border-border bg-card text-xs"
           />
         </div>
 
@@ -319,7 +319,7 @@ export function AdvertiserLeadDetailsFilters({ campaigns }: { campaigns: Campaig
               variant="outline"
               onClick={clearFilters}
               disabled={isPending}
-              className="h-8 gap-1 rounded-md border-slate-200 bg-white px-2.5 text-xs"
+              className="h-8 gap-1 rounded-md border-border bg-card px-2.5 text-xs"
             >
               <FilterX className="h-3 w-3" />
               Clear

@@ -12,7 +12,7 @@ export const SUPPORT_STATUS_STYLES: Record<string, string> = {
   IN_PROGRESS: "border-amber-200 bg-amber-50 text-amber-700",
   WAITING_ON_CUSTOMER: "border-violet-200 bg-violet-50 text-violet-700",
   RESOLVED: "border-emerald-200 bg-emerald-50 text-emerald-700",
-  CLOSED: "border-slate-200 bg-slate-50 text-slate-600",
+  CLOSED: "border-border bg-muted text-muted-foreground",
 };
 
 export const SUPPORT_STATUS_LABELS: Record<string, string> = {

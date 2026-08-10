@@ -17,9 +17,9 @@ export function FunnelListToolbar({
   onSearchChange,
 }: FunnelListToolbarProps) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
+    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3">
       <div className="flex items-center gap-2">
-        <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-500" disabled>
+        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" disabled>
           <Home className="h-4 w-4" />
         </Button>
       </div>
@@ -28,12 +28,12 @@ export function FunnelListToolbar({
           <LayoutGrid className="h-4 w-4" />
         </Button>
         <div className="relative w-full max-w-xs">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder={searchPlaceholder}
-            className="h-9 border-slate-200 bg-white pl-9"
+            className="h-9 border-border bg-white pl-9"
           />
         </div>
       </div>

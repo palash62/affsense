@@ -28,15 +28,15 @@ export function AutomationCreateForm({ onContinue }: Props) {
 
   return (
     <div className="mx-auto w-full max-w-lg">
-      <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
-        <div className="border-b border-slate-100 bg-gradient-to-br from-slate-50 via-white to-emerald-50/40 px-6 py-5">
+      <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+        <div className="border-b border-border bg-gradient-to-br from-slate-50 via-white to-emerald-50/40 px-6 py-5">
           <div className="mb-3 flex size-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700">
             <Zap className="size-5" />
           </div>
-          <h1 className="text-xl font-semibold tracking-tight text-slate-900">
+          <h1 className="text-xl font-semibold tracking-tight text-foreground">
             Create automation
           </h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-muted-foreground">
             Name it, then build your email sequence on the canvas. Leads enter from the
             audience list’s campaign.
           </p>

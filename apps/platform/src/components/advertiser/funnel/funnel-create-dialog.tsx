@@ -114,8 +114,8 @@ export function FunnelCreateDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50/80 p-4">
-          <Label htmlFor="funnel-name" className="text-sm font-medium text-slate-700">
+        <div className="space-y-2 rounded-xl border border-border bg-muted/80 p-4">
+          <Label htmlFor="funnel-name" className="text-sm font-medium text-foreground">
             Funnel name
           </Label>
           <Input
@@ -127,17 +127,17 @@ export function FunnelCreateDialog({
               setName(e.target.value);
             }}
             placeholder="e.g. Summer promo funnel"
-            className="h-10 border-slate-200 bg-white text-base"
+            className="h-10 border-border bg-card text-base"
           />
           {mode === "templates" && selectedTemplateData && (
-            <p className="text-xs text-slate-500">
-              Based on template: <span className="font-medium text-slate-700">{selectedTemplateData.name}</span>
+            <p className="text-xs text-muted-foreground">
+              Based on template: <span className="font-medium text-foreground">{selectedTemplateData.name}</span>
             </p>
           )}
         </div>
 
         {quickCreate ? (
-          <div className="overflow-hidden rounded-xl border border-slate-200">
+          <div className="overflow-hidden rounded-xl border border-border">
             <FunnelCraftTemplateCard
               id={selectedTemplateData!.id}
               name={selectedTemplateData!.name}
@@ -147,12 +147,12 @@ export function FunnelCreateDialog({
               variant="picker"
               selected
             />
-            <div className="border-t border-slate-100 px-4 py-3">
+            <div className="border-t border-border px-4 py-3">
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="h-8 text-slate-600"
+                className="h-8 text-muted-foreground"
                 onClick={() => setShowTemplatePicker(true)}
               >
                 <Pencil className="mr-1.5 h-3.5 w-3.5" />
@@ -174,14 +174,14 @@ export function FunnelCreateDialog({
                   "rounded-xl border-2 p-4 text-left transition",
                   mode === "blank"
                     ? "border-blue-600 bg-blue-50/50"
-                    : "border-slate-200 hover:border-slate-300",
+                    : "border-border hover:border-border",
                 )}
               >
-                <div className="mb-3 flex h-16 items-center justify-center rounded-lg border border-dashed border-slate-300 bg-white">
-                  <LayoutTemplate className="h-7 w-7 text-slate-400" />
+                <div className="mb-3 flex h-16 items-center justify-center rounded-lg border border-dashed border-border bg-white">
+                  <LayoutTemplate className="h-7 w-7 text-muted-foreground" />
                 </div>
-                <p className="font-semibold text-slate-900">Start from blank</p>
-                <p className="mt-1 text-xs text-slate-500">Build your opt-in page from scratch.</p>
+                <p className="font-semibold text-foreground">Start from blank</p>
+                <p className="mt-1 text-xs text-muted-foreground">Build your opt-in page from scratch.</p>
               </button>
 
               <button
@@ -194,23 +194,23 @@ export function FunnelCreateDialog({
                   "rounded-xl border-2 p-4 text-left transition",
                   mode === "templates"
                     ? "border-blue-600 bg-blue-50/50"
-                    : "border-slate-200 hover:border-slate-300",
+                    : "border-border hover:border-border",
                 )}
               >
-                <div className="mb-3 flex h-16 items-center justify-center gap-1 rounded-lg bg-slate-100">
+                <div className="mb-3 flex h-16 items-center justify-center gap-1 rounded-lg bg-muted">
                   <div className="h-12 w-8 rounded bg-blue-200" />
                   <div className="h-12 w-8 rounded bg-teal-200" />
                   <div className="h-12 w-8 rounded bg-violet-200" />
                 </div>
-                <p className="font-semibold text-slate-900">Use a template</p>
-                <p className="mt-1 text-xs text-slate-500">Start from a prebuilt layout and customize it.</p>
+                <p className="font-semibold text-foreground">Use a template</p>
+                <p className="mt-1 text-xs text-muted-foreground">Start from a prebuilt layout and customize it.</p>
               </button>
             </div>
 
             {mode === "templates" && showTemplatePicker && (
               <div className="grid max-h-[360px] gap-4 overflow-y-auto sm:grid-cols-2">
                 {templates.length === 0 && (
-                  <div className="col-span-2 rounded-lg border border-dashed border-slate-200 p-4 text-sm text-slate-500">
+                  <div className="col-span-2 rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
                     No templates available yet. Ask admin to create templates.
                   </div>
                 )}
@@ -232,8 +232,8 @@ export function FunnelCreateDialog({
             )}
 
             {mode === "templates" && selectedTemplate && !showTemplatePicker && (
-              <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
-                <p className="text-sm text-slate-700">
+              <div className="flex items-center justify-between rounded-lg border border-border bg-muted px-3 py-2">
+                <p className="text-sm text-foreground">
                   Template: <span className="font-medium">{selectedTemplateData?.name}</span>
                 </p>
                 <Button
@@ -250,7 +250,7 @@ export function FunnelCreateDialog({
           </>
         )}
 
-        <div className="flex justify-end gap-2 border-t border-slate-100 pt-4">
+        <div className="flex justify-end gap-2 border-t border-border pt-4">
           <Button variant="ghost" onClick={() => handleClose(false)}>
             Cancel
           </Button>

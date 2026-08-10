@@ -42,7 +42,7 @@ export default async function AdvertiserReferralLinkPage() {
       />
 
       <div
-        className="flex gap-3 rounded-xl border px-4 py-3 text-sm text-slate-700"
+        className="flex gap-3 rounded-xl border px-4 py-3 text-sm text-foreground"
         style={{
           borderColor: "color-mix(in srgb, var(--theme-primary) 20%, transparent)",
           background: "var(--theme-primary-soft)",
@@ -115,10 +115,10 @@ export default async function AdvertiserReferralLinkPage() {
             <div className="p-6">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     {tier.label}
                   </p>
-                  <h3 className="mt-1 text-lg font-semibold text-slate-900">{tier.title}</h3>
+                  <h3 className="mt-1 text-lg font-semibold text-foreground">{tier.title}</h3>
                 </div>
                 <div
                   className="rounded-xl px-4 py-2 text-2xl font-bold text-white shadow-sm"
@@ -127,7 +127,7 @@ export default async function AdvertiserReferralLinkPage() {
                   {tier.rate}
                 </div>
               </div>
-              <p className="mt-4 text-sm leading-relaxed text-slate-600">{tier.description}</p>
+              <p className="mt-4 text-sm leading-relaxed text-muted-foreground">{tier.description}</p>
             </div>
           </div>
         ))}
@@ -144,7 +144,7 @@ export default async function AdvertiserReferralLinkPage() {
           {REFERRAL_STEPS.map((step) => (
             <div
               key={step.step}
-              className="rounded-xl border border-slate-200 bg-slate-50/60 p-5"
+              className="rounded-xl border border-border bg-muted/60 p-5"
             >
               <div
                 className="mb-3 flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold text-white"
@@ -152,8 +152,8 @@ export default async function AdvertiserReferralLinkPage() {
               >
                 {step.step}
               </div>
-              <h3 className="font-semibold text-slate-900">{step.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-slate-600">{step.description}</p>
+              <h3 className="font-semibold text-foreground">{step.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{step.description}</p>
             </div>
           ))}
         </div>
@@ -161,20 +161,20 @@ export default async function AdvertiserReferralLinkPage() {
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="premium-card p-5">
-          <p className="text-sm font-semibold text-slate-900">Level 1 earnings</p>
+          <p className="text-sm font-semibold text-foreground">Level 1 earnings</p>
           <p className="mt-2 text-2xl font-bold text-emerald-600">
             {formatCurrency(data.stats.level1Commission)}
           </p>
-          <p className="mt-1 text-xs text-slate-500">
+          <p className="mt-1 text-xs text-muted-foreground">
             {REFERRAL_LEVELS[0].rate} of direct referral ad spend
           </p>
         </div>
         <div className="premium-card p-5">
-          <p className="text-sm font-semibold text-slate-900">Level 2 earnings</p>
+          <p className="text-sm font-semibold text-foreground">Level 2 earnings</p>
           <p className="mt-2 text-2xl font-bold text-violet-600">
             {formatCurrency(data.stats.level2Commission)}
           </p>
-          <p className="mt-1 text-xs text-slate-500">
+          <p className="mt-1 text-xs text-muted-foreground">
             {REFERRAL_LEVELS[1].rate} of indirect referral ad spend
           </p>
         </div>
@@ -198,15 +198,15 @@ export default async function AdvertiserReferralLinkPage() {
                 className="border-none hover:bg-transparent"
                 style={{ background: "var(--theme-primary-soft)" }}
               >
-                <TableHead className="h-11 px-6 text-slate-600">Date</TableHead>
-                <TableHead className="h-11 px-4 text-slate-600">Description</TableHead>
-                <TableHead className="h-11 px-4 text-right text-slate-600">Amount</TableHead>
+                <TableHead className="h-11 px-6 text-muted-foreground">Date</TableHead>
+                <TableHead className="h-11 px-4 text-muted-foreground">Description</TableHead>
+                <TableHead className="h-11 px-4 text-right text-muted-foreground">Amount</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {data.commissionHistory.length === 0 ? (
                 <TableRow className="hover:bg-transparent">
-                  <TableCell colSpan={3} className="px-6 py-16 text-center text-slate-500">
+                  <TableCell colSpan={3} className="px-6 py-16 text-center text-muted-foreground">
                     No commissions yet. Share your link to start earning when referrals spend on ads.
                   </TableCell>
                 </TableRow>
@@ -214,12 +214,12 @@ export default async function AdvertiserReferralLinkPage() {
                 data.commissionHistory.map((entry) => (
                   <TableRow
                     key={entry.id}
-                    className="border-slate-100 transition-colors hover:bg-blue-50/40"
+                    className="border-border transition-colors hover:bg-blue-50/40"
                   >
-                    <TableCell className="px-6 py-4 text-sm text-slate-600">
+                    <TableCell className="px-6 py-4 text-sm text-muted-foreground">
                       {formatUserDateTime(entry.createdAt, tz, "MMM d, yyyy HH:mm")}
                     </TableCell>
-                    <TableCell className="px-4 py-4 text-sm text-slate-700">
+                    <TableCell className="px-4 py-4 text-sm text-foreground">
                       {entry.description ?? "Referral commission"}
                     </TableCell>
                     <TableCell className="px-4 py-4 text-right text-sm font-semibold tabular-nums text-emerald-600">
@@ -246,20 +246,20 @@ export default async function AdvertiserReferralLinkPage() {
                 className="border-none hover:bg-transparent"
                 style={{ background: "var(--theme-primary-soft)" }}
               >
-                <TableHead className="h-11 px-6 text-slate-600">User</TableHead>
-                <TableHead className="h-11 px-4 text-slate-600">Referred via</TableHead>
-                <TableHead className="h-11 px-4 text-slate-600">Role</TableHead>
-                <TableHead className="h-11 px-4 text-slate-600">Level</TableHead>
-                <TableHead className="h-11 px-4 text-slate-600">Joined</TableHead>
-                <TableHead className="h-11 px-4 text-slate-600">Status</TableHead>
-                <TableHead className="h-11 px-4 text-right text-slate-600">Ad Spend</TableHead>
-                <TableHead className="h-11 px-4 text-right text-slate-600">Your Commission</TableHead>
+                <TableHead className="h-11 px-6 text-muted-foreground">User</TableHead>
+                <TableHead className="h-11 px-4 text-muted-foreground">Referred via</TableHead>
+                <TableHead className="h-11 px-4 text-muted-foreground">Role</TableHead>
+                <TableHead className="h-11 px-4 text-muted-foreground">Level</TableHead>
+                <TableHead className="h-11 px-4 text-muted-foreground">Joined</TableHead>
+                <TableHead className="h-11 px-4 text-muted-foreground">Status</TableHead>
+                <TableHead className="h-11 px-4 text-right text-muted-foreground">Ad Spend</TableHead>
+                <TableHead className="h-11 px-4 text-right text-muted-foreground">Your Commission</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {data.referrals.length === 0 ? (
                 <TableRow className="hover:bg-transparent">
-                  <TableCell colSpan={8} className="px-6 py-16 text-center text-slate-500">
+                  <TableCell colSpan={8} className="px-6 py-16 text-center text-muted-foreground">
                     No referrals yet. Copy your link above and share it to start earning.
                   </TableCell>
                 </TableRow>
@@ -267,15 +267,15 @@ export default async function AdvertiserReferralLinkPage() {
                 data.referrals.map((referral) => (
                   <TableRow
                     key={`${referral.id}-${referral.level}`}
-                    className="border-slate-100 transition-colors hover:bg-blue-50/40"
+                    className="border-border transition-colors hover:bg-blue-50/40"
                   >
                     <TableCell className="px-6 py-4">
                       <div>
-                        <p className="font-medium text-slate-900">{referral.name}</p>
-                        <p className="text-xs text-slate-500">{referral.email}</p>
+                        <p className="font-medium text-foreground">{referral.name}</p>
+                        <p className="text-xs text-muted-foreground">{referral.email}</p>
                       </div>
                     </TableCell>
-                    <TableCell className="px-4 py-4 text-sm text-slate-600">
+                    <TableCell className="px-4 py-4 text-sm text-muted-foreground">
                       {referral.level === 2 && referral.referredByName
                         ? referral.referredByName
                         : "Direct (your link)"}
@@ -298,13 +298,13 @@ export default async function AdvertiserReferralLinkPage() {
                         Level {referral.level}
                       </Badge>
                     </TableCell>
-                    <TableCell className="px-4 py-4 text-sm text-slate-600">
+                    <TableCell className="px-4 py-4 text-sm text-muted-foreground">
                       {formatUserDateTime(referral.createdAt, tz, "MMM d, yyyy")}
                     </TableCell>
                     <TableCell className="px-4 py-4">
                       <UserStatusBadge status={referral.status as "ACTIVE" | "PENDING" | "SUSPENDED"} />
                     </TableCell>
-                    <TableCell className="px-4 py-4 text-right text-sm font-medium tabular-nums text-slate-700">
+                    <TableCell className="px-4 py-4 text-right text-sm font-medium tabular-nums text-foreground">
                       {formatCurrency(referral.adSpend)}
                     </TableCell>
                     <TableCell className="px-4 py-4 text-right text-sm font-semibold tabular-nums text-emerald-600">

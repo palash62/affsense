@@ -54,7 +54,7 @@ export function ActionPickerDialog({
           </DialogDescription>
         </DialogHeader>
         <div className="relative">
-          <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-slate-400" />
+          <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -77,14 +77,14 @@ export function ActionPickerDialog({
                 onSelectEmail();
                 setQuery("");
               }}
-              className="flex w-full items-start gap-3 rounded-xl border border-slate-200 bg-white px-3 py-3 text-left transition hover:border-emerald-300 hover:bg-emerald-50/40 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex w-full items-start gap-3 rounded-xl border border-border bg-card px-3 py-3 text-left transition hover:border-emerald-300 hover:bg-emerald-50/40 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <span className="flex size-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700">
                 <Mail className="size-5" />
               </span>
               <span>
-                <span className="block text-sm font-semibold text-slate-900">Send Email</span>
-                <span className="mt-0.5 block text-xs text-slate-500">
+                <span className="block text-sm font-semibold text-foreground">Send Email</span>
+                <span className="mt-0.5 block text-xs text-muted-foreground">
                   Send a template to the contact
                 </span>
               </span>
@@ -98,21 +98,21 @@ export function ActionPickerDialog({
                 onSelectWait();
                 setQuery("");
               }}
-              className="flex w-full items-start gap-3 rounded-xl border border-slate-200 bg-white px-3 py-3 text-left transition hover:border-violet-300 hover:bg-violet-50/40 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex w-full items-start gap-3 rounded-xl border border-border bg-card px-3 py-3 text-left transition hover:border-violet-300 hover:bg-violet-50/40 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <span className="flex size-10 items-center justify-center rounded-xl bg-violet-50 text-violet-700">
                 <Clock className="size-5" />
               </span>
               <span>
-                <span className="block text-sm font-semibold text-slate-900">Wait</span>
-                <span className="mt-0.5 block text-xs text-slate-500">
+                <span className="block text-sm font-semibold text-foreground">Wait</span>
+                <span className="mt-0.5 block text-xs text-muted-foreground">
                   Hold for a set number of days before the next email.
                 </span>
               </span>
             </button>
           ) : null}
           {noMatch ? (
-            <p className="py-6 text-center text-sm text-slate-400">No matching actions</p>
+            <p className="py-6 text-center text-sm text-muted-foreground">No matching actions</p>
           ) : null}
         </div>
       </DialogContent>

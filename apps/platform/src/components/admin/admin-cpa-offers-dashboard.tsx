@@ -84,10 +84,10 @@ function MetricCard({
   const max = Math.max(...sparkValues, 1);
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
+    <div className="relative overflow-hidden rounded-2xl border border-border bg-card p-4 shadow-sm">
       <div className={cn("absolute inset-x-0 top-0 h-1 bg-gradient-to-r", accentBar)} />
       <div className="flex items-start justify-between gap-2">
-        <p className="text-sm font-medium text-slate-600">{title}</p>
+        <p className="text-sm font-medium text-muted-foreground">{title}</p>
         <span
           className={cn(
             "text-xs font-semibold tabular-nums",
@@ -95,7 +95,7 @@ function MetricCard({
               ? "text-emerald-600"
               : changePct < 0
                 ? "text-red-500"
-                : "text-slate-400",
+                : "text-muted-foreground",
           )}
         >
           {formatChange(changePct)}
@@ -114,7 +114,7 @@ function MetricCard({
             ))}
           </div>
         ) : (
-          <div className="flex h-full items-center justify-center rounded-lg bg-slate-50 text-[11px] text-slate-400">
+          <div className="flex h-full items-center justify-center rounded-lg bg-muted text-[11px] text-muted-foreground">
             No Data Available
           </div>
         )}
@@ -167,7 +167,7 @@ export function AdminCpaOffersDashboard() {
       />
 
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex flex-wrap gap-1.5 rounded-xl border border-slate-200 bg-white p-1.5 shadow-sm">
+        <div className="flex flex-wrap gap-1.5 rounded-xl border border-border bg-card p-1.5 shadow-sm">
           {RANGES.map((item) => (
             <button
               key={item.id}
@@ -177,7 +177,7 @@ export function AdminCpaOffersDashboard() {
                 "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
                 range === item.id
                   ? "bg-slate-900 text-white shadow-sm"
-                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground",
               )}
             >
               {item.label}
@@ -210,7 +210,7 @@ export function AdminCpaOffersDashboard() {
           sparkValues={[]}
           accent="sky"
         >
-          <p className="text-3xl font-bold tabular-nums text-slate-900">
+          <p className="text-3xl font-bold tabular-nums text-foreground">
             {loading
               ? "…"
               : `${data?.metrics.hits ?? 0} / ${data?.metrics.clicks ?? 0}`}
@@ -238,13 +238,13 @@ export function AdminCpaOffersDashboard() {
         >
           <div className="flex items-end gap-6">
             <div>
-              <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400">Revenue</p>
-              <p className="text-2xl font-bold tabular-nums text-slate-900">
+              <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Revenue</p>
+              <p className="text-2xl font-bold tabular-nums text-foreground">
                 {loading ? "…" : formatCurrency(Number(data?.metrics.revenue ?? 0))}
               </p>
             </div>
             <div>
-              <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400">Payout</p>
+              <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Payout</p>
               <p className="text-2xl font-bold tabular-nums text-violet-700">
                 {loading ? "…" : formatCurrency(Number(data?.metrics.payout ?? 0))}
               </p>
@@ -258,23 +258,23 @@ export function AdminCpaOffersDashboard() {
           sparkValues={[]}
           accent="orange"
         >
-          <p className="text-3xl font-bold tabular-nums text-slate-900">
+          <p className="text-3xl font-bold tabular-nums text-foreground">
             {loading ? "…" : formatCurrency(Number(data?.metrics.profit ?? 0))}
           </p>
         </MetricCard>
       </div>
 
-      <section className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm sm:p-5">
+      <section className="rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5">
         <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h2 className="text-base font-semibold text-slate-900">
+            <h2 className="text-base font-semibold text-foreground">
               {data?.rangeLabel ?? "Last 7 Days"}
             </h2>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-muted-foreground">
               {data ? formatRangeDates(data.from, data.to) : "Loading…"}
             </p>
           </div>
-          <div className="flex rounded-lg border border-slate-200 bg-slate-50 p-0.5">
+          <div className="flex rounded-lg border border-border bg-muted p-0.5">
             {(["area", "bar"] as const).map((type) => (
               <button
                 key={type}
@@ -283,8 +283,8 @@ export function AdminCpaOffersDashboard() {
                 className={cn(
                   "rounded-md px-3 py-1 text-xs font-semibold capitalize transition-colors",
                   chartType === type
-                    ? "bg-white text-slate-900 shadow-sm"
-                    : "text-slate-500 hover:text-slate-800",
+                    ? "bg-card text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground",
                 )}
               >
                 {type}
@@ -295,7 +295,7 @@ export function AdminCpaOffersDashboard() {
 
         <div className="h-[340px] w-full">
           {loading || !data ? (
-            <div className="flex h-full items-center justify-center text-sm text-slate-400">
+            <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
               Loading chart…
             </div>
           ) : (
@@ -316,13 +316,13 @@ export function AdminCpaOffersDashboard() {
                       <stop offset="95%" stopColor="#22c55e" stopOpacity={0.02} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="4 4" stroke="#e2e8f0" />
+                  <CartesianGrid strokeDasharray="4 4" stroke="var(--border)" />
                   <XAxis dataKey="label" tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
                   <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} width={28} />
                   <Tooltip
                     contentStyle={{
                       borderRadius: 12,
-                      border: "1px solid #e2e8f0",
+                      border: "1px solid var(--border)",
                       fontSize: 12,
                     }}
                   />
@@ -354,13 +354,13 @@ export function AdminCpaOffersDashboard() {
                 </AreaChart>
               ) : (
                 <BarChart data={data.series} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="4 4" stroke="#e2e8f0" />
+                  <CartesianGrid strokeDasharray="4 4" stroke="var(--border)" />
                   <XAxis dataKey="label" tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
                   <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} width={28} />
                   <Tooltip
                     contentStyle={{
                       borderRadius: 12,
-                      border: "1px solid #e2e8f0",
+                      border: "1px solid var(--border)",
                       fontSize: 12,
                     }}
                   />
@@ -373,12 +373,12 @@ export function AdminCpaOffersDashboard() {
             </ResponsiveContainer>
           )}
         </div>
-        <p className="mt-2 text-[11px] text-slate-400">
+        <p className="mt-2 text-[11px] text-muted-foreground">
           Hits/clicks come from stored CPA click records; conversion series comes from CPA conversion postbacks.
         </p>
       </section>
 
-      <section className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+      <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
         <div
           className="flex items-center justify-between px-5 py-4 text-white"
           style={{
@@ -400,7 +400,7 @@ export function AdminCpaOffersDashboard() {
 
         <Table>
           <TableHeader>
-            <TableRow className="bg-slate-50/90 hover:bg-slate-50/90">
+            <TableRow className="bg-muted/90 hover:bg-muted/90">
               <TableHead>Offer ID</TableHead>
               <TableHead>Offer</TableHead>
               <TableHead className="text-right">Payout</TableHead>
@@ -409,13 +409,13 @@ export function AdminCpaOffersDashboard() {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={3} className="py-10 text-center text-sm text-slate-500">
+                <TableCell colSpan={3} className="py-10 text-center text-sm text-muted-foreground">
                   Loading offers…
                 </TableCell>
               </TableRow>
             ) : !data?.newOffers.length ? (
               <TableRow>
-                <TableCell colSpan={3} className="py-10 text-center text-sm text-slate-500">
+                <TableCell colSpan={3} className="py-10 text-center text-sm text-muted-foreground">
                   No offers yet. Create your first offer to get started.
                 </TableCell>
               </TableRow>
@@ -425,7 +425,7 @@ export function AdminCpaOffersDashboard() {
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <CpaOfferStatusDot status={offer.status} />
-                      <span className="font-mono text-xs text-slate-600">
+                      <span className="font-mono text-xs text-muted-foreground">
                         {offer.id.slice(-6)}
                       </span>
                     </div>
@@ -436,7 +436,7 @@ export function AdminCpaOffersDashboard() {
                       <div className="min-w-0">
                         <Link
                           href={`/admin/cpa-offers/${offer.id}/edit`}
-                          className="block truncate font-medium text-slate-900 hover:text-[var(--theme-primary)]"
+                          className="block truncate font-medium text-foreground hover:text-[var(--theme-primary)]"
                         >
                           {offer.name}
                         </Link>
@@ -451,7 +451,7 @@ export function AdminCpaOffersDashboard() {
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell className="text-right text-sm font-semibold tabular-nums text-slate-900">
+                  <TableCell className="text-right text-sm font-semibold tabular-nums text-foreground">
                     {formatCurrency(Number(offer.payout))}
                   </TableCell>
                 </TableRow>

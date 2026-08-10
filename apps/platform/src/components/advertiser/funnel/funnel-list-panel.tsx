@@ -179,18 +179,18 @@ export function FunnelListPanel({ initialFunnels, initialTemplates }: FunnelList
       }
     >
       <div className="space-y-8">
-        <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-          <div className="border-b border-slate-200 px-4 py-4">
-            <h2 className="text-lg font-semibold text-slate-900">Template library</h2>
-            <p className="mt-1 text-sm text-slate-500">
+        <section className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+          <div className="border-b border-border px-4 py-4">
+            <h2 className="text-lg font-semibold text-foreground">Template library</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
               Pick a high-converting layout, then customize it in the funnel builder.
             </p>
           </div>
 
           {templatesLoading ? (
-            <div className="px-6 py-12 text-sm text-slate-500">Loading templates...</div>
+            <div className="px-6 py-12 text-sm text-muted-foreground">Loading templates...</div>
           ) : templates.length === 0 ? (
-            <div className="px-6 py-12 text-center text-sm text-slate-500">
+            <div className="px-6 py-12 text-center text-sm text-muted-foreground">
               No templates available yet. Ask your admin to create funnel templates.
             </div>
           ) : (
@@ -221,13 +221,13 @@ export function FunnelListPanel({ initialFunnels, initialTemplates }: FunnelList
 
         <section>
           <div className="mb-4">
-            <h2 className="text-lg font-semibold text-slate-900">Your funnels</h2>
-            <p className="mt-1 text-sm text-slate-500">
+            <h2 className="text-lg font-semibold text-foreground">Your funnels</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
               Funnels you have created or duplicated from templates.
             </p>
           </div>
 
-        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
           <FunnelListToolbar search={search} onSearchChange={(v) => { setSearch(v); setPage(1); }} />
 
           {filtered.length === 0 ? (
@@ -235,10 +235,10 @@ export function FunnelListPanel({ initialFunnels, initialTemplates }: FunnelList
               <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-blue-50">
                 <LayoutTemplate className="h-7 w-7 text-blue-600" />
               </div>
-              <p className="text-sm font-medium text-slate-900">
+              <p className="text-sm font-medium text-foreground">
                 {funnels.length === 0 ? "No funnels yet" : "No funnels match your search"}
               </p>
-              <p className="mt-1 max-w-sm text-sm text-slate-500">
+              <p className="mt-1 max-w-sm text-sm text-muted-foreground">
                 {funnels.length === 0
                   ? "Create your first funnel or pick a template from the library below."
                   : "Try a different search term."}
@@ -265,7 +265,7 @@ export function FunnelListPanel({ initialFunnels, initialTemplates }: FunnelList
           )}
 
           {filtered.length > 0 && (
-            <div className="flex flex-wrap items-center justify-end gap-4 border-t border-slate-200 px-4 py-3 text-sm text-slate-500">
+            <div className="flex flex-wrap items-center justify-end gap-4 border-t border-border px-4 py-3 text-sm text-muted-foreground">
               <div className="flex items-center gap-2">
                 <span>Rows per page</span>
                 <Select
@@ -299,7 +299,7 @@ export function FunnelListPanel({ initialFunnels, initialTemplates }: FunnelList
                 >
                   Previous
                 </Button>
-                <span className="flex h-8 min-w-8 items-center justify-center rounded-md border border-slate-200 px-2 text-slate-700">
+                <span className="flex h-8 min-w-8 items-center justify-center rounded-md border border-border px-2 text-foreground">
                   {currentPage}
                 </span>
                 <Button

@@ -196,11 +196,11 @@ export function AdminCampaignEditForm({ campaign }: AdminCampaignEditFormProps) 
   return (
     <form
       onSubmit={handleSubmit}
-      className="mx-auto max-w-4xl space-y-6 rounded-[18px] border border-slate-200 bg-white p-6 shadow-sm"
+      className="mx-auto max-w-4xl space-y-6 rounded-[18px] border border-border bg-card p-6 shadow-sm"
     >
       <div>
-        <h2 className="text-lg font-semibold text-slate-900">Edit campaign</h2>
-        <p className="mt-1 text-sm text-slate-500">
+        <h2 className="text-lg font-semibold text-foreground">Edit campaign</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
           {fullEdit
             ? "Full edit is available for draft and pending campaigns."
             : "Running campaigns allow limited edits. CPL, budget, and category cannot be changed while active."}
@@ -220,7 +220,7 @@ export function AdminCampaignEditForm({ campaign }: AdminCampaignEditFormProps) 
       )}
 
       <section className="space-y-4">
-        <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+        <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
           Basic details
         </h3>
         <div className="grid gap-4 sm:grid-cols-2">
@@ -241,7 +241,7 @@ export function AdminCampaignEditForm({ campaign }: AdminCampaignEditFormProps) 
               rows={3}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-[var(--theme-primary)] focus:ring-2 focus:ring-[var(--theme-primary)]/15"
+              className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-[var(--theme-primary)] focus:ring-2 focus:ring-[var(--theme-primary)]/15"
             />
           </div>
           {fullEdit && (
@@ -289,7 +289,7 @@ export function AdminCampaignEditForm({ campaign }: AdminCampaignEditFormProps) 
               disabled={!fullEdit}
               placeholder="Unlimited"
             />
-            <p className="text-xs text-slate-500">Leave blank for unlimited.</p>
+            <p className="text-xs text-muted-foreground">Leave blank for unlimited.</p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="dailyCap">Daily cap</Label>
@@ -331,17 +331,17 @@ export function AdminCampaignEditForm({ campaign }: AdminCampaignEditFormProps) 
       </section>
 
       {canEditTargeting && (
-        <section className="space-y-4 border-t border-slate-100 pt-6">
-          <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+        <section className="space-y-4 border-t border-border pt-6">
+          <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
             Targeting & scheduling
           </h3>
 
           {parsedTargeting.destinationUrl && (
-            <div className="rounded-lg border border-slate-200 bg-slate-50/60 px-3 py-2">
-              <p className="text-xs text-slate-500">Destination URL (from optin page)</p>
-              <p className="break-all text-sm text-slate-800">{parsedTargeting.destinationUrl}</p>
+            <div className="rounded-lg border border-border bg-muted/60 px-3 py-2">
+              <p className="text-xs text-muted-foreground">Destination URL (from optin page)</p>
+              <p className="break-all text-sm text-foreground">{parsedTargeting.destinationUrl}</p>
               {parsedTargeting.optinSlug && (
-                <p className="mt-1 text-xs text-slate-500">Optin: /o/{parsedTargeting.optinSlug}</p>
+                <p className="mt-1 text-xs text-muted-foreground">Optin: /o/{parsedTargeting.optinSlug}</p>
               )}
             </div>
           )}
@@ -368,7 +368,7 @@ export function AdminCampaignEditForm({ campaign }: AdminCampaignEditFormProps) 
                 type="checkbox"
                 checked={excludeBlockedPublishers}
                 onChange={(e) => setExcludeBlockedPublishers(e.target.checked)}
-                className="rounded border-slate-300"
+                className="rounded border-border"
               />
               <Label htmlFor="excludeBlocked">Exclude blocked publishers</Label>
             </div>
@@ -486,11 +486,11 @@ export function AdminCampaignEditForm({ campaign }: AdminCampaignEditFormProps) 
       )}
 
       {campaign.fields.length > 0 && (
-        <section className="space-y-3 border-t border-slate-100 pt-6">
-          <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+        <section className="space-y-3 border-t border-border pt-6">
+          <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
             Lead fields
           </h3>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-muted-foreground">
             Lead fields can only be changed for draft or pending campaigns via full campaign setup.
           </p>
           <div className="flex flex-wrap gap-2">
@@ -505,15 +505,15 @@ export function AdminCampaignEditForm({ campaign }: AdminCampaignEditFormProps) 
       )}
 
       {SHOW_CAMPAIGN_TRACKING_PIXEL_UI && campaign.pixelToken && (
-        <section className="space-y-3 border-t border-slate-100 pt-6">
-          <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+        <section className="space-y-3 border-t border-border pt-6">
+          <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
             Tracking pixel
           </h3>
           <CampaignTrackingPixelPanel pixelToken={campaign.pixelToken} />
         </section>
       )}
 
-      <div className="flex justify-end gap-2 border-t border-slate-100 pt-6">
+      <div className="flex justify-end gap-2 border-t border-border pt-6">
         <Button type="button" variant="outline" onClick={() => router.back()}>
           Cancel
         </Button>

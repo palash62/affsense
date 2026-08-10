@@ -64,7 +64,7 @@ export function BuilderToolbar({
   void historyTick;
 
   return (
-    <header className="flex h-14 shrink-0 items-center gap-2 border-b border-slate-200/80 bg-white px-3">
+    <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border bg-card px-3">
       <ButtonLink
         href="/advertiser/email/automations"
         variant="ghost"
@@ -78,7 +78,7 @@ export function BuilderToolbar({
       <div className="mx-1 hidden h-6 w-px bg-slate-200 sm:block" />
 
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-semibold text-slate-900">
+        <p className="truncate text-sm font-semibold text-foreground">
           {form.name.trim() || "Untitled automation"}
         </p>
         <p
@@ -86,7 +86,7 @@ export function BuilderToolbar({
             "truncate text-[11px]",
             saveStatus === "error" || saveStatus === "blocked"
               ? "text-amber-700"
-              : "text-slate-500",
+              : "text-muted-foreground",
           )}
         >
           {statusLabel(state)}

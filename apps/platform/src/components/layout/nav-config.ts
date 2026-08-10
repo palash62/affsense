@@ -1,8 +1,10 @@
 import type { UserRole } from "@prisma/client";
 import type { LucideIcon } from "lucide-react";
 import {
+  Archive,
   ArrowDownToLine,
   LayoutDashboard,
+  History,
   Users,
   Megaphone,
   FileText,
@@ -26,6 +28,24 @@ import {
   Store,
   Webhook,
   UserCog,
+  CreditCard,
+  ShieldCheck,
+  Package,
+  ShoppingCart,
+  Percent,
+  ListTodo,
+  ClipboardList,
+  Plus,
+  Tags,
+  HandCoins,
+  Bell,
+  Image,
+  Files,
+  Images,
+  Landmark,
+  Lock,
+  Ticket,
+  Share2,
 } from "lucide-react";
 import { STAFF_USERS_PATH } from "@/lib/admin-portal";
 
@@ -36,8 +56,13 @@ export interface NavItem {
   children?: NavItem[];
 }
 
-export const ADMIN_NAV: NavItem[] = [
-  { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
+export type AdminNavEntry =
+  | { kind: "section"; label: string }
+  | { kind: "item"; item: NavItem };
+
+/** Legacy admin routes preserved under Old Menu (also used for staff menu assignment UI). */
+export const ADMIN_LEGACY_NAV: NavItem[] = [
+  { label: "Old Dashboard", href: "/admin/old-dashboard", icon: History },
   { label: "Users", href: STAFF_USERS_PATH, icon: UserCog },
   { label: "Profit", href: "/admin/profit", icon: TrendingUp },
   { label: "Advertisers", href: "/admin/advertisers", icon: Users },
@@ -69,6 +94,117 @@ export const ADMIN_NAV: NavItem[] = [
   { label: "Themes", href: "/admin/themes", icon: Palette },
   { label: "Funnel Templates", href: "/admin/funnel-templates", icon: FileStack },
   { label: "Tutorials", href: "/admin/tutorials", icon: PlayCircle },
+];
+
+export const ADMIN_NAV: AdminNavEntry[] = [
+  { kind: "section", label: "MAIN" },
+  { kind: "item", item: { label: "Dashboard", href: "/admin", icon: LayoutDashboard } },
+  {
+    kind: "item",
+    item: {
+      label: "Users",
+      href: "/admin/publishers",
+      icon: Users,
+      children: [
+        { label: "Affiliates", href: "/admin/publishers", icon: Share2 },
+        { label: "Manager", href: "/admin/users", icon: UserCog },
+      ],
+    },
+  },
+  { kind: "item", item: { label: "Memberships", href: "/admin/memberships", icon: CreditCard } },
+  { kind: "item", item: { label: "KYC Verification", href: "/admin/kyc", icon: ShieldCheck } },
+  {
+    kind: "item",
+    item: {
+      label: "Digital Products",
+      href: "/admin/digital-products",
+      icon: Package,
+      children: [
+        { label: "All Products", href: "/admin/digital-products", icon: Package },
+        { label: "Add New Product", href: "/admin/digital-products/new", icon: Plus },
+        { label: "Product Categories", href: "/admin/digital-products/categories", icon: Tags },
+      ],
+    },
+  },
+  {
+    kind: "item",
+    item: {
+      label: "Get Paid Tasks",
+      href: "/admin/get-paid-tasks",
+      icon: ClipboardList,
+      children: [
+        { label: "All Tasks", href: "/admin/get-paid-tasks", icon: ListTodo },
+        { label: "Add New Task", href: "/admin/get-paid-tasks/new", icon: Plus },
+        { label: "Task Categories", href: "/admin/get-paid-tasks/categories", icon: Tags },
+      ],
+    },
+  },
+  { kind: "item", item: { label: "CPA Offers", href: "/admin/offer-network", icon: Store } },
+  {
+    kind: "item",
+    item: { label: "Orders & Sales", href: "/admin/orders-sales", icon: ShoppingCart },
+  },
+  { kind: "item", item: { label: "Commissions", href: "/admin/commissions", icon: Percent } },
+  { kind: "item", item: { label: "Payouts", href: "/admin/payout-center", icon: Wallet } },
+  {
+    kind: "item",
+    item: { label: "Referrals", href: "/admin/referral-program", icon: Gift },
+  },
+  {
+    kind: "item",
+    item: { label: "Withdrawals", href: "/admin/withdrawals", icon: HandCoins },
+  },
+  {
+    kind: "item",
+    item: { label: "Support Tickets", href: "/admin/support-tickets", icon: Ticket },
+  },
+
+  { kind: "section", label: "MARKETING" },
+  { kind: "item", item: { label: "Promotions", href: "/admin/promotions", icon: Megaphone } },
+  {
+    kind: "item",
+    item: { label: "Email Campaigns", href: "/admin/email-campaigns", icon: Mail },
+  },
+  {
+    kind: "item",
+    item: { label: "Announcements", href: "/admin/announcements", icon: Bell },
+  },
+  { kind: "item", item: { label: "Banners", href: "/admin/banners", icon: Image } },
+
+  { kind: "section", label: "CONTENT" },
+  { kind: "item", item: { label: "Blog Posts", href: "/admin/blog-posts", icon: FileText } },
+  { kind: "item", item: { label: "Pages", href: "/admin/content-pages", icon: Files } },
+  {
+    kind: "item",
+    item: { label: "Media Library", href: "/admin/media-library", icon: Images },
+  },
+
+  { kind: "section", label: "SETTINGS" },
+  {
+    kind: "item",
+    item: { label: "General Settings", href: "/admin/general-settings", icon: Settings },
+  },
+  {
+    kind: "item",
+    item: { label: "Payment Settings", href: "/admin/payment-settings", icon: Landmark },
+  },
+  { kind: "item", item: { label: "Security", href: "/admin/security", icon: Lock } },
+  {
+    kind: "item",
+    item: { label: "System Logs", href: "/admin/system-logs", icon: ScrollText },
+  },
+  { kind: "item", item: { label: "Themes", href: "/admin/themes", icon: Palette } },
+
+  { kind: "section", label: "OLD" },
+  {
+    kind: "item",
+    item: {
+      label: "Old Menu",
+      href: "/admin/old-menu",
+      icon: Archive,
+      children: ADMIN_LEGACY_NAV,
+    },
+  },
 ];
 
 export const ADVERTISER_NAV: NavItem[] = [
@@ -110,6 +246,10 @@ export const PUBLISHER_NAV: NavItem[] = [
   { label: "Settings", href: "/publisher/settings", icon: Settings },
 ];
 
+function asNavEntries(items: NavItem[]): AdminNavEntry[] {
+  return items.map((item) => ({ kind: "item" as const, item }));
+}
+
 export function getNavForRole(
   role: UserRole,
   options?: {
@@ -117,17 +257,32 @@ export function getNavForRole(
     canAccessAutoresponder?: boolean;
     staffMenuAccess?: string[];
   },
-): NavItem[] {
+): AdminNavEntry[] {
   switch (role) {
     case "ADMIN":
       return ADMIN_NAV;
     case "PLATFORM_MANAGER": {
       const allowed = new Set(options?.staffMenuAccess ?? []);
-      return ADMIN_NAV.filter((item) => {
-        if (item.href === "/admin") return true;
+      const legacyChildren = ADMIN_LEGACY_NAV.filter((item) => {
         if (item.href === STAFF_USERS_PATH) return false;
         return allowed.has(item.href);
       });
+      const entries: AdminNavEntry[] = [
+        { kind: "item", item: { label: "Dashboard", href: "/admin", icon: LayoutDashboard } },
+      ];
+      if (legacyChildren.length > 0) {
+        entries.push({ kind: "section", label: "OLD" });
+        entries.push({
+          kind: "item",
+          item: {
+            label: "Old Menu",
+            href: "/admin/old-menu",
+            icon: Archive,
+            children: legacyChildren,
+          },
+        });
+      }
+      return entries;
     }
     case "ADVERTISER": {
       let items = ADVERTISER_NAV;
@@ -137,10 +292,10 @@ export function getNavForRole(
       if (options?.canAccessAutoresponder === false) {
         items = items.filter((item) => item.href !== "/advertiser/email");
       }
-      return items;
+      return asNavEntries(items);
     }
     case "PUBLISHER":
-      return PUBLISHER_NAV;
+      return asNavEntries(PUBLISHER_NAV);
     default:
       return [];
   }

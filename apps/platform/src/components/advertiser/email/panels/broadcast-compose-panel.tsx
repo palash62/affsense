@@ -123,15 +123,15 @@ function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <section className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
-      <div className="border-b border-slate-100 bg-gradient-to-br from-slate-50 via-white to-emerald-50/30 px-6 py-4">
+    <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+      <div className="border-b border-border bg-gradient-to-br from-slate-50 via-white to-emerald-50/30 px-6 py-4">
         <div className="flex items-start gap-3">
           <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700">
             <Icon className="size-4" />
           </div>
           <div>
-            <h2 className="text-base font-semibold tracking-tight text-slate-900">{title}</h2>
-            <p className="mt-0.5 text-sm text-slate-500">{description}</p>
+            <h2 className="text-base font-semibold tracking-tight text-foreground">{title}</h2>
+            <p className="mt-0.5 text-sm text-muted-foreground">{description}</p>
           </div>
         </div>
       </div>
@@ -505,7 +505,7 @@ export function BroadcastComposePanel({ broadcastId: initialBroadcastId }: Props
       showToolbar={false}
     >
       {loading ? (
-        <div className="flex h-48 items-center justify-center text-slate-500">
+        <div className="flex h-48 items-center justify-center text-muted-foreground">
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           Loading…
         </div>
@@ -562,7 +562,7 @@ export function BroadcastComposePanel({ broadcastId: initialBroadcastId }: Props
                       "rounded-xl border px-4 py-2 text-sm font-medium transition",
                       audienceType === opt.id
                         ? "border-emerald-600 bg-emerald-50 text-emerald-900"
-                        : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50",
+                        : "border-border bg-card text-muted-foreground hover:bg-muted",
                     )}
                   >
                     {opt.label}
@@ -590,9 +590,9 @@ export function BroadcastComposePanel({ broadcastId: initialBroadcastId }: Props
             ) : (
               <div className="space-y-2">
                 <Label>Tags</Label>
-                <div className="max-h-48 space-y-2 overflow-y-auto rounded-xl border border-slate-200 p-3">
+                <div className="max-h-48 space-y-2 overflow-y-auto rounded-xl border border-border p-3">
                   {tags.length === 0 ? (
-                    <p className="text-sm text-slate-500">No tags yet.</p>
+                    <p className="text-sm text-muted-foreground">No tags yet.</p>
                   ) : (
                     tags.map((t) => {
                       const checked = tagIds.includes(t.id);
@@ -625,7 +625,7 @@ export function BroadcastComposePanel({ broadcastId: initialBroadcastId }: Props
               </div>
             )}
 
-            <p className="rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-600">
+            <p className="rounded-xl bg-muted px-3 py-2 text-sm text-muted-foreground">
               Recipients:{" "}
               {counting ? (
                 <span className="inline-flex items-center gap-1">
@@ -634,7 +634,7 @@ export function BroadcastComposePanel({ broadcastId: initialBroadcastId }: Props
               ) : recipientCount == null ? (
                 "—"
               ) : (
-                <strong className="text-slate-900">
+                <strong className="text-foreground">
                   {recipientCount.toLocaleString()}
                 </strong>
               )}{" "}
@@ -693,7 +693,7 @@ export function BroadcastComposePanel({ broadcastId: initialBroadcastId }: Props
                       "rounded-xl border px-4 py-2 text-sm font-medium transition",
                       contentMode === opt.id
                         ? "border-emerald-600 bg-emerald-50 text-emerald-900"
-                        : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50",
+                        : "border-border bg-card text-muted-foreground hover:bg-muted",
                     )}
                   >
                     {opt.label}
@@ -798,7 +798,7 @@ export function BroadcastComposePanel({ broadcastId: initialBroadcastId }: Props
                 </p>
               ) : null}
             </div>
-            <div className="space-y-2 border-t border-slate-100 pt-4">
+            <div className="space-y-2 border-t border-border pt-4">
               <Label htmlFor="broadcast-test-to">Send test email</Label>
               <div className="flex flex-wrap items-center gap-2">
                 <Input
@@ -849,7 +849,7 @@ export function BroadcastComposePanel({ broadcastId: initialBroadcastId }: Props
                     "rounded-xl border px-4 py-2 text-sm font-medium transition",
                     deliveryMode === opt.id
                       ? "border-emerald-600 bg-emerald-50 text-emerald-900"
-                      : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50",
+                      : "border-border bg-card text-muted-foreground hover:bg-muted",
                   )}
                 >
                   {opt.label}
@@ -869,10 +869,10 @@ export function BroadcastComposePanel({ broadcastId: initialBroadcastId }: Props
                   className="max-w-xs"
                   disabled={Boolean(saving)}
                 />
-                <p className="text-xs text-slate-500">Timezone: {timezone}</p>
+                <p className="text-xs text-muted-foreground">Timezone: {timezone}</p>
               </div>
             ) : (
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-muted-foreground">
                 Messages queue immediately and send to subscribed recipients.
               </p>
             )}
@@ -887,7 +887,7 @@ export function BroadcastComposePanel({ broadcastId: initialBroadcastId }: Props
       )}
 
       {!loading ? (
-        <div className="sticky bottom-0 z-10 -mx-1 border-t border-slate-200/80 bg-white/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-white/80">
+        <div className="sticky bottom-0 z-10 -mx-1 border-t border-border bg-white/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-card/80">
           <div className="mx-auto flex max-w-3xl flex-wrap items-center justify-end gap-2">
             <Button
               type="button"

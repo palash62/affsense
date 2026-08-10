@@ -60,18 +60,18 @@ export function TutorialsPanel({ tutorials }: TutorialsPanelProps) {
           </div>
           <div className="w-full max-w-md">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search tutorials..."
-                className="h-10 border-white/20 bg-white/95 pl-9 pr-9 text-slate-900 shadow-sm placeholder:text-slate-400"
+                className="h-10 border-white/20 bg-white/95 pl-9 pr-9 text-foreground shadow-sm placeholder:text-muted-foreground"
               />
               {search ? (
                 <button
                   type="button"
                   onClick={() => setSearch("")}
-                  className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                  className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-muted-foreground"
                   aria-label="Clear search"
                 >
                   <X className="h-4 w-4" />
@@ -83,21 +83,21 @@ export function TutorialsPanel({ tutorials }: TutorialsPanelProps) {
       </div>
 
       <div className="flex items-center justify-between gap-3 px-1">
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-muted-foreground">
           {filtered.length} tutorial{filtered.length === 1 ? "" : "s"}
           {search.trim() ? ` matching "${search.trim()}"` : " available"}
         </p>
       </div>
 
       {tutorials.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 px-6 py-16 text-center">
-          <p className="text-sm font-medium text-slate-700">No tutorials available yet</p>
-          <p className="mt-1 text-xs text-slate-500">Check back later for new video guides.</p>
+        <div className="rounded-2xl border border-dashed border-border bg-muted/80 px-6 py-16 text-center">
+          <p className="text-sm font-medium text-foreground">No tutorials available yet</p>
+          <p className="mt-1 text-xs text-muted-foreground">Check back later for new video guides.</p>
         </div>
       ) : filtered.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 px-6 py-16 text-center">
-          <p className="text-sm font-medium text-slate-700">No tutorials found</p>
-          <p className="mt-1 text-xs text-slate-500">Try a different search term.</p>
+        <div className="rounded-2xl border border-dashed border-border bg-muted/80 px-6 py-16 text-center">
+          <p className="text-sm font-medium text-foreground">No tutorials found</p>
+          <p className="mt-1 text-xs text-muted-foreground">Try a different search term.</p>
         </div>
       ) : (
         <div className="grid gap-6 md:grid-cols-2">

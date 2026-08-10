@@ -126,7 +126,7 @@ export default async function AdminCampaignsPage({ searchParams }: PageProps) {
         icon={Megaphone}
         gradient="approved"
       >
-        <Suspense fallback={<div className="px-6 py-4 text-sm text-slate-500">Loading filters...</div>}>
+        <Suspense fallback={<div className="px-6 py-4 text-sm text-muted-foreground">Loading filters...</div>}>
           <CampaignsTableFilters />
         </Suspense>
 
@@ -135,10 +135,10 @@ export default async function AdminCampaignsPage({ searchParams }: PageProps) {
             <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full" style={{ background: "var(--theme-primary-soft)" }}>
               <Megaphone className="h-7 w-7 text-[var(--theme-primary)]" />
             </div>
-            <h3 className="text-lg font-semibold text-slate-900">
+            <h3 className="text-lg font-semibold text-foreground">
               {hasFilters ? "No matching campaigns" : "No campaigns yet"}
             </h3>
-            <p className="mt-1 max-w-sm text-sm text-slate-500">
+            <p className="mt-1 max-w-sm text-sm text-muted-foreground">
               {hasFilters
                 ? "Try adjusting your search or filter criteria."
                 : "Campaigns will appear here once advertisers create them."}
@@ -150,27 +150,27 @@ export default async function AdminCampaignsPage({ searchParams }: PageProps) {
             <Table>
               <TableHeader>
                 <TableRow className="border-none hover:bg-transparent" style={{ background: "var(--theme-primary-soft)" }}>
-                  <TableHead className="h-11 px-6 text-slate-600">Campaign</TableHead>
-                  <TableHead className="h-11 px-4 text-slate-600">Advertiser</TableHead>
-                  <TableHead className="h-11 px-4 text-right text-slate-600">CPL</TableHead>
-                  <TableHead className="h-11 px-4 text-center text-slate-600">Leads</TableHead>
-                  <TableHead className="h-11 px-4 text-right text-slate-600">Spent</TableHead>
-                  <TableHead className="h-11 px-4 text-slate-600">Status</TableHead>
-                  <TableHead className="h-11 px-4 text-slate-600">Created</TableHead>
-                  <TableHead className="h-11 px-6 text-right text-slate-600">Actions</TableHead>
+                  <TableHead className="h-11 px-6 text-muted-foreground">Campaign</TableHead>
+                  <TableHead className="h-11 px-4 text-muted-foreground">Advertiser</TableHead>
+                  <TableHead className="h-11 px-4 text-right text-muted-foreground">CPL</TableHead>
+                  <TableHead className="h-11 px-4 text-center text-muted-foreground">Leads</TableHead>
+                  <TableHead className="h-11 px-4 text-right text-muted-foreground">Spent</TableHead>
+                  <TableHead className="h-11 px-4 text-muted-foreground">Status</TableHead>
+                  <TableHead className="h-11 px-4 text-muted-foreground">Created</TableHead>
+                  <TableHead className="h-11 px-6 text-right text-muted-foreground">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {campaigns.map((c) => (
-                  <TableRow key={c.id} className="border-slate-100 transition-colors hover:bg-blue-50/40">
+                  <TableRow key={c.id} className="border-border transition-colors hover:bg-blue-50/40">
                     <TableCell className="px-6 py-4">
-                      <p className="font-medium text-slate-900">{c.name}</p>
-                      <p className="text-xs text-slate-500">{c.category}</p>
+                      <p className="font-medium text-foreground">{c.name}</p>
+                      <p className="text-xs text-muted-foreground">{c.category}</p>
                     </TableCell>
                     <TableCell className="px-4 py-4">
                       <div className="flex items-center gap-2">
                         <Building2 className="h-3.5 w-3.5 text-indigo-400" />
-                        <span className="text-sm text-slate-700">{c.advertiser.name}</span>
+                        <span className="text-sm text-foreground">{c.advertiser.name}</span>
                       </div>
                     </TableCell>
                     <TableCell className="px-4 py-4 text-right">
@@ -183,13 +183,13 @@ export default async function AdminCampaignsPage({ searchParams }: PageProps) {
                         {c._count.leads}
                       </span>
                     </TableCell>
-                    <TableCell className="px-4 py-4 text-right text-sm font-medium text-slate-700">
+                    <TableCell className="px-4 py-4 text-right text-sm font-medium text-foreground">
                       {formatCurrency(Number(c.spent))}
                     </TableCell>
                     <TableCell className="px-4 py-4">
                       <CampaignStatusBadge status={c.status} />
                     </TableCell>
-                    <TableCell className="px-4 py-4 text-sm text-slate-500">
+                    <TableCell className="px-4 py-4 text-sm text-muted-foreground">
                       {formatUserDateTime(c.createdAt, tz, "MMM d, yyyy")}
                     </TableCell>
                     <TableCell className="px-6 py-4 text-right">

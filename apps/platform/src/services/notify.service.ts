@@ -68,7 +68,7 @@ export async function notifyWelcome(user: { id: string; email: string; name: str
     template: "welcome",
     userId: user.id,
     notificationType: "auth.welcome",
-    notificationTitle: "Welcome to LeadVix",
+    notificationTitle: "Welcome to Affsense",
     notificationBody: isAdvertiser
       ? "Check your email and verify your address to activate your account."
       : "Your account is pending review. We will notify you when it is activated.",
@@ -167,7 +167,7 @@ export async function notifyPasswordChanged(user: { id: string; email: string; n
   const rendered = renderGenericEmail({
     ...(await baseParams(user.name)),
     title: "Password changed",
-    message: "Your LeadVix password was changed successfully. If this was not you, contact support immediately.",
+    message: "Your Affsense password was changed successfully. If this was not you, contact support immediately.",
   });
   await deliver({
     to: user.email,

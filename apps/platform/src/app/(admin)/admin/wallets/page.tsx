@@ -90,7 +90,7 @@ export default async function AdminWalletsPage({ searchParams }: PageProps) {
 
       <PageSection title="All Wallets" description="Balances by user account" icon={Wallet} gradient="revenue">
         {total === 0 ? (
-          <div className="px-6 py-16 text-center text-slate-500">No wallets found</div>
+          <div className="px-6 py-16 text-center text-muted-foreground">No wallets found</div>
         ) : (
           <>
             <Table>
@@ -99,16 +99,16 @@ export default async function AdminWalletsPage({ searchParams }: PageProps) {
                   className="border-none hover:bg-transparent"
                   style={{ background: "var(--theme-primary-soft)" }}
                 >
-                  <TableHead className="h-11 px-6 text-slate-600">User</TableHead>
-                  <TableHead className="h-11 px-4 text-slate-600">Role</TableHead>
-                  <TableHead className="h-11 px-4 text-right text-slate-600">Balance</TableHead>
+                  <TableHead className="h-11 px-6 text-muted-foreground">User</TableHead>
+                  <TableHead className="h-11 px-4 text-muted-foreground">Role</TableHead>
+                  <TableHead className="h-11 px-4 text-right text-muted-foreground">Balance</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {wallets.map((w, index) => (
                   <TableRow
                     key={w.id}
-                    className="border-slate-100 transition-colors hover:bg-blue-50/40"
+                    className="border-border transition-colors hover:bg-blue-50/40"
                   >
                     <TableCell className="px-6 py-4">
                       <div className="flex items-center gap-3">
@@ -123,8 +123,8 @@ export default async function AdminWalletsPage({ searchParams }: PageProps) {
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <p className="font-medium text-slate-900">{w.user.name}</p>
-                          <p className="text-xs text-slate-500">{w.user.email}</p>
+                          <p className="font-medium text-foreground">{w.user.name}</p>
+                          <p className="text-xs text-muted-foreground">{w.user.email}</p>
                         </div>
                       </div>
                     </TableCell>
@@ -140,7 +140,7 @@ export default async function AdminWalletsPage({ searchParams }: PageProps) {
                       <span
                         className={cn(
                           "text-sm font-bold tabular-nums",
-                          Number(w.balance) > 0 ? "text-emerald-600" : "text-slate-400",
+                          Number(w.balance) > 0 ? "text-emerald-600" : "text-muted-foreground",
                         )}
                       >
                         {formatCurrency(Number(w.balance))}

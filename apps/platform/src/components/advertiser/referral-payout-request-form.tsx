@@ -98,11 +98,11 @@ export function ReferralPayoutRequestForm({
               {formatCurrency(withdrawableReferral)}
             </p>
           </div>
-          <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+          <div className="rounded-xl border border-border bg-muted px-4 py-3">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Wallet available
             </p>
-            <p className="mt-1 text-2xl font-bold text-slate-800">
+            <p className="mt-1 text-2xl font-bold text-foreground">
               {formatCurrency(availableBalance)}
             </p>
           </div>
@@ -149,7 +149,7 @@ export function ReferralPayoutRequestForm({
             required
             disabled={!canSubmit}
           />
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-muted-foreground">
             Minimum payout: {formatCurrency(REFERRAL_MIN_PAYOUT)}
           </p>
         </div>

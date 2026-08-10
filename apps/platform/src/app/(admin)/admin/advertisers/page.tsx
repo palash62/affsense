@@ -105,7 +105,7 @@ export default async function AdminAdvertisersPage({ searchParams }: PageProps) 
         icon={Building2}
         gradient="revenue"
       >
-        <Suspense fallback={<div className="px-6 py-4 text-sm text-slate-500">Loading filters...</div>}>
+        <Suspense fallback={<div className="px-6 py-4 text-sm text-muted-foreground">Loading filters...</div>}>
           <UsersTableFilters />
         </Suspense>
 
@@ -114,10 +114,10 @@ export default async function AdminAdvertisersPage({ searchParams }: PageProps) 
             <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full" style={{ background: "var(--theme-primary-soft)" }}>
               <Building2 className="h-7 w-7 text-[var(--theme-primary)]" />
             </div>
-            <h3 className="text-lg font-semibold text-slate-900">
+            <h3 className="text-lg font-semibold text-foreground">
               {hasFilters ? "No matching advertisers" : "No advertisers yet"}
             </h3>
-            <p className="mt-1 max-w-sm text-sm text-slate-500">
+            <p className="mt-1 max-w-sm text-sm text-muted-foreground">
               {hasFilters
                 ? "Try adjusting your search or filter criteria."
                 : "Advertiser accounts will appear here once users register with the advertiser role."}
@@ -128,13 +128,13 @@ export default async function AdminAdvertisersPage({ searchParams }: PageProps) 
             <Table>
               <TableHeader>
                 <TableRow className="border-none hover:bg-transparent" style={{ background: "var(--theme-primary-soft)" }}>
-                  <TableHead className="h-11 px-6 text-slate-600">Advertiser</TableHead>
-                  <TableHead className="h-11 px-4 text-slate-600">Company</TableHead>
-                  <TableHead className="h-11 px-4 text-center text-slate-600">Campaigns</TableHead>
-                  <TableHead className="h-11 px-4 text-right text-slate-600">Wallet</TableHead>
-                  <TableHead className="h-11 px-4 text-slate-600">Status</TableHead>
-                  <TableHead className="h-11 px-4 text-slate-600">Joined</TableHead>
-                  <TableHead className="h-11 px-6 text-right text-slate-600">Actions</TableHead>
+                  <TableHead className="h-11 px-6 text-muted-foreground">Advertiser</TableHead>
+                  <TableHead className="h-11 px-4 text-muted-foreground">Company</TableHead>
+                  <TableHead className="h-11 px-4 text-center text-muted-foreground">Campaigns</TableHead>
+                  <TableHead className="h-11 px-4 text-right text-muted-foreground">Wallet</TableHead>
+                  <TableHead className="h-11 px-4 text-muted-foreground">Status</TableHead>
+                  <TableHead className="h-11 px-4 text-muted-foreground">Joined</TableHead>
+                  <TableHead className="h-11 px-6 text-right text-muted-foreground">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -150,7 +150,7 @@ export default async function AdminAdvertisersPage({ searchParams }: PageProps) 
                     adminId,
                   );
                   return (
-                    <TableRow key={advertiser.id} className="border-slate-100 transition-colors hover:bg-blue-50/40">
+                    <TableRow key={advertiser.id} className="border-border transition-colors hover:bg-blue-50/40">
                       <TableCell className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           <Avatar size="lg">
@@ -159,8 +159,8 @@ export default async function AdminAdvertisersPage({ searchParams }: PageProps) 
                             </AvatarFallback>
                           </Avatar>
                           <div className="min-w-0">
-                            <p className="truncate font-medium text-slate-900">{advertiser.name}</p>
-                            <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-slate-500">
+                            <p className="truncate font-medium text-foreground">{advertiser.name}</p>
+                            <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-muted-foreground">
                               <Mail className="h-3 w-3 shrink-0 text-[var(--theme-primary)]" />
                               {advertiser.email}
                             </p>
@@ -170,7 +170,7 @@ export default async function AdminAdvertisersPage({ searchParams }: PageProps) 
                       <TableCell className="px-4 py-4">
                         <div className="flex items-center gap-2">
                           <Building2 className="h-3.5 w-3.5 shrink-0 text-indigo-400" />
-                          <span className="text-sm text-slate-700">
+                          <span className="text-sm text-foreground">
                             {advertiser.advertiserProfile?.company ?? "—"}
                           </span>
                         </div>
@@ -181,7 +181,7 @@ export default async function AdminAdvertisersPage({ searchParams }: PageProps) 
                         </span>
                       </TableCell>
                       <TableCell className="px-4 py-4 text-right">
-                        <span className={cn("text-sm font-semibold tabular-nums", balance > 0 ? "text-emerald-600" : "text-slate-400")}>
+                        <span className={cn("text-sm font-semibold tabular-nums", balance > 0 ? "text-emerald-600" : "text-muted-foreground")}>
                           {formatCurrency(balance)}
                         </span>
                       </TableCell>
@@ -203,7 +203,7 @@ export default async function AdminAdvertisersPage({ searchParams }: PageProps) 
                           )}
                         </div>
                       </TableCell>
-                      <TableCell className="px-4 py-4 text-sm text-slate-500">
+                      <TableCell className="px-4 py-4 text-sm text-muted-foreground">
                         {formatUserDateTime(advertiser.createdAt, tz, "MMM d, yyyy")}
                       </TableCell>
                       <TableCell className="px-6 py-4 text-right">

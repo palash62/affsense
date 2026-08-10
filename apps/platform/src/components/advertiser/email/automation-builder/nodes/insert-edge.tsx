@@ -50,7 +50,7 @@ function InsertEdgeComponent({
       <EdgeLabelRenderer>
         <button
           type="button"
-          className="nodrag nopan absolute flex size-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-emerald-200 bg-white text-emerald-700 shadow-sm transition hover:scale-105 hover:border-emerald-400 hover:bg-emerald-50"
+          className="nodrag nopan absolute flex size-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-emerald-200 bg-card text-emerald-700 shadow-sm transition hover:scale-105 hover:border-emerald-400 hover:bg-emerald-50"
           style={{ left: labelX, top: labelY, pointerEvents: "all" }}
           onClick={onClick}
           aria-label="Add action"

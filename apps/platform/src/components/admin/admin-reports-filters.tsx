@@ -71,12 +71,12 @@ export function AdminReportsFilters() {
   }
 
   return (
-    <div className="space-y-3 border-b border-slate-100 bg-slate-50/50 px-4 py-4 sm:px-6">
+    <div className="space-y-3 border-b border-border bg-muted/50 px-4 py-4 sm:px-6">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
         <div className="flex-1 space-y-1.5">
-          <label className="text-xs font-medium text-slate-500">Search account</label>
+          <label className="text-xs font-medium text-muted-foreground">Search account</label>
           <div className="relative">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -89,7 +89,7 @@ export function AdminReportsFilters() {
 
         <div className="grid flex-1 grid-cols-2 gap-3 sm:grid-cols-4">
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-slate-500">From</label>
+            <label className="text-xs font-medium text-muted-foreground">From</label>
             <Input
               type="date"
               value={dateFrom}
@@ -98,7 +98,7 @@ export function AdminReportsFilters() {
             />
           </div>
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-slate-500">To</label>
+            <label className="text-xs font-medium text-muted-foreground">To</label>
             <Input
               type="date"
               value={dateTo}
@@ -107,7 +107,7 @@ export function AdminReportsFilters() {
             />
           </div>
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-slate-500">View</label>
+            <label className="text-xs font-medium text-muted-foreground">View</label>
             <Select
               value={view}
               onValueChange={(v) => {
@@ -126,7 +126,7 @@ export function AdminReportsFilters() {
             </Select>
           </div>
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-slate-500">Sort by</label>
+            <label className="text-xs font-medium text-muted-foreground">Sort by</label>
             <Select
               value={sort}
               onValueChange={(v) => {

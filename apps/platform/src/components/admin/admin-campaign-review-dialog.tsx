@@ -104,33 +104,33 @@ export function AdminCampaignReviewDialog({ campaign }: { campaign: CampaignRow 
         </DialogHeader>
 
         <div className="space-y-5">
-          <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
+          <div className="rounded-xl border border-border bg-muted/60 p-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <p className="text-sm font-semibold text-slate-900">{campaign.name}</p>
-                <p className="text-xs capitalize text-slate-500">{campaign.category.toLowerCase()}</p>
+                <p className="text-sm font-semibold text-foreground">{campaign.name}</p>
+                <p className="text-xs capitalize text-muted-foreground">{campaign.category.toLowerCase()}</p>
               </div>
               <CampaignStatusBadge status={status} />
             </div>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
-                <p className="text-xs text-slate-500">Advertiser</p>
-                <p className="text-sm font-medium text-slate-900">{campaign.advertiser.name}</p>
-                <p className="text-xs text-slate-500">{campaign.advertiser.email}</p>
+              <div className="rounded-lg border border-border bg-card px-3 py-2">
+                <p className="text-xs text-muted-foreground">Advertiser</p>
+                <p className="text-sm font-medium text-foreground">{campaign.advertiser.name}</p>
+                <p className="text-xs text-muted-foreground">{campaign.advertiser.email}</p>
               </div>
-              <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
-                <p className="text-xs text-slate-500">Submitted</p>
-                <p className="text-sm font-medium text-slate-900">
+              <div className="rounded-lg border border-border bg-card px-3 py-2">
+                <p className="text-xs text-muted-foreground">Submitted</p>
+                <p className="text-sm font-medium text-foreground">
                   {formatUserDateTime(campaign.createdAt, session?.user?.timezone, "MMM d, yyyy")}
                 </p>
               </div>
-              <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
-                <p className="text-xs text-slate-500">CPL bid</p>
-                <p className="text-sm font-medium text-slate-900">{formatCurrency(Number(campaign.cpl))}</p>
+              <div className="rounded-lg border border-border bg-card px-3 py-2">
+                <p className="text-xs text-muted-foreground">CPL bid</p>
+                <p className="text-sm font-medium text-foreground">{formatCurrency(Number(campaign.cpl))}</p>
               </div>
-              <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
-                <p className="text-xs text-slate-500">Budget</p>
-                <p className="text-sm font-medium text-slate-900">
+              <div className="rounded-lg border border-border bg-card px-3 py-2">
+                <p className="text-xs text-muted-foreground">Budget</p>
+                <p className="text-sm font-medium text-foreground">
                   {campaign.budget == null
                     ? "Unlimited"
                     : formatCurrency(Number(campaign.budget))}
@@ -140,29 +140,29 @@ export function AdminCampaignReviewDialog({ campaign }: { campaign: CampaignRow 
             </div>
           </div>
 
-          <div className="rounded-xl border border-slate-200 bg-white p-4">
-            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <div className="rounded-xl border border-border bg-card p-4">
+            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               <Building2 className="h-4 w-4 text-[var(--theme-primary)]" />
               Campaign details
             </div>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              <div className="rounded-lg border border-slate-200 bg-slate-50/60 px-3 py-2">
-                <p className="text-xs text-slate-500">Optin page destination</p>
-                <p className="break-all text-sm font-medium text-slate-900">{destinationUrl || "—"}</p>
+              <div className="rounded-lg border border-border bg-muted/60 px-3 py-2">
+                <p className="text-xs text-muted-foreground">Optin page destination</p>
+                <p className="break-all text-sm font-medium text-foreground">{destinationUrl || "—"}</p>
               </div>
-              <div className="rounded-lg border border-slate-200 bg-slate-50/60 px-3 py-2">
-                <p className="text-xs text-slate-500">Vertical</p>
-                <p className="text-sm font-medium text-slate-900">{vertical || "—"}</p>
+              <div className="rounded-lg border border-border bg-muted/60 px-3 py-2">
+                <p className="text-xs text-muted-foreground">Vertical</p>
+                <p className="text-sm font-medium text-foreground">{vertical || "—"}</p>
               </div>
             </div>
             {campaign.description && (
-              <p className="mt-3 text-sm text-slate-600">{campaign.description}</p>
+              <p className="mt-3 text-sm text-muted-foreground">{campaign.description}</p>
             )}
           </div>
 
           {campaign.fields && campaign.fields.length > 0 && (
-            <div className="rounded-xl border border-slate-200 bg-white p-4">
-              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <div className="rounded-xl border border-border bg-card p-4">
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 <FileText className="h-4 w-4 text-[var(--theme-primary)]" />
                 Lead fields
               </div>
@@ -185,8 +185,8 @@ export function AdminCampaignReviewDialog({ campaign }: { campaign: CampaignRow 
           )}
 
           {canDecide && (
-            <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
-              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <div className="rounded-xl border border-border bg-muted/60 p-4">
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 <Target className="h-4 w-4 text-[var(--theme-primary)]" />
                 Approval decision
               </div>
@@ -202,7 +202,7 @@ export function AdminCampaignReviewDialog({ campaign }: { campaign: CampaignRow 
                   placeholder="Rejection note (required if rejecting)"
                   rows={2}
                   className={cn(
-                    "w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none",
+                    "w-full rounded-lg border border-border bg-card px-3 py-2 text-sm outline-none",
                     "focus:border-[var(--theme-primary)] focus:ring-2 focus:ring-[var(--theme-primary)]/15",
                   )}
                 />
@@ -225,7 +225,7 @@ export function AdminCampaignReviewDialog({ campaign }: { campaign: CampaignRow 
                   Reject
                 </Button>
               </div>
-              <p className="mt-2 text-xs text-slate-500">
+              <p className="mt-2 text-xs text-muted-foreground">
                 Approving sets the campaign to Active. Rejecting archives it and shows the note to the
                 advertiser.
               </p>

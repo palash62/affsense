@@ -27,7 +27,7 @@ export function StatCard({ label, value, icon: Icon, trend, className }: StatCar
           <span
             className={cn(
               "flex items-center gap-1 text-xs font-medium",
-              trendUp ? "text-emerald-600" : "text-red-500",
+              trendUp ? "text-[var(--theme-success)]" : "text-destructive",
             )}
           >
             {trendUp ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
@@ -36,8 +36,8 @@ export function StatCard({ label, value, icon: Icon, trend, className }: StatCar
         )}
       </div>
       <div className="mt-4">
-        <p className="text-sm font-medium text-slate-500">{label}</p>
-        <p className="mt-1 text-2xl font-bold tracking-tight text-slate-900">{value}</p>
+        <p className="text-sm font-medium text-muted-foreground">{label}</p>
+        <p className="mt-1 text-2xl font-bold tracking-tight text-foreground">{value}</p>
       </div>
     </div>
   );

@@ -141,13 +141,13 @@ export function AdvertiserDomainsPanel({
 
   return (
     <div className="space-y-6">
-      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
         <div className="flex items-start gap-3">
           <div className="rounded-lg bg-blue-50 p-2 text-blue-600">
             <Globe className="h-5 w-5" />
           </div>
-          <div className="min-w-0 flex-1 space-y-3 text-sm text-slate-600">
-            <p className="font-medium text-slate-900">DNS setup</p>
+          <div className="min-w-0 flex-1 space-y-3 text-sm text-muted-foreground">
+            <p className="font-medium text-foreground">DNS setup</p>
             <p>
               In your domain registrar (Namecheap, GoDaddy, Cloudflare, etc.), open the DNS
               settings for your domain and add <strong>one</strong> of these records:
@@ -155,7 +155,7 @@ export function AdvertiserDomainsPanel({
             <div className="overflow-x-auto">
               <table className="w-full min-w-[480px] text-left text-xs">
                 <thead>
-                  <tr className="border-b border-slate-200 text-slate-500">
+                  <tr className="border-b border-border text-muted-foreground">
                     <th className="py-1.5 pr-4 font-medium">Use case</th>
                     <th className="py-1.5 pr-4 font-medium">Type</th>
                     <th className="py-1.5 pr-4 font-medium">Host</th>
@@ -163,26 +163,26 @@ export function AdvertiserDomainsPanel({
                     <th className="py-1.5 font-medium">TTL</th>
                   </tr>
                 </thead>
-                <tbody className="text-slate-700">
-                  <tr className="border-b border-slate-100">
+                <tbody className="text-foreground">
+                  <tr className="border-b border-border">
                     <td className="py-1.5 pr-4">
                       Subdomain (e.g. <span className="font-mono">www.yourdomain.com</span>)
                     </td>
                     <td className="py-1.5 pr-4 font-mono">CNAME</td>
                     <td className="py-1.5 pr-4 font-mono">www</td>
-                    <td className="py-1.5 pr-4 font-mono font-semibold text-slate-900">
+                    <td className="py-1.5 pr-4 font-mono font-semibold text-foreground">
                       {platformHost}
                     </td>
                     <td className="py-1.5 font-mono">Automatic</td>
                   </tr>
                   {platformIp && (
-                    <tr className="border-b border-slate-100">
+                    <tr className="border-b border-border">
                       <td className="py-1.5 pr-4">
                         Root domain (e.g. <span className="font-mono">yourdomain.com</span>)
                       </td>
                       <td className="py-1.5 pr-4 font-mono">A</td>
                       <td className="py-1.5 pr-4 font-mono">@</td>
-                      <td className="py-1.5 pr-4 font-mono font-semibold text-slate-900">
+                      <td className="py-1.5 pr-4 font-mono font-semibold text-foreground">
                         {platformIp}
                       </td>
                       <td className="py-1.5 font-mono">Automatic</td>
@@ -191,7 +191,7 @@ export function AdvertiserDomainsPanel({
                 </tbody>
               </table>
             </div>
-            <ul className="list-disc space-y-1 pl-5 text-xs text-slate-500">
+            <ul className="list-disc space-y-1 pl-5 text-xs text-muted-foreground">
               <li>
                 Remove any existing <span className="font-mono">URL Redirect</span>,{" "}
                 <span className="font-mono">A</span>, or <span className="font-mono">CNAME</span>{" "}
@@ -215,9 +215,9 @@ export function AdvertiserDomainsPanel({
 
       <form
         onSubmit={(e) => void handleAdd(e)}
-        className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
+        className="rounded-xl border border-border bg-card p-5 shadow-sm"
       >
-        <Label htmlFor="domain-input" className="text-sm font-medium text-slate-700">
+        <Label htmlFor="domain-input" className="text-sm font-medium text-foreground">
           Add domain
         </Label>
         <div className="mt-2 flex flex-col gap-2 sm:flex-row">
@@ -226,7 +226,7 @@ export function AdvertiserDomainsPanel({
             value={domainInput}
             onChange={(e) => setDomainInput(e.target.value)}
             placeholder="www.yourdomain.com"
-            className="h-10 border-slate-200"
+            className="h-10 border-border"
             disabled={adding}
           />
           <Button type="submit" className="h-10 shrink-0" disabled={adding}>
@@ -253,18 +253,18 @@ export function AdvertiserDomainsPanel({
         </p>
       )}
 
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-        <div className="border-b border-slate-100 px-5 py-4">
-          <h2 className="text-base font-semibold text-slate-900">Your domains</h2>
+      <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+        <div className="border-b border-border px-5 py-4">
+          <h2 className="text-base font-semibold text-foreground">Your domains</h2>
         </div>
 
         {loading ? (
-          <div className="flex items-center justify-center gap-2 px-5 py-10 text-sm text-slate-500">
+          <div className="flex items-center justify-center gap-2 px-5 py-10 text-sm text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" />
             Loading domains...
           </div>
         ) : domains.length === 0 ? (
-          <div className="px-5 py-10 text-center text-sm text-slate-500">
+          <div className="px-5 py-10 text-center text-sm text-muted-foreground">
             No domains yet. Add one above to get started.
           </div>
         ) : (
@@ -278,12 +278,12 @@ export function AdvertiserDomainsPanel({
                 >
                   <div className="min-w-0 space-y-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <p className="truncate font-mono text-sm font-medium text-slate-900">
+                      <p className="truncate font-mono text-sm font-medium text-foreground">
                         {domain.domain}
                       </p>
                       <Badge
                         variant="secondary"
-                        className={STATUS_STYLES[domain.status] ?? "bg-slate-100 text-slate-700"}
+                        className={STATUS_STYLES[domain.status] ?? "bg-muted text-foreground"}
                       >
                         {domain.status === "VERIFIED" && (
                           <CheckCircle2 className="mr-1 h-3 w-3" />
@@ -292,7 +292,7 @@ export function AdvertiserDomainsPanel({
                       </Badge>
                     </div>
                     {connectedFunnel ? (
-                      <p className="text-xs text-slate-500">
+                      <p className="text-xs text-muted-foreground">
                         Connected to funnel:{" "}
                         <Link
                           href={`/advertiser/optin-funnels/${connectedFunnel.id}`}
@@ -302,7 +302,7 @@ export function AdvertiserDomainsPanel({
                         </Link>
                       </p>
                     ) : (
-                      <p className="text-xs text-slate-500">Not connected to a funnel</p>
+                      <p className="text-xs text-muted-foreground">Not connected to a funnel</p>
                     )}
                   </div>
 

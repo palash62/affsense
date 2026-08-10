@@ -82,15 +82,15 @@ export function AdminPartnerSettlementSummary({
         <div
           key={card.title}
           className={cn(
-            "rounded-[18px] border border-slate-200/80 border-t-[3px] bg-white p-5 shadow-sm",
+            "rounded-[18px] border border-border border-t-[3px] bg-white p-5 shadow-sm",
             card.accent,
           )}
         >
-          <p className="text-sm font-medium text-slate-600">{card.title}</p>
+          <p className="text-sm font-medium text-muted-foreground">{card.title}</p>
           <p className={cn("mt-2 text-2xl font-bold", moneyClass(card.value))}>
             {formatCurrency(card.value)}
           </p>
-          <p className="mt-2 text-xs text-slate-500">{card.description}</p>
+          <p className="mt-2 text-xs text-muted-foreground">{card.description}</p>
         </div>
       ))}
     </div>
@@ -99,17 +99,17 @@ export function AdminPartnerSettlementSummary({
 
 export function AdminPartnerSettlementTable({ rows }: { rows: PartnerSettlementRow[] }) {
   return (
-    <div className="overflow-hidden rounded-[18px] border border-slate-200/80 bg-white shadow-sm">
-      <div className="border-b border-slate-100 px-5 py-4">
-        <h2 className="text-base font-semibold text-slate-900">Partner settlement</h2>
-        <p className="text-sm text-slate-500">Monthly owed vs paid for the selected range</p>
+    <div className="overflow-hidden rounded-[18px] border border-border bg-card shadow-sm">
+      <div className="border-b border-border px-5 py-4">
+        <h2 className="text-base font-semibold text-foreground">Partner settlement</h2>
+        <p className="text-sm text-muted-foreground">Monthly owed vs paid for the selected range</p>
       </div>
       {rows.length === 0 ? (
-        <p className="px-5 py-12 text-center text-sm text-slate-500">No months in this range.</p>
+        <p className="px-5 py-12 text-center text-sm text-muted-foreground">No months in this range.</p>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full min-w-[640px] text-sm">
-            <thead className="bg-slate-50/90 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <thead className="bg-muted/90 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               <tr>
                 <th className="px-4 py-3 pl-5">Month</th>
                 <th className="px-4 py-3">Owed</th>
@@ -120,14 +120,14 @@ export function AdminPartnerSettlementTable({ rows }: { rows: PartnerSettlementR
             </thead>
             <tbody>
               {rows.map((row) => (
-                <tr key={row.periodMonth} className="border-t border-slate-100 hover:bg-slate-50/60">
-                  <td className="px-4 py-3 pl-5 font-medium text-slate-800">
+                <tr key={row.periodMonth} className="border-t border-border hover:bg-muted/60">
+                  <td className="px-4 py-3 pl-5 font-medium text-foreground">
                     {formatPartnerPeriodMonthLabel(row.periodMonth)}
                   </td>
                   <td className={cn("px-4 py-3", moneyClass(row.owed))}>
                     {formatCurrency(row.owed)}
                   </td>
-                  <td className="px-4 py-3 text-slate-700">{formatCurrency(row.paid)}</td>
+                  <td className="px-4 py-3 text-foreground">{formatCurrency(row.paid)}</td>
                   <td className={cn("px-4 py-3 font-semibold", moneyClass(row.remaining))}>
                     {formatCurrency(row.remaining)}
                   </td>
@@ -153,17 +153,17 @@ export function AdminPartnerSettlementTable({ rows }: { rows: PartnerSettlementR
 
 export function AdminPartnerPaymentHistory({ payments }: { payments: PartnerPaymentRecord[] }) {
   return (
-    <div className="overflow-hidden rounded-[18px] border border-slate-200/80 bg-white shadow-sm">
-      <div className="border-b border-slate-100 px-5 py-4">
-        <h2 className="text-base font-semibold text-slate-900">Payment history</h2>
-        <p className="text-sm text-slate-500">Manual partner payments in this range (newest first)</p>
+    <div className="overflow-hidden rounded-[18px] border border-border bg-card shadow-sm">
+      <div className="border-b border-border px-5 py-4">
+        <h2 className="text-base font-semibold text-foreground">Payment history</h2>
+        <p className="text-sm text-muted-foreground">Manual partner payments in this range (newest first)</p>
       </div>
       {payments.length === 0 ? (
-        <p className="px-5 py-12 text-center text-sm text-slate-500">No partner payments recorded yet.</p>
+        <p className="px-5 py-12 text-center text-sm text-muted-foreground">No partner payments recorded yet.</p>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full min-w-[720px] text-sm">
-            <thead className="bg-slate-50/90 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <thead className="bg-muted/90 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               <tr>
                 <th className="px-4 py-3 pl-5">Month</th>
                 <th className="px-4 py-3">Amount</th>
@@ -175,21 +175,21 @@ export function AdminPartnerPaymentHistory({ payments }: { payments: PartnerPaym
             </thead>
             <tbody>
               {payments.map((payment) => (
-                <tr key={payment.id} className="border-t border-slate-100 hover:bg-slate-50/60">
-                  <td className="px-4 py-3 pl-5 font-medium text-slate-800">
+                <tr key={payment.id} className="border-t border-border hover:bg-muted/60">
+                  <td className="px-4 py-3 pl-5 font-medium text-foreground">
                     {formatPartnerPeriodMonthLabel(payment.periodMonth)}
                   </td>
-                  <td className="px-4 py-3 font-semibold text-slate-800">
+                  <td className="px-4 py-3 font-semibold text-foreground">
                     {formatCurrency(payment.amount)}
                   </td>
-                  <td className="px-4 py-3 text-slate-700">
+                  <td className="px-4 py-3 text-foreground">
                     {formatPartnerPaidDate(payment.paidAt)}
                   </td>
-                  <td className="px-4 py-3 text-slate-700">{payment.method || "—"}</td>
-                  <td className="max-w-[220px] truncate px-4 py-3 text-slate-600" title={payment.note ?? ""}>
+                  <td className="px-4 py-3 text-foreground">{payment.method || "—"}</td>
+                  <td className="max-w-[220px] truncate px-4 py-3 text-muted-foreground" title={payment.note ?? ""}>
                     {payment.note || "—"}
                   </td>
-                  <td className="px-4 py-3 pr-5 text-slate-700">
+                  <td className="px-4 py-3 pr-5 text-foreground">
                     {payment.createdByName || "—"}
                   </td>
                 </tr>
@@ -237,16 +237,16 @@ export function AdminProfitSummaryCards({
         <div
           key={card.title}
           className={cn(
-            "rounded-[18px] border border-slate-200/80 border-t-[3px] bg-white p-5 shadow-sm",
+            "rounded-[18px] border border-border border-t-[3px] bg-white p-5 shadow-sm",
             card.accent,
           )}
         >
-          <p className="text-sm font-medium text-slate-600">{card.title}</p>
+          <p className="text-sm font-medium text-muted-foreground">{card.title}</p>
           <p className={cn("mt-2 text-2xl font-bold", moneyClass(card.value))}>
             {formatCurrency(card.value)}
           </p>
-          <p className="mt-2 text-xs text-slate-500">{card.description}</p>
-          <p className="mt-1 text-xs font-medium text-slate-400">{card.detail}</p>
+          <p className="mt-2 text-xs text-muted-foreground">{card.description}</p>
+          <p className="mt-1 text-xs font-medium text-muted-foreground">{card.detail}</p>
         </div>
       ))}
     </div>
@@ -296,11 +296,11 @@ export function AdminProfitReportTable({
   ]);
 
   return (
-    <div className="overflow-hidden rounded-[18px] border border-slate-200/80 bg-white shadow-sm">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
+    <div className="overflow-hidden rounded-[18px] border border-border bg-card shadow-sm">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-4">
         <div>
-          <h2 className="text-base font-semibold text-slate-900">Profit report</h2>
-          <p className="text-sm text-slate-500">
+          <h2 className="text-base font-semibold text-foreground">Profit report</h2>
+          <p className="text-sm text-muted-foreground">
             Breakdown for {fromLabel} → {toLabel}
           </p>
         </div>
@@ -312,12 +312,12 @@ export function AdminProfitReportTable({
       </div>
 
       {total === 0 ? (
-        <p className="px-5 py-12 text-center text-sm text-slate-500">No profit data for this range.</p>
+        <p className="px-5 py-12 text-center text-sm text-muted-foreground">No profit data for this range.</p>
       ) : (
         <>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[720px] text-sm">
-              <thead className="bg-slate-50/90 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+              <thead className="bg-muted/90 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 <tr>
                   {headers.map((header) => (
                     <th key={header} className="px-4 py-3 first:pl-5 last:pr-5">
@@ -328,13 +328,13 @@ export function AdminProfitReportTable({
               </thead>
               <tbody>
                 {pageRows.map((row) => (
-                  <tr key={row.period} className="border-t border-slate-100 hover:bg-slate-50/60">
-                    <td className="px-4 py-3 pl-5 font-medium text-slate-800">
+                  <tr key={row.period} className="border-t border-border hover:bg-muted/60">
+                    <td className="px-4 py-3 pl-5 font-medium text-foreground">
                       {formatProfitPeriodLabel(row.period, groupBy)}
                     </td>
-                    <td className="px-4 py-3 text-slate-700">{formatCurrency(row.advertiserPayment)}</td>
-                    <td className="px-4 py-3 text-slate-700">{formatCurrency(row.publisherPayout)}</td>
-                    <td className="px-4 py-3 text-slate-700">{formatCurrency(row.referralPay)}</td>
+                    <td className="px-4 py-3 text-foreground">{formatCurrency(row.advertiserPayment)}</td>
+                    <td className="px-4 py-3 text-foreground">{formatCurrency(row.publisherPayout)}</td>
+                    <td className="px-4 py-3 text-foreground">{formatCurrency(row.referralPay)}</td>
                     <td className={cn("px-4 py-3 font-semibold", moneyClass(row.platformProfit))}>
                       {formatCurrency(row.platformProfit)}
                     </td>

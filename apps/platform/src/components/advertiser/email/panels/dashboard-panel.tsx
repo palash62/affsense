@@ -99,13 +99,13 @@ export function DashboardPanel() {
             {stats.activity.map((item) => (
               <li
                 key={item.id}
-                className="flex items-start justify-between gap-4 px-6 py-4 transition-colors hover:bg-slate-50"
+                className="flex items-start justify-between gap-4 px-6 py-4 transition-colors hover:bg-muted"
               >
                 <div>
-                  <p className="font-medium text-slate-900">{item.action}</p>
-                  <p className="text-sm text-slate-500">{item.detail}</p>
+                  <p className="font-medium text-foreground">{item.action}</p>
+                  <p className="text-sm text-muted-foreground">{item.detail}</p>
                 </div>
-                <span className="shrink-0 text-xs text-slate-400">
+                <span className="shrink-0 text-xs text-muted-foreground">
                   {formatUserDateTime(item.time, timezone, "MMM d, yyyy")}
                 </span>
               </li>
@@ -121,8 +121,8 @@ export function DashboardPanel() {
           background: "var(--theme-primary-soft)",
         }}
       >
-        <p className="font-semibold text-slate-900">Get started in 3 steps</p>
-        <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-slate-600">
+        <p className="font-semibold text-foreground">Get started in 3 steps</p>
+        <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-muted-foreground">
           <li>
             <Link
               href="/advertiser/email/lists"

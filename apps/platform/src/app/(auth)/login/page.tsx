@@ -160,7 +160,7 @@ function LoginForm() {
     <AuthLayout
       badge="Secure sign in"
       title="Welcome back"
-      description="Sign in to your LeadVix account and manage verified lead campaigns."
+      description="Sign in to your Affsense account and manage verified lead campaigns."
     >
       {info && (
         <Alert className="mb-4">
@@ -183,7 +183,7 @@ function LoginForm() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@company.com"
-              className="rounded-xl border-slate-200 bg-transparent"
+              className="rounded-xl border-border bg-transparent"
               required
               autoComplete="email"
             />
@@ -201,14 +201,14 @@ function LoginForm() {
                 type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="rounded-xl border-slate-200 bg-transparent pr-11"
+                className="rounded-xl border-border bg-transparent pr-11"
                 required
                 autoComplete="current-password"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword((prev) => !prev)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-slate-400 transition-colors hover:text-slate-200"
+                className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-muted-foreground transition-colors hover:text-slate-200"
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -228,7 +228,7 @@ function LoginForm() {
               type="email"
               value={email}
               readOnly
-              className="rounded-xl border-slate-200 bg-slate-50"
+              className="rounded-xl border-border bg-muted"
             />
           </div>
           <div className="space-y-2">
@@ -241,7 +241,7 @@ function LoginForm() {
               value={code}
               onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
               placeholder="123456"
-              className="rounded-xl border-slate-200 bg-transparent tracking-[0.35em]"
+              className="rounded-xl border-border bg-transparent tracking-[0.35em]"
               required
               maxLength={6}
             />

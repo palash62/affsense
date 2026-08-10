@@ -21,12 +21,12 @@ export function FunnelStepsSidebar({
   const enabledCount = steps.filter((s) => s.enabled).length;
 
   return (
-    <div className="flex flex-col rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+    <div className="flex flex-col rounded-xl border border-border bg-card p-4 shadow-sm">
       <div className="mb-4 flex items-center gap-2">
         <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-        <span className="text-sm font-medium text-slate-900">Funnel steps</span>
+        <span className="text-sm font-medium text-foreground">Funnel steps</span>
         {enabledCount > 0 && (
-          <span className="ml-auto text-xs text-slate-400">{enabledCount} step{enabledCount === 1 ? "" : "s"}</span>
+          <span className="ml-auto text-xs text-muted-foreground">{enabledCount} step{enabledCount === 1 ? "" : "s"}</span>
         )}
       </div>
 
@@ -43,8 +43,8 @@ export function FunnelStepsSidebar({
               activeStepId === step.id && step.enabled
                 ? "bg-blue-50 font-medium text-blue-900 ring-1 ring-blue-200"
                 : step.enabled
-                  ? "text-slate-700 hover:bg-slate-50"
-                  : "text-slate-400",
+                  ? "text-foreground hover:bg-muted"
+                  : "text-muted-foreground",
             )}
           >
             <Mail className="h-4 w-4 shrink-0" />

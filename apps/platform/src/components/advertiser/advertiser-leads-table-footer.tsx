@@ -29,38 +29,38 @@ export function AdvertiserLeadsTableFooter({
   const nextDisabled = page >= totalPages;
 
   return (
-    <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50/80 px-4 py-3">
-      <p className="text-sm text-slate-600">
+    <div className="flex items-center justify-between border-t border-border bg-muted/80 px-4 py-3">
+      <p className="text-sm text-muted-foreground">
         Total ({total}) Per Page ({perPage})
       </p>
       {totalPages > 1 && (
         <div className="flex gap-1">
           {prevDisabled ? (
-            <span className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-300">
+            <span className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border bg-card text-muted-foreground">
               <ChevronLeft className="h-4 w-4" />
             </span>
           ) : (
             <Link
               href={pageHref(page - 1)}
               className={cn(
-                "inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-slate-100",
+                "inline-flex h-8 w-8 items-center justify-center rounded-md border border-border bg-card text-muted-foreground hover:bg-muted",
               )}
             >
               <ChevronLeft className="h-4 w-4" />
             </Link>
           )}
-          <span className="inline-flex h-8 items-center px-2 text-sm text-slate-600">
+          <span className="inline-flex h-8 items-center px-2 text-sm text-muted-foreground">
             {page} / {totalPages}
           </span>
           {nextDisabled ? (
-            <span className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-300">
+            <span className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border bg-card text-muted-foreground">
               <ChevronRight className="h-4 w-4" />
             </span>
           ) : (
             <Link
               href={pageHref(page + 1)}
               className={cn(
-                "inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-slate-100",
+                "inline-flex h-8 w-8 items-center justify-center rounded-md border border-border bg-card text-muted-foreground hover:bg-muted",
               )}
             >
               <ChevronRight className="h-4 w-4" />

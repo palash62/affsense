@@ -42,13 +42,13 @@ export function OptinPageStatusBadges({ initialPage }: { initialPage: OptinPageC
       >
         {page.isPublished ? "Published" : "Draft"}
       </Badge>
-      <Badge variant="outline" className="border-slate-200 bg-slate-50 text-slate-600">
+      <Badge variant="outline" className="border-border bg-muted text-muted-foreground">
         {page.title}
       </Badge>
-      <Badge variant="outline" className="border-slate-200 bg-slate-50 text-slate-600 capitalize">
+      <Badge variant="outline" className="border-border bg-muted text-muted-foreground capitalize">
         Template: {page.templateId}
       </Badge>
-      <Badge variant="outline" className="border-slate-200 bg-slate-50 text-slate-600">
+      <Badge variant="outline" className="border-border bg-muted text-muted-foreground">
         /o/{page.slug}
       </Badge>
     </div>

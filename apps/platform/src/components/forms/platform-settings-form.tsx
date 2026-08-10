@@ -35,11 +35,11 @@ function TierPayoutRow({
   onMaxChange: (value: number) => void;
 }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4">
-      <p className="mb-3 text-sm font-semibold text-slate-900">{tier}</p>
+    <div className="rounded-xl border border-border bg-muted/50 p-4">
+      <p className="mb-3 text-sm font-semibold text-foreground">{tier}</p>
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-1.5">
-          <Label className="text-xs text-slate-500">Min payout (USD)</Label>
+          <Label className="text-xs text-muted-foreground">Min payout (USD)</Label>
           <Input
             type="number"
             min={0}
@@ -49,7 +49,7 @@ function TierPayoutRow({
           />
         </div>
         <div className="space-y-1.5">
-          <Label className="text-xs text-slate-500">Max payout (USD)</Label>
+          <Label className="text-xs text-muted-foreground">Max payout (USD)</Label>
           <Input
             type="number"
             min={0}
@@ -106,7 +106,7 @@ export function PlatformSettingsForm() {
   }
 
   if (!settings) {
-    return <p className="text-sm text-slate-500">Loading settings...</p>;
+    return <p className="text-sm text-muted-foreground">Loading settings...</p>;
   }
 
   return (
@@ -114,9 +114,9 @@ export function PlatformSettingsForm() {
       <section className="space-y-4">
         <div className="flex items-center gap-2">
           <Percent className="h-4 w-4 text-[var(--theme-primary)]" />
-          <h3 className="text-sm font-semibold text-slate-900">Publisher payout</h3>
+          <h3 className="text-sm font-semibold text-foreground">Publisher payout</h3>
         </div>
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-muted-foreground">
           Publisher payout per lead is calculated as CPL multiplied by this percentage (for example,
           $1.00 CPL at 70% pays the publisher $0.70). Changes apply to new paid leads after you save.
         </p>
@@ -132,7 +132,7 @@ export function PlatformSettingsForm() {
                 setSettings({ ...settings, publisherPayoutPercent: Number(e.target.value) })
               }
             />
-            <p className="text-xs text-slate-500">Must be between 1% and 100%.</p>
+            <p className="text-xs text-muted-foreground">Must be between 1% and 100%.</p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="minPayoutWise">Minimum Wise payout ($)</Label>
@@ -179,7 +179,7 @@ export function PlatformSettingsForm() {
       <section className="space-y-4">
         <div className="flex items-center gap-2">
           <Wallet className="h-4 w-4 text-[var(--theme-primary)]" />
-          <h3 className="text-sm font-semibold text-slate-900">
+          <h3 className="text-sm font-semibold text-foreground">
             Tier payout ranges for advertiser bid guidance (USD per lead)
           </h3>
         </div>
@@ -211,7 +211,7 @@ export function PlatformSettingsForm() {
       <section className="space-y-2">
         <div className="flex items-center gap-2">
           <Globe className="h-4 w-4 text-[var(--theme-primary)]" />
-          <h3 className="text-sm font-semibold text-slate-900">Global link</h3>
+          <h3 className="text-sm font-semibold text-foreground">Global link</h3>
         </div>
         <Label htmlFor="globalLinkUrl">Global campaign link</Label>
         <Input
@@ -225,7 +225,7 @@ export function PlatformSettingsForm() {
         />
       </section>
 
-      <div className="flex items-center gap-3 border-t border-slate-100 pt-4">
+      <div className="flex items-center gap-3 border-t border-border pt-4">
         <Button
           type="submit"
           disabled={saving}

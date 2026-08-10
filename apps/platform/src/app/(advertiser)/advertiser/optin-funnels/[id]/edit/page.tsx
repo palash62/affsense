@@ -14,7 +14,7 @@ export default function OptinFunnelEditPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex h-full items-center justify-center text-sm text-slate-500">
+        <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
           Loading editor...
         </div>
       }

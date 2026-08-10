@@ -44,16 +44,16 @@ function SuppressionTable({ rows }: { rows: Contact[] }) {
         <TableBody>
           {rows.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={3} className="h-32 text-center text-slate-500">
+              <TableCell colSpan={3} className="h-32 text-center text-muted-foreground">
                 No records found
               </TableCell>
             </TableRow>
           ) : (
             rows.map((row) => (
-              <TableRow key={row.id} className="transition-colors hover:bg-slate-50">
+              <TableRow key={row.id} className="transition-colors hover:bg-muted">
                 <TableCell className="font-medium">{row.email}</TableCell>
-                <TableCell className="text-slate-600">{row.status.toLowerCase()}</TableCell>
-                <TableCell className="text-slate-500">
+                <TableCell className="text-muted-foreground">{row.status.toLowerCase()}</TableCell>
+                <TableCell className="text-muted-foreground">
                   {formatUserDateTime(row.unsubscribedAt ?? row.createdAt, timezone, "MMM d, yyyy")}
                 </TableCell>
               </TableRow>
@@ -163,7 +163,7 @@ function SuppressionContent({ onChanged }: { onChanged: () => void }) {
       </PageSection>
 
       <PageSection title="Suppressed Contacts" icon={AlertTriangle} gradient="approved">
-        <p className="border-b border-slate-100 px-6 py-3 text-sm text-slate-600">
+        <p className="border-b border-border px-6 py-3 text-sm text-muted-foreground">
           Bounces and complaints are recorded from delivery events (SES/SNS). Manual suppress marks an
           existing subscriber as unsubscribed.
         </p>

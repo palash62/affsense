@@ -106,7 +106,7 @@ export function SmtpSettingsForm() {
   }
 
   if (!settings) {
-    return <p className="text-sm text-slate-500">Loading SMTP settings...</p>;
+    return <p className="text-sm text-muted-foreground">Loading SMTP settings...</p>;
   }
 
   return (
@@ -120,7 +120,7 @@ export function SmtpSettingsForm() {
         </Alert>
       )}
 
-      <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
+      <p className="rounded-lg border border-border bg-muted px-3 py-2 text-sm text-muted-foreground">
         {SOURCE_LABELS[settings.source]}
         {settings.providerStatus?.provider === "mailgun" && " · Mailgun active via environment"}
       </p>
@@ -186,7 +186,7 @@ export function SmtpSettingsForm() {
               id="smtpFrom"
               value={settings.from}
               onChange={(e) => setSettings({ ...settings, from: e.target.value })}
-              placeholder='LeadVix <noreply@leadvix.io>'
+              placeholder='Affsense <noreply@leadvix.io>'
             />
           </div>
           <div className="space-y-2">
@@ -221,7 +221,7 @@ export function SmtpSettingsForm() {
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3 border-t border-slate-100 pt-4">
+        <div className="flex flex-wrap items-center gap-3 border-t border-border pt-4">
           <Button type="submit" disabled={saving} className="gap-2 bg-[var(--theme-primary)] hover:opacity-90">
             <Save className="h-4 w-4" />
             {saving ? "Saving..." : "Save SMTP settings"}
@@ -240,8 +240,8 @@ export function SmtpSettingsForm() {
         </Alert>
       )}
 
-      <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/50 p-4">
-        <h3 className="text-sm font-semibold text-slate-900">Send test email</h3>
+      <div className="space-y-3 rounded-xl border border-border bg-muted/50 p-4">
+        <h3 className="text-sm font-semibold text-foreground">Send test email</h3>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
           <div className="flex-1 space-y-2">
             <Label htmlFor="testTo">Recipient (optional)</Label>
@@ -258,7 +258,7 @@ export function SmtpSettingsForm() {
             {testing ? "Sending..." : "Send test"}
           </Button>
         </div>
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-muted-foreground">
           Save settings first, then test. Admin settings override .env when SMTP host is saved here.
         </p>
       </div>

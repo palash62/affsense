@@ -27,4 +27,4 @@ LeadFlow CPL: advertisers buy leads, publishers generate them, admin operates th
 
 ## UI standards
 
-Stripe/HubSpot-inspired SaaS: light theme, Inter, primary `#2563EB`. See `docs/DESIGN-SYSTEM.md`.
+Stripe/HubSpot-inspired SaaS: light theme, Inter, primary `#4F46F5`, sidebar `#07162D`. See `docs/DESIGN-SYSTEM.md`.

@@ -32,13 +32,13 @@ export function PageSection({
   return (
     <div className={cn("premium-card overflow-hidden", className)}>
       <div className="h-1" style={{ background: gradientMap[gradient] }} />
-      <CardHeader className="border-b border-slate-100 bg-[var(--theme-primary-soft)] px-6 py-5">
+      <CardHeader className="border-b border-border bg-[var(--theme-primary-soft)] px-6 py-5">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-sm">
+          <div className="flex h-10 w-10 items-center justify-center rounded-md bg-card shadow-sm">
             <Icon className="h-5 w-5 text-[var(--theme-primary)]" />
           </div>
           <div>
-            <CardTitle className="text-lg text-slate-900">{title}</CardTitle>
+            <CardTitle className="text-lg text-foreground">{title}</CardTitle>
             {description && (
               <CardDescription className="mt-0.5">{description}</CardDescription>
             )}

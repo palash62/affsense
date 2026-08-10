@@ -49,7 +49,7 @@ export function CampaignPixelButton({
         type="button"
         variant="outline"
         size="sm"
-        className="h-8 rounded-md border-slate-200 text-xs"
+        className="h-8 rounded-md border-border text-xs"
         onClick={() => setOpen(true)}
       >
         <Crosshair className="mr-1 h-3.5 w-3.5" />
@@ -64,13 +64,13 @@ export function CampaignPixelButton({
             aria-label="Close"
             onClick={() => setOpen(false)}
           />
-          <div className="relative z-10 max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-slate-200 bg-white p-5 shadow-xl">
+          <div className="relative z-10 max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-border bg-card p-5 shadow-xl">
             <div className="mb-4 flex items-start justify-between gap-3">
               <div>
-                <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                   Tracking pixel
                 </p>
-                <h3 className="mt-1 text-lg font-semibold text-slate-900">{campaignName}</h3>
+                <h3 className="mt-1 text-lg font-semibold text-foreground">{campaignName}</h3>
               </div>
               <Button
                 type="button"
@@ -82,7 +82,7 @@ export function CampaignPixelButton({
                 Close
               </Button>
             </div>
-            {loading && <p className="text-sm text-slate-500">Loading pixel...</p>}
+            {loading && <p className="text-sm text-muted-foreground">Loading pixel...</p>}
             {!loading && pixelToken && <CampaignTrackingPixelPanel pixelToken={pixelToken} compact />}
             {!loading && !pixelToken && (
               <p className="text-sm text-red-600">Unable to load tracking pixel for this campaign.</p>

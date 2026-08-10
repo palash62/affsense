@@ -31,7 +31,7 @@ export function FunnelCard({ funnel, duplicating, onDuplicate, onArchive }: Funn
   const thumbnailRevision = funnelCraftPreviewRevision(entity.craftState?.craft, themeJson);
 
   return (
-    <div className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:border-slate-300 hover:shadow-md">
+    <div className="group overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition hover:border-border hover:shadow-md">
       <div
         role="button"
         tabIndex={0}
@@ -42,7 +42,7 @@ export function FunnelCard({ funnel, duplicating, onDuplicate, onArchive }: Funn
             router.push(`/advertiser/optin-funnels/${funnel.id}`);
           }
         }}
-        className="relative aspect-[16/10] cursor-pointer overflow-hidden bg-slate-100 outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40"
+        className="relative aspect-[16/10] cursor-pointer overflow-hidden bg-muted outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40"
       >
         {showPreview && entity.craftState ? (
           <OptinFunnelCraftThumbnail
@@ -54,8 +54,8 @@ export function FunnelCard({ funnel, duplicating, onDuplicate, onArchive }: Funn
           />
         ) : (
           <div className="flex h-full flex-col items-center justify-center gap-2 bg-gradient-to-br from-slate-100 to-slate-200 px-4 text-center">
-            <LayoutTemplate className="h-8 w-8 text-slate-400" />
-            <span className="line-clamp-2 text-sm font-medium text-slate-600">{funnel.name}</span>
+            <LayoutTemplate className="h-8 w-8 text-muted-foreground" />
+            <span className="line-clamp-2 text-sm font-medium text-muted-foreground">{funnel.name}</span>
           </div>
         )}
 
@@ -81,10 +81,10 @@ export function FunnelCard({ funnel, duplicating, onDuplicate, onArchive }: Funn
         </div>
       </div>
 
-      <div className="border-t border-slate-100 px-4 py-3">
-        <p className="font-semibold text-slate-900">{funnel.name}</p>
-        <p className="mt-0.5 font-mono text-xs text-slate-500">/o/{funnel.slug}</p>
-        <p className="mt-1 text-xs text-slate-500">
+      <div className="border-t border-border px-4 py-3">
+        <p className="font-semibold text-foreground">{funnel.name}</p>
+        <p className="mt-0.5 font-mono text-xs text-muted-foreground">/o/{funnel.slug}</p>
+        <p className="mt-1 text-xs text-muted-foreground">
           Updated {formatFunnelDate(funnel.updatedAt)} · {steps} step{steps === 1 ? "" : "s"}
         </p>
       </div>

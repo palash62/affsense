@@ -30,8 +30,8 @@ export function UsersTablePagination({
   const nextDisabled = page >= totalPages;
 
   return (
-    <div className="flex items-center justify-between border-t border-slate-100 px-6 py-4">
-      <p className="text-sm text-slate-500">
+    <div className="flex items-center justify-between border-t border-border px-6 py-4">
+      <p className="text-sm text-muted-foreground">
         Page {page} of {totalPages} · {total} result{total === 1 ? "" : "s"}
       </p>
       <div className="flex gap-2">

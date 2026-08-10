@@ -76,17 +76,17 @@ export function CampaignsPanel() {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="h-32 text-center text-slate-500">Loading...</TableCell>
+                  <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">Loading...</TableCell>
                 </TableRow>
               ) : rows.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="h-32 text-center text-slate-500">
+                  <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
                     No campaigns yet. Create a lead campaign to get started.
                   </TableCell>
                 </TableRow>
               ) : (
                 rows.map((c) => (
-                  <TableRow key={c.id} className="transition-colors hover:bg-slate-50">
+                  <TableRow key={c.id} className="transition-colors hover:bg-muted">
                     <TableCell className="font-medium">{c.name}</TableCell>
                     <TableCell>
                       <Badge variant={STATUS_VARIANT[c.status] ?? "outline"}>{c.status.toLowerCase()}</Badge>
@@ -94,7 +94,7 @@ export function CampaignsPanel() {
                     <TableCell>{c.automationCount}</TableCell>
                     <TableCell>{c.sendCount.toLocaleString()}</TableCell>
                     <TableCell>{c.contactCount.toLocaleString()}</TableCell>
-                    <TableCell className="text-slate-500">
+                    <TableCell className="text-muted-foreground">
                       {formatUserDateTime(c.createdAt, timezone, "MMM d, yyyy")}
                     </TableCell>
                   </TableRow>

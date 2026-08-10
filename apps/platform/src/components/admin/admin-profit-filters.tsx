@@ -96,7 +96,7 @@ export function AdminProfitFilters({
   }
 
   return (
-    <div className="space-y-4 rounded-[18px] border border-slate-200/80 bg-white p-4 shadow-sm sm:p-5">
+    <div className="space-y-4 rounded-[18px] border border-border bg-card p-4 shadow-sm sm:p-5">
       <div className="flex flex-wrap gap-2">
         {PERIODS.map((item) => (
           <button
@@ -108,7 +108,7 @@ export function AdminProfitFilters({
               "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
               period === item.value
                 ? "bg-[var(--theme-primary)] text-white"
-                : "bg-slate-100 text-slate-700 hover:bg-slate-200",
+                : "bg-muted text-foreground hover:bg-slate-200",
             )}
           >
             {item.label}
@@ -118,7 +118,7 @@ export function AdminProfitFilters({
 
       <div className="flex flex-wrap items-end gap-3">
         <div className="space-y-1.5">
-          <label className="text-xs font-medium text-slate-500">From</label>
+          <label className="text-xs font-medium text-muted-foreground">From</label>
           <Input
             type="date"
             value={dateFrom}
@@ -127,7 +127,7 @@ export function AdminProfitFilters({
           />
         </div>
         <div className="space-y-1.5">
-          <label className="text-xs font-medium text-slate-500">To</label>
+          <label className="text-xs font-medium text-muted-foreground">To</label>
           <Input
             type="date"
             value={dateTo}
@@ -150,8 +150,8 @@ export function AdminProfitFilters({
         </Button>
       </div>
 
-      <div className="flex flex-wrap gap-2 border-t border-slate-100 pt-4">
-        <span className="mr-1 self-center text-xs font-medium uppercase tracking-wide text-slate-500">
+      <div className="flex flex-wrap gap-2 border-t border-border pt-4">
+        <span className="mr-1 self-center text-xs font-medium uppercase tracking-wide text-muted-foreground">
           Report
         </span>
         {GROUPS.map((item) => (
@@ -171,7 +171,7 @@ export function AdminProfitFilters({
               "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
               groupBy === item.value
                 ? "bg-slate-900 text-white"
-                : "bg-slate-100 text-slate-700 hover:bg-slate-200",
+                : "bg-muted text-foreground hover:bg-slate-200",
             )}
           >
             {item.label}

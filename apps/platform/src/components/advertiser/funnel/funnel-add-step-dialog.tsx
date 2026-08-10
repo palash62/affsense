@@ -61,7 +61,7 @@ export function FunnelAddStepDialog({ open, onOpenChange }: FunnelAddStepDialogP
                 Beta
               </Badge>
             </div>
-            <p className="text-xs text-slate-500">Nested paths are now supported in URLs</p>
+            <p className="text-xs text-muted-foreground">Nested paths are now supported in URLs</p>
             <Input id="step-path" value={path} onChange={(e) => setPath(e.target.value)} placeholder="Path" />
           </div>
         </div>

@@ -57,7 +57,7 @@ export function CpaOfferSelect({
 
   if (unavailable && !value) {
     return (
-      <p className="text-xs text-slate-500">
+      <p className="text-xs text-muted-foreground">
         CPA offers are not available for your account. Use a destination URL instead.
       </p>
     );
@@ -73,7 +73,7 @@ export function CpaOfferSelect({
         disabled={disabled || loading}
         onValueChange={(next) => onChange(next === NONE_VALUE ? null : next)}
       >
-        <SelectTrigger className="h-9 w-full border-slate-200 bg-white text-sm">
+        <SelectTrigger className="h-9 w-full border-border bg-card text-sm">
           <SelectValue placeholder={loading ? "Loading offers…" : placeholder} />
         </SelectTrigger>
         <SelectContent>

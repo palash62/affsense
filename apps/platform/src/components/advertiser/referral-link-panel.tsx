@@ -33,16 +33,16 @@ export function ReferralLinkPanel({ referralCode }: { referralCode: string }) {
         }}
       >
         <div className="flex items-start gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-card shadow-sm">
             <Gift className="h-5 w-5 text-[var(--theme-primary)]" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-slate-900">Your unique referral link</p>
-            <p className="mt-1 text-sm text-slate-600">
+            <p className="text-sm font-semibold text-foreground">Your unique referral link</p>
+            <p className="mt-1 text-sm text-muted-foreground">
               Refer &amp; earn passive income. Share this link — when users sign up and spend on ads,
               you earn commissions on 2 levels.
             </p>
-            <p className="mt-2 text-xs font-medium uppercase tracking-wide text-slate-500">
+            <p className="mt-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Referral code: <span className="text-[var(--theme-primary)]">{referralCode}</span>
             </p>
           </div>
@@ -53,7 +53,7 @@ export function ReferralLinkPanel({ referralCode }: { referralCode: string }) {
         <input
           readOnly
           value={referralUrl}
-          className="h-11 min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-4 text-sm text-slate-700 shadow-sm"
+          className="h-11 min-w-0 flex-1 rounded-lg border border-border bg-card px-4 text-sm text-foreground shadow-sm"
         />
         <Button
           onClick={copyLink}
@@ -68,7 +68,7 @@ export function ReferralLinkPanel({ referralCode }: { referralCode: string }) {
         <Button
           type="button"
           variant="outline"
-          className="h-9 gap-2 rounded-lg border-slate-200"
+          className="h-9 gap-2 rounded-lg border-border"
           onClick={copyLink}
         >
           <Share2 className="h-4 w-4" />
@@ -78,7 +78,7 @@ export function ReferralLinkPanel({ referralCode }: { referralCode: string }) {
           href={`/?referral_by=${encodeURIComponent(referralCode)}`}
           target="_blank"
           rel="noreferrer"
-          className="inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          className="inline-flex h-9 items-center gap-2 rounded-lg border border-border bg-card px-3 text-sm font-medium text-foreground hover:bg-muted"
         >
           <ExternalLink className="h-4 w-4" />
           Preview landing page

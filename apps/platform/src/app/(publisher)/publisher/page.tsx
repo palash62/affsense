@@ -53,12 +53,12 @@ export default async function PublisherDashboardPage({ searchParams }: PageProps
       </PublisherInfoBanner>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <Suspense fallback={<div className="h-9 w-36 animate-pulse rounded-lg bg-slate-100" />}>
+        <Suspense fallback={<div className="h-9 w-36 animate-pulse rounded-lg bg-muted" />}>
           <PublisherPeriodFilter current={period} />
         </Suspense>
         <div className="flex items-center gap-3">
-          <div className="rounded-[18px] border border-slate-200/80 border-t-[3px] border-t-emerald-500 bg-white px-5 py-3 shadow-sm">
-            <p className="text-xs font-medium text-slate-500">Available Balance</p>
+          <div className="rounded-[18px] border border-border border-t-[3px] border-t-emerald-500 bg-card px-5 py-3 shadow-sm">
+            <p className="text-xs font-medium text-muted-foreground">Available Balance</p>
             <p className="text-xl font-bold tracking-tight text-[var(--theme-primary)]">
               {formatCurrency(data.availableBalance)}
             </p>

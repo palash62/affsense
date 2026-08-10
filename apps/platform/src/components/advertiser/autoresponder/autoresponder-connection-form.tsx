@@ -669,7 +669,7 @@ export function AutoresponderConnectionForm({
               ))}
             </SelectContent>
           </Select>
-          <p className="text-xs text-slate-500">Limit to one campaign or apply to all</p>
+          <p className="text-xs text-muted-foreground">Limit to one campaign or apply to all</p>
         </div>
         <div className="space-y-2">
           <Label>Provider</Label>
@@ -702,7 +702,7 @@ export function AutoresponderConnectionForm({
             </SelectContent>
           </Select>
           {selectedProvider && (
-            <p className="text-xs text-slate-500">{selectedProvider.hint}</p>
+            <p className="text-xs text-muted-foreground">{selectedProvider.hint}</p>
           )}
         </div>
         <div className="space-y-2">
@@ -728,20 +728,20 @@ export function AutoresponderConnectionForm({
             </SelectContent>
           </Select>
           {selectedTrigger && (
-            <p className="text-xs text-slate-500">{selectedTrigger.description}</p>
+            <p className="text-xs text-muted-foreground">{selectedTrigger.description}</p>
           )}
         </div>
       </div>
 
-      <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-5">
-        <p className="mb-4 text-sm font-medium text-slate-700">
+      <div className="rounded-xl border border-border bg-muted/80 p-5">
+        <p className="mb-4 text-sm font-medium text-foreground">
           {selectedProvider?.label} credentials
         </p>
 
         {form.provider === "WEBHOOK" && (
           <div className="space-y-4">
             <div className="flex items-center justify-between gap-2">
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-muted-foreground">
                 Works with Zapier, Make, n8n, webhook.site, or any HTTPS endpoint.
               </p>
               <Button
@@ -766,7 +766,7 @@ export function AutoresponderConnectionForm({
                 required
                 className="bg-white"
               />
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-muted-foreground">
                 Paste a Catch Hook / webhook URL — not your email address.
               </p>
             </div>
@@ -789,11 +789,11 @@ export function AutoresponderConnectionForm({
                 onChange={(e) => setForm({ ...form, bodyTemplate: e.target.value })}
                 rows={8}
                 placeholder={`{\n  "formName": "My Opt-in Form",\n  "contact": {\n    "email": "{{email}}",\n    "firstName": "{{firstName}}",\n    "lastName": "{{lastName}}",\n    "phone": "{{phone}}"\n  }\n}`}
-                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 font-mono text-xs text-slate-800 outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+                className="w-full rounded-lg border border-border bg-card px-3 py-2 font-mono text-xs text-foreground outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
               />
-              <p className="text-xs text-slate-500">
-                Leave blank to send the default LeadVix payload. Use placeholders like{" "}
-                <code className="rounded bg-slate-100 px-1">{"{{email}}"}</code> for custom APIs.
+              <p className="text-xs text-muted-foreground">
+                Leave blank to send the default Affsense payload. Use placeholders like{" "}
+                <code className="rounded bg-muted px-1">{"{{email}}"}</code> for custom APIs.
               </p>
             </div>
           </div>
@@ -820,7 +820,7 @@ export function AutoresponderConnectionForm({
                 required
                 className="bg-white"
               />
-              <p className="text-xs text-slate-500">From your Mailchimp API key (e.g. us21)</p>
+              <p className="text-xs text-muted-foreground">From your Mailchimp API key (e.g. us21)</p>
             </div>
             <div className="space-y-2">
               <Label>Audience list ID</Label>
@@ -845,7 +845,7 @@ export function AutoresponderConnectionForm({
 
             {!aweberConnected ? (
               <div className="space-y-3">
-                <p className="text-sm text-slate-600">
+                <p className="text-sm text-muted-foreground">
                   Connect your AWeber account to choose a list. Access tokens are handled securely
                   via OAuth.
                 </p>
@@ -890,7 +890,7 @@ export function AutoresponderConnectionForm({
                 <div className="space-y-2">
                   <Label>AWeber list</Label>
                   {aweberListsLoading ? (
-                    <div className="flex h-10 items-center gap-2 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-500">
+                    <div className="flex h-10 items-center gap-2 rounded-md border border-border bg-card px-3 text-sm text-muted-foreground">
                       <Loader2 className="h-4 w-4 animate-spin" />
                       Loading lists…
                     </div>
@@ -926,12 +926,12 @@ export function AutoresponderConnectionForm({
                       </SelectContent>
                     </Select>
                   ) : (
-                    <p className="text-sm text-slate-500">No lists found on this AWeber account.</p>
+                    <p className="text-sm text-muted-foreground">No lists found on this AWeber account.</p>
                   )}
                   {aweberListsError ? (
                     <p className="text-xs text-red-600">{aweberListsError}</p>
                   ) : aweberListOptions.length > 0 ? (
-                    <p className="text-xs text-slate-500">Subscribers are added to the selected list.</p>
+                    <p className="text-xs text-muted-foreground">Subscribers are added to the selected list.</p>
                   ) : null}
                 </div>
               </div>
@@ -976,14 +976,14 @@ export function AutoresponderConnectionForm({
                   )}
                 </Button>
               </div>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-muted-foreground">
                 Paste your API key, then lists load automatically. Use Load lists if they do not appear.
               </p>
             </div>
             <div className="space-y-2">
               <Label>GetResponse list</Label>
               {getResponseListsLoading ? (
-                <div className="flex h-10 items-center gap-2 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-500">
+                <div className="flex h-10 items-center gap-2 rounded-md border border-border bg-card px-3 text-sm text-muted-foreground">
                   <Loader2 className="h-4 w-4 animate-spin" />
                   Loading lists…
                 </div>
@@ -1027,7 +1027,7 @@ export function AutoresponderConnectionForm({
                   </SelectContent>
                 </Select>
               ) : (
-                <div className="flex h-10 items-center rounded-md border border-dashed border-slate-200 bg-white px-3 text-sm text-slate-500">
+                <div className="flex h-10 items-center rounded-md border border-dashed border-border bg-card px-3 text-sm text-muted-foreground">
                   {form.apiKey.trim() || isEditMode
                     ? "No lists loaded yet — click Load lists"
                     : "Enter your API key first"}
@@ -1036,12 +1036,12 @@ export function AutoresponderConnectionForm({
               {getResponseListsError ? (
                 <p className="text-xs text-red-600">{getResponseListsError}</p>
               ) : getResponseListOptions.length > 0 ? (
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-muted-foreground">
                   Choose the GetResponse list where new leads should be added. The short code in
                   parentheses is the API list token saved with the connection.
                 </p>
               ) : (
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-muted-foreground">
                   Lists are fetched from your GetResponse account using the API key above.
                 </p>
               )}
@@ -1051,8 +1051,8 @@ export function AutoresponderConnectionForm({
 
         {form.provider === "SYSTEME" && (
           <div className="grid gap-4 sm:grid-cols-2">
-            <div className="sm:col-span-2 flex flex-col gap-3 rounded-lg border border-slate-200 bg-slate-50/80 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm text-slate-600">
+            <div className="sm:col-span-2 flex flex-col gap-3 rounded-lg border border-border bg-muted/80 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm text-muted-foreground">
                 Don’t have a Systeme.io account?
               </p>
               <a
@@ -1100,14 +1100,14 @@ export function AutoresponderConnectionForm({
                   )}
                 </Button>
               </div>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-muted-foreground">
                 Paste your API key, then tags load automatically. Use Load tags if they do not appear.
               </p>
             </div>
             <div className="space-y-2">
               <Label>Tag (optional)</Label>
               {systemeTagsLoading ? (
-                <div className="flex h-10 items-center gap-2 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-500">
+                <div className="flex h-10 items-center gap-2 rounded-md border border-border bg-card px-3 text-sm text-muted-foreground">
                   <Loader2 className="h-4 w-4 animate-spin" />
                   Loading tags…
                 </div>
@@ -1150,18 +1150,18 @@ export function AutoresponderConnectionForm({
                   </SelectContent>
                 </Select>
               ) : (
-                <div className="flex h-10 items-center rounded-md border border-dashed border-slate-200 bg-white px-3 text-sm text-slate-500">
+                <div className="flex h-10 items-center rounded-md border border-dashed border-border bg-card px-3 text-sm text-muted-foreground">
                   Enter your API key first
                 </div>
               )}
               {systemeTagsError ? (
                 <p className="text-xs text-red-600">{systemeTagsError}</p>
               ) : systemeTagOptions.length > 0 ? (
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-muted-foreground">
                   Choose the Systeme.io tag to apply to new contacts, or select No tag to skip tagging.
                 </p>
               ) : (
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-muted-foreground">
                   Tags are fetched from your Systeme.io account using the API key above.
                 </p>
               )}
@@ -1189,31 +1189,31 @@ export function AutoresponderConnectionForm({
         <DialogHeader>
           <DialogTitle>Custom Webhook guidelines</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4 text-sm text-slate-700">
+        <div className="space-y-4 text-sm text-foreground">
           <div>
-            <p className="font-medium text-slate-900">1. Webhook URL</p>
-            <p className="mt-1 text-slate-600">
+            <p className="font-medium text-foreground">1. Webhook URL</p>
+            <p className="mt-1 text-muted-foreground">
               Use an HTTPS endpoint from Zapier, Make, n8n, webhook.site, or your own API. Do not put
               an email address in this field.
             </p>
           </div>
           <div>
-            <p className="font-medium text-slate-900">2. Default payload</p>
-            <p className="mt-1 text-slate-600">
-              If Custom JSON body is empty, LeadVix POSTs the standard lead payload (
-              <code className="rounded bg-slate-100 px-1 text-xs">event</code>,{" "}
-              <code className="rounded bg-slate-100 px-1 text-xs">email</code>,{" "}
-              <code className="rounded bg-slate-100 px-1 text-xs">firstName</code>, campaign,
+            <p className="font-medium text-foreground">2. Default payload</p>
+            <p className="mt-1 text-muted-foreground">
+              If Custom JSON body is empty, Affsense POSTs the standard lead payload (
+              <code className="rounded bg-muted px-1 text-xs">event</code>,{" "}
+              <code className="rounded bg-muted px-1 text-xs">email</code>,{" "}
+              <code className="rounded bg-muted px-1 text-xs">firstName</code>, campaign,
               publisher, etc.).
             </p>
           </div>
           <div>
-            <p className="font-medium text-slate-900">3. Custom JSON body</p>
-            <p className="mt-1 text-slate-600">
+            <p className="font-medium text-foreground">3. Custom JSON body</p>
+            <p className="mt-1 text-muted-foreground">
               For destinations that need a different JSON shape, paste a valid JSON template and use
               placeholders. Example:
             </p>
-            <pre className="mt-2 overflow-x-auto rounded-lg border border-slate-200 bg-slate-50 p-3 font-mono text-[11px] text-slate-800">{`{
+            <pre className="mt-2 overflow-x-auto rounded-lg border border-border bg-muted p-3 font-mono text-[11px] text-foreground">{`{
   "formName": "My Opt-in Form",
   "contact": {
     "email": "{{email}}",
@@ -1222,26 +1222,26 @@ export function AutoresponderConnectionForm({
     "phone": "{{phone}}"
   }
 }`}</pre>
-            <p className="mt-2 text-slate-600">Available placeholders:</p>
-            <p className="mt-1 font-mono text-[11px] leading-relaxed text-slate-600">
+            <p className="mt-2 text-muted-foreground">Available placeholders:</p>
+            <p className="mt-1 font-mono text-[11px] leading-relaxed text-muted-foreground">
               {WEBHOOK_BODY_PLACEHOLDERS.map((p) => `{{${p}}}`).join(", ")}
             </p>
           </div>
           <div>
-            <p className="font-medium text-slate-900">4. Zapier / Make</p>
-            <p className="mt-1 text-slate-600">
+            <p className="font-medium text-foreground">4. Zapier / Make</p>
+            <p className="mt-1 text-muted-foreground">
               You can also leave Custom JSON body empty, send to a Catch Hook, then map fields in
               Zapier or Make to any third-party API.
             </p>
           </div>
           <div>
-            <p className="font-medium text-slate-900">5. Test</p>
-            <p className="mt-1 text-slate-600">
+            <p className="font-medium text-foreground">5. Test</p>
+            <p className="mt-1 text-muted-foreground">
               After saving, use <strong>Test</strong> on the connection to send a sample lead and
               confirm the destination receives the body you expect.
             </p>
           </div>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-muted-foreground">
             Third-party APIs may require exact field names (for example a form name that matches
             their mapping). Check that product&apos;s webhook docs when building your template.
           </p>

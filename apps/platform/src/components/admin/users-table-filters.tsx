@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-export function UsersTableFilters() {
+export function UsersTableFilters({ showDateRange = true }: { showDateRange?: boolean }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -26,7 +26,7 @@ export function UsersTableFilters() {
 
   const applyFilters = useCallback(
     (overrides?: { q?: string; status?: string; from?: string; to?: string }) => {
-      const params = new URLSearchParams(searchParams.toString());
+      const params = new URLSearchParams();
 
       const values = {
         q: overrides?.q ?? search,
@@ -36,24 +36,19 @@ export function UsersTableFilters() {
       };
 
       if (values.q.trim()) params.set("q", values.q.trim());
-      else params.delete("q");
-
       if (values.status && values.status !== "all") params.set("status", values.status);
-      else params.delete("status");
 
-      if (values.from) params.set("from", values.from);
-      else params.delete("from");
+      if (showDateRange) {
+        if (values.from) params.set("from", values.from);
+        if (values.to) params.set("to", values.to);
+      }
 
-      if (values.to) params.set("to", values.to);
-      else params.delete("to");
-
-      params.delete("page");
-
+      const qs = params.toString();
       startTransition(() => {
-        router.push(`${pathname}?${params.toString()}`);
+        router.push(qs ? `${pathname}?${qs}` : pathname);
       });
     },
-    [search, status, dateFrom, dateTo, pathname, router, searchParams],
+    [search, status, dateFrom, dateTo, pathname, router, showDateRange],
   );
 
   function clearFilters() {
@@ -69,59 +64,60 @@ export function UsersTableFilters() {
   const hasFilters =
     searchParams.has("q") ||
     searchParams.has("status") ||
-    searchParams.has("from") ||
-    searchParams.has("to");
+    (showDateRange && (searchParams.has("from") || searchParams.has("to")));
 
   return (
-    <div className="border-b border-slate-100 bg-slate-50/80 px-4 py-2.5">
-      <div className="flex w-full flex-nowrap items-center gap-2">
-        <div className="relative min-w-[140px] flex-1">
-          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+    <div className="rounded-[var(--radius-card,0.875rem)] border border-border bg-card p-3 shadow-[var(--shadow-card)] sm:p-3.5">
+      <div className="flex w-full flex-col gap-2 lg:flex-row lg:flex-nowrap lg:items-center">
+        <div className="relative min-w-[160px] flex-1">
+          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Search name, email, company..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && applyFilters()}
-            className="h-8 w-full rounded-md border-slate-200 bg-white pl-8 text-xs"
+            className="h-8 w-full rounded-md border-border bg-background pl-8 text-xs"
           />
         </div>
 
-        <Select
-          value={status}
-          onValueChange={(v) => {
-            if (!v) return;
-            setStatus(v);
-            applyFilters({ status: v });
-          }}
-        >
-          <SelectTrigger className="h-8 w-[118px] shrink-0 rounded-md border-slate-200 bg-white text-xs">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All status</SelectItem>
-            <SelectItem value="ACTIVE">Active</SelectItem>
-            <SelectItem value="SUSPENDED">Blocked</SelectItem>
-            <SelectItem value="PENDING">Pending</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex flex-wrap items-center gap-2">
+          <Select
+            value={status}
+            onValueChange={(v) => {
+              if (!v) return;
+              setStatus(v);
+              applyFilters({ status: v });
+            }}
+          >
+            <SelectTrigger className="h-8 w-[118px] shrink-0 rounded-md border-border bg-background text-xs">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All status</SelectItem>
+              <SelectItem value="ACTIVE">Active</SelectItem>
+              <SelectItem value="SUSPENDED">Blocked</SelectItem>
+              <SelectItem value="PENDING">Pending</SelectItem>
+            </SelectContent>
+          </Select>
 
-        <div className="flex shrink-0 items-center gap-1.5">
-          <Input
-            type="date"
-            value={dateFrom}
-            onChange={(e) => setDateFrom(e.target.value)}
-            className="h-8 w-[132px] rounded-md border-slate-200 bg-white text-xs"
-          />
-          <span className="text-xs text-slate-400">to</span>
-          <Input
-            type="date"
-            value={dateTo}
-            onChange={(e) => setDateTo(e.target.value)}
-            className="h-8 w-[132px] rounded-md border-slate-200 bg-white text-xs"
-          />
-        </div>
+          {showDateRange ? (
+            <div className="flex shrink-0 items-center gap-1.5">
+              <Input
+                type="date"
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
+                className="h-8 w-[132px] rounded-md border-border bg-background text-xs"
+              />
+              <span className="text-xs text-muted-foreground">to</span>
+              <Input
+                type="date"
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+                className="h-8 w-[132px] rounded-md border-border bg-background text-xs"
+              />
+            </div>
+          ) : null}
 
-        <div className="flex shrink-0 items-center gap-1.5">
           <Button
             size="sm"
             onClick={() => applyFilters()}
@@ -130,18 +126,19 @@ export function UsersTableFilters() {
           >
             {isPending ? "..." : "Search"}
           </Button>
-          {hasFilters && (
+
+          {hasFilters ? (
             <Button
               size="sm"
               variant="outline"
               onClick={clearFilters}
               disabled={isPending}
-              className="h-8 gap-1 rounded-md border-slate-200 bg-white px-2.5 text-xs"
+              className="h-8 gap-1 rounded-md border-border bg-card px-2.5 text-xs"
             >
               <RotateCcw className="h-3 w-3" />
               Reset
             </Button>
-          )}
+          ) : null}
         </div>
       </div>
     </div>

@@ -36,17 +36,17 @@ export function AdminReferralsFilters() {
       }}
     >
       <div className="min-w-0 flex-1 space-y-1.5">
-        <label htmlFor="referral-search" className="text-xs font-medium text-slate-600">
+        <label htmlFor="referral-search" className="text-xs font-medium text-muted-foreground">
           Search
         </label>
         <div className="relative">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             id="referral-search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Referrer, referred, email, or code"
-            className="h-10 rounded-xl border-slate-200 pl-9"
+            className="h-10 rounded-xl border-border pl-9"
           />
         </div>
       </div>
@@ -57,7 +57,7 @@ export function AdminReferralsFilters() {
         <Button
           type="button"
           variant="outline"
-          className="h-10 rounded-xl border-slate-200"
+          className="h-10 rounded-xl border-border"
           disabled={isPending}
           onClick={() => {
             setSearch("");

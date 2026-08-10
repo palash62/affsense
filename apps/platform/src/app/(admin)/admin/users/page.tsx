@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { formatUserDateTime } from "@/lib/user-timezone";
 import { Phone, UserCheck, UserCog, Users } from "lucide-react";
@@ -5,8 +6,6 @@ import type { UserStatus } from "@prisma/client";
 import { listPlatformManagers } from "@/services/admin.service";
 import { getSession } from "@/lib/session";
 import { parseStaffMenuAccess } from "@/lib/admin-portal";
-import { PageHero } from "@/components/admin/page-hero";
-import { PageSection } from "@/components/admin/page-section";
 import { NeutralStatCard } from "@/components/admin/gradient-stat-card";
 import {
   avatarColors,
@@ -16,6 +15,8 @@ import {
 import { AdminCreateStaffUserDialog } from "@/components/admin/admin-create-staff-user-dialog";
 import { AdminEditStaffMenusDialog } from "@/components/admin/admin-edit-staff-menus-dialog";
 import { StaffUserStatusActions } from "@/components/admin/staff-user-status-actions";
+import { UsersTableFilters } from "@/components/admin/users-table-filters";
+import { UsersTablePagination } from "@/components/admin/users-table-pagination";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Table,
@@ -25,7 +26,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ADMIN_NAV } from "@/components/layout/nav-config";
+import { ADMIN_LEGACY_NAV } from "@/components/layout/nav-config";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -39,7 +40,7 @@ interface PageProps {
 }
 
 function menuLabels(access: string[]) {
-  const items = Array.isArray(ADMIN_NAV) ? ADMIN_NAV : [];
+  const items = Array.isArray(ADMIN_LEGACY_NAV) ? ADMIN_LEGACY_NAV : [];
   const map = new Map(items.map((n) => [n.href, n.label]));
   return access.map((href) => map.get(href) ?? href);
 }
@@ -65,20 +66,10 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
   ]);
 
   const activeCount = allManagers.filter((u) => u.status === "ACTIVE").length;
+  const hasFilters = !!(params.q || params.status);
 
   return (
-    <div className="space-y-7">
-      <PageHero
-        eyebrow="User Management"
-        title="Users"
-        description="Create Platform Managers, grant menu access, and deactivate staff logins."
-        badge={`${meta.total} platform manager${meta.total === 1 ? "" : "s"}`}
-      />
-
-      <div className="flex flex-wrap items-center justify-end gap-3">
-        <AdminCreateStaffUserDialog />
-      </div>
-
+    <div className="space-y-5">
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <NeutralStatCard
           label="Platform Managers"
@@ -100,37 +91,66 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
         />
       </div>
 
-      <PageSection
-        title="Platform Managers"
-        description="Staff accounts with custom admin menu access"
-        icon={UserCog}
+      <Suspense
+        fallback={
+          <div className="h-14 animate-pulse rounded-[var(--radius-card,0.875rem)] bg-muted" />
+        }
       >
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>User</TableHead>
-                <TableHead>Contact</TableHead>
-                <TableHead>Menus</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Created</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {managers.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="h-28 text-center text-slate-500">
-                    No platform managers yet.
-                  </TableCell>
+        <UsersTableFilters showDateRange={false} />
+      </Suspense>
+
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-muted-foreground">
+          {hasFilters
+            ? `Showing ${managers.length} of ${meta.total} manager${meta.total === 1 ? "" : "s"}`
+            : `${meta.total} manager${meta.total === 1 ? "" : "s"}`}
+        </p>
+        <AdminCreateStaffUserDialog />
+      </div>
+
+      {managers.length === 0 ? (
+        <div className="flex flex-col items-center justify-center rounded-[var(--radius-card,0.875rem)] border border-dashed border-border bg-card px-6 py-16 text-center shadow-[var(--shadow-card)]">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--theme-primary-soft)]">
+            <UserCog className="h-6 w-6 text-[var(--theme-primary)]" />
+          </div>
+          <h3 className="mt-4 text-base font-semibold text-foreground">
+            {hasFilters ? "No managers match your filters" : "No platform managers yet"}
+          </h3>
+          <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+            {hasFilters
+              ? "Try adjusting search or status filters."
+              : "Create a staff login with custom menu access to get started."}
+          </p>
+          {!hasFilters ? (
+            <div className="mt-5">
+              <AdminCreateStaffUserDialog />
+            </div>
+          ) : null}
+        </div>
+      ) : (
+        <div className="overflow-hidden rounded-[var(--radius-card,0.875rem)] border border-border bg-card shadow-[var(--shadow-card)]">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-border hover:bg-transparent bg-muted/60">
+                  <TableHead className="h-11 px-6 text-muted-foreground">User</TableHead>
+                  <TableHead className="h-11 px-4 text-muted-foreground">Contact</TableHead>
+                  <TableHead className="h-11 px-4 text-muted-foreground">Menus</TableHead>
+                  <TableHead className="h-11 px-4 text-muted-foreground">Status</TableHead>
+                  <TableHead className="h-11 px-4 text-muted-foreground">Created</TableHead>
+                  <TableHead className="h-11 px-6 text-right text-muted-foreground">Actions</TableHead>
                 </TableRow>
-              ) : (
-                managers.map((user, index) => {
+              </TableHeader>
+              <TableBody>
+                {managers.map((user, index) => {
                   const menus = parseStaffMenuAccess(user.staffMenuAccess);
                   const labels = menuLabels(menus);
                   return (
-                    <TableRow key={user.id}>
-                      <TableCell>
+                    <TableRow
+                      key={user.id}
+                      className="border-border transition-colors hover:bg-muted/40"
+                    >
+                      <TableCell className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           <Avatar className="h-9 w-9">
                             <AvatarFallback
@@ -143,12 +163,12 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
                             </AvatarFallback>
                           </Avatar>
                           <div>
-                            <p className="font-medium text-slate-900">{user.name}</p>
-                            <p className="text-xs text-slate-500">{user.email}</p>
+                            <p className="font-medium text-foreground">{user.name}</p>
+                            <p className="text-xs text-muted-foreground">{user.email}</p>
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell className="text-sm text-slate-600">
+                      <TableCell className="px-4 py-4 text-sm text-muted-foreground">
                         <div className="space-y-1">
                           {user.phone ? (
                             <p className="flex items-center gap-1.5">
@@ -158,26 +178,26 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
                           ) : null}
                           {user.country ? <p>{user.country}</p> : null}
                           {!user.phone && !user.country ? (
-                            <span className="text-slate-400">—</span>
+                            <span className="text-muted-foreground">—</span>
                           ) : null}
                         </div>
                       </TableCell>
-                      <TableCell className="max-w-[220px]">
+                      <TableCell className="max-w-[220px] px-4 py-4">
                         {labels.length === 0 ? (
-                          <span className="text-sm text-slate-400">Dashboard only</span>
+                          <span className="text-sm text-muted-foreground">Dashboard only</span>
                         ) : (
-                          <p className="line-clamp-2 text-sm text-slate-600">
+                          <p className="line-clamp-2 text-sm text-muted-foreground">
                             {labels.join(", ")}
                           </p>
                         )}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="px-4 py-4">
                         <UserStatusBadge status={user.status} />
                       </TableCell>
-                      <TableCell className="whitespace-nowrap text-sm text-slate-500">
+                      <TableCell className="whitespace-nowrap px-4 py-4 text-sm text-muted-foreground">
                         {formatUserDateTime(user.createdAt, tz, "MMM d, yyyy")}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="px-6 py-4">
                         <div className="flex flex-col items-end gap-2">
                           <AdminEditStaffMenusDialog
                             userId={user.id}
@@ -191,12 +211,15 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
                       </TableCell>
                     </TableRow>
                   );
-                })
-              )}
-            </TableBody>
-          </Table>
+                })}
+              </TableBody>
+            </Table>
+          </div>
+          <Suspense>
+            <UsersTablePagination page={meta.page} totalPages={meta.totalPages} total={meta.total} />
+          </Suspense>
         </div>
-      </PageSection>
+      )}
     </div>
   );
 }

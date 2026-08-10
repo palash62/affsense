@@ -158,7 +158,7 @@ export function AdminCampaignActions({ campaign }: AdminCampaignActionsProps) {
             <DialogHeader>
               <DialogTitle>Delete campaign</DialogTitle>
             </DialogHeader>
-            <p className="text-sm text-slate-600">
+            <p className="text-sm text-muted-foreground">
               Permanently delete <strong>{campaign.name}</strong>? This cannot be undone.
             </p>
             {error && <p className="text-sm text-red-600">{error}</p>}

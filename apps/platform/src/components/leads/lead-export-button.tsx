@@ -15,7 +15,7 @@ export function LeadExportButton() {
       download
       className={cn(
         buttonVariants({ variant: "outline", size: "sm" }),
-        "inline-flex h-8 items-center gap-1.5 rounded-md border-slate-300 bg-white px-3 text-xs font-medium text-slate-700 shadow-sm hover:bg-slate-50",
+        "inline-flex h-8 items-center gap-1.5 rounded-md border-border bg-card px-3 text-xs font-medium text-foreground shadow-sm hover:bg-muted",
       )}
     >
       <Download className="h-3.5 w-3.5" />

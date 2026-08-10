@@ -31,4 +31,4 @@ New email screens: wrap content in `EmailModuleShell`, add panel + page route, r
 
 ## Design tokens
 
-Primary `#2563EB`, secondary `#14B8A6`, background `#F8FAFC`, cards `#FFFFFF`. Details in `docs/DESIGN-SYSTEM.md`.
+Primary `#4F46F5`, purple `#713BFF`, sidebar `#07162D`, page bg `#F7F9FC`, text `#111827` / `#667085`, border `#E7EAF0`, success `#12A150`. Cards 14px radius, controls 8px. Details in `docs/DESIGN-SYSTEM.md`.

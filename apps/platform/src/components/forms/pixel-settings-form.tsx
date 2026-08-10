@@ -60,7 +60,7 @@ export function PixelSettingsForm() {
   }
 
   if (!settings) {
-    return <p className="text-sm text-slate-500">Loading pixel settings...</p>;
+    return <p className="text-sm text-muted-foreground">Loading pixel settings...</p>;
   }
 
   const metaActive =
@@ -83,11 +83,11 @@ export function PixelSettingsForm() {
         </AlertDescription>
       </Alert>
 
-      <section className="space-y-4 rounded-xl border border-slate-200 p-4">
+      <section className="space-y-4 rounded-xl border border-border p-4">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h3 className="text-sm font-semibold text-slate-900">Facebook Pixel</h3>
-            <p className="mt-1 text-sm text-slate-500">
+            <h3 className="text-sm font-semibold text-foreground">Facebook Pixel</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
               Load Meta Pixel site-wide: PageView everywhere, Lead on signup and
               form leads, Purchase on card deposits.
             </p>
@@ -101,7 +101,7 @@ export function PixelSettingsForm() {
               </p>
             ) : null}
           </div>
-          <label className="flex items-center gap-2 text-sm text-slate-700">
+          <label className="flex items-center gap-2 text-sm text-foreground">
             <input
               type="checkbox"
               checked={settings.meta.enabled}
@@ -134,11 +134,11 @@ export function PixelSettingsForm() {
         </div>
       </section>
 
-      <section className="space-y-4 rounded-xl border border-slate-200 p-4">
+      <section className="space-y-4 rounded-xl border border-border p-4">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h3 className="text-sm font-semibold text-slate-900">Google Ads</h3>
-            <p className="mt-1 text-sm text-slate-500">
+            <h3 className="text-sm font-semibold text-foreground">Google Ads</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
               Load gtag.js site-wide and fire conversion events on accepted leads.
             </p>
             {googleActive ? (
@@ -152,7 +152,7 @@ export function PixelSettingsForm() {
               </p>
             ) : null}
           </div>
-          <label className="flex items-center gap-2 text-sm text-slate-700">
+          <label className="flex items-center gap-2 text-sm text-foreground">
             <input
               type="checkbox"
               checked={settings.googleAds.enabled}
@@ -220,12 +220,12 @@ export function PixelSettingsForm() {
         </Alert>
       )}
 
-      <div className="flex items-center gap-3 border-t border-slate-100 pt-4">
+      <div className="flex items-center gap-3 border-t border-border pt-4">
         <Button type="submit" disabled={saving}>
           <Save className="mr-2 h-4 w-4" />
           {saving ? "Saving..." : "Save pixel settings"}
         </Button>
-        <div className="flex items-center gap-2 text-xs text-slate-500">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <Crosshair className="h-3.5 w-3.5" />
           Settings apply site-wide when enabled: signup Lead, form Lead, and card
           deposit Purchase for Meta; Google conversions on accepted form submits.

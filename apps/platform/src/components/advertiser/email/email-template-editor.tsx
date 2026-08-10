@@ -117,14 +117,14 @@ export function EmailTemplateEditor({ templateId }: Props) {
   if (loading) {
     return (
       <div className="flex justify-center py-12">
-        <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
   return (
     <div className="grid gap-6 lg:grid-cols-2">
-      <div className="space-y-4 rounded-xl border border-slate-200 bg-white p-6">
+      <div className="space-y-4 rounded-xl border border-border bg-card p-6">
         <div>
           <Label htmlFor="name">Template name</Label>
           <Input
@@ -149,7 +149,7 @@ export function EmailTemplateEditor({ templateId }: Props) {
                 key={tag}
                 type="button"
                 onClick={() => insertTag(tag)}
-                className="rounded-md bg-slate-100 px-2 py-0.5 text-xs text-slate-700 hover:bg-slate-200"
+                className="rounded-md bg-muted px-2 py-0.5 text-xs text-foreground hover:bg-slate-200"
               >
                 {`{{${tag}}}`}
               </button>
@@ -161,7 +161,7 @@ export function EmailTemplateEditor({ templateId }: Props) {
           <textarea
             id="htmlBody"
             rows={14}
-            className="flex w-full rounded-md border border-slate-200 bg-white px-3 py-2 font-mono text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-primary)]"
+            className="flex w-full rounded-md border border-border bg-card px-3 py-2 font-mono text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-primary)]"
             value={form.htmlBody}
             onChange={(e) => setForm({ ...form, htmlBody: e.target.value })}
           />
@@ -171,7 +171,7 @@ export function EmailTemplateEditor({ templateId }: Props) {
           <textarea
             id="textBody"
             rows={4}
-            className="flex w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-primary)]"
+            className="flex w-full rounded-md border border-border bg-card px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-primary)]"
             value={form.textBody}
             onChange={(e) => setForm({ ...form, textBody: e.target.value })}
           />
@@ -191,10 +191,10 @@ export function EmailTemplateEditor({ templateId }: Props) {
           )}
         </div>
       </div>
-      <div className="rounded-xl border border-slate-200 bg-white p-6">
-        <p className="mb-3 text-sm font-semibold text-slate-900">Preview</p>
+      <div className="rounded-xl border border-border bg-card p-6">
+        <p className="mb-3 text-sm font-semibold text-foreground">Preview</p>
         <div
-          className="min-h-[400px] overflow-auto rounded-lg border border-slate-100 bg-slate-50 p-4"
+          className="min-h-[400px] overflow-auto rounded-lg border border-border bg-muted p-4"
           dangerouslySetInnerHTML={{ __html: previewHtml || form.htmlBody }}
         />
       </div>

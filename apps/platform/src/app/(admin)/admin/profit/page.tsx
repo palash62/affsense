@@ -109,7 +109,7 @@ export default async function AdminProfitPage({ searchParams }: PageProps) {
         description="Platform profit split into admin (80%) and partner (20%) shares for the selected period."
       />
 
-      <Suspense fallback={<div className="h-28 animate-pulse rounded-[18px] bg-slate-100" />}>
+      <Suspense fallback={<div className="h-28 animate-pulse rounded-[18px] bg-muted" />}>
         <AdminProfitFilters
           period={range.period}
           fromStr={range.fromStr}

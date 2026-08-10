@@ -72,11 +72,11 @@ export function AdminDepositsFilters({ advertisers }: { advertisers: AdvertiserO
     searchParams.has("advertiser") || searchParams.has("from") || searchParams.has("to");
 
   return (
-    <div className="border-b border-slate-100 bg-slate-50/60 px-6 py-4">
+    <div className="border-b border-border bg-muted/60 px-6 py-4">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end">
         <div className="grid flex-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <div className="space-y-1.5">
-            <label className="text-xs font-medium uppercase tracking-wide text-slate-500">
+            <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Advertiser
             </label>
             <Select value={advertiserId} onValueChange={(value) => value && setAdvertiserId(value)}>
@@ -95,7 +95,7 @@ export function AdminDepositsFilters({ advertisers }: { advertisers: AdvertiserO
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-medium uppercase tracking-wide text-slate-500">
+            <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               From date
             </label>
             <Input
@@ -107,7 +107,7 @@ export function AdminDepositsFilters({ advertisers }: { advertisers: AdvertiserO
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-medium uppercase tracking-wide text-slate-500">
+            <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               To date
             </label>
             <Input

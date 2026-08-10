@@ -66,27 +66,27 @@ export default async function AdminFraudPage() {
         gradient="leads"
       >
         {leads.length === 0 ? (
-          <p className="p-6 text-sm text-slate-500">No high-risk leads in the queue.</p>
+          <p className="p-6 text-sm text-muted-foreground">No high-risk leads in the queue.</p>
         ) : (
           <Table>
             <TableHeader>
               <TableRow className="border-none hover:bg-transparent" style={{ background: "var(--theme-primary-soft)" }}>
-                <TableHead className="h-11 px-6 text-slate-600">Submitted</TableHead>
-                <TableHead className="h-11 px-4 text-slate-600">Campaign</TableHead>
-                <TableHead className="h-11 px-4 text-slate-600">Publisher</TableHead>
-                <TableHead className="h-11 px-4 text-slate-600">Review</TableHead>
+                <TableHead className="h-11 px-6 text-muted-foreground">Submitted</TableHead>
+                <TableHead className="h-11 px-4 text-muted-foreground">Campaign</TableHead>
+                <TableHead className="h-11 px-4 text-muted-foreground">Publisher</TableHead>
+                <TableHead className="h-11 px-4 text-muted-foreground">Review</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {leads.map((lead) => (
-                <TableRow key={lead.id} className="border-slate-100 align-top hover:bg-violet-50/40">
-                  <TableCell className="px-6 py-4 text-sm text-slate-500">
+                <TableRow key={lead.id} className="border-border align-top hover:bg-violet-50/40">
+                  <TableCell className="px-6 py-4 text-sm text-muted-foreground">
                     {formatUserDateTime(lead.createdAt, tz, "MMM d, yyyy HH:mm")}
                   </TableCell>
-                  <TableCell className="px-4 py-4 text-sm font-medium text-slate-900">
+                  <TableCell className="px-4 py-4 text-sm font-medium text-foreground">
                     {lead.campaign.name}
                   </TableCell>
-                  <TableCell className="px-4 py-4 text-sm text-slate-700">
+                  <TableCell className="px-4 py-4 text-sm text-foreground">
                     {lead.publisher.name}
                   </TableCell>
                   <TableCell className="px-4 py-4">

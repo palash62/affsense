@@ -161,7 +161,7 @@ export default async function PublisherEarningsPage({ searchParams }: PageProps)
         />
       </div>
 
-      <Suspense fallback={<div className="h-[72px] w-full animate-pulse rounded-2xl border border-slate-200 bg-slate-100" />}>
+      <Suspense fallback={<div className="h-[72px] w-full animate-pulse rounded-2xl border border-border bg-muted" />}>
         <PublisherEarningsTabNav active={tab} />
       </Suspense>
 
@@ -176,8 +176,8 @@ export default async function PublisherEarningsPage({ searchParams }: PageProps)
           >
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="text-sm text-slate-500">Ready to withdraw</p>
-                <p className="text-2xl font-bold text-slate-900">
+                <p className="text-sm text-muted-foreground">Ready to withdraw</p>
+                <p className="text-2xl font-bold text-foreground">
                   {formatCurrency(wallet.availableBalance)}
                 </p>
               </div>
@@ -192,39 +192,39 @@ export default async function PublisherEarningsPage({ searchParams }: PageProps)
 
           <div className="premium-card overflow-hidden">
             <div className="h-1" style={{ background: "var(--theme-gradient-approved)" }} />
-            <div className="border-b border-slate-100 bg-[var(--theme-primary-soft)] px-6 py-5">
+            <div className="border-b border-border bg-[var(--theme-primary-soft)] px-6 py-5">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-sm">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-card shadow-sm">
                   <Wallet className="h-5 w-5 text-[var(--theme-primary)]" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-semibold text-slate-900">Balance details</h2>
-                  <p className="text-sm text-slate-500">How your earnings balance is calculated</p>
+                  <h2 className="text-lg font-semibold text-foreground">Balance details</h2>
+                  <p className="text-sm text-muted-foreground">How your earnings balance is calculated</p>
                 </div>
               </div>
             </div>
             <div className="grid gap-0 divide-y divide-slate-100 sm:grid-cols-2 sm:divide-x sm:divide-y-0 lg:grid-cols-4">
               <div className="flex items-center justify-between px-6 py-4 sm:flex-col sm:items-start sm:gap-1">
-                <span className="text-sm text-slate-500">Total balance</span>
-                <span className="text-sm font-semibold text-slate-900">
+                <span className="text-sm text-muted-foreground">Total balance</span>
+                <span className="text-sm font-semibold text-foreground">
                   {formatCurrency(wallet.balance)}
                 </span>
               </div>
               <div className="flex items-center justify-between px-6 py-4 sm:flex-col sm:items-start sm:gap-1">
-                <span className="text-sm text-slate-500">On hold</span>
+                <span className="text-sm text-muted-foreground">On hold</span>
                 <span className="text-sm font-semibold text-amber-600">
                   {formatCurrency(wallet.holdBalance)}
                 </span>
               </div>
               <div className="flex items-center justify-between px-6 py-4 sm:flex-col sm:items-start sm:gap-1">
-                <span className="text-sm text-slate-500">Available</span>
+                <span className="text-sm text-muted-foreground">Available</span>
                 <span className="text-sm font-semibold text-emerald-600">
                   {formatCurrency(wallet.availableBalance)}
                 </span>
               </div>
               <div className="flex items-center justify-between px-6 py-4 sm:flex-col sm:items-start sm:gap-1">
-                <span className="text-sm text-slate-500">Lifetime earned</span>
-                <span className="text-sm font-semibold text-slate-900">
+                <span className="text-sm text-muted-foreground">Lifetime earned</span>
+                <span className="text-sm font-semibold text-foreground">
                   {formatCurrency(ledger?.totalEarned ?? wallet.balance)}
                 </span>
               </div>
@@ -244,17 +244,17 @@ export default async function PublisherEarningsPage({ searchParams }: PageProps)
                     className="border-none hover:bg-transparent"
                     style={{ background: "var(--theme-primary-soft)" }}
                   >
-                    <TableHead className="h-11 px-6 text-slate-600">Date</TableHead>
-                    <TableHead className="h-11 px-4 text-slate-600">Reference</TableHead>
-                    <TableHead className="h-11 px-4 text-slate-600">Description</TableHead>
-                    <TableHead className="h-11 px-4 text-right text-slate-600">Amount</TableHead>
-                    <TableHead className="h-11 px-6 text-right text-slate-600">Balance After</TableHead>
+                    <TableHead className="h-11 px-6 text-muted-foreground">Date</TableHead>
+                    <TableHead className="h-11 px-4 text-muted-foreground">Reference</TableHead>
+                    <TableHead className="h-11 px-4 text-muted-foreground">Description</TableHead>
+                    <TableHead className="h-11 px-4 text-right text-muted-foreground">Amount</TableHead>
+                    <TableHead className="h-11 px-6 text-right text-muted-foreground">Balance After</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {!ledger || ledger.data.length === 0 ? (
                     <TableRow className="hover:bg-transparent">
-                      <TableCell colSpan={5} className="px-6 py-16 text-center text-slate-500">
+                      <TableCell colSpan={5} className="px-6 py-16 text-center text-muted-foreground">
                         No earnings yet. Paid leads will appear here.
                       </TableCell>
                     </TableRow>
@@ -262,21 +262,21 @@ export default async function PublisherEarningsPage({ searchParams }: PageProps)
                     ledger.data.map((entry) => (
                       <TableRow
                         key={entry.id}
-                        className="border-slate-100 transition-colors hover:bg-blue-50/40"
+                        className="border-border transition-colors hover:bg-blue-50/40"
                       >
-                        <TableCell className="px-6 py-4 text-sm text-slate-700">
+                        <TableCell className="px-6 py-4 text-sm text-foreground">
                           {formatUserDateTime(entry.createdAt, tz, "MMM d, yyyy HH:mm")}
                         </TableCell>
-                        <TableCell className="px-4 py-4 font-mono text-xs text-slate-500">
+                        <TableCell className="px-4 py-4 font-mono text-xs text-muted-foreground">
                           {shortLedgerId(entry.referenceId ?? entry.id)}
                         </TableCell>
-                        <TableCell className="px-4 py-4 text-sm text-slate-600">
+                        <TableCell className="px-4 py-4 text-sm text-muted-foreground">
                           {entry.description ?? entry.referenceType}
                         </TableCell>
                         <TableCell className="px-4 py-4 text-right text-sm font-semibold tabular-nums text-emerald-600">
                           +{formatCurrency(entry.amount)}
                         </TableCell>
-                        <TableCell className="px-6 py-4 text-right text-sm font-medium tabular-nums text-slate-700">
+                        <TableCell className="px-6 py-4 text-right text-sm font-medium tabular-nums text-foreground">
                           {formatCurrency(entry.balanceAfter)}
                         </TableCell>
                       </TableRow>
@@ -320,15 +320,15 @@ export default async function PublisherEarningsPage({ searchParams }: PageProps)
               </div>
               {payoutFiltersActive ? (
                 <>
-                  <h3 className="text-lg font-semibold text-slate-900">No payouts match your filters</h3>
-                  <p className="mt-1 max-w-sm text-sm text-slate-500">
+                  <h3 className="text-lg font-semibold text-foreground">No payouts match your filters</h3>
+                  <p className="mt-1 max-w-sm text-sm text-muted-foreground">
                     Try adjusting the status, method, or date range, then apply again.
                   </p>
                 </>
               ) : (
                 <>
-                  <h3 className="text-lg font-semibold text-slate-900">No payout history yet</h3>
-                  <p className="mt-1 max-w-sm text-sm text-slate-500">
+                  <h3 className="text-lg font-semibold text-foreground">No payout history yet</h3>
+                  <p className="mt-1 max-w-sm text-sm text-muted-foreground">
                     Once you have available earnings, you can request a payout.
                   </p>
                   <ButtonLink
@@ -350,51 +350,51 @@ export default async function PublisherEarningsPage({ searchParams }: PageProps)
                     className="border-none hover:bg-transparent"
                     style={{ background: "var(--theme-primary-soft)" }}
                   >
-                    <TableHead className="h-11 px-6 text-slate-600">
+                    <TableHead className="h-11 px-6 text-muted-foreground">
                       <Suspense fallback={<span>Requested</span>}>
                         <PublisherPayoutsSortHeader field="date" label="Requested" />
                       </Suspense>
                     </TableHead>
-                    <TableHead className="h-11 px-4 text-right text-slate-600">
+                    <TableHead className="h-11 px-4 text-right text-muted-foreground">
                       <Suspense fallback={<span>Amount</span>}>
                         <PublisherPayoutsSortHeader field="amount" label="Amount" align="right" />
                       </Suspense>
                     </TableHead>
-                    <TableHead className="h-11 px-4 text-slate-600">
+                    <TableHead className="h-11 px-4 text-muted-foreground">
                       <Suspense fallback={<span>Method</span>}>
                         <PublisherPayoutsSortHeader field="method" label="Method" />
                       </Suspense>
                     </TableHead>
-                    <TableHead className="h-11 px-4 text-slate-600">Destination</TableHead>
-                    <TableHead className="h-11 px-4 text-slate-600">
+                    <TableHead className="h-11 px-4 text-muted-foreground">Destination</TableHead>
+                    <TableHead className="h-11 px-4 text-muted-foreground">
                       <Suspense fallback={<span>Status</span>}>
                         <PublisherPayoutsSortHeader field="status" label="Status" />
                       </Suspense>
                     </TableHead>
-                    <TableHead className="h-11 px-6 text-slate-600">Processed</TableHead>
+                    <TableHead className="h-11 px-6 text-muted-foreground">Processed</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {payoutsResult.data.map((payout) => (
                     <TableRow
                       key={payout.id}
-                      className="border-slate-100 transition-colors hover:bg-blue-50/40"
+                      className="border-border transition-colors hover:bg-blue-50/40"
                     >
                       <TableCell className="px-6 py-4">
-                        <p className="text-sm text-slate-700">
+                        <p className="text-sm text-foreground">
                           {formatUserDateTime(payout.createdAt, tz, "MMM d, yyyy HH:mm")}
                         </p>
-                        <p className="font-mono text-xs text-slate-400">
+                        <p className="font-mono text-xs text-muted-foreground">
                           {shortPayoutId(payout.id)}
                         </p>
                       </TableCell>
-                      <TableCell className="px-4 py-4 text-right text-sm font-semibold tabular-nums text-slate-900">
+                      <TableCell className="px-4 py-4 text-right text-sm font-semibold tabular-nums text-foreground">
                         {formatCurrency(Number(payout.amount))}
                       </TableCell>
-                      <TableCell className="px-4 py-4 text-sm text-slate-600">
+                      <TableCell className="px-4 py-4 text-sm text-muted-foreground">
                         {formatPayoutMethod(payout.method)}
                       </TableCell>
-                      <TableCell className="max-w-[180px] truncate px-4 py-4 text-xs text-slate-500">
+                      <TableCell className="max-w-[180px] truncate px-4 py-4 text-xs text-muted-foreground">
                         {payoutDetailsSummary(payout.method, payout.paymentDetails)}
                       </TableCell>
                       <TableCell className="px-4 py-4">
@@ -405,7 +405,7 @@ export default async function PublisherEarningsPage({ searchParams }: PageProps)
                           )}
                         </div>
                       </TableCell>
-                      <TableCell className="px-6 py-4 text-sm text-slate-600">
+                      <TableCell className="px-6 py-4 text-sm text-muted-foreground">
                         {payout.processedAt ? formatUserDateTime(payout.processedAt, tz, "MMM d, yyyy") : "—"}
                       </TableCell>
                     </TableRow>

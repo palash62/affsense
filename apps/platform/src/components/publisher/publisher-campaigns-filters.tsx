@@ -60,21 +60,21 @@ export function PublisherCampaignsFilters() {
     (searchParams.has("page") && searchParams.get("page") !== "1");
 
   return (
-    <div className="border-b border-slate-100 bg-slate-50/80 px-4 py-2.5">
+    <div className="border-b border-border bg-muted/80 px-4 py-2.5">
       <div className="flex w-full flex-nowrap items-center gap-2 overflow-x-auto">
         <div className="relative min-w-[120px] flex-1">
-          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Search campaign..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && applyFilters()}
-            className="h-8 w-full rounded-md border-slate-200 bg-white pl-8 text-xs"
+            className="h-8 w-full rounded-md border-border bg-white pl-8 text-xs"
           />
         </div>
 
         <Select value={status} onValueChange={(v) => v && setStatus(v)}>
-          <SelectTrigger className="h-8 w-[140px] rounded-md border-slate-200 bg-white text-xs">
+          <SelectTrigger className="h-8 w-[140px] rounded-md border-border bg-card text-xs">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
@@ -100,7 +100,7 @@ export function PublisherCampaignsFilters() {
               variant="outline"
               onClick={resetFilters}
               disabled={isPending}
-              className="h-8 gap-1 rounded-md border-slate-200 bg-white px-2.5 text-xs"
+              className="h-8 gap-1 rounded-md border-border bg-card px-2.5 text-xs"
             >
               <RotateCcw className="h-3 w-3" />
               Reset

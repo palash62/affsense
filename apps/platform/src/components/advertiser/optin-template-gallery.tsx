@@ -144,7 +144,7 @@ export function OptinTemplateGallery({
           {templates.map((template) => (
             <div key={template.id} className="relative">
               {loadingId === template.id && (
-                <div className="absolute inset-0 z-20 flex items-center justify-center rounded-2xl bg-white/80">
+                <div className="absolute inset-0 z-20 flex items-center justify-center rounded-2xl bg-card/80">
                   <Loader2 className="h-6 w-6 animate-spin text-[var(--theme-primary)]" />
                 </div>
               )}
@@ -179,7 +179,7 @@ export function OptinTemplateGallery({
                   type="color"
                   value={primaryColor}
                   onChange={(e) => setPrimaryColor(e.target.value)}
-                  className="h-11 w-14 cursor-pointer rounded-lg border border-slate-200 bg-white"
+                  className="h-11 w-14 cursor-pointer rounded-lg border border-border bg-card"
                 />
                 <Input
                   value={primaryColor}
@@ -196,7 +196,7 @@ export function OptinTemplateGallery({
                   type="color"
                   value={accentColor}
                   onChange={(e) => setAccentColor(e.target.value)}
-                  className="h-11 w-14 cursor-pointer rounded-lg border border-slate-200 bg-white"
+                  className="h-11 w-14 cursor-pointer rounded-lg border border-border bg-card"
                 />
                 <Input
                   value={accentColor}

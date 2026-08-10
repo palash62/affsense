@@ -81,7 +81,7 @@ type IdentityRow = {
 
 function StatusIcon({ ready, instructional }: { ready: boolean; instructional?: boolean }) {
   if (instructional) {
-    return <Circle className="h-5 w-5 text-slate-300" aria-label="Add DNS record" />;
+    return <Circle className="h-5 w-5 text-muted-foreground" aria-label="Add DNS record" />;
   }
   if (ready) {
     return <CheckCircle2 className="h-5 w-5 text-emerald-600" aria-label="Ready" />;
@@ -387,7 +387,7 @@ export function EmailDomainsPanel() {
       ) : null}
 
       <PageSection title="Domains" icon={Globe} gradient="leads">
-        <div className="flex items-center justify-end border-b border-slate-100 px-6 py-3">
+        <div className="flex items-center justify-end border-b border-border px-6 py-3">
           <Button
             type="button"
             onClick={() => {
@@ -423,13 +423,13 @@ export function EmailDomainsPanel() {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="h-32 text-center text-slate-500">
+                  <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
                     Loading…
                   </TableCell>
                 </TableRow>
               ) : rows.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="h-32 text-center text-slate-500">
+                  <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
                     No sending domains yet. Add an existing domain you own.
                   </TableCell>
                 </TableRow>
@@ -452,13 +452,13 @@ export function EmailDomainsPanel() {
                         ];
                   return (
                     <Fragment key={row.id}>
-                      <TableRow className="hover:bg-slate-50">
+                      <TableRow className="hover:bg-muted">
                         <TableCell>
                           <div className="flex items-start gap-1.5">
                             {isVerified ? (
                               <button
                                 type="button"
-                                className="mt-0.5 rounded p-0.5 text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+                                className="mt-0.5 rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
                                 aria-expanded={expanded}
                                 aria-label={
                                   expanded
@@ -478,16 +478,16 @@ export function EmailDomainsPanel() {
                             )}
                             <div>
                               <div className="flex flex-wrap items-center gap-2">
-                                <span className="font-medium text-slate-900">{row.domain}</span>
+                                <span className="font-medium text-foreground">{row.domain}</span>
                                 {row.isDefault ? (
                                   <Badge variant="outline" className="text-xs">
                                     Default
                                   </Badge>
                                 ) : null}
                               </div>
-                              <p className="text-xs text-slate-500">{row.fromEmail}</p>
+                              <p className="text-xs text-muted-foreground">{row.fromEmail}</p>
                               {isVerified ? (
-                                <p className="mt-0.5 text-[11px] text-slate-400">
+                                <p className="mt-0.5 text-[11px] text-muted-foreground">
                                   {mailboxes.length} sending email
                                   {mailboxes.length === 1 ? "" : "s"}
                                   {!expanded ? " · expand to manage" : ""}
@@ -508,7 +508,7 @@ export function EmailDomainsPanel() {
                         <TableCell className="text-center">
                           <div className="flex flex-col items-center gap-1">
                             <StatusIcon ready={row.ready} />
-                            <span className="text-xs text-slate-500">
+                            <span className="text-xs text-muted-foreground">
                               {row.ready ? "Yes" : "No"}
                             </span>
                           </div>
@@ -589,20 +589,20 @@ export function EmailDomainsPanel() {
                         </TableCell>
                       </TableRow>
                       {isVerified && expanded ? (
-                        <TableRow className="bg-slate-50/80 hover:bg-slate-50/80">
+                        <TableRow className="bg-muted/80 hover:bg-muted/80">
                           <TableCell colSpan={7} className="px-6 py-4">
                             <div className="ml-6 space-y-3">
-                              <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                                 Sending emails for @{row.domain}
                               </p>
-                              <ul className="divide-y divide-slate-200 rounded-lg border border-slate-200 bg-white">
+                              <ul className="divide-y divide-slate-200 rounded-lg border border-border bg-card">
                                 {mailboxes.map((m) => (
                                   <li
                                     key={m.id}
                                     className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5 text-sm"
                                   >
                                     <div className="flex flex-wrap items-center gap-2">
-                                      <span className="font-mono text-slate-800">{m.email}</span>
+                                      <span className="font-mono text-foreground">{m.email}</span>
                                       {m.isDefault ? (
                                         <Badge
                                           variant="outline"
@@ -676,7 +676,7 @@ export function EmailDomainsPanel() {
                                   className="h-9 max-w-[200px] bg-white"
                                   disabled={mailboxBusy === row.id}
                                 />
-                                <span className="text-sm text-slate-500">@{row.domain}</span>
+                                <span className="text-sm text-muted-foreground">@{row.domain}</span>
                                 <Button
                                   type="button"
                                   size="sm"
@@ -706,7 +706,7 @@ export function EmailDomainsPanel() {
             </TableBody>
           </Table>
         </div>
-        <p className="border-t border-slate-100 px-6 py-3 text-xs text-slate-500">
+        <p className="border-t border-border px-6 py-3 text-xs text-muted-foreground">
           {provider === "mailgun"
             ? "Add the SPF, DKIM, and tracking records Mailgun shows, then click Refresh. DKIM / SPF / DMARC ticks update from Mailgun after DNS propagates."
             : "SPF and DMARC show as setup guidance. Ready / DKIM update after you add the provider DNS records and click Refresh."}
@@ -727,16 +727,16 @@ export function EmailDomainsPanel() {
             <button
               type="button"
               className={cn(
-                "flex w-full items-start gap-3 rounded-xl border border-slate-200 bg-slate-50/80 p-4 text-left",
+                "flex w-full items-start gap-3 rounded-xl border border-border bg-muted/80 p-4 text-left",
                 "ring-2 ring-[var(--theme-primary)]",
               )}
             >
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white shadow-sm">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-card shadow-sm">
                 <Plus className="h-5 w-5 text-[var(--theme-primary)]" />
               </span>
               <span>
-                <span className="block font-semibold text-slate-900">Add an existing domain</span>
-                <span className="mt-0.5 block text-sm text-slate-500">
+                <span className="block font-semibold text-foreground">Add an existing domain</span>
+                <span className="mt-0.5 block text-sm text-muted-foreground">
                   Connect DNS at your registrar, then verify
                   {provider === "mailgun" ? " with Mailgun." : "."}
                 </span>
@@ -780,11 +780,11 @@ export function EmailDomainsPanel() {
                   disabled={saving}
                   className="min-w-0 flex-1"
                 />
-                <span className="shrink-0 text-sm text-slate-500">
+                <span className="shrink-0 text-sm text-muted-foreground">
                   @{domain.trim().toLowerCase() || "your-domain.com"}
                 </span>
               </div>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-muted-foreground">
                 Must use this domain. After verification, expand the domain row to add more
                 sending addresses.
               </p>
@@ -872,32 +872,32 @@ export function EmailDomainsPanel() {
                 };
                 return (
                   <div key={purpose} className="space-y-2">
-                    <h3 className="text-sm font-semibold text-slate-900">{purpose}</h3>
-                    <p className="text-xs text-slate-500">{purposeHelp[purpose]}</p>
+                    <h3 className="text-sm font-semibold text-foreground">{purpose}</h3>
+                    <p className="text-xs text-muted-foreground">{purposeHelp[purpose]}</p>
                     <div className="space-y-2">
                       {records.map((rec, idx) => {
                         const key = `${rec.purpose}-${rec.name}-${idx}`;
                         return (
                           <div
                             key={key}
-                            className="rounded-lg border border-slate-200 bg-slate-50/80 p-3 text-xs"
+                            className="rounded-lg border border-border bg-muted/80 p-3 text-xs"
                           >
                             <div className="flex items-start justify-between gap-2">
-                              <div className="min-w-0 space-y-1 font-mono break-all text-slate-700">
+                              <div className="min-w-0 space-y-1 font-mono break-all text-foreground">
                                 <p>
-                                  <span className="font-sans font-medium text-slate-500">
+                                  <span className="font-sans font-medium text-muted-foreground">
                                     Type:{" "}
                                   </span>
                                   {rec.type}
                                 </p>
                                 <p>
-                                  <span className="font-sans font-medium text-slate-500">
+                                  <span className="font-sans font-medium text-muted-foreground">
                                     Name:{" "}
                                   </span>
                                   {rec.name}
                                 </p>
                                 <p>
-                                  <span className="font-sans font-medium text-slate-500">
+                                  <span className="font-sans font-medium text-muted-foreground">
                                     Value:{" "}
                                   </span>
                                   {rec.value}

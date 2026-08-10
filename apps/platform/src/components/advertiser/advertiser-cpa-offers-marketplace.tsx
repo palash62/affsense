@@ -85,10 +85,10 @@ export function AdvertiserCpaOffersMarketplace() {
         description="Browse active CPA offers and copy personalized tracking links for your campaigns."
       />
 
-      <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-4">
+      <div className="space-y-3 rounded-xl border border-border bg-card p-4">
         <div className="flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-end">
           <div className="w-full space-y-1 sm:w-40">
-            <label className="text-xs font-medium text-slate-500">Offer ID</label>
+            <label className="text-xs font-medium text-muted-foreground">Offer ID</label>
             <Input
               value={draft.offerId}
               onChange={(e) => setDraft((prev) => ({ ...prev, offerId: e.target.value }))}
@@ -96,7 +96,7 @@ export function AdvertiserCpaOffersMarketplace() {
             />
           </div>
           <div className="min-w-[200px] flex-1 space-y-1">
-            <label className="text-xs font-medium text-slate-500">Offer Title</label>
+            <label className="text-xs font-medium text-muted-foreground">Offer Title</label>
             <Input
               value={draft.q}
               onChange={(e) => setDraft((prev) => ({ ...prev, q: e.target.value }))}
@@ -104,7 +104,7 @@ export function AdvertiserCpaOffersMarketplace() {
             />
           </div>
           <div className="w-full space-y-1 sm:w-36">
-            <label className="text-xs font-medium text-slate-500">Category</label>
+            <label className="text-xs font-medium text-muted-foreground">Category</label>
             <Input
               value={draft.category}
               onChange={(e) => setDraft((prev) => ({ ...prev, category: e.target.value }))}
@@ -124,9 +124,9 @@ export function AdvertiserCpaOffersMarketplace() {
       </div>
 
       {loading ? (
-        <p className="py-10 text-center text-sm text-slate-500">Loading offers…</p>
+        <p className="py-10 text-center text-sm text-muted-foreground">Loading offers…</p>
       ) : items.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-slate-200 bg-white px-4 py-12 text-center text-sm text-slate-500">
+        <div className="rounded-2xl border border-dashed border-border bg-card px-4 py-12 text-center text-sm text-muted-foreground">
           No active offers. Check back later — new CPA offers appear here when published.
         </div>
       ) : (
@@ -148,7 +148,7 @@ export function AdvertiserCpaOffersMarketplace() {
                   </Button>
                   <DropdownMenu>
                     <DropdownMenuTrigger
-                      className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-slate-100"
+                      className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border bg-card text-muted-foreground hover:bg-muted"
                       aria-label="More offer actions"
                     >
                       <MoreHorizontal className="h-4 w-4" />
@@ -168,8 +168,8 @@ export function AdvertiserCpaOffersMarketplace() {
         </CpaOfferCardGrid>
       )}
 
-      <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3">
-        <p className="text-sm text-slate-500">
+      <div className="flex items-center justify-between rounded-xl border border-border bg-card px-4 py-3">
+        <p className="text-sm text-muted-foreground">
           Showing {items.length} of {total} items
         </p>
         <div className="flex gap-2">

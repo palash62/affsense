@@ -18,7 +18,7 @@ export default async function AdminSettingsPage() {
         description="Configure global platform options and your personal display preferences"
       />
       <Suspense
-        fallback={<p className="text-sm text-slate-500">Loading settings...</p>}
+        fallback={<p className="text-sm text-muted-foreground">Loading settings...</p>}
       >
         <AdminSettingsShell initialTimezone={initialTimezone} />
       </Suspense>

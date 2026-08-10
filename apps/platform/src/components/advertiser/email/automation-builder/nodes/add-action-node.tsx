@@ -13,7 +13,7 @@ function AddActionNodeComponent({ data }: NodeProps) {
       className={cn(
         "flex min-w-[160px] flex-col items-center justify-center rounded-2xl border border-dashed px-4 py-5 transition-colors",
         d.disabled
-          ? "cursor-not-allowed border-slate-200 bg-slate-50 text-slate-400"
+          ? "cursor-not-allowed border-border bg-muted text-muted-foreground"
           : "cursor-pointer border-emerald-300 bg-emerald-50/60 text-emerald-800 hover:border-emerald-400 hover:bg-emerald-50",
       )}
     >
@@ -26,8 +26,8 @@ function AddActionNodeComponent({ data }: NodeProps) {
         className={cn(
           "mb-2 flex size-9 items-center justify-center rounded-full border",
           d.disabled
-            ? "border-slate-200 bg-white"
-            : "border-emerald-200 bg-white text-emerald-600",
+            ? "border-border bg-white"
+            : "border-emerald-200 bg-card text-emerald-600",
         )}
       >
         <Plus className="size-4" />

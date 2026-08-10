@@ -23,7 +23,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 
 const cardClass =
-  "overflow-hidden rounded-[18px] border border-slate-200/80 bg-white shadow-sm transition-shadow duration-300 hover:shadow-md";
+  "overflow-hidden rounded-[18px] border border-border bg-card shadow-sm transition-shadow duration-300 hover:shadow-md";
 
 const accentColors = {
   violet: "border-t-violet-500",
@@ -63,8 +63,8 @@ function SectionHeader({
 }) {
   return (
     <div className="mb-4">
-      <h3 className="text-base font-semibold text-slate-900">{title}</h3>
-      {description && <p className="mt-0.5 text-sm text-slate-500">{description}</p>}
+      <h3 className="text-base font-semibold text-foreground">{title}</h3>
+      {description && <p className="mt-0.5 text-sm text-muted-foreground">{description}</p>}
     </div>
   );
 }
@@ -154,7 +154,7 @@ export function AdminWelcomeSummary({
         <div className="flex shrink-0 flex-wrap gap-2">
           <ButtonLink
             href="/admin/leads"
-            className="rounded-xl bg-white px-4 text-[var(--theme-hero-btn-text)] shadow-sm hover:bg-white/90"
+            className="rounded-xl bg-card px-4 text-[var(--theme-hero-btn-text)] shadow-sm hover:bg-card/90"
           >
             Review Leads
           </ButtonLink>
@@ -200,7 +200,7 @@ export function AdminActionCenter({
         </p>
       ) : (
         <Tabs defaultValue="approvals">
-          <TabsList className="mb-4 h-10 w-full max-w-md bg-slate-100 p-1">
+          <TabsList className="mb-4 h-10 w-full max-w-md bg-muted p-1">
             <TabsTrigger value="approvals" className="flex-1 gap-2 px-4">
               Approvals
               <span className="rounded-full bg-violet-100 px-2 py-0.5 text-xs font-semibold text-violet-700">
@@ -245,17 +245,17 @@ function AdminActionList({ list }: { list: AdminControlCenterData["actionItems"]
             "group flex items-center justify-between rounded-xl border p-4 transition-all hover:shadow-sm",
             item.critical
               ? "border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50/40 hover:border-amber-300"
-              : "border-slate-200 bg-slate-50/60 hover:border-[var(--theme-primary)]/25 hover:bg-[var(--theme-primary-soft)]/40",
+              : "border-border bg-muted/60 hover:border-[var(--theme-primary)]/25 hover:bg-[var(--theme-primary-soft)]/40",
           )}
         >
           <div>
-            <p className="text-2xl font-bold text-slate-900">{item.count}</p>
-            <p className="mt-1 text-sm font-medium text-slate-700">{item.label}</p>
+            <p className="text-2xl font-bold text-foreground">{item.count}</p>
+            <p className="mt-1 text-sm font-medium text-foreground">{item.label}</p>
             <p className="mt-2 text-xs font-semibold text-[var(--theme-primary)] group-hover:underline">
               {item.action}
             </p>
           </div>
-          <ArrowRight className="h-4 w-4 text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-[var(--theme-primary)]" />
+          <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-[var(--theme-primary)]" />
         </Link>
       ))}
     </div>
@@ -282,17 +282,17 @@ export function AdminPendingApprovalCenter({
             key={lane.id}
             href={lane.href}
             className={cn(
-              "rounded-xl border border-slate-200 border-t-[3px] bg-gradient-to-b from-white to-slate-50/80 p-4 transition-all hover:shadow-sm",
+              "rounded-xl border border-border border-t-[3px] bg-gradient-to-b from-white to-slate-50/80 p-4 transition-all hover:shadow-sm",
               accentColors[accent],
               lane.count > 0
                 ? "hover:border-[var(--theme-primary)]/30"
                 : "opacity-90",
             )}
           >
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               {lane.title}
             </p>
-            <p className="mt-2 text-2xl font-bold text-slate-900">{lane.count}</p>
+            <p className="mt-2 text-2xl font-bold text-foreground">{lane.count}</p>
             <div className="mt-3 flex items-center justify-between gap-2">
               <span
                 className={cn(
@@ -359,20 +359,20 @@ export function AdminTopPerformers({
               <div className={cn("flex h-9 w-9 items-center justify-center rounded-xl", iconBg[blockIndex % 3])}>
                 <Icon className="h-4 w-4" />
               </div>
-              <h3 className="text-sm font-semibold text-slate-900">{block.title}</h3>
+              <h3 className="text-sm font-semibold text-foreground">{block.title}</h3>
             </div>
             <div className="space-y-3">
               {block.rows.length === 0 ? (
-                <p className="text-sm text-slate-500">No data yet</p>
+                <p className="text-sm text-muted-foreground">No data yet</p>
               ) : (
                 block.rows.map((row, i) => (
                   <div
                     key={`${row.name}-${i}`}
-                    className="rounded-lg border border-slate-100 bg-slate-50/50 px-3 py-2.5"
+                    className="rounded-lg border border-border bg-muted/50 px-3 py-2.5"
                   >
-                    <p className="text-sm font-medium text-slate-900">{row.name}</p>
-                    <p className="mt-0.5 text-xs text-slate-600">{row.primary}</p>
-                    <p className="text-xs text-slate-400">{row.secondary}</p>
+                    <p className="text-sm font-medium text-foreground">{row.name}</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">{row.primary}</p>
+                    <p className="text-xs text-muted-foreground">{row.secondary}</p>
                   </div>
                 ))
               )}
@@ -405,9 +405,9 @@ export function AdminPlatformHealthPanel({
         {services.map((service) => (
           <div
             key={service.name}
-            className="flex items-center justify-between rounded-lg border border-slate-100 px-3 py-2"
+            className="flex items-center justify-between rounded-lg border border-border px-3 py-2"
           >
-            <span className="text-sm text-slate-700">{service.name}</span>
+            <span className="text-sm text-foreground">{service.name}</span>
             <span
               className={cn(
                 "rounded-full px-2 py-0.5 text-xs font-medium",
@@ -422,13 +422,13 @@ export function AdminPlatformHealthPanel({
         ))}
       </div>
       <div className="mt-4 grid grid-cols-2 gap-3">
-        <div className="rounded-xl border border-slate-100 bg-slate-50/80 p-3 text-center">
-          <p className="text-xl font-bold text-slate-900">{pendingPayouts}</p>
-          <p className="text-xs text-slate-500">Pending payouts</p>
+        <div className="rounded-xl border border-border bg-muted/80 p-3 text-center">
+          <p className="text-xl font-bold text-foreground">{pendingPayouts}</p>
+          <p className="text-xs text-muted-foreground">Pending payouts</p>
         </div>
-        <div className="rounded-xl border border-slate-100 bg-slate-50/80 p-3 text-center">
-          <p className="text-xl font-bold text-slate-900">{openTickets}</p>
-          <p className="text-xs text-slate-500">Open tickets</p>
+        <div className="rounded-xl border border-border bg-muted/80 p-3 text-center">
+          <p className="text-xl font-bold text-foreground">{openTickets}</p>
+          <p className="text-xs text-muted-foreground">Open tickets</p>
         </div>
       </div>
     </AccentCard>
@@ -469,17 +469,17 @@ export function AdminProfitOverview({
               "rounded-xl border p-3",
               row.highlight
                 ? "border-emerald-200 bg-gradient-to-br from-emerald-50 to-teal-50"
-                : "border-slate-100 bg-slate-50/50",
+                : "border-border bg-muted/50",
             )}
           >
-            <p className="text-xs text-slate-500">{row.label}</p>
+            <p className="text-xs text-muted-foreground">{row.label}</p>
             <p
               className={cn(
                 "mt-1 text-lg font-bold",
                 row.snapshot.adminProfit >= 0
                   ? row.highlight
                     ? "text-emerald-700"
-                    : "text-slate-900"
+                    : "text-foreground"
                   : "text-red-600",
               )}
             >
@@ -490,14 +490,14 @@ export function AdminProfitOverview({
       </div>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-3">
-        <div className="rounded-xl border border-slate-100 bg-sky-50/60 px-4 py-3">
-          <p className="text-xs font-medium text-slate-500">Advertiser payments</p>
+        <div className="rounded-xl border border-border bg-sky-50/60 px-4 py-3">
+          <p className="text-xs font-medium text-muted-foreground">Advertiser payments</p>
           <p className="mt-1 text-lg font-bold text-sky-700">
             {formatCurrency(lifetime.advertiserPayment)}
           </p>
         </div>
-        <div className="rounded-xl border border-slate-100 bg-amber-50/60 px-4 py-3">
-          <p className="flex items-center gap-1 text-xs font-medium text-slate-500">
+        <div className="rounded-xl border border-border bg-amber-50/60 px-4 py-3">
+          <p className="flex items-center gap-1 text-xs font-medium text-muted-foreground">
             <Minus className="h-3 w-3" />
             Publisher payouts
           </p>
@@ -505,8 +505,8 @@ export function AdminProfitOverview({
             {formatCurrency(lifetime.publisherPayout)}
           </p>
         </div>
-        <div className="rounded-xl border border-slate-100 bg-violet-50/60 px-4 py-3">
-          <p className="flex items-center gap-1 text-xs font-medium text-slate-500">
+        <div className="rounded-xl border border-border bg-violet-50/60 px-4 py-3">
+          <p className="flex items-center gap-1 text-xs font-medium text-muted-foreground">
             <Minus className="h-3 w-3" />
             Referral pay
           </p>
@@ -516,7 +516,7 @@ export function AdminProfitOverview({
         </div>
       </div>
 
-      <p className="mt-3 text-xs text-slate-500">
+      <p className="mt-3 text-xs text-muted-foreground">
         Publisher lead earnings and referral commissions reduce admin profit after advertisers pay for
         leads.
       </p>
@@ -553,11 +553,11 @@ export function AdminRevenueOverview({
               "rounded-xl border p-3",
               row.highlight
                 ? "border-violet-200 bg-gradient-to-br from-violet-50 to-indigo-50"
-                : "border-slate-100 bg-slate-50/50",
+                : "border-border bg-muted/50",
             )}
           >
-            <p className="text-xs text-slate-500">{row.label}</p>
-            <p className={cn("mt-1 text-lg font-bold", row.highlight ? "text-violet-700" : "text-slate-900")}>
+            <p className="text-xs text-muted-foreground">{row.label}</p>
+            <p className={cn("mt-1 text-lg font-bold", row.highlight ? "text-violet-700" : "text-foreground")}>
               ${row.value.toFixed(2)}
             </p>
           </div>
@@ -612,13 +612,13 @@ export function AdminBusinessOverviewStats({
           return (
             <div
               key={stat.label}
-              className={cn("rounded-xl border border-slate-100 p-3", style.bg)}
+              className={cn("rounded-xl border border-border p-3", style.bg)}
             >
-              <div className="flex items-center gap-2 text-slate-500">
+              <div className="flex items-center gap-2 text-muted-foreground">
                 <Icon className={cn("h-3.5 w-3.5", style.icon)} />
                 <span className="text-xs font-medium">{stat.label}</span>
               </div>
-              <p className="mt-2 text-xl font-bold text-slate-900">{stat.value}</p>
+              <p className="mt-2 text-xl font-bold text-foreground">{stat.value}</p>
             </div>
           );
         })}

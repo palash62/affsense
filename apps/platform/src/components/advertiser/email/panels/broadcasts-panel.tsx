@@ -113,14 +113,14 @@ function StatRow({
   detail?: string;
 }) {
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-3">
-      <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-white text-slate-600 shadow-sm">
+    <div className="flex items-center gap-3 rounded-xl border border-border bg-muted/80 px-3 py-3">
+      <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-card text-muted-foreground shadow-sm">
         <Icon className="size-4" />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="text-xs font-medium text-slate-500">{label}</p>
-        <p className="text-lg font-semibold tracking-tight text-slate-900">{value}</p>
-        {detail ? <p className="text-xs text-slate-500">{detail}</p> : null}
+        <p className="text-xs font-medium text-muted-foreground">{label}</p>
+        <p className="text-lg font-semibold tracking-tight text-foreground">{value}</p>
+        {detail ? <p className="text-xs text-muted-foreground">{detail}</p> : null}
       </div>
     </div>
   );
@@ -229,7 +229,7 @@ export function BroadcastsPanel() {
       showToolbar={false}
     >
       <PageSection title="Broadcast history" icon={Send} gradient="leads">
-        <div className="flex items-center justify-end border-b border-slate-100 px-6 py-3">
+        <div className="flex items-center justify-end border-b border-border px-6 py-3">
           <ButtonLink
             href="/advertiser/email/broadcasts/new"
             className="h-9 gap-2 rounded-xl bg-[var(--theme-primary)] hover:opacity-90"
@@ -255,15 +255,15 @@ export function BroadcastsPanel() {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="h-32 text-center text-slate-500">
+                  <TableCell colSpan={8} className="h-32 text-center text-muted-foreground">
                     Loading…
                   </TableCell>
                 </TableRow>
               ) : rows.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={8} className="h-40 px-6 text-center">
-                    <p className="text-slate-600">No broadcasts yet.</p>
-                    <p className="mt-1 text-sm text-slate-500">
+                    <p className="text-muted-foreground">No broadcasts yet.</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
                       Save a draft, schedule for later, or send to a list or tags.
                     </p>
                     <div className="mt-4 flex justify-center">
@@ -278,7 +278,7 @@ export function BroadcastsPanel() {
                 rows.map((row) => {
                   const label = statusLabel(row);
                   return (
-                    <TableRow key={row.id} className="hover:bg-slate-50">
+                    <TableRow key={row.id} className="hover:bg-muted">
                       <TableCell className="font-medium">
                         {isEditable(row) ? (
                           <Link
@@ -297,16 +297,16 @@ export function BroadcastsPanel() {
                           </button>
                         )}
                       </TableCell>
-                      <TableCell className="max-w-[200px] truncate text-sm text-slate-600">
+                      <TableCell className="max-w-[200px] truncate text-sm text-muted-foreground">
                         {audienceLabel(row)}
                       </TableCell>
-                      <TableCell className="max-w-[200px] truncate text-sm text-slate-600">
+                      <TableCell className="max-w-[200px] truncate text-sm text-muted-foreground">
                         {row.template.subject}
                       </TableCell>
                       <TableCell>
                         <Badge variant={statusVariant(label)}>{label}</Badge>
                       </TableCell>
-                      <TableCell className="whitespace-nowrap text-sm text-slate-500">
+                      <TableCell className="whitespace-nowrap text-sm text-muted-foreground">
                         {row.scheduledAt
                           ? formatUserDateTime(
                               row.scheduledAt,
@@ -316,7 +316,7 @@ export function BroadcastsPanel() {
                           : "—"}
                       </TableCell>
                       <TableCell>{row.recipientCount.toLocaleString()}</TableCell>
-                      <TableCell className="whitespace-nowrap text-sm tabular-nums text-slate-700">
+                      <TableCell className="whitespace-nowrap text-sm tabular-nums text-foreground">
                         {row.sentCount.toLocaleString()}/
                         {row.recipientCount.toLocaleString()}
                         {row.failedCount > 0 ? (
@@ -325,7 +325,7 @@ export function BroadcastsPanel() {
                           </span>
                         ) : null}
                       </TableCell>
-                      <TableCell className="text-slate-500">
+                      <TableCell className="text-muted-foreground">
                         {formatUserDateTime(
                           row.createdAt,
                           timezone,
@@ -359,7 +359,7 @@ export function BroadcastsPanel() {
             </DialogDescription>
           </DialogHeader>
           {statsLoading ? (
-            <p className="py-8 text-center text-sm text-slate-500">Loading stats…</p>
+            <p className="py-8 text-center text-sm text-muted-foreground">Loading stats…</p>
           ) : statsError ? (
             <p className="py-8 text-center text-sm text-red-600">{statsError}</p>
           ) : stats ? (

@@ -43,14 +43,14 @@ export function AdminHero({ userName = "Admin" }: AdminHeroProps) {
             {greeting}, {userName}
           </h1>
           <p className="mt-1.5 max-w-lg text-sm text-white/80">
-            Monitor your LeadVix platform from one powerful dashboard.
+            Monitor your Affsense platform from one powerful dashboard.
           </p>
         </div>
 
         <div className="flex shrink-0 flex-wrap gap-2.5">
           <ButtonLink
             href="/admin/campaigns"
-            className="rounded-xl bg-white px-4 text-[var(--theme-hero-btn-text)] shadow-sm hover:bg-white/90"
+            className="rounded-xl bg-card px-4 text-[var(--theme-hero-btn-text)] shadow-sm hover:bg-card/90"
           >
             <Megaphone className="mr-2 h-4 w-4" />
             Create Campaign

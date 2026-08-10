@@ -165,7 +165,7 @@ export function TagsPanel() {
       showToolbar={false}
     >
       <PageSection title="Subscriber Tags" icon={Tags} gradient="revenue">
-        <div className="flex items-center justify-end border-b border-slate-100 px-6 py-3">
+        <div className="flex items-center justify-end border-b border-border px-6 py-3">
           <Button
             type="button"
             onClick={openCreate}
@@ -187,15 +187,15 @@ export function TagsPanel() {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={3} className="h-32 text-center text-slate-500">
+                  <TableCell colSpan={3} className="h-32 text-center text-muted-foreground">
                     Loading...
                   </TableCell>
                 </TableRow>
               ) : rows.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={3} className="h-40 px-6 text-center">
-                    <p className="text-slate-600">No tags yet.</p>
-                    <p className="mt-1 text-sm text-slate-500">
+                    <p className="text-muted-foreground">No tags yet.</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
                       Create a tag, then connect it as Tag on open / Tag on click in an
                       automation — or apply it on the Subscribers page. The Subscribers
                       count rises when contacts receive the tag.
@@ -210,7 +210,7 @@ export function TagsPanel() {
                 </TableRow>
               ) : (
                 rows.map((tag) => (
-                  <TableRow key={tag.id} className="transition-colors hover:bg-slate-50">
+                  <TableRow key={tag.id} className="transition-colors hover:bg-muted">
                     <TableCell>
                       <Link
                         href={`/advertiser/email/subscribers?tagId=${tag.id}`}

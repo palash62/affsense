@@ -82,23 +82,23 @@ export default async function AdminPublisherDetailPage({ params }: PageProps) {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-[18px] border border-slate-200 bg-white p-5 shadow-sm">
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Wallet balance</p>
+        <div className="rounded-[18px] border border-border bg-card p-5 shadow-sm">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Wallet balance</p>
           <p className="mt-2 text-2xl font-bold text-emerald-600">{formatCurrency(balance)}</p>
         </div>
-        <div className="rounded-[18px] border border-slate-200 bg-white p-5 shadow-sm">
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Leads</p>
-          <p className="mt-2 text-2xl font-bold text-slate-900">{publisher._count.leads}</p>
+        <div className="rounded-[18px] border border-border bg-card p-5 shadow-sm">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Leads</p>
+          <p className="mt-2 text-2xl font-bold text-foreground">{publisher._count.leads}</p>
         </div>
-        <div className="rounded-[18px] border border-slate-200 bg-white p-5 shadow-sm">
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Status</p>
+        <div className="rounded-[18px] border border-border bg-card p-5 shadow-sm">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Status</p>
           <div className="mt-2">
             <UserStatusBadge status={publisher.status} />
           </div>
         </div>
-        <div className="rounded-[18px] border border-slate-200 bg-white p-5 shadow-sm">
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Joined</p>
-          <p className="mt-2 text-sm font-semibold text-slate-900">
+        <div className="rounded-[18px] border border-border bg-card p-5 shadow-sm">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Joined</p>
+          <p className="mt-2 text-sm font-semibold text-foreground">
             {formatUserDateTime(publisher.createdAt, tz, "MMM d, yyyy")}
           </p>
         </div>
@@ -107,25 +107,25 @@ export default async function AdminPublisherDetailPage({ params }: PageProps) {
       <PageSection title="Profile" description="Publisher account details" icon={Share2} gradient="leads">
         <div className="grid gap-4 px-6 py-5 sm:grid-cols-2">
           <div className="flex items-start gap-3">
-            <Mail className="mt-0.5 h-4 w-4 text-slate-400" />
+            <Mail className="mt-0.5 h-4 w-4 text-muted-foreground" />
             <div>
-              <p className="text-xs text-slate-500">Email</p>
-              <p className="text-sm font-medium text-slate-900">{publisher.email}</p>
+              <p className="text-xs text-muted-foreground">Email</p>
+              <p className="text-sm font-medium text-foreground">{publisher.email}</p>
             </div>
           </div>
           <div className="flex items-start gap-3">
-            <ShieldAlert className="mt-0.5 h-4 w-4 text-slate-400" />
+            <ShieldAlert className="mt-0.5 h-4 w-4 text-muted-foreground" />
             <div>
-              <p className="text-xs text-slate-500">KYC status</p>
+              <p className="text-xs text-muted-foreground">KYC status</p>
               <div className="mt-1">
                 {profile ? <KycStatusBadge status={profile.kycStatus} /> : <span>—</span>}
               </div>
             </div>
           </div>
           <div className="flex items-start gap-3">
-            <ShieldAlert className="mt-0.5 h-4 w-4 text-slate-400" />
+            <ShieldAlert className="mt-0.5 h-4 w-4 text-muted-foreground" />
             <div>
-              <p className="text-xs text-slate-500">Spam score</p>
+              <p className="text-xs text-muted-foreground">Spam score</p>
               <div className="mt-1">
                 <SpamScoreBadge score={spamScore} />
               </div>
@@ -133,9 +133,9 @@ export default async function AdminPublisherDetailPage({ params }: PageProps) {
           </div>
           {profile?.website && (
             <div className="flex items-start gap-3">
-              <Globe className="mt-0.5 h-4 w-4 text-slate-400" />
+              <Globe className="mt-0.5 h-4 w-4 text-muted-foreground" />
               <div>
-                <p className="text-xs text-slate-500">Website</p>
+                <p className="text-xs text-muted-foreground">Website</p>
                 <a
                   href={profile.website}
                   target="_blank"
@@ -149,19 +149,19 @@ export default async function AdminPublisherDetailPage({ params }: PageProps) {
           )}
           {profile?.trafficSource && (
             <div className="flex items-start gap-3">
-              <Share2 className="mt-0.5 h-4 w-4 text-slate-400" />
+              <Share2 className="mt-0.5 h-4 w-4 text-muted-foreground" />
               <div>
-                <p className="text-xs text-slate-500">Traffic source</p>
-                <p className="text-sm font-medium text-slate-900">{profile.trafficSource}</p>
+                <p className="text-xs text-muted-foreground">Traffic source</p>
+                <p className="text-sm font-medium text-foreground">{profile.trafficSource}</p>
               </div>
             </div>
           )}
           {profile?.country && (
             <div className="flex items-start gap-3">
-              <MapPin className="mt-0.5 h-4 w-4 text-slate-400" />
+              <MapPin className="mt-0.5 h-4 w-4 text-muted-foreground" />
               <div>
-                <p className="text-xs text-slate-500">Country</p>
-                <p className="text-sm font-medium text-slate-900">{profile.country}</p>
+                <p className="text-xs text-muted-foreground">Country</p>
+                <p className="text-sm font-medium text-foreground">{profile.country}</p>
               </div>
             </div>
           )}
@@ -180,18 +180,18 @@ export default async function AdminPublisherDetailPage({ params }: PageProps) {
               {tierRows.map((row) => (
                 <div
                   key={row.label}
-                  className="rounded-xl border border-slate-200 bg-slate-50/60 px-4 py-3"
+                  className="rounded-xl border border-border bg-muted/60 px-4 py-3"
                 >
-                  <p className="text-xs text-slate-500">{row.label}</p>
-                  <p className="mt-1 text-lg font-semibold text-slate-900">
+                  <p className="text-xs text-muted-foreground">{row.label}</p>
+                  <p className="mt-1 text-lg font-semibold text-foreground">
                     {row.value != null ? formatCurrency(row.value) : "—"}
                   </p>
-                  <p className="mt-1 text-xs text-slate-500">Min per lead</p>
+                  <p className="mt-1 text-xs text-muted-foreground">Min per lead</p>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-sm text-slate-600">
+            <p className="text-sm text-muted-foreground">
               No special tier payouts. All eligible active campaigns can rotate in Smart Link.
             </p>
           )}

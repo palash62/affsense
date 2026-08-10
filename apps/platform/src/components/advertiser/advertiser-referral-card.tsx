@@ -36,8 +36,8 @@ export function AdvertiserReferralCard({ referralCode }: { referralCode: string 
             <Gift className="h-5 w-5 text-[var(--theme-primary)]" />
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-slate-900">Your Referral Link</h3>
-            <p className="text-xs text-slate-500">{REFERRAL_RATES_SUMMARY}</p>
+            <h3 className="text-sm font-semibold text-foreground">Your Referral Link</h3>
+            <p className="text-xs text-muted-foreground">{REFERRAL_RATES_SUMMARY}</p>
           </div>
         </div>
 
@@ -48,8 +48,8 @@ export function AdvertiserReferralCard({ referralCode }: { referralCode: string 
             background: "var(--theme-primary-soft)",
           }}
         >
-          <p className="text-xs font-medium text-slate-800">Refer &amp; earn passive income</p>
-          <p className="mt-1 text-xs text-slate-600">
+          <p className="text-xs font-medium text-foreground">Refer &amp; earn passive income</p>
+          <p className="mt-1 text-xs text-muted-foreground">
             Share your link. When referrals sign up and spend on ads, you earn recurring commissions.
           </p>
         </div>
@@ -58,7 +58,7 @@ export function AdvertiserReferralCard({ referralCode }: { referralCode: string 
           <input
             readOnly
             value={referralUrl}
-            className="h-9 min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-3 text-xs text-slate-600"
+            className="h-9 min-w-0 flex-1 rounded-lg border border-border bg-card px-3 text-xs text-muted-foreground"
           />
           <Button
             size="sm"
@@ -86,7 +86,7 @@ export function AdvertiserReferralCard({ referralCode }: { referralCode: string 
           }}
         >
           <Info className="mt-0.5 h-4 w-4 shrink-0 text-[var(--theme-primary)]" />
-          <p className="text-xs leading-relaxed text-slate-600">
+          <p className="text-xs leading-relaxed text-muted-foreground">
             Copy and share on social media, email, or your website to invite new users.
           </p>
         </div>

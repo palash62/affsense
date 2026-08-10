@@ -75,7 +75,7 @@ export default async function AdvertiserReportsPage({ searchParams }: PageProps)
         icon={BarChart3}
         gradient="leads"
       >
-        <Suspense fallback={<div className="px-6 py-4 text-sm text-slate-500">Loading filters...</div>}>
+        <Suspense fallback={<div className="px-6 py-4 text-sm text-muted-foreground">Loading filters...</div>}>
           <ReportsPeriodFilters />
         </Suspense>
       </PageSection>

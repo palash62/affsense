@@ -31,8 +31,8 @@ export function PublisherBankPayoutFields({ value, onChange }: PublisherBankPayo
   }
 
   return (
-    <div className="space-y-4 rounded-xl border border-slate-200 bg-slate-50/60 p-4">
-      <p className="text-sm font-medium text-slate-900">Bank transfer details</p>
+    <div className="space-y-4 rounded-xl border border-border bg-muted/60 p-4">
+      <p className="text-sm font-medium text-foreground">Bank transfer details</p>
 
       <div className="space-y-2">
         <Label>Country</Label>

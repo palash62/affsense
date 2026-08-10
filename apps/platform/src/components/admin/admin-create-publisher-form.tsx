@@ -104,12 +104,12 @@ export function AdminCreatePublisherForm() {
         </p>
       )}
       {tempPassword && (
-        <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+        <div className="rounded-lg border border-border bg-muted px-3 py-2">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Temporary password
           </p>
           <div className="mt-2 flex flex-wrap items-center gap-2">
-            <span className="rounded-md bg-white px-3 py-1 text-sm font-semibold text-slate-900 shadow-sm">
+            <span className="rounded-md bg-card px-3 py-1 text-sm font-semibold text-foreground shadow-sm">
               {tempPassword}
             </span>
             <Button type="button" variant="outline" size="sm" onClick={copyPassword} className="gap-1">
@@ -117,14 +117,14 @@ export function AdminCreatePublisherForm() {
               {copied ? "Copied" : "Copy"}
             </Button>
           </div>
-          <p className="mt-2 text-xs text-slate-500">
+          <p className="mt-2 text-xs text-muted-foreground">
             Share this password with the publisher. They should update it after logging in.
           </p>
         </div>
       )}
 
-      <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
-        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+      <div className="rounded-xl border border-border bg-muted/60 p-4">
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           Publisher details
         </p>
         <div className="mt-4 grid gap-4 md:grid-cols-2">
@@ -141,7 +141,7 @@ export function AdminCreatePublisherForm() {
           <div className="space-y-2">
             <Label htmlFor="publisher-email">Email</Label>
             <div className="relative">
-              <MailPlus className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <MailPlus className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 id="publisher-email"
                 type="email"
@@ -175,8 +175,8 @@ export function AdminCreatePublisherForm() {
         </div>
       </div>
 
-      <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+      <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           <MapPin className="h-4 w-4 text-[var(--theme-primary)]" />
           Address details
         </div>
@@ -247,14 +247,14 @@ export function AdminCreatePublisherForm() {
           value={status}
           onChange={(e) => setStatus(e.target.value)}
           className={cn(
-            "h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 shadow-sm outline-none",
+            "h-10 w-full rounded-lg border border-border bg-card px-3 text-sm text-foreground shadow-sm outline-none",
             "focus:border-[var(--theme-primary)] focus:ring-2 focus:ring-[var(--theme-primary)]/15",
           )}
         >
           <option value="PENDING">Pending (verify email, then admin approval)</option>
           <option value="ACTIVE">Active (skip approval)</option>
         </select>
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-muted-foreground">
           Publishers must verify their email. Pending accounts still need admin approval before they can sign in.
         </p>
       </div>

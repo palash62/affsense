@@ -43,7 +43,7 @@ function LeadStatusBadge({ status }: { status: LeadStatus }) {
     <span
       className={cn(
         "inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ring-1 ring-inset",
-        styles[status] ?? "bg-slate-50 text-slate-600 ring-slate-500/20",
+        styles[status] ?? "bg-muted text-muted-foreground ring-slate-500/20",
       )}
     >
       {status.toLowerCase()}
@@ -66,27 +66,27 @@ export function AdminRecentLeadsTable({
   timezone?: string;
 }) {
   return (
-    <div className="overflow-hidden rounded-[18px] border border-slate-200/80 bg-white shadow-sm transition-shadow duration-300 hover:shadow-md">
-      <div className="flex flex-col gap-4 border-b border-slate-100 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+    <div className="overflow-hidden rounded-[18px] border border-border bg-card shadow-sm transition-shadow duration-300 hover:shadow-md">
+      <div className="flex flex-col gap-4 border-b border-border px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h3 className="text-base font-semibold text-slate-900">Recent Leads</h3>
-          <p className="mt-0.5 text-sm text-slate-500">Latest submissions across all campaigns</p>
+          <h3 className="text-base font-semibold text-foreground">Recent Leads</h3>
+          <p className="mt-0.5 text-sm text-muted-foreground">Latest submissions across all campaigns</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+            <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Search leads..."
-              className="h-9 w-44 rounded-lg border-slate-200 bg-slate-50 pl-8 text-sm"
+              className="h-9 w-44 rounded-lg border-border bg-muted pl-8 text-sm"
               readOnly
               aria-hidden
             />
           </div>
-          <Button variant="outline" size="sm" className="h-9 gap-1.5 rounded-lg border-slate-200">
+          <Button variant="outline" size="sm" className="h-9 gap-1.5 rounded-lg border-border">
             <Filter className="h-3.5 w-3.5" />
             Filter
           </Button>
-          <Button variant="outline" size="sm" className="h-9 gap-1.5 rounded-lg border-slate-200">
+          <Button variant="outline" size="sm" className="h-9 gap-1.5 rounded-lg border-border">
             <Download className="h-3.5 w-3.5" />
             Export
           </Button>
@@ -94,22 +94,22 @@ export function AdminRecentLeadsTable({
       </div>
 
       {leads.length === 0 ? (
-        <p className="px-6 py-12 text-center text-sm text-slate-500">No leads yet</p>
+        <p className="px-6 py-12 text-center text-sm text-muted-foreground">No leads yet</p>
       ) : (
         <div className="max-h-[420px] overflow-auto">
           <Table>
-            <TableHeader className="sticky top-0 z-10 bg-slate-50/95 backdrop-blur-sm">
-              <TableRow className="border-slate-100 hover:bg-slate-50/95">
-                <TableHead className="h-10 px-6 text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <TableHeader className="sticky top-0 z-10 bg-muted/95 backdrop-blur-sm">
+              <TableRow className="border-border hover:bg-muted/95">
+                <TableHead className="h-10 px-6 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   Publisher
                 </TableHead>
-                <TableHead className="h-10 px-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <TableHead className="h-10 px-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   Campaign
                 </TableHead>
-                <TableHead className="h-10 px-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <TableHead className="h-10 px-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   Status
                 </TableHead>
-                <TableHead className="h-10 px-6 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <TableHead className="h-10 px-6 text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   Date
                 </TableHead>
               </TableRow>
@@ -118,7 +118,7 @@ export function AdminRecentLeadsTable({
               {leads.map((lead, i) => (
                 <TableRow
                   key={lead.id}
-                  className="border-slate-100 transition-colors duration-150 hover:bg-blue-50/40"
+                  className="border-border transition-colors duration-150 hover:bg-blue-50/40"
                 >
                   <TableCell className="px-6 py-3.5">
                     <div className="flex items-center gap-3">
@@ -132,14 +132,14 @@ export function AdminRecentLeadsTable({
                           {getInitials(lead.publisher.name)}
                         </AvatarFallback>
                       </Avatar>
-                      <span className="font-medium text-slate-800">{lead.publisher.name}</span>
+                      <span className="font-medium text-foreground">{lead.publisher.name}</span>
                     </div>
                   </TableCell>
-                  <TableCell className="px-4 py-3.5 text-slate-600">{lead.campaign.name}</TableCell>
+                  <TableCell className="px-4 py-3.5 text-muted-foreground">{lead.campaign.name}</TableCell>
                   <TableCell className="px-4 py-3.5">
                     <LeadStatusBadge status={lead.status} />
                   </TableCell>
-                  <TableCell className="px-6 py-3.5 text-right text-sm text-slate-500">
+                  <TableCell className="px-6 py-3.5 text-right text-sm text-muted-foreground">
                     {formatUserDateTime(lead.createdAt, timezone, "MMM d, yyyy")}
                   </TableCell>
                 </TableRow>

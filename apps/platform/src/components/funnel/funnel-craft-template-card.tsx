@@ -77,15 +77,15 @@ export function FunnelCraftTemplateCard({
           : undefined
       }
       className={cn(
-        "group relative overflow-hidden rounded-2xl border bg-white text-left transition-all",
+        "group relative overflow-hidden rounded-2xl border bg-card text-left transition-all",
         isInteractive && "cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40",
         loading && "cursor-wait opacity-80",
         selected
           ? "border-blue-600 ring-2 ring-blue-600/25 shadow-md"
-          : "border-slate-200 hover:border-slate-300 hover:shadow-md",
+          : "border-border hover:border-border hover:shadow-md",
       )}
     >
-      <div className="relative aspect-[16/10] overflow-hidden bg-slate-100">
+      <div className="relative aspect-[16/10] overflow-hidden bg-muted">
         <OptinFunnelCraftThumbnail
           craftState={wrapCraft(craftState)}
           themeJson={themeJson}
@@ -107,7 +107,7 @@ export function FunnelCraftTemplateCard({
 
         {isPicker && !selected && (
           <div className="pointer-events-none absolute inset-0 z-10 flex items-end justify-center bg-gradient-to-t from-slate-900/50 to-transparent pb-4 opacity-0 transition-opacity group-hover:opacity-100">
-            <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-800 shadow">
+            <span className="rounded-full bg-card px-3 py-1 text-xs font-semibold text-foreground shadow">
               Click to select
             </span>
           </div>
@@ -122,9 +122,9 @@ export function FunnelCraftTemplateCard({
         )}
       </div>
 
-      <div className="border-t border-slate-100 px-4 py-3">
-        <p className="font-semibold text-slate-900">{name}</p>
-        <p className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+      <div className="border-t border-border px-4 py-3">
+        <p className="font-semibold text-foreground">{name}</p>
+        <p className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
           <span>
             {variant === "admin" ? "System template" : "Prebuilt funnel template"}
             {createdLabel ? ` · ${createdLabel}` : ""}
@@ -182,17 +182,17 @@ export function FunnelCraftTemplateCard({
       {variant === "advertiser" && (
         <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
           <DialogContent className="max-w-4xl overflow-hidden p-0">
-            <DialogHeader className="border-b border-slate-100 px-6 py-4">
+            <DialogHeader className="border-b border-border px-6 py-4">
               <DialogTitle>{name}</DialogTitle>
             </DialogHeader>
-            <div className="relative aspect-[16/10] bg-slate-100">
+            <div className="relative aspect-[16/10] bg-muted">
               <OptinFunnelCraftThumbnail
                 craftState={wrapCraft(craftState)}
                 themeJson={themeJson}
                 scale={0.42}
               />
             </div>
-            <div className="flex justify-end gap-2 border-t border-slate-100 px-6 py-4">
+            <div className="flex justify-end gap-2 border-t border-border px-6 py-4">
               <Button variant="ghost" onClick={() => setPreviewOpen(false)}>
                 Close
               </Button>

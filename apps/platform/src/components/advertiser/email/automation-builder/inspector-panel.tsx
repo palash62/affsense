@@ -86,11 +86,11 @@ function PanelSection({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-xl border border-slate-200/90 bg-white p-4 shadow-sm">
+    <section className="rounded-xl border border-border/90 bg-white p-4 shadow-sm">
       <div className="mb-3">
-        <h3 className="text-sm font-semibold tracking-tight text-slate-900">{title}</h3>
+        <h3 className="text-sm font-semibold tracking-tight text-foreground">{title}</h3>
         {description ? (
-          <p className="mt-0.5 text-xs leading-relaxed text-slate-500">{description}</p>
+          <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{description}</p>
         ) : null}
       </div>
       <div className="space-y-3.5">{children}</div>
@@ -109,7 +109,7 @@ function FieldHint({
     <p
       className={cn(
         "mt-1.5 text-xs leading-relaxed",
-        tone === "muted" && "text-slate-500",
+        tone === "muted" && "text-muted-foreground",
         tone === "amber" &&
           "rounded-lg border border-amber-200/80 bg-amber-50 px-2.5 py-2 text-amber-800",
         tone === "success" &&
@@ -129,7 +129,7 @@ function FieldLabel({
   required?: boolean;
 }) {
   return (
-    <Label className="text-xs font-medium text-slate-500">
+    <Label className="text-xs font-medium text-muted-foreground">
       {children}
       {required ? <span className="text-red-500"> *</span> : null}
     </Label>
@@ -147,18 +147,18 @@ function StatsEmpty({
 }) {
   return (
     <div className="flex min-h-[200px] flex-col items-center justify-center px-4 py-10 text-center">
-      <span className="mb-3 flex size-12 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-400">
+      <span className="mb-3 flex size-12 items-center justify-center rounded-2xl border border-border bg-muted text-muted-foreground">
         <Icon className="size-5" />
       </span>
-      <p className="text-sm font-medium text-slate-800">{title}</p>
-      <p className="mt-1 max-w-[240px] text-xs leading-relaxed text-slate-500">{description}</p>
+      <p className="text-sm font-medium text-foreground">{title}</p>
+      <p className="mt-1 max-w-[240px] text-xs leading-relaxed text-muted-foreground">{description}</p>
     </div>
   );
 }
 
 function StickyFooter({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex shrink-0 items-center justify-between gap-2 border-t border-slate-200/90 bg-white/95 px-4 py-3 backdrop-blur-sm">
+    <div className="flex shrink-0 items-center justify-between gap-2 border-t border-border/90 bg-white/95 px-4 py-3 backdrop-blur-sm">
       {children}
     </div>
   );
@@ -178,20 +178,20 @@ function StatRow({
   onClick?: () => void;
 }) {
   const className =
-    "flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-3 text-left transition";
+    "flex w-full items-center gap-3 rounded-xl border border-border bg-muted/80 px-3 py-3 text-left transition";
   const interactive = onClick
-    ? "cursor-pointer hover:border-slate-300 hover:bg-slate-100/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-primary)]/30"
+    ? "cursor-pointer hover:border-border hover:bg-muted/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-primary)]/30"
     : "";
 
   const body = (
     <>
-      <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-white text-slate-600 shadow-sm">
+      <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-card text-muted-foreground shadow-sm">
         <Icon className="size-4" />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="text-xs font-medium text-slate-500">{label}</p>
-        <p className="text-lg font-semibold tracking-tight text-slate-900">{value}</p>
-        {detail ? <p className="text-xs text-slate-500">{detail}</p> : null}
+        <p className="text-xs font-medium text-muted-foreground">{label}</p>
+        <p className="text-lg font-semibold tracking-tight text-foreground">{value}</p>
+        {detail ? <p className="text-xs text-muted-foreground">{detail}</p> : null}
       </div>
     </>
   );
@@ -345,7 +345,7 @@ function StepStatistics({
             <DialogTitle>
               {metric ? METRIC_LABELS[metric] : "Recipients"}
               {total > 0 ? (
-                <span className="ml-2 text-sm font-normal text-slate-500">
+                <span className="ml-2 text-sm font-normal text-muted-foreground">
                   ({total.toLocaleString()})
                 </span>
               ) : null}
@@ -358,14 +358,14 @@ function StepStatistics({
           </DialogHeader>
 
           {loading ? (
-            <div className="flex items-center justify-center gap-2 py-10 text-sm text-slate-500">
+            <div className="flex items-center justify-center gap-2 py-10 text-sm text-muted-foreground">
               <Loader2 className="size-4 animate-spin" />
               Loading…
             </div>
           ) : error ? (
             <p className="py-8 text-center text-sm text-red-600">{error}</p>
           ) : items.length === 0 ? (
-            <p className="py-8 text-center text-sm text-slate-500">No recipients</p>
+            <p className="py-8 text-center text-sm text-muted-foreground">No recipients</p>
           ) : (
             <div className="max-h-[360px] space-y-2 overflow-y-auto pr-1">
               {items.map((row) => {
@@ -377,12 +377,12 @@ function StepStatistics({
                 return (
                   <div
                     key={row.sendId}
-                    className="rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2.5"
+                    className="rounded-xl border border-border bg-muted/70 px-3 py-2.5"
                   >
-                    <p className="truncate text-sm font-medium text-slate-900">
+                    <p className="truncate text-sm font-medium text-foreground">
                       {row.email}
                     </p>
-                    <p className="mt-0.5 text-xs text-slate-500">
+                    <p className="mt-0.5 text-xs text-muted-foreground">
                       {name ? `${name} · ` : ""}
                       {formatShortDate(time)}
                     </p>
@@ -393,7 +393,7 @@ function StepStatistics({
           )}
 
           {totalPages > 1 && !loading && !error ? (
-            <div className="flex items-center justify-between gap-2 border-t border-slate-100 pt-3">
+            <div className="flex items-center justify-between gap-2 border-t border-border pt-3">
               <Button
                 type="button"
                 variant="outline"
@@ -408,7 +408,7 @@ function StepStatistics({
               >
                 Previous
               </Button>
-              <span className="text-xs text-slate-500">
+              <span className="text-xs text-muted-foreground">
                 Page {page} of {totalPages}
               </span>
               <Button
@@ -620,7 +620,7 @@ function EmailContentForm({ state }: { state: AutomationBuilderState }) {
           </div>
 
           <div>
-            <p className="mb-2 text-xs font-medium text-slate-500">Create email</p>
+            <p className="mb-2 text-xs font-medium text-muted-foreground">Create email</p>
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
@@ -629,16 +629,16 @@ function EmailContentForm({ state }: { state: AutomationBuilderState }) {
                   "rounded-lg border px-3 py-2.5 text-left text-sm transition",
                   createMode === "quick"
                     ? "border-[var(--theme-primary)] bg-[var(--theme-primary-soft)] ring-1 ring-[var(--theme-primary)]"
-                    : "border-slate-200 hover:border-slate-300",
+                    : "border-border hover:border-border",
                 )}
               >
-                <span className="flex items-center gap-2 font-medium text-slate-900">
+                <span className="flex items-center gap-2 font-medium text-foreground">
                   <span
                     className={cn(
                       "flex size-3.5 items-center justify-center rounded-full border",
                       createMode === "quick"
                         ? "border-[var(--theme-primary)]"
-                        : "border-slate-300",
+                        : "border-border",
                     )}
                   >
                     {createMode === "quick" ? (
@@ -655,16 +655,16 @@ function EmailContentForm({ state }: { state: AutomationBuilderState }) {
                   "rounded-lg border px-3 py-2.5 text-left text-sm transition",
                   createMode === "library"
                     ? "border-[var(--theme-primary)] bg-[var(--theme-primary-soft)] ring-1 ring-[var(--theme-primary)]"
-                    : "border-slate-200 hover:border-slate-300",
+                    : "border-border hover:border-border",
                 )}
               >
-                <span className="flex items-center gap-2 font-medium text-slate-900">
+                <span className="flex items-center gap-2 font-medium text-foreground">
                   <span
                     className={cn(
                       "flex size-3.5 items-center justify-center rounded-full border",
                       createMode === "library"
                         ? "border-[var(--theme-primary)]"
-                        : "border-slate-300",
+                        : "border-border",
                     )}
                   >
                     {createMode === "library" ? (
@@ -959,12 +959,12 @@ export function InspectorPanel({ state }: Props) {
 
   if (!open) {
     return (
-      <aside className="flex h-full w-10 shrink-0 flex-col items-center border-l border-slate-200/80 bg-slate-50/80 pt-3">
+      <aside className="flex h-full w-10 shrink-0 flex-col items-center border-l border-border bg-muted/80 pt-3">
         <Button
           type="button"
           variant="ghost"
           size="icon"
-          className="size-8 text-slate-600 hover:text-slate-900"
+          className="size-8 text-muted-foreground hover:text-foreground"
           aria-label="Open inspector"
           onClick={() => setOpen(true)}
         >
@@ -975,16 +975,16 @@ export function InspectorPanel({ state }: Props) {
   }
 
   return (
-    <aside className="flex h-full w-[460px] min-w-[440px] max-w-[520px] shrink-0 flex-col border-l border-slate-200/80 bg-slate-50/40">
-      <div className="flex items-start justify-between gap-2 border-b border-slate-200/80 bg-slate-50/80 px-4 py-3.5">
+    <aside className="flex h-full w-[460px] min-w-[440px] max-w-[520px] shrink-0 flex-col border-l border-border bg-muted/40">
+      <div className="flex items-start justify-between gap-2 border-b border-border bg-muted/80 px-4 py-3.5">
         {isWait ? (
           <div className="flex min-w-0 flex-1 items-start gap-2.5">
             <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-700 shadow-sm">
               <Clock className="size-4" />
             </span>
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-slate-900">Wait</p>
-              <p className="mt-0.5 text-xs leading-relaxed text-slate-500">
+              <p className="truncate text-sm font-semibold text-foreground">Wait</p>
+              <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
                 Hold for a set number of days before the next email
               </p>
             </div>
@@ -995,8 +995,8 @@ export function InspectorPanel({ state }: Props) {
               <Mail className="size-4" />
             </span>
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-slate-900">Email</p>
-              <p className="mt-0.5 text-xs leading-relaxed text-slate-500">
+              <p className="truncate text-sm font-semibold text-foreground">Email</p>
+              <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
                 Compose the message contacts receive in this step
               </p>
             </div>
@@ -1007,10 +1007,10 @@ export function InspectorPanel({ state }: Props) {
               <Zap className="size-4" />
             </span>
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-slate-900">
+              <p className="truncate text-sm font-semibold text-foreground">
                 Automation settings
               </p>
-              <p className="mt-0.5 text-xs leading-relaxed text-slate-500">
+              <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
                 Who enters and how this flow starts
               </p>
             </div>
@@ -1020,7 +1020,7 @@ export function InspectorPanel({ state }: Props) {
           type="button"
           variant="ghost"
           size="icon"
-          className="mt-0.5 size-8 shrink-0 text-slate-500 hover:text-slate-900"
+          className="mt-0.5 size-8 shrink-0 text-muted-foreground hover:text-foreground"
           aria-label="Collapse inspector"
           onClick={() => setOpen(false)}
         >
@@ -1053,7 +1053,7 @@ export function InspectorPanel({ state }: Props) {
       >
         <TabsList
           variant="line"
-          className="w-full shrink-0 justify-start gap-1 rounded-none border-b border-slate-200/80 bg-white px-3"
+          className="w-full shrink-0 justify-start gap-1 rounded-none border-b border-border bg-card px-3"
         >
           <TabsTrigger
             value="content"
@@ -1073,7 +1073,7 @@ export function InspectorPanel({ state }: Props) {
           <>
             <TabsContent
               value="content"
-              className="mt-0 flex min-h-0 flex-1 flex-col bg-slate-50/30 data-[hidden]:hidden"
+              className="mt-0 flex min-h-0 flex-1 flex-col bg-muted/30 data-[hidden]:hidden"
             >
               <WaitContentForm state={state} />
             </TabsContent>
@@ -1092,17 +1092,17 @@ export function InspectorPanel({ state }: Props) {
           <>
             <TabsContent
               value="content"
-              className="mt-0 flex min-h-0 flex-1 flex-col bg-slate-50/30 data-[hidden]:hidden"
+              className="mt-0 flex min-h-0 flex-1 flex-col bg-muted/30 data-[hidden]:hidden"
             >
               <EmailContentForm state={state} />
             </TabsContent>
             <TabsContent
               value="statistics"
-              className="mt-0 min-h-0 flex-1 overflow-y-auto bg-white px-4 py-4"
+              className="mt-0 min-h-0 flex-1 overflow-y-auto bg-card px-4 py-4"
             >
               {stepStat ? (
                 <div className="space-y-3">
-                  <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
+                  <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                     This email
                   </p>
                   <StepStatistics
@@ -1124,7 +1124,7 @@ export function InspectorPanel({ state }: Props) {
           <>
             <TabsContent
               value="content"
-              className="mt-0 min-h-0 flex-1 space-y-3 overflow-y-auto bg-slate-50/30 px-4 py-4"
+              className="mt-0 min-h-0 flex-1 space-y-3 overflow-y-auto bg-muted/30 px-4 py-4"
             >
               <PanelSection
                 title="Flow"
@@ -1157,7 +1157,7 @@ export function InspectorPanel({ state }: Props) {
                       <SelectValue placeholder="Select a list">
                         {selectedList ? (
                           <span className="flex items-center gap-2">
-                            <List className="size-3.5 text-slate-400" />
+                            <List className="size-3.5 text-muted-foreground" />
                             {selectedList.name}
                           </span>
                         ) : (
@@ -1204,7 +1204,7 @@ export function InspectorPanel({ state }: Props) {
                 description="Optional. Applied when someone opens or clicks an email in this automation."
               >
                 {tags.length === 0 ? (
-                  <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs text-slate-600">
+                  <div className="rounded-lg border border-border bg-muted px-3 py-2.5 text-xs text-muted-foreground">
                     No tags yet.{" "}
                     <a
                       href="/advertiser/email/tags"
@@ -1304,7 +1304,7 @@ export function InspectorPanel({ state }: Props) {
                 <div>
                   <FieldLabel>Reply-to email</FieldLabel>
                   <div className="relative mt-1.5">
-                    <User className="pointer-events-none absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-slate-400" />
+                    <User className="pointer-events-none absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-muted-foreground" />
                     <Input
                       type="email"
                       className="h-10 pl-9"
@@ -1319,7 +1319,7 @@ export function InspectorPanel({ state }: Props) {
 
             <TabsContent
               value="statistics"
-              className="mt-0 min-h-0 flex-1 overflow-y-auto bg-white px-4 py-4"
+              className="mt-0 min-h-0 flex-1 overflow-y-auto bg-card px-4 py-4"
             >
               {stats.length > 0 ? (
                 (() => {
@@ -1331,10 +1331,10 @@ export function InspectorPanel({ state }: Props) {
                   return (
                     <div className="space-y-3">
                       <div>
-                        <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
+                        <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                           Totals
                         </p>
-                        <p className="mt-0.5 text-xs text-slate-500">
+                        <p className="mt-0.5 text-xs text-muted-foreground">
                           All emails in this automation
                         </p>
                       </div>

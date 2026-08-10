@@ -29,7 +29,7 @@ function SidebarNavLinkContent({
         <span className={cn("flex-1", pending && "opacity-70")}>{label}</span>
       )}
       {pending && !collapsed && (
-        <span className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-white/80" />
+        <span className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-card/80" />
       )}
       <span className="sr-only">{active ? `${label}, current page` : label}</span>
     </>
@@ -51,10 +51,10 @@ export function SidebarNavLink({
       prefetch={true}
       onClick={() => startNavigation()}
       className={cn(
-        "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
+        "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-all duration-200",
         active
-          ? "bg-white shadow-sm text-[var(--theme-sidebar-active-text)]"
-          : "text-blue-100/90 hover:bg-white/10 hover:text-white",
+          ? "sidebar-nav-link-active bg-gradient-to-r from-[var(--theme-sidebar-active-from)] to-[var(--theme-sidebar-active-to)] text-[var(--theme-sidebar-active-text)] shadow-sm"
+          : "text-white/60 hover:bg-white/[0.06] hover:text-white [&_svg]:text-white/50 hover:[&_svg]:text-white",
       )}
     >
       <SidebarNavLinkContent

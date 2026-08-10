@@ -5,8 +5,6 @@ import type { UserStatus } from "@prisma/client";
 import { listUsers, getUserDeleteEligibility } from "@/services/admin.service";
 import { getSession } from "@/lib/session";
 import { getPublisherSpamScoresByIds } from "@/modules/fraud/repositories/quality.repo";
-import { PageHero } from "@/components/admin/page-hero";
-import { PageSection } from "@/components/admin/page-section";
 import { GradientStatCard, NeutralStatCard } from "@/components/admin/gradient-stat-card";
 import { AdminCreatePublisherDialog } from "@/components/admin/admin-create-publisher-dialog";
 import { AdminPublisherReviewDialog } from "@/components/admin/admin-publisher-review-dialog";
@@ -94,21 +92,10 @@ export default async function AdminPublishersPage({ searchParams }: PageProps) {
   const hasFilters = !!(params.q || params.status || params.from || params.to);
 
   return (
-    <div className="space-y-7">
-      <PageHero
-        eyebrow="User Management"
-        title="Publishers"
-        description="Manage publisher accounts, KYC status, and earnings"
-        badge={`${meta.total} total account${meta.total === 1 ? "" : "s"}`}
-      />
-
-      <div className="flex flex-wrap items-center justify-end gap-3">
-        <AdminCreatePublisherDialog />
-      </div>
-
+    <div className="space-y-5">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         <GradientStatCard variant="leads" label="Total Leads Generated" value={totalLeads} icon={Megaphone} />
-        <NeutralStatCard label="Total Publishers" value={allPublishers.length} icon={Users} accent="purple" />
+        <NeutralStatCard label="Total Affiliates" value={allPublishers.length} icon={Users} accent="purple" />
         <NeutralStatCard label="Active Accounts" value={activeCount} icon={UserCheck} accent="green" />
         <NeutralStatCard label="KYC Approved" value={kycApproved} icon={Share2} accent="orange" />
         <NeutralStatCard label="High Spam Score" value={highSpamCount} icon={ShieldAlert} accent="red" />
@@ -116,47 +103,56 @@ export default async function AdminPublishersPage({ searchParams }: PageProps) {
 
       <SpamScoreGuide />
 
-      <PageSection
-        title="Publisher Accounts"
-        description={
-          hasFilters
-            ? `Showing ${publishers.length} filtered result${publishers.length === 1 ? "" : "s"}`
-            : "View and manage all registered publishers on the platform"
+      <Suspense
+        fallback={
+          <div className="h-14 animate-pulse rounded-[var(--radius-card,0.875rem)] bg-muted" />
         }
-        icon={Share2}
-        gradient="leads"
       >
-        <Suspense fallback={<div className="px-6 py-4 text-sm text-slate-500">Loading filters...</div>}>
-          <UsersTableFilters />
-        </Suspense>
+        <UsersTableFilters />
+      </Suspense>
 
-        {publishers.length === 0 ? (
-          <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
-            <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full" style={{ background: "var(--theme-primary-soft)" }}>
-              <Share2 className="h-7 w-7 text-[var(--theme-primary)]" />
-            </div>
-            <h3 className="text-lg font-semibold text-slate-900">
-              {hasFilters ? "No matching publishers" : "No publishers yet"}
-            </h3>
-            <p className="mt-1 max-w-sm text-sm text-slate-500">
-              {hasFilters
-                ? "Try adjusting your search or filter criteria."
-                : "Publisher accounts will appear here once users register."}
-            </p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-muted-foreground">
+          {hasFilters
+            ? `Showing ${publishers.length} of ${meta.total} affiliate${meta.total === 1 ? "" : "s"}`
+            : `${meta.total} affiliate${meta.total === 1 ? "" : "s"}`}
+        </p>
+        <AdminCreatePublisherDialog />
+      </div>
+
+      {publishers.length === 0 ? (
+        <div className="flex flex-col items-center justify-center rounded-[var(--radius-card,0.875rem)] border border-dashed border-border bg-card px-6 py-16 text-center shadow-[var(--shadow-card)]">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--theme-primary-soft)]">
+            <Share2 className="h-6 w-6 text-[var(--theme-primary)]" />
           </div>
-        ) : (
-          <>
+          <h3 className="mt-4 text-base font-semibold text-foreground">
+            {hasFilters ? "No matching affiliates" : "No affiliates yet"}
+          </h3>
+          <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+            {hasFilters
+              ? "Try adjusting your search or filter criteria."
+              : "Affiliate accounts will appear here once users register."}
+          </p>
+          {!hasFilters ? (
+            <div className="mt-5">
+              <AdminCreatePublisherDialog />
+            </div>
+          ) : null}
+        </div>
+      ) : (
+        <div className="overflow-hidden rounded-[var(--radius-card,0.875rem)] border border-border bg-card shadow-[var(--shadow-card)]">
+          <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow className="border-none hover:bg-transparent" style={{ background: "var(--theme-primary-soft)" }}>
-                  <TableHead className="h-11 px-6 text-slate-600">Publisher</TableHead>
-                  <TableHead className="h-11 px-4 text-slate-600">KYC</TableHead>
-                  <TableHead className="h-11 px-4 text-center text-slate-600">Spam Score</TableHead>
-                  <TableHead className="h-11 px-4 text-center text-slate-600">Leads</TableHead>
-                  <TableHead className="h-11 px-4 text-right text-slate-600">Earnings</TableHead>
-                  <TableHead className="h-11 px-4 text-slate-600">Status</TableHead>
-                  <TableHead className="h-11 px-4 text-slate-600">Joined</TableHead>
-                  <TableHead className="h-11 px-6 text-right text-slate-600">Actions</TableHead>
+                <TableRow className="border-border hover:bg-transparent bg-muted/60">
+                  <TableHead className="h-11 px-6 text-muted-foreground">Affiliate</TableHead>
+                  <TableHead className="h-11 px-4 text-muted-foreground">KYC</TableHead>
+                  <TableHead className="h-11 px-4 text-center text-muted-foreground">Spam Score</TableHead>
+                  <TableHead className="h-11 px-4 text-center text-muted-foreground">Leads</TableHead>
+                  <TableHead className="h-11 px-4 text-right text-muted-foreground">Earnings</TableHead>
+                  <TableHead className="h-11 px-4 text-muted-foreground">Status</TableHead>
+                  <TableHead className="h-11 px-4 text-muted-foreground">Joined</TableHead>
+                  <TableHead className="h-11 px-6 text-right text-muted-foreground">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -176,17 +172,25 @@ export default async function AdminPublishersPage({ searchParams }: PageProps) {
                     publisher.publisherProfile?.spamScore,
                   );
                   return (
-                    <TableRow key={publisher.id} className="border-slate-100 transition-colors hover:bg-indigo-50/40">
+                    <TableRow
+                      key={publisher.id}
+                      className="border-border transition-colors hover:bg-muted/40"
+                    >
                       <TableCell className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           <Avatar size="lg">
-                            <AvatarFallback className={cn("text-sm font-semibold", avatarColors[index % avatarColors.length])}>
+                            <AvatarFallback
+                              className={cn(
+                                "text-sm font-semibold",
+                                avatarColors[index % avatarColors.length],
+                              )}
+                            >
                               {getInitials(publisher.name)}
                             </AvatarFallback>
                           </Avatar>
                           <div className="min-w-0">
-                            <p className="truncate font-medium text-slate-900">{publisher.name}</p>
-                            <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-slate-500">
+                            <p className="truncate font-medium text-foreground">{publisher.name}</p>
+                            <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-muted-foreground">
                               <Mail className="h-3 w-3 shrink-0 text-[var(--theme-primary)]" />
                               {publisher.email}
                             </p>
@@ -197,19 +201,24 @@ export default async function AdminPublishersPage({ searchParams }: PageProps) {
                         {publisher.publisherProfile ? (
                           <KycStatusBadge status={publisher.publisherProfile.kycStatus} />
                         ) : (
-                          <span className="text-sm text-slate-400">—</span>
+                          <span className="text-sm text-muted-foreground">—</span>
                         )}
                       </TableCell>
                       <TableCell className="px-4 py-4 text-center">
                         <SpamScoreBadge score={spamScore} />
                       </TableCell>
                       <TableCell className="px-4 py-4 text-center">
-                        <span className="inline-flex min-w-8 items-center justify-center rounded-md bg-violet-50 px-2.5 py-1 text-sm font-semibold text-violet-700">
+                        <span className="inline-flex min-w-8 items-center justify-center rounded-md bg-[color-mix(in_srgb,var(--theme-accent-purple,#713BFF)_12%,white)] px-2.5 py-1 text-sm font-semibold text-[var(--theme-accent-purple,#713BFF)]">
                           {publisher._count.leads}
                         </span>
                       </TableCell>
                       <TableCell className="px-4 py-4 text-right">
-                        <span className={cn("text-sm font-semibold tabular-nums", balance > 0 ? "text-emerald-600" : "text-slate-400")}>
+                        <span
+                          className={cn(
+                            "text-sm font-semibold tabular-nums",
+                            balance > 0 ? "text-[var(--theme-success)]" : "text-muted-foreground",
+                          )}
+                        >
                           {formatCurrency(balance)}
                         </span>
                       </TableCell>
@@ -218,11 +227,13 @@ export default async function AdminPublishersPage({ searchParams }: PageProps) {
                           <UserStatusBadge status={publisher.status} />
                           <EmailVerifiedBadge verified={!!publisher.emailVerified} />
                           {publisher.status === "PENDING" && publisher.emailVerified && (
-                            <span className="text-xs text-emerald-700">Ready for admin approval</span>
+                            <span className="text-xs text-[var(--theme-success)]">
+                              Ready for admin approval
+                            </span>
                           )}
                         </div>
                       </TableCell>
-                      <TableCell className="px-4 py-4 text-sm text-slate-500">
+                      <TableCell className="px-4 py-4 text-sm text-muted-foreground">
                         {formatUserDateTime(publisher.createdAt, tz, "MMM d, yyyy")}
                       </TableCell>
                       <TableCell className="px-6 py-4 text-right">
@@ -231,8 +242,8 @@ export default async function AdminPublishersPage({ searchParams }: PageProps) {
                             publisherId={publisher.id}
                             publisherName={publisher.name}
                             settings={{
-                              useSpecialTierPayouts:
-                                publisher.publisherProfile?.useSpecialTierPayouts ?? false,
+                              useSpecialTiersPayouts:
+                                publisher.publisherProfile?.useSpecialTiersPayouts ?? false,
                               tier1SpecialPayout:
                                 publisher.publisherProfile?.tier1SpecialPayout ?? null,
                               tier2SpecialPayout:
@@ -278,12 +289,12 @@ export default async function AdminPublishersPage({ searchParams }: PageProps) {
                 })}
               </TableBody>
             </Table>
-            <Suspense>
-              <UsersTablePagination page={meta.page} totalPages={meta.totalPages} total={meta.total} />
-            </Suspense>
-          </>
-        )}
-      </PageSection>
+          </div>
+          <Suspense>
+            <UsersTablePagination page={meta.page} totalPages={meta.totalPages} total={meta.total} />
+          </Suspense>
+        </div>
+      )}
     </div>
   );
 }

@@ -164,7 +164,7 @@ export function AdvertiserCpaOffersReport() {
         />
       </div>
 
-      <div className="overflow-hidden rounded-[18px] border border-slate-200/80 bg-white shadow-sm">
+      <div className="overflow-hidden rounded-[18px] border border-border bg-card shadow-sm">
         <div
           className="flex items-center gap-2 px-5 py-3.5 text-white"
           style={{
@@ -181,7 +181,7 @@ export function AdvertiserCpaOffersReport() {
         <div className="space-y-3 bg-gradient-to-br from-slate-50/80 to-white p-4">
           <div className="flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-end">
             <div className="w-full space-y-1 sm:w-48">
-              <label className="text-xs font-medium text-slate-500">From</label>
+              <label className="text-xs font-medium text-muted-foreground">From</label>
               <Input
                 type="date"
                 value={draft.from}
@@ -190,7 +190,7 @@ export function AdvertiserCpaOffersReport() {
               />
             </div>
             <div className="w-full space-y-1 sm:w-48">
-              <label className="text-xs font-medium text-slate-500">To</label>
+              <label className="text-xs font-medium text-muted-foreground">To</label>
               <Input
                 type="date"
                 value={draft.to}
@@ -199,7 +199,7 @@ export function AdvertiserCpaOffersReport() {
               />
             </div>
             <div className="w-full space-y-1 sm:w-52">
-              <label className="text-xs font-medium text-slate-500">Offer ID</label>
+              <label className="text-xs font-medium text-muted-foreground">Offer ID</label>
               <Input
                 value={draft.offerId}
                 onChange={(e) => setDraft((prev) => ({ ...prev, offerId: e.target.value }))}
@@ -208,9 +208,9 @@ export function AdvertiserCpaOffersReport() {
               />
             </div>
             <div className="min-w-[12rem] flex-1 space-y-1">
-              <label className="text-xs font-medium text-slate-500">Search</label>
+              <label className="text-xs font-medium text-muted-foreground">Search</label>
               <div className="relative">
-                <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   className="bg-white pl-9"
                   value={draft.q}
@@ -234,11 +234,11 @@ export function AdvertiserCpaOffersReport() {
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-[18px] border border-slate-200/80 bg-white shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 bg-gradient-to-r from-sky-50 via-white to-emerald-50 px-5 py-3.5">
+      <div className="overflow-hidden rounded-[18px] border border-border bg-card shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-gradient-to-r from-sky-50 via-white to-emerald-50 px-5 py-3.5">
           <div>
-            <p className="text-sm font-semibold text-slate-900">Conversion log</p>
-            <p className="text-xs text-slate-500">
+            <p className="text-sm font-semibold text-foreground">Conversion log</p>
+            <p className="text-xs text-muted-foreground">
               {loading
                 ? "Loading…"
                 : `Showing ${items.length} of ${total} conversions · page ${page} of ${totalPages}`}
@@ -253,7 +253,7 @@ export function AdvertiserCpaOffersReport() {
 
         <Table>
           <TableHeader>
-            <TableRow className="bg-slate-50/90 hover:bg-slate-50/90">
+            <TableRow className="bg-muted/90 hover:bg-muted/90">
               <TableHead>Date</TableHead>
               <TableHead>Offer</TableHead>
               <TableHead>Click ID</TableHead>
@@ -269,7 +269,7 @@ export function AdvertiserCpaOffersReport() {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={10} className="py-12 text-center text-sm text-slate-500">
+                <TableCell colSpan={10} className="py-12 text-center text-sm text-muted-foreground">
                   Loading conversions…
                 </TableCell>
               </TableRow>
@@ -279,8 +279,8 @@ export function AdvertiserCpaOffersReport() {
                   <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-50 text-violet-600">
                     <Activity className="h-5 w-5" />
                   </div>
-                  <p className="text-sm font-medium text-slate-700">No conversions found</p>
-                  <p className="mt-1 text-xs text-slate-500">
+                  <p className="text-sm font-medium text-foreground">No conversions found</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
                     Try widening the date range or clearing filters.
                   </p>
                 </TableCell>
@@ -288,7 +288,7 @@ export function AdvertiserCpaOffersReport() {
             ) : (
               items.map((row) => (
                 <TableRow key={row.id} className="hover:bg-sky-50/40">
-                  <TableCell className="whitespace-nowrap text-sm text-slate-700">
+                  <TableCell className="whitespace-nowrap text-sm text-foreground">
                     <span className="rounded-md bg-sky-50 px-2 py-0.5 text-xs font-medium text-sky-800">
                       {formatDateTime(row.createdAt)}
                     </span>
@@ -297,14 +297,14 @@ export function AdvertiserCpaOffersReport() {
                     <div className="flex items-center gap-2.5">
                       <CpaOfferStatusDot status={row.offerStatus} />
                       <div>
-                        <p className="font-medium text-slate-900">{row.offerName}</p>
-                        <p className="font-mono text-[11px] text-slate-400">
+                        <p className="font-medium text-foreground">{row.offerName}</p>
+                        <p className="font-mono text-[11px] text-muted-foreground">
                           #{row.offerId.slice(-8)}
                         </p>
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell className="max-w-[10rem] truncate font-mono text-xs text-slate-600">
+                  <TableCell className="max-w-[10rem] truncate font-mono text-xs text-muted-foreground">
                     {row.clickId ? (
                       <span
                         className="rounded bg-violet-50 px-1.5 py-0.5 text-violet-700"
@@ -317,25 +317,25 @@ export function AdvertiserCpaOffersReport() {
                     )}
                   </TableCell>
                   <TableCell
-                    className="max-w-[8rem] truncate font-mono text-xs text-slate-600"
+                    className="max-w-[8rem] truncate font-mono text-xs text-muted-foreground"
                     title={row.ip ?? undefined}
                   >
                     {cellValue(row.ip)}
                   </TableCell>
-                  <TableCell className="whitespace-nowrap text-sm text-slate-700">
+                  <TableCell className="whitespace-nowrap text-sm text-foreground">
                     {row.device}
                   </TableCell>
-                  <TableCell className="whitespace-nowrap text-sm text-slate-700">
+                  <TableCell className="whitespace-nowrap text-sm text-foreground">
                     {row.browser}
                   </TableCell>
                   <TableCell
-                    className="max-w-[8rem] truncate text-sm text-slate-700"
+                    className="max-w-[8rem] truncate text-sm text-foreground"
                     title={row.source ?? undefined}
                   >
                     {cellValue(row.source)}
                   </TableCell>
                   <TableCell
-                    className="max-w-[8rem] truncate font-mono text-xs text-slate-600"
+                    className="max-w-[8rem] truncate font-mono text-xs text-muted-foreground"
                     title={row.subId ?? undefined}
                   >
                     {cellValue(row.subId)}
@@ -371,8 +371,8 @@ export function AdvertiserCpaOffersReport() {
         </Table>
 
         {totalPages > 1 ? (
-          <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50/50 px-5 py-3">
-            <p className="text-xs text-slate-500">
+          <div className="flex items-center justify-between border-t border-border bg-muted/50 px-5 py-3">
+            <p className="text-xs text-muted-foreground">
               Page {page} of {totalPages}
             </p>
             <div className="flex gap-2">

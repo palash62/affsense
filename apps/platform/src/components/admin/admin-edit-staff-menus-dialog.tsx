@@ -12,11 +12,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { ADMIN_NAV } from "@/components/layout/nav-config";
+import { ADMIN_LEGACY_NAV } from "@/components/layout/nav-config";
 import { ASSIGNABLE_STAFF_MENU_HREFS } from "@/lib/admin-portal";
 import { cn } from "@/lib/utils";
 
-const MENU_OPTIONS = ADMIN_NAV.filter((item) =>
+const MENU_OPTIONS = ADMIN_LEGACY_NAV.filter((item) =>
   (ASSIGNABLE_STAFF_MENU_HREFS as readonly string[]).includes(item.href),
 ).map((item) => ({ href: item.href, label: item.label }));
 
@@ -106,7 +106,7 @@ export function AdminEditStaffMenusDialog({
                 key={opt.href}
                 className={cn(
                   "flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm",
-                  checked ? "border-emerald-300 bg-emerald-50/40" : "border-slate-200",
+                  checked ? "border-emerald-300 bg-emerald-50/40" : "border-border",
                 )}
               >
                 <input

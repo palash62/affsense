@@ -66,13 +66,13 @@ export function AdminBulkEmailReport({ refreshKey = 0 }: AdminBulkEmailReportPro
   }, [load, refreshKey]);
 
   return (
-    <div className="space-y-4 rounded-[18px] border border-slate-200 bg-white p-6 shadow-sm">
+    <div className="space-y-4 rounded-[18px] border border-border bg-card p-6 shadow-sm">
       <div>
         <div className="flex items-center gap-2">
           <BarChart3 className="h-4 w-4 text-[var(--theme-primary)]" />
-          <h2 className="text-lg font-semibold text-slate-900">Send report</h2>
+          <h2 className="text-lg font-semibold text-foreground">Send report</h2>
         </div>
-        <p className="mt-1 text-sm text-slate-500">Recent bulk email sends.</p>
+        <p className="mt-1 text-sm text-muted-foreground">Recent bulk email sends.</p>
       </div>
 
       {error ? (
@@ -81,7 +81,7 @@ export function AdminBulkEmailReport({ refreshKey = 0 }: AdminBulkEmailReportPro
         </p>
       ) : null}
 
-      <div className="overflow-x-auto rounded-xl border border-slate-100">
+      <div className="overflow-x-auto rounded-xl border border-border">
         <Table>
           <TableHeader>
             <TableRow>
@@ -96,20 +96,20 @@ export function AdminBulkEmailReport({ refreshKey = 0 }: AdminBulkEmailReportPro
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={6} className="h-20 text-center text-slate-500">
+                <TableCell colSpan={6} className="h-20 text-center text-muted-foreground">
                   Loading…
                 </TableCell>
               </TableRow>
             ) : rows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="h-20 text-center text-slate-500">
+                <TableCell colSpan={6} className="h-20 text-center text-muted-foreground">
                   No bulk emails sent yet.
                 </TableCell>
               </TableRow>
             ) : (
               rows.map((row) => (
                 <TableRow key={row.id}>
-                  <TableCell className="whitespace-nowrap text-slate-600">
+                  <TableCell className="whitespace-nowrap text-muted-foreground">
                     {formatUserDateTime(row.createdAt, timezone, "MMM d, yyyy HH:mm")}
                   </TableCell>
                   <TableCell className="max-w-[280px] truncate font-medium">

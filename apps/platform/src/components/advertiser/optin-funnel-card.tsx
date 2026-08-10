@@ -26,8 +26,8 @@ export function OptinFunnelCard({
   const thumbnailRevision = funnelCraftPreviewRevision(entity.craftState?.craft, themeJson);
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-      <div className="relative aspect-[16/10] overflow-hidden bg-slate-100">
+    <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+      <div className="relative aspect-[16/10] overflow-hidden bg-muted">
         {showPreview && entity.craftState ? (
           <OptinFunnelCraftThumbnail
             key={thumbnailRevision}
@@ -38,8 +38,8 @@ export function OptinFunnelCard({
           />
         ) : (
           <div className="flex h-full flex-col items-center justify-center gap-2 bg-gradient-to-br from-slate-100 to-slate-200 px-4 text-center">
-            <LayoutTemplate className="h-8 w-8 text-slate-400" />
-            <span className="line-clamp-2 text-sm font-medium text-slate-600">{funnel.name}</span>
+            <LayoutTemplate className="h-8 w-8 text-muted-foreground" />
+            <span className="line-clamp-2 text-sm font-medium text-muted-foreground">{funnel.name}</span>
           </div>
         )}
 
@@ -57,8 +57,8 @@ export function OptinFunnelCard({
 
       <div className="space-y-3 p-4">
         <div>
-          <h3 className="font-semibold text-slate-900">{funnel.name}</h3>
-          <p className="mt-0.5 font-mono text-xs text-slate-500">/o/{funnel.slug}</p>
+          <h3 className="font-semibold text-foreground">{funnel.name}</h3>
+          <p className="mt-0.5 font-mono text-xs text-muted-foreground">/o/{funnel.slug}</p>
         </div>
 
         <div className="flex flex-wrap gap-2">
@@ -70,7 +70,7 @@ export function OptinFunnelCard({
             href={`/o/${funnel.slug}?preview=1&frame=1`}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex h-8 items-center gap-1 rounded-md border border-slate-200 px-3 text-sm hover:bg-slate-50"
+            className="inline-flex h-8 items-center gap-1 rounded-md border border-border px-3 text-sm hover:bg-muted"
           >
             <Eye className="h-3.5 w-3.5" />
             Preview

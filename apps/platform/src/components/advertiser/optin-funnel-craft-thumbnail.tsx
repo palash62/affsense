@@ -44,7 +44,7 @@ export function OptinFunnelCraftThumbnail({
 
   if (!craft) {
     return (
-      <div className="absolute inset-0 flex items-center justify-center bg-slate-100 text-sm text-slate-500">
+      <div className="absolute inset-0 flex items-center justify-center bg-muted text-sm text-muted-foreground">
         No preview
       </div>
     );

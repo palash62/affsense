@@ -1,0 +1,160 @@
+/**
+ * Resolve admin page title (+ optional header subtitle) from pathname.
+ */
+export function getAdminPageMeta(
+  pathname: string,
+  firstName = "Admin",
+): { title: string; subtitle?: string } {
+  const path = pathname.split("?")[0] || pathname;
+
+  if (path === "/admin" || path === "/admin/") {
+    return {
+      title: "Dashboard",
+      subtitle: `Welcome back, ${firstName}! Here's what's happening today.`,
+    };
+  }
+
+  if (path === "/admin/digital-products") {
+    return {
+      title: "Digital Products",
+      subtitle: "Manage your digital product offers",
+    };
+  }
+
+  if (path === "/admin/digital-products/new") {
+    return { title: "Add New Digital Product Offer" };
+  }
+
+  if (path === "/admin/digital-products/categories") {
+    return {
+      title: "Product Categories",
+      subtitle: "Organize digital products by category",
+    };
+  }
+
+  if (path === "/admin/get-paid-tasks") {
+    return {
+      title: "Get Paid Tasks",
+      subtitle: "Manage member micro-tasks and rewards",
+    };
+  }
+
+  if (path === "/admin/get-paid-tasks/new") {
+    return { title: "Add New Get Paid Task" };
+  }
+
+  if (path === "/admin/get-paid-tasks/categories") {
+    return {
+      title: "Task Categories",
+      subtitle: "Organize get paid tasks by category",
+    };
+  }
+
+  if (path === "/admin/offer-network") {
+    return {
+      title: "CPA Offers",
+      subtitle: "Create and manage CPA offers for the advertiser marketplace",
+    };
+  }
+
+  if (path === "/admin/publishers") {
+    return {
+      title: "Affiliates",
+      subtitle: "Manage publisher accounts and approvals",
+    };
+  }
+
+  if (path === "/admin/users") {
+    return {
+      title: "Manager",
+      subtitle: "Manage platform staff and menu access",
+    };
+  }
+
+  if (path === "/admin/themes") {
+    return {
+      title: "Themes",
+      subtitle: "Choose a color theme for the platform",
+    };
+  }
+
+  const exact: Record<string, string> = {
+    "/admin/user-directory": "Users",
+    "/admin/memberships": "Memberships",
+    "/admin/kyc": "KYC Verification",
+    "/admin/orders-sales": "Orders & Sales",
+    "/admin/commissions": "Commissions",
+    "/admin/payout-center": "Payouts",
+    "/admin/tasks": "Tasks (Quick Earn)",
+    "/admin/referral-program": "Referrals",
+    "/admin/withdrawals": "Withdrawals",
+    "/admin/support-tickets": "Support Tickets",
+    "/admin/promotions": "Promotions",
+    "/admin/email-campaigns": "Email Campaigns",
+    "/admin/announcements": "Announcements",
+    "/admin/banners": "Banners",
+    "/admin/blog-posts": "Blog Posts",
+    "/admin/content-pages": "Pages",
+    "/admin/media-library": "Media Library",
+    "/admin/general-settings": "General Settings",
+    "/admin/payment-settings": "Payment Settings",
+    "/admin/security": "Security",
+    "/admin/system-logs": "System Logs",
+    "/admin/old-menu": "Old Menu",
+    "/admin/old-dashboard": "Old Dashboard",
+    "/admin/profit": "Profit",
+    "/admin/advertisers": "Advertisers",
+    "/admin/campaigns": "Campaigns",
+    "/admin/cpa-offers": "CPA Offers",
+    "/admin/cpa-offers/offers": "All Offers",
+    "/admin/cpa-offers/report": "CPA Report",
+    "/admin/cpa-offers/payouts": "CPA Payouts",
+    "/admin/global-postback": "Global Postback",
+    "/admin/bulk-email": "Bulk Email",
+    "/admin/leads": "Leads",
+    "/admin/fraud": "Fraud Center",
+    "/admin/wallets": "Wallets",
+    "/admin/deposits": "Deposits",
+    "/admin/payouts": "Payouts",
+    "/admin/referrals": "Referrals",
+    "/admin/reports": "Reports",
+    "/admin/support": "Support",
+    "/admin/settings": "Settings",
+    "/admin/audit-log": "Audit Log",
+    "/admin/funnel-templates": "Funnel Templates",
+    "/admin/tutorials": "Tutorials",
+    "/admin/notifications": "Notifications",
+  };
+
+  if (exact[path]) {
+    return { title: exact[path] };
+  }
+
+  // Prefix matches for nested legacy/admin routes
+  const prefixes: Array<[string, string]> = [
+    ["/admin/advertisers/", "Advertisers"],
+    ["/admin/publishers/", "Affiliates"],
+    ["/admin/campaigns/", "Campaigns"],
+    ["/admin/cpa-offers/", "CPA Offers"],
+    ["/admin/digital-products/", "Digital Products"],
+    ["/admin/get-paid-tasks/", "Get Paid Tasks"],
+    ["/admin/funnel-templates/", "Funnel Templates"],
+  ];
+  for (const [prefix, title] of prefixes) {
+    if (path.startsWith(prefix)) return { title };
+  }
+
+  const slug = path.replace(/^\/admin\/?/, "").split("/")[0];
+  if (!slug) return { title: "Dashboard" };
+  const pretty = slug
+    .split("-")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+  return { title: pretty };
+}
+
+export function getAdminRoleLabel(role: string): string {
+  if (role === "ADMIN") return "Super Admin";
+  if (role === "PLATFORM_MANAGER") return "Platform Manager";
+  return role;
+}

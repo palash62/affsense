@@ -60,7 +60,7 @@ export function FraudSettingsForm() {
   }
 
   if (status === "loading" || !config) {
-    return <p className="text-sm text-slate-500">Loading fraud settings…</p>;
+    return <p className="text-sm text-muted-foreground">Loading fraud settings…</p>;
   }
 
   return (
@@ -71,10 +71,10 @@ export function FraudSettingsForm() {
         </Alert>
       )}
 
-      <div className="flex items-center justify-between rounded-xl border border-slate-200 p-4">
+      <div className="flex items-center justify-between rounded-xl border border-border p-4">
         <div>
-          <p className="font-medium text-slate-900">Use risk-based decisions</p>
-          <p className="text-sm text-slate-500">
+          <p className="font-medium text-foreground">Use risk-based decisions</p>
+          <p className="text-sm text-muted-foreground">
             When off (shadow mode), fraud scores are recorded but legacy quality rules decide status.
           </p>
         </div>
@@ -140,8 +140,8 @@ export function FraudSettingsForm() {
       </div>
 
       {providers && (
-        <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4 text-sm text-slate-600">
-          <p className="font-medium text-slate-900">Optional API providers</p>
+        <div className="rounded-xl border border-border bg-muted/60 p-4 text-sm text-muted-foreground">
+          <p className="font-medium text-foreground">Optional API providers</p>
           <ul className="mt-2 space-y-1">
             <li>IP lookup (IPinfo): {providers.ipApiConfigured ? "configured" : "not set — set FRAUD_IP_API_KEY"}</li>
             <li>Email validation: {providers.emailApiConfigured ? "configured" : "not set — set FRAUD_EMAIL_API_KEY"}</li>

@@ -53,22 +53,22 @@ export function FunnelStepsPopover({
       <DropdownMenuTrigger
         className={cn(
           buttonVariants({ variant: "outline", size: "sm" }),
-          "h-8 max-w-[180px] justify-between gap-2 border-slate-200 bg-white font-normal",
+          "h-8 max-w-[180px] justify-between gap-2 border-border bg-white font-normal",
         )}
       >
         <span className="truncate capitalize">{currentStepLabel}</span>
-        <span className="text-slate-400">▾</span>
+        <span className="text-muted-foreground">▾</span>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-72 p-0">
-        <div className="border-b border-slate-100 p-3">
-          <p className="mb-2 text-sm font-medium text-slate-900">Steps</p>
+        <div className="border-b border-border p-3">
+          <p className="mb-2 text-sm font-medium text-foreground">Steps</p>
           <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+            <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search"
-              className="h-8 border-slate-200 pl-8 text-sm"
+              className="h-8 border-border pl-8 text-sm"
               onKeyDown={(e) => e.stopPropagation()}
             />
           </div>
@@ -81,15 +81,15 @@ export function FunnelStepsPopover({
               onClick={() => void goToStep(step.id)}
               className={cn(
                 "flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm",
-                currentStepId === step.id ? "bg-blue-50 text-blue-900" : "text-slate-700 hover:bg-slate-50",
+                currentStepId === step.id ? "bg-blue-50 text-blue-900" : "text-foreground hover:bg-muted",
               )}
             >
-              <GripVertical className="h-3.5 w-3.5 text-slate-300" />
+              <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
               <span className="truncate capitalize">{step.name}</span>
             </button>
           ))}
         </div>
-        <div className="border-t border-slate-100 p-2">
+        <div className="border-t border-border p-2">
           <Button
             variant="ghost"
             size="sm"

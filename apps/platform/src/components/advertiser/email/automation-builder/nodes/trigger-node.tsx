@@ -12,17 +12,17 @@ function TriggerNodeComponent({ data }: NodeProps) {
   return (
     <div
       className={cn(
-        "min-w-[200px] rounded-2xl border bg-white px-4 py-3 shadow-sm transition-shadow",
+        "min-w-[200px] rounded-2xl border bg-card px-4 py-3 shadow-sm transition-shadow",
         d.selected
           ? "border-emerald-500 ring-2 ring-emerald-500/20"
-          : "border-slate-200 hover:border-slate-300",
+          : "border-border hover:border-border",
       )}
     >
       <div className={cn("flex items-center gap-2", hasTags && "mb-1.5")}>
         <span className="flex size-7 items-center justify-center rounded-lg bg-amber-50 text-amber-700">
           <Zap className="size-3.5" />
         </span>
-        <span className="text-[11px] font-semibold tracking-wide text-slate-500 uppercase">
+        <span className="text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
           {d.title}
         </span>
       </div>

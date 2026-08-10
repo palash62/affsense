@@ -35,11 +35,11 @@ function CurrencyInput({
   return (
     <div
       className={cn(
-        "flex h-11 w-full items-stretch overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm",
+        "flex h-11 w-full items-stretch overflow-hidden rounded-lg border border-border bg-card shadow-sm",
         "transition-colors focus-within:border-[var(--theme-primary)] focus-within:ring-2 focus-within:ring-[var(--theme-primary)]/15",
       )}
     >
-      <span className="flex w-10 shrink-0 items-center justify-center border-r border-slate-200 bg-slate-50 text-sm font-semibold text-slate-600">
+      <span className="flex w-10 shrink-0 items-center justify-center border-r border-border bg-muted text-sm font-semibold text-muted-foreground">
         $
       </span>
       <input
@@ -50,9 +50,9 @@ function CurrencyInput({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder="0.00"
-        className="min-w-0 flex-1 border-0 bg-white px-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+        className="min-w-0 flex-1 border-0 bg-card px-3 text-sm text-foreground outline-none placeholder:text-muted-foreground [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
       />
-      <span className="flex w-12 shrink-0 items-center justify-center border-l border-slate-200 bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+      <span className="flex w-12 shrink-0 items-center justify-center border-l border-border bg-muted text-xs font-semibold uppercase tracking-wide text-muted-foreground">
         USD
       </span>
     </div>
@@ -183,11 +183,11 @@ export function WalletRechargePanel({
           background: "var(--theme-primary-soft)",
         }}
       >
-        <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Available balance</p>
+        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Available balance</p>
         <p className="mt-1 text-3xl font-bold tracking-tight text-[var(--theme-primary)]">
           ${balance.availableBalance.toFixed(2)}
         </p>
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="mt-1 text-sm text-muted-foreground">
           Total: ${balance.balance.toFixed(2)} {balance.currency}
         </p>
       </div>
@@ -205,13 +205,13 @@ export function WalletRechargePanel({
               "flex items-center gap-3 rounded-xl border px-4 py-3 text-left transition-colors",
               method === "CREDIT_CARD"
                 ? "border-[var(--theme-primary)] bg-[var(--theme-primary-soft)]"
-                : "border-slate-200 bg-white hover:border-slate-300",
+                : "border-border bg-white hover:border-border",
             )}
           >
             <CreditCard className="h-5 w-5 text-[var(--theme-primary)]" />
             <div>
-              <p className="text-sm font-semibold text-slate-900">Credit Card</p>
-              <p className="text-xs text-slate-500">
+              <p className="text-sm font-semibold text-foreground">Credit Card</p>
+              <p className="text-xs text-muted-foreground">
                 {stripeEnabled === false ? "Not configured" : "Stripe checkout"}
               </p>
             </div>
@@ -226,13 +226,13 @@ export function WalletRechargePanel({
               "flex items-center gap-3 rounded-xl border px-4 py-3 text-left transition-colors",
               method === "WISE"
                 ? "border-[var(--theme-primary)] bg-[var(--theme-primary-soft)]"
-                : "border-slate-200 bg-white hover:border-slate-300",
+                : "border-border bg-white hover:border-border",
             )}
           >
             <Landmark className="h-5 w-5 text-[var(--theme-primary)]" />
             <div>
-              <p className="text-sm font-semibold text-slate-900">Wise</p>
-              <p className="text-xs text-slate-500">Admin reviews transfer</p>
+              <p className="text-sm font-semibold text-foreground">Wise</p>
+              <p className="text-xs text-muted-foreground">Admin reviews transfer</p>
             </div>
           </button>
         </div>
@@ -252,7 +252,7 @@ export function WalletRechargePanel({
                   "rounded-lg border px-3 py-1 text-xs font-medium transition-colors",
                   Number(amount) === preset
                     ? "border-[var(--theme-primary)] bg-[var(--theme-primary-soft)] text-[var(--theme-primary)]"
-                    : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50",
+                    : "border-border bg-card text-muted-foreground hover:bg-muted",
                 )}
               >
                 ${preset}
@@ -265,13 +265,13 @@ export function WalletRechargePanel({
       {method === "WISE" && !stripeCheckout && (
         <div className="space-y-4">
           <div className="rounded-xl border border-emerald-200 bg-emerald-50/40 p-4">
-            <p className="text-sm font-medium text-slate-800">Choose how to pay</p>
-            <p className="mt-1 text-xs text-slate-500">
+            <p className="text-sm font-medium text-foreground">Choose how to pay</p>
+            <p className="mt-1 text-xs text-muted-foreground">
               Pay first with the QR code or payment link, then submit your transfer reference below.
             </p>
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              <div className="rounded-xl border border-slate-200 bg-white p-4 text-center shadow-sm">
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              <div className="rounded-xl border border-border bg-card p-4 text-center shadow-sm">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   Scan QR
                 </p>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -281,8 +281,8 @@ export function WalletRechargePanel({
                   className="mx-auto mt-3 h-40 w-40 rounded-lg object-contain"
                 />
               </div>
-              <div className="flex flex-col justify-center gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              <div className="flex flex-col justify-center gap-3 rounded-xl border border-border bg-card p-4 shadow-sm">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   Pay online
                 </p>
                 <a
@@ -297,7 +297,7 @@ export function WalletRechargePanel({
                 <Button
                   type="button"
                   variant="outline"
-                  className="h-10 border-slate-200"
+                  className="h-10 border-border"
                   onClick={async () => {
                     try {
                       await navigator.clipboard.writeText(WISE_PAYMENT_URL);
@@ -321,15 +321,15 @@ export function WalletRechargePanel({
                     </>
                   )}
                 </Button>
-                <p className="break-all text-[11px] leading-relaxed text-slate-400">
+                <p className="break-all text-[11px] leading-relaxed text-muted-foreground">
                   {WISE_PAYMENT_URL}
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="space-y-4 rounded-xl border border-slate-200 bg-slate-50/60 p-4">
-            <p className="text-sm text-slate-600">
+          <div className="space-y-4 rounded-xl border border-border bg-muted/60 p-4">
+            <p className="text-sm text-muted-foreground">
               After paying via Wise, enter the reference and payer details below. Funds are credited
               after admin approval.
             </p>
@@ -340,7 +340,7 @@ export function WalletRechargePanel({
                 value={wiseReference}
                 onChange={(e) => setWiseReference(e.target.value)}
                 placeholder="e.g. WISE-123456789"
-                className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none focus:border-[var(--theme-primary)] focus:ring-2 focus:ring-[var(--theme-primary)]/15"
+                className="h-11 w-full rounded-lg border border-border bg-card px-3 text-sm outline-none focus:border-[var(--theme-primary)] focus:ring-2 focus:ring-[var(--theme-primary)]/15"
               />
             </div>
             <div className="space-y-2">
@@ -350,7 +350,7 @@ export function WalletRechargePanel({
                 value={payerName}
                 onChange={(e) => setPayerName(e.target.value)}
                 placeholder="Name on the Wise transfer"
-                className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none focus:border-[var(--theme-primary)] focus:ring-2 focus:ring-[var(--theme-primary)]/15"
+                className="h-11 w-full rounded-lg border border-border bg-card px-3 text-sm outline-none focus:border-[var(--theme-primary)] focus:ring-2 focus:ring-[var(--theme-primary)]/15"
               />
             </div>
             <div className="space-y-2">
@@ -361,7 +361,7 @@ export function WalletRechargePanel({
                 onChange={(e) => setNote(e.target.value)}
                 rows={2}
                 placeholder="Any extra details for admin review"
-                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-[var(--theme-primary)] focus:ring-2 focus:ring-[var(--theme-primary)]/15"
+                className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm outline-none focus:border-[var(--theme-primary)] focus:ring-2 focus:ring-[var(--theme-primary)]/15"
               />
             </div>
           </div>

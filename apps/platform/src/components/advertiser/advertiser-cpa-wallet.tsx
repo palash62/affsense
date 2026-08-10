@@ -138,11 +138,11 @@ export function AdvertiserCpaWallet({
       >
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm text-slate-500">Ready to withdraw</p>
-            <p className="text-2xl font-bold text-slate-900">
+            <p className="text-sm text-muted-foreground">Ready to withdraw</p>
+            <p className="text-2xl font-bold text-foreground">
               {formatCurrency(balances.availableBalance)}
             </p>
-            <p className="mt-1 text-xs text-slate-500">
+            <p className="mt-1 text-xs text-muted-foreground">
               Minimum withdrawal: {formatCurrency(lowestMin)}
             </p>
           </div>
@@ -161,7 +161,7 @@ export function AdvertiserCpaWallet({
         </div>
       </PageSection>
 
-      <div className="flex gap-1 rounded-xl border border-slate-200 bg-white p-1">
+      <div className="flex gap-1 rounded-xl border border-border bg-card p-1">
         {(
           [
             { id: "activity", label: "Recent Activity" },
@@ -176,7 +176,7 @@ export function AdvertiserCpaWallet({
               "rounded-lg px-4 py-2 text-sm font-medium transition-colors",
               tab === item.id
                 ? "bg-[var(--theme-primary-soft)] text-[var(--theme-primary)]"
-                : "text-slate-600 hover:bg-slate-50",
+                : "text-muted-foreground hover:bg-muted",
             )}
           >
             {item.label}
@@ -194,9 +194,9 @@ export function AdvertiserCpaWallet({
         >
           {activity.length === 0 ? (
             <div className="flex flex-col items-center justify-center px-6 py-12 text-center">
-              <Wallet className="mb-3 h-10 w-10 text-slate-300" />
-              <p className="font-medium text-slate-900">No activity yet</p>
-              <p className="mt-1 text-sm text-slate-500">
+              <Wallet className="mb-3 h-10 w-10 text-muted-foreground" />
+              <p className="font-medium text-foreground">No activity yet</p>
+              <p className="mt-1 text-sm text-muted-foreground">
                 CPA conversions will appear here after postbacks are received.
               </p>
             </div>
@@ -208,39 +208,39 @@ export function AdvertiserCpaWallet({
                     className="border-none hover:bg-transparent"
                     style={{ background: "var(--theme-primary-soft)" }}
                   >
-                    <TableHead className="h-11 px-6 text-slate-600">Activity</TableHead>
-                    <TableHead className="h-11 px-4 text-slate-600">Type</TableHead>
-                    <TableHead className="h-11 px-4 text-slate-600">Details</TableHead>
-                    <TableHead className="h-11 px-4 text-right text-slate-600">Amount</TableHead>
-                    <TableHead className="h-11 px-4 text-slate-600">Date</TableHead>
-                    <TableHead className="h-11 px-6 text-slate-600">Status</TableHead>
+                    <TableHead className="h-11 px-6 text-muted-foreground">Activity</TableHead>
+                    <TableHead className="h-11 px-4 text-muted-foreground">Type</TableHead>
+                    <TableHead className="h-11 px-4 text-muted-foreground">Details</TableHead>
+                    <TableHead className="h-11 px-4 text-right text-muted-foreground">Amount</TableHead>
+                    <TableHead className="h-11 px-4 text-muted-foreground">Date</TableHead>
+                    <TableHead className="h-11 px-6 text-muted-foreground">Status</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {activity.map((row) => (
-                    <TableRow key={`${row.activity}-${row.id}`} className="border-slate-100">
+                    <TableRow key={`${row.activity}-${row.id}`} className="border-border">
                       <TableCell className="px-6 py-4">
-                        <span className="inline-flex items-center gap-2 text-sm font-medium text-slate-800">
+                        <span className="inline-flex items-center gap-2 text-sm font-medium text-foreground">
                           {row.activity === "Earnings" ? (
                             <ArrowDownLeft className="h-4 w-4 text-emerald-600" />
                           ) : (
-                            <ArrowUpRight className="h-4 w-4 text-slate-500" />
+                            <ArrowUpRight className="h-4 w-4 text-muted-foreground" />
                           )}
                           {row.activity}
                         </span>
                       </TableCell>
-                      <TableCell className="px-4 py-4 text-sm text-slate-600">{row.type}</TableCell>
-                      <TableCell className="px-4 py-4 text-sm text-slate-700">{row.details}</TableCell>
+                      <TableCell className="px-4 py-4 text-sm text-muted-foreground">{row.type}</TableCell>
+                      <TableCell className="px-4 py-4 text-sm text-foreground">{row.details}</TableCell>
                       <TableCell
                         className={cn(
                           "px-4 py-4 text-right text-sm font-semibold tabular-nums",
-                          row.amount >= 0 ? "text-emerald-600" : "text-slate-800",
+                          row.amount >= 0 ? "text-emerald-600" : "text-foreground",
                         )}
                       >
                         {row.amount >= 0 ? "+" : ""}
                         {formatCurrency(Math.abs(row.amount))}
                       </TableCell>
-                      <TableCell className="px-4 py-4 text-sm text-slate-600">
+                      <TableCell className="px-4 py-4 text-sm text-muted-foreground">
                         {formatUserDateTime(row.date, timezone, "MMM d, yyyy HH:mm")}
                       </TableCell>
                       <TableCell className="px-6 py-4">
@@ -263,11 +263,11 @@ export function AdvertiserCpaWallet({
           ).map((period) => (
             <div
               key={period.label}
-              className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+              className="rounded-2xl border border-border bg-card p-5 shadow-sm"
             >
               <div className="mb-4 flex items-center gap-2">
                 <Banknote className="h-4 w-4 text-[var(--theme-primary)]" />
-                <h3 className="font-semibold text-slate-900">{period.label}</h3>
+                <h3 className="font-semibold text-foreground">{period.label}</h3>
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="rounded-xl border border-emerald-100 bg-emerald-50/60 px-4 py-3">
@@ -276,9 +276,9 @@ export function AdvertiserCpaWallet({
                     {formatCurrency(period.data.earnings)}
                   </p>
                 </div>
-                <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-                  <p className="text-xs uppercase tracking-wide text-slate-500">Withdrawals</p>
-                  <p className="mt-1 text-xl font-bold text-slate-800">
+                <div className="rounded-xl border border-border bg-muted px-4 py-3">
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Withdrawals</p>
+                  <p className="mt-1 text-xl font-bold text-foreground">
                     {formatCurrency(period.data.withdrawals)}
                   </p>
                 </div>

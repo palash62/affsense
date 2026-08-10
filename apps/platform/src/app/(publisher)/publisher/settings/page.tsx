@@ -81,8 +81,8 @@ export default async function PublisherSettingsPage() {
               </AvatarFallback>
             </Avatar>
             <div>
-              <h2 className="text-xl font-bold text-slate-900">{user.name}</h2>
-              <p className="text-sm text-slate-500">{user.email}</p>
+              <h2 className="text-xl font-bold text-foreground">{user.name}</h2>
+              <p className="text-sm text-muted-foreground">{user.email}</p>
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 <UserStatusBadge status={user.status} />
                 <Badge variant="outline" className="border-indigo-200 bg-indigo-50 text-indigo-700 capitalize">
@@ -95,13 +95,13 @@ export default async function PublisherSettingsPage() {
             </div>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
-            <div className="rounded-xl border border-slate-200 bg-slate-50/60 px-4 py-3">
-              <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Traffic source</p>
-              <p className="mt-1 text-sm font-semibold text-slate-900">{trafficSource || "—"}</p>
+            <div className="rounded-xl border border-border bg-muted/60 px-4 py-3">
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Traffic source</p>
+              <p className="mt-1 text-sm font-semibold text-foreground">{trafficSource || "—"}</p>
             </div>
-            <div className="rounded-xl border border-slate-200 bg-slate-50/60 px-4 py-3">
-              <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Member since</p>
-              <p className="mt-1 text-sm font-semibold text-slate-900">{memberSince}</p>
+            <div className="rounded-xl border border-border bg-muted/60 px-4 py-3">
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Member since</p>
+              <p className="mt-1 text-sm font-semibold text-foreground">{memberSince}</p>
             </div>
           </div>
         </div>

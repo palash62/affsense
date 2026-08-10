@@ -48,9 +48,9 @@ export function ReportsPeriodFilters({
   }
 
   return (
-    <div className="flex flex-wrap items-end gap-3 border-b border-slate-100 bg-slate-50/50 px-4 py-4 sm:px-6">
+    <div className="flex flex-wrap items-end gap-3 border-b border-border bg-muted/50 px-4 py-4 sm:px-6">
       <div className="space-y-1.5">
-        <label className="text-xs font-medium text-slate-500">From</label>
+        <label className="text-xs font-medium text-muted-foreground">From</label>
         <Input
           type="date"
           value={dateFrom}
@@ -59,7 +59,7 @@ export function ReportsPeriodFilters({
         />
       </div>
       <div className="space-y-1.5">
-        <label className="text-xs font-medium text-slate-500">To</label>
+        <label className="text-xs font-medium text-muted-foreground">To</label>
         <Input
           type="date"
           value={dateTo}

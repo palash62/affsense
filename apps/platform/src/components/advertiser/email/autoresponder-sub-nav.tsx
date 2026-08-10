@@ -55,11 +55,11 @@ export function AutoresponderSubNav() {
   return (
     <nav
       aria-label="Autoresponder"
-      className="w-full shrink-0 rounded-2xl border border-slate-200/80 bg-white p-3 shadow-sm lg:sticky lg:top-4 lg:w-56 lg:self-start"
+      className="w-full shrink-0 rounded-2xl border border-border bg-card p-3 shadow-sm lg:sticky lg:top-4 lg:w-56 lg:self-start"
     >
       <div className="mb-2 flex items-center gap-2 px-1 lg:mb-3">
         <Mail className="h-4 w-4 text-[var(--theme-primary)]" />
-        <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Autoresponder
         </span>
       </div>
@@ -75,7 +75,7 @@ export function AutoresponderSubNav() {
                 "flex shrink-0 items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                 active
                   ? "bg-[var(--theme-primary-soft)] text-[var(--theme-primary)]"
-                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground",
               )}
             >
               <Icon className="h-4 w-4 shrink-0" />

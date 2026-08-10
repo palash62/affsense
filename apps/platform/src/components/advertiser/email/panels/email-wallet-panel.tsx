@@ -124,7 +124,7 @@ export function EmailWalletPanel() {
               className="bg-white"
             />
             {snapshot ? (
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-muted-foreground">
                 ≈{" "}
                 {Math.floor(Number(amount || 0) * snapshot.emailsPerDollar).toLocaleString()}{" "}
                 emails at current rate · ${snapshot.emailCostUsd.toFixed(4)} / email

@@ -185,7 +185,7 @@ export default async function AdminLeadsPage({ searchParams }: PageProps) {
         icon={FileText}
         gradient="leads"
       >
-        <Suspense fallback={<div className="px-6 py-4 text-sm text-slate-500">Loading filters...</div>}>
+        <Suspense fallback={<div className="px-6 py-4 text-sm text-muted-foreground">Loading filters...</div>}>
           <AdminLeadDetailsFilters
             campaigns={campaigns}
             advertisers={advertisers}
@@ -204,7 +204,7 @@ export default async function AdminLeadsPage({ searchParams }: PageProps) {
           />
         </Suspense>
 
-        <div className="border-t border-slate-100 px-6 py-4">
+        <div className="border-t border-border px-6 py-4">
           <Link href="/admin/fraud" className="text-sm font-medium text-[var(--theme-primary)] hover:underline">
             Open Fraud Center for high-risk review →
           </Link>

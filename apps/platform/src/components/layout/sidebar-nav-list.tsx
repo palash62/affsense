@@ -22,6 +22,15 @@ function isRootHref(href: string) {
 
 /** True when pathname belongs under this nav item (prefix match, excluding role roots). */
 function isItemActive(pathname: string, href: string) {
+  if (href === "/admin/offer-network") {
+    return (
+      pathname === "/admin/offer-network" ||
+      pathname.startsWith("/admin/offer-network/") ||
+      pathname === "/admin/cpa-offers/new" ||
+      pathname.startsWith("/admin/cpa-offers/new/") ||
+      /^\/admin\/cpa-offers\/[^/]+\/edit$/.test(pathname)
+    );
+  }
   if (pathname === href) return true;
   if (isRootHref(href)) return false;
   return pathname.startsWith(href);
@@ -48,6 +57,44 @@ function isChildActive(pathname: string, child: NavItem, siblings: NavItem[]) {
   }
   if (child.href === "/admin/global-postback") {
     return pathname === "/admin/global-postback" || pathname.startsWith("/admin/global-postback/");
+  }
+  if (child.href === "/admin/publishers") {
+    return (
+      pathname === "/admin/publishers" || pathname.startsWith("/admin/publishers/")
+    );
+  }
+  if (child.href === "/admin/users") {
+    return pathname === "/admin/users" || pathname.startsWith("/admin/users/");
+  }
+  if (child.href === "/admin/digital-products") {
+    return pathname === "/admin/digital-products";
+  }
+  if (child.href === "/admin/digital-products/new") {
+    return (
+      pathname === "/admin/digital-products/new" ||
+      pathname.startsWith("/admin/digital-products/new/")
+    );
+  }
+  if (child.href === "/admin/digital-products/categories") {
+    return (
+      pathname === "/admin/digital-products/categories" ||
+      pathname.startsWith("/admin/digital-products/categories/")
+    );
+  }
+  if (child.href === "/admin/get-paid-tasks") {
+    return pathname === "/admin/get-paid-tasks";
+  }
+  if (child.href === "/admin/get-paid-tasks/new") {
+    return (
+      pathname === "/admin/get-paid-tasks/new" ||
+      pathname.startsWith("/admin/get-paid-tasks/new/")
+    );
+  }
+  if (child.href === "/admin/get-paid-tasks/categories") {
+    return (
+      pathname === "/admin/get-paid-tasks/categories" ||
+      pathname.startsWith("/admin/get-paid-tasks/categories/")
+    );
   }
   if (child.href === "/advertiser/cpa-offers/dashboard") {
     return pathname === "/advertiser/cpa-offers/dashboard" || pathname.startsWith("/advertiser/cpa-offers/dashboard/");
@@ -119,8 +166,8 @@ function NavGroup({
           className={cn(
             "flex w-full items-center justify-center rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 outline-none",
             groupActive
-              ? "bg-white shadow-sm text-[var(--theme-sidebar-active-text)]"
-              : "text-blue-100/90 hover:bg-white/10 hover:text-white",
+              ? "sidebar-nav-link-active bg-gradient-to-r from-[var(--theme-sidebar-active-from)] to-[var(--theme-sidebar-active-to)] text-white shadow-sm"
+              : "text-white/60 hover:bg-white/5 hover:text-white [&_svg]:text-white/50",
           )}
           aria-label={item.label}
         >
@@ -129,9 +176,9 @@ function NavGroup({
         <DropdownMenuContent
           side="right"
           align="start"
-          className="min-w-[11rem] rounded-xl border-slate-200 bg-white p-1.5 shadow-lg"
+          className="min-w-[11rem] rounded-xl border-border bg-white p-1.5 shadow-lg"
         >
-          <p className="px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+          <p className="px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
             {item.label}
           </p>
           {children.map((child) => {
@@ -142,7 +189,7 @@ function NavGroup({
                 key={child.href + child.label}
                 className={cn(
                   "cursor-pointer gap-2 rounded-lg",
-                  active && "bg-slate-100 font-medium text-slate-900",
+                  active && "bg-muted font-medium text-foreground",
                 )}
                 render={
                   <Link
@@ -174,15 +221,15 @@ function NavGroup({
         className={cn(
           "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
           groupActive
-            ? "bg-white/15 text-white"
-            : "text-blue-100/90 hover:bg-white/10 hover:text-white",
+            ? "bg-white/10 text-white"
+            : "text-white/60 hover:bg-white/5 hover:text-white [&_svg]:text-white/50",
         )}
       >
         <ParentIcon className="h-4 w-4 shrink-0" />
         <span className="flex-1 text-left">{item.label}</span>
         <ChevronDown
           className={cn(
-            "h-4 w-4 shrink-0 opacity-70 transition-transform duration-200",
+            "h-4 w-4 shrink-0 text-white/40 transition-transform duration-200",
             open && "rotate-180",
           )}
         />
@@ -211,8 +258,8 @@ function NavGroup({
                   className={cn(
                     "flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium transition-all duration-150",
                     active
-                      ? "bg-white shadow-sm text-[var(--theme-sidebar-active-text)]"
-                      : "text-blue-100/80 hover:bg-white/10 hover:text-white",
+                      ? "sidebar-nav-link-active bg-gradient-to-r from-[var(--theme-sidebar-active-from)] to-[var(--theme-sidebar-active-to)] text-white shadow-sm"
+                      : "text-white/60 hover:bg-white/5 hover:text-white",
                   )}
                 >
                   <ChildIcon className="h-3.5 w-3.5 shrink-0 opacity-90" />
@@ -243,7 +290,7 @@ export function SidebarNavList({
   staffMenuAccess?: string[];
 }) {
   const pathname = usePathname();
-  const items = getNavForRole(role, {
+  const entries = getNavForRole(role, {
     canAccessCpaOffers,
     canAccessAutoresponder,
     staffMenuAccess,
@@ -251,7 +298,20 @@ export function SidebarNavList({
 
   return (
     <nav className="flex-1 space-y-0.5 overflow-y-auto p-3">
-      {items.map((item) => {
+      {entries.map((entry, index) => {
+        if (entry.kind === "section") {
+          if (collapsed) return null;
+          return (
+            <p
+              key={`section-${entry.label}-${index}`}
+              className="mb-1.5 mt-5 px-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/35 first:mt-2"
+            >
+              {entry.label}
+            </p>
+          );
+        }
+
+        const item = entry.item;
         if (item.children?.length) {
           return (
             <NavGroup
@@ -283,17 +343,9 @@ export function SidebarNavList({
 
 export function SidebarStatusCard() {
   return (
-    <div className="mx-3 mb-4 rounded-xl border border-white/10 bg-white/5 p-3.5">
-      <p className="text-[11px] font-medium uppercase tracking-wide text-blue-200/80">
-        Platform Status
-      </p>
-      <p className="mt-1 text-sm font-medium text-white">All systems operational</p>
-      <div className="mt-2.5 h-1 overflow-hidden rounded-full bg-white/15">
-        <div
-          className="h-full w-4/5 rounded-full"
-          style={{ backgroundColor: "var(--theme-success)" }}
-        />
-      </div>
+    <div className="mx-3 mb-4 rounded-xl border border-white/5 bg-white/5 px-3.5 py-2.5">
+      <p className="text-sm font-semibold text-white">Affsense Admin</p>
+      <p className="mt-0.5 text-[11px] text-white/45">Version 1.0.0</p>
     </div>
   );
 }

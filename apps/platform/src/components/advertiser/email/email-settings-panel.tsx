@@ -122,8 +122,8 @@ export function EmailSettingsPanel() {
         </div>
       ) : null}
 
-      <div className="max-w-xl space-y-4 rounded-xl border border-slate-200 bg-white p-6">
-        <h3 className="font-semibold text-slate-900">Sender details</h3>
+      <div className="max-w-xl space-y-4 rounded-xl border border-border bg-card p-6">
+        <h3 className="font-semibold text-foreground">Sender details</h3>
         <div>
           <Label>From name</Label>
           <Input
@@ -134,7 +134,7 @@ export function EmailSettingsPanel() {
         <div>
           <Label>Default from email</Label>
           {verifiedMailboxes.length === 0 ? (
-            <p className="mt-1 text-sm text-slate-600">
+            <p className="mt-1 text-sm text-muted-foreground">
               No verified sending emails yet.{" "}
               <Link
                 href="/advertiser/email/domains"
@@ -159,7 +159,7 @@ export function EmailSettingsPanel() {
               ))}
             </select>
           )}
-          <p className="mt-1 text-xs text-slate-500">
+          <p className="mt-1 text-xs text-muted-foreground">
             Automations use this address when an email action does not override the sender.
           </p>
         </div>
@@ -180,9 +180,9 @@ export function EmailSettingsPanel() {
         </Button>
       </div>
 
-      <div className="max-w-xl space-y-2 rounded-xl border border-slate-200 bg-white p-6">
-        <h3 className="font-semibold text-slate-900">Sending domain</h3>
-        <p className="text-sm text-slate-600">
+      <div className="max-w-xl space-y-2 rounded-xl border border-border bg-card p-6">
+        <h3 className="font-semibold text-foreground">Sending domain</h3>
+        <p className="text-sm text-muted-foreground">
           Add and verify custom domains for branded autoresponder mail on the Domain tab.
         </p>
         <Link
@@ -194,7 +194,7 @@ export function EmailSettingsPanel() {
       </div>
 
       <div
-        className="flex max-w-2xl gap-3 rounded-xl border px-4 py-3 text-sm text-slate-700"
+        className="flex max-w-2xl gap-3 rounded-xl border px-4 py-3 text-sm text-foreground"
         style={{
           borderColor: "color-mix(in srgb, var(--theme-primary) 20%, transparent)",
           background: "var(--theme-primary-soft)",

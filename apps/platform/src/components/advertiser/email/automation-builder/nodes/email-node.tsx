@@ -11,12 +11,12 @@ function EmailNodeComponent({ data }: NodeProps) {
   return (
     <div
       className={cn(
-        "min-w-[220px] max-w-[260px] rounded-2xl border bg-white px-4 py-3 shadow-sm transition-shadow",
+        "min-w-[220px] max-w-[260px] rounded-2xl border bg-card px-4 py-3 shadow-sm transition-shadow",
         d.hasError
           ? "border-red-300 ring-2 ring-red-500/15"
           : d.selected
             ? "border-emerald-500 ring-2 ring-emerald-500/20"
-            : "border-slate-200 hover:border-slate-300",
+            : "border-border hover:border-border",
       )}
     >
       <Handle
@@ -29,7 +29,7 @@ function EmailNodeComponent({ data }: NodeProps) {
           <span className="flex size-7 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700">
             <Mail className="size-3.5" />
           </span>
-          <span className="text-[11px] font-semibold tracking-wide text-slate-500 uppercase">
+          <span className="text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
             Email {d.order}
           </span>
         </div>
@@ -37,7 +37,7 @@ function EmailNodeComponent({ data }: NodeProps) {
           <AlertCircle className="size-3.5 text-red-500" />
         ) : null}
       </div>
-      <p className="truncate text-sm font-semibold text-slate-900">{d.templateName}</p>
+      <p className="truncate text-sm font-semibold text-foreground">{d.templateName}</p>
       <Handle
         type="source"
         position={Position.Bottom}

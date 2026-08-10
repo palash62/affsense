@@ -56,9 +56,9 @@ export function EmailMarketingConfigForm() {
 
   return (
     <div className="max-w-xl space-y-6">
-      <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-        <p className="text-sm font-medium text-slate-900">Autoresponder email pricing</p>
-        <p className="mt-1 text-sm text-slate-600">
+      <div className="rounded-lg border border-border bg-muted p-4">
+        <p className="text-sm font-medium text-foreground">Autoresponder email pricing</p>
+        <p className="mt-1 text-sm text-muted-foreground">
           Advertisers fund an Autoresponder wallet from their main wallet. Each
           successful marketing send consumes fund at this global rate.
         </p>
@@ -76,7 +76,7 @@ export function EmailMarketingConfigForm() {
           onChange={(e) => setEmailsPerDollar(e.target.value)}
           className="max-w-xs bg-white"
         />
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-muted-foreground">
           Cost per email: ${costPreview}
           {config ? ` · Daily send cap: ${config.maxSendsPerDay.toLocaleString()}` : null}
         </p>

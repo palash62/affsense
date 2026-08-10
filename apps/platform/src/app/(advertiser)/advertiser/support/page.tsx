@@ -15,7 +15,7 @@ export default function AdvertiserSupportPage() {
       />
 
       <div
-        className="flex gap-3 rounded-xl border px-4 py-3 text-sm text-slate-700"
+        className="flex gap-3 rounded-xl border px-4 py-3 text-sm text-foreground"
         style={{
           borderColor: "color-mix(in srgb, var(--theme-primary) 20%, transparent)",
           background: "var(--theme-primary-soft)",

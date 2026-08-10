@@ -38,20 +38,20 @@ export function EmailTemplatesPanel() {
     <div className="space-y-6">
       {loading ? (
         <div className="flex justify-center py-12">
-          <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
       ) : templates.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-slate-300 p-12 text-center">
-          <FileText className="mx-auto h-10 w-10 text-slate-300" />
-          <p className="mt-3 font-medium text-slate-900">No templates yet</p>
-          <p className="mt-1 text-sm text-slate-500">Starter templates are created on first visit.</p>
+        <div className="rounded-xl border border-dashed border-border p-12 text-center">
+          <FileText className="mx-auto h-10 w-10 text-muted-foreground" />
+          <p className="mt-3 font-medium text-foreground">No templates yet</p>
+          <p className="mt-1 text-sm text-muted-foreground">Starter templates are created on first visit.</p>
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {templates.map((t) => (
-            <div key={t.id} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-              <h3 className="font-semibold text-slate-900">{t.name}</h3>
-              <p className="mt-1 truncate text-sm text-slate-500">{t.subject}</p>
+            <div key={t.id} className="rounded-xl border border-border bg-card p-5 shadow-sm">
+              <h3 className="font-semibold text-foreground">{t.name}</h3>
+              <p className="mt-1 truncate text-sm text-muted-foreground">{t.subject}</p>
               <div className="mt-4 flex gap-2">
                 <ButtonLink href={`/advertiser/email/templates/${t.id}`} size="sm" variant="outline">
                   Edit

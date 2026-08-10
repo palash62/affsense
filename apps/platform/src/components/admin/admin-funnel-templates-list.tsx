@@ -153,7 +153,7 @@ export function AdminFunnelTemplatesList() {
         <DropdownMenuTrigger
           className={cn(
             buttonVariants({ variant: "secondary", size: "icon" }),
-            "h-8 w-8 bg-white/95 text-slate-600 shadow-sm hover:bg-white",
+            "h-8 w-8 bg-white/95 text-muted-foreground shadow-sm hover:bg-white",
           )}
         >
           <MoreHorizontal className="h-4 w-4" />
@@ -208,7 +208,7 @@ export function AdminFunnelTemplatesList() {
         </div>
       }
     >
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
         <FunnelListToolbar
           search={search}
           searchPlaceholder="Search for templates"
@@ -219,13 +219,13 @@ export function AdminFunnelTemplatesList() {
         />
 
         {loading ? (
-          <div className="px-6 py-12 text-sm text-slate-500">Loading templates...</div>
+          <div className="px-6 py-12 text-sm text-muted-foreground">Loading templates...</div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
-            <p className="text-sm font-medium text-slate-900">
+            <p className="text-sm font-medium text-foreground">
               {templates.length === 0 ? "No templates yet" : "No templates match your search"}
             </p>
-            <p className="mt-1 max-w-sm text-sm text-slate-500">
+            <p className="mt-1 max-w-sm text-sm text-muted-foreground">
               {templates.length === 0
                 ? "Create your first template to make reusable funnel layouts for advertisers."
                 : "Try a different search term."}
@@ -251,7 +251,7 @@ export function AdminFunnelTemplatesList() {
         )}
 
         {filtered.length > 0 && (
-          <div className="flex flex-wrap items-center justify-end gap-4 border-t border-slate-200 px-4 py-3 text-sm text-slate-500">
+          <div className="flex flex-wrap items-center justify-end gap-4 border-t border-border px-4 py-3 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
               <span>Rows per page</span>
               <Select
@@ -285,7 +285,7 @@ export function AdminFunnelTemplatesList() {
               >
                 Previous
               </Button>
-              <span className="flex h-8 min-w-8 items-center justify-center rounded-md border border-slate-200 px-2 text-slate-700">
+              <span className="flex h-8 min-w-8 items-center justify-center rounded-md border border-border px-2 text-foreground">
                 {currentPage}
               </span>
               <Button

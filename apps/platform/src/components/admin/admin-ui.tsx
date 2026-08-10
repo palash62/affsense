@@ -4,11 +4,11 @@ import { isPendingPayoutStatus, payoutStatusLabel } from "@/lib/payout-status";
 import { cn } from "@/lib/utils";
 
 export const avatarColors = [
-  "bg-blue-100 text-blue-700",
-  "bg-indigo-100 text-indigo-700",
-  "bg-violet-100 text-violet-700",
-  "bg-cyan-100 text-cyan-700",
-  "bg-sky-100 text-sky-700",
+  "bg-[var(--theme-primary-soft)] text-[var(--theme-primary)]",
+  "bg-[color-mix(in_srgb,var(--theme-accent-purple,#713BFF)_12%,white)] text-[var(--theme-accent-purple,#713BFF)]",
+  "bg-[color-mix(in_srgb,var(--theme-success)_12%,white)] text-[var(--theme-success)]",
+  "bg-[color-mix(in_srgb,var(--warning)_14%,white)] text-[var(--warning)]",
+  "bg-muted text-muted-foreground",
 ];
 
 export function getInitials(name: string) {
@@ -31,9 +31,9 @@ export function formatCurrency(value: number) {
 
 export function UserStatusBadge({ status }: { status: UserStatus }) {
   const styles: Record<UserStatus, string> = {
-    ACTIVE: "border-emerald-200 bg-emerald-50 text-emerald-700",
-    SUSPENDED: "border-red-200 bg-red-50 text-red-700",
-    PENDING: "border-amber-200 bg-amber-50 text-amber-700",
+    ACTIVE: "border-[color-mix(in_srgb,var(--success)_30%,transparent)] bg-[color-mix(in_srgb,var(--success)_10%,white)] text-[var(--success)]",
+    SUSPENDED: "border-[color-mix(in_srgb,var(--destructive)_30%,transparent)] bg-[color-mix(in_srgb,var(--destructive)_10%,white)] text-destructive",
+    PENDING: "border-[color-mix(in_srgb,var(--warning)_35%,transparent)] bg-[color-mix(in_srgb,var(--warning)_12%,white)] text-[var(--warning)]",
   };
 
   return (
@@ -50,8 +50,8 @@ export function EmailVerifiedBadge({ verified }: { verified: boolean }) {
       className={cn(
         "font-medium",
         verified
-          ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-          : "border-slate-200 bg-slate-50 text-slate-600",
+          ? "border-[color-mix(in_srgb,var(--success)_30%,transparent)] bg-[color-mix(in_srgb,var(--success)_10%,white)] text-[var(--success)]"
+          : "border-border bg-muted text-muted-foreground",
       )}
     >
       {verified ? "Email verified" : "Email not verified"}
@@ -61,16 +61,16 @@ export function EmailVerifiedBadge({ verified }: { verified: boolean }) {
 
 export function LeadStatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
-    CAPTURED: "border-slate-200 bg-slate-50 text-slate-600",
-    VALIDATING: "border-blue-200 bg-blue-50 text-blue-700",
-    PENDING: "border-amber-200 bg-amber-50 text-amber-700",
-    APPROVED: "border-emerald-200 bg-emerald-50 text-emerald-700",
-    REJECTED: "border-red-200 bg-red-50 text-red-700",
-    PAID: "border-violet-200 bg-violet-50 text-violet-700",
+    CAPTURED: "border-border bg-muted text-muted-foreground",
+    VALIDATING: "border-[color-mix(in_srgb,var(--primary)_30%,transparent)] bg-[var(--theme-primary-soft)] text-primary",
+    PENDING: "border-[color-mix(in_srgb,var(--warning)_35%,transparent)] bg-[color-mix(in_srgb,var(--warning)_12%,white)] text-[var(--warning)]",
+    APPROVED: "border-[color-mix(in_srgb,var(--success)_30%,transparent)] bg-[color-mix(in_srgb,var(--success)_10%,white)] text-[var(--success)]",
+    REJECTED: "border-[color-mix(in_srgb,var(--destructive)_30%,transparent)] bg-[color-mix(in_srgb,var(--destructive)_10%,white)] text-destructive",
+    PAID: "border-[color-mix(in_srgb,var(--theme-accent-purple,#713BFF)_30%,transparent)] bg-[color-mix(in_srgb,var(--theme-accent-purple,#713BFF)_10%,white)] text-[var(--theme-accent-purple,#713BFF)]",
   };
 
   return (
-    <Badge variant="outline" className={cn("font-medium capitalize", styles[status] ?? "border-slate-200 bg-slate-50 text-slate-600")}>
+    <Badge variant="outline" className={cn("font-medium capitalize", styles[status] ?? "border-border bg-muted text-muted-foreground")}>
       {status.toLowerCase()}
     </Badge>
   );
@@ -78,9 +78,9 @@ export function LeadStatusBadge({ status }: { status: string }) {
 
 export function DepositStatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
-    COMPLETED: "border-emerald-200 bg-emerald-50 text-emerald-700",
-    PENDING: "border-amber-200 bg-amber-50 text-amber-700",
-    FAILED: "border-red-200 bg-red-50 text-red-700",
+    COMPLETED: "border-[color-mix(in_srgb,var(--success)_30%,transparent)] bg-[color-mix(in_srgb,var(--success)_10%,white)] text-[var(--success)]",
+    PENDING: "border-[color-mix(in_srgb,var(--warning)_35%,transparent)] bg-[color-mix(in_srgb,var(--warning)_12%,white)] text-[var(--warning)]",
+    FAILED: "border-[color-mix(in_srgb,var(--destructive)_30%,transparent)] bg-[color-mix(in_srgb,var(--destructive)_10%,white)] text-destructive",
   };
 
   const labels: Record<string, string> = {
@@ -90,7 +90,7 @@ export function DepositStatusBadge({ status }: { status: string }) {
   };
 
   return (
-    <Badge variant="outline" className={cn("font-medium capitalize", styles[status] ?? "border-slate-200 bg-slate-50 text-slate-600")}>
+    <Badge variant="outline" className={cn("font-medium capitalize", styles[status] ?? "border-border bg-muted text-muted-foreground")}>
       {labels[status] ?? status.toLowerCase()}
     </Badge>
   );
@@ -98,12 +98,12 @@ export function DepositStatusBadge({ status }: { status: string }) {
 
 export function CampaignStatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
-    ACTIVE: "border-emerald-200 bg-emerald-50 text-emerald-700",
-    PENDING: "border-amber-200 bg-amber-50 text-amber-700",
-    PAUSED: "border-amber-200 bg-amber-50 text-amber-700",
-    DRAFT: "border-slate-200 bg-slate-50 text-slate-600",
-    COMPLETED: "border-red-200 bg-red-50 text-red-700",
-    ARCHIVED: "border-red-200 bg-red-50 text-red-700",
+    ACTIVE: "border-[color-mix(in_srgb,var(--success)_30%,transparent)] bg-[color-mix(in_srgb,var(--success)_10%,white)] text-[var(--success)]",
+    PENDING: "border-[color-mix(in_srgb,var(--warning)_35%,transparent)] bg-[color-mix(in_srgb,var(--warning)_12%,white)] text-[var(--warning)]",
+    PAUSED: "border-[color-mix(in_srgb,var(--warning)_35%,transparent)] bg-[color-mix(in_srgb,var(--warning)_12%,white)] text-[var(--warning)]",
+    DRAFT: "border-border bg-muted text-muted-foreground",
+    COMPLETED: "border-[color-mix(in_srgb,var(--destructive)_30%,transparent)] bg-[color-mix(in_srgb,var(--destructive)_10%,white)] text-destructive",
+    ARCHIVED: "border-[color-mix(in_srgb,var(--destructive)_30%,transparent)] bg-[color-mix(in_srgb,var(--destructive)_10%,white)] text-destructive",
   };
 
   const labels: Record<string, string> = {
@@ -114,7 +114,7 @@ export function CampaignStatusBadge({ status }: { status: string }) {
   };
 
   return (
-    <Badge variant="outline" className={cn("font-medium capitalize", styles[status] ?? "border-indigo-200 bg-indigo-50 text-indigo-700")}>
+    <Badge variant="outline" className={cn("font-medium capitalize", styles[status] ?? "border-[color-mix(in_srgb,var(--primary)_30%,transparent)] bg-[var(--theme-primary-soft)] text-primary")}>
       {labels[status] ?? status.toLowerCase()}
     </Badge>
   );
@@ -122,18 +122,18 @@ export function CampaignStatusBadge({ status }: { status: string }) {
 
 export function PayoutStatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
-    COMPLETED: "border-emerald-200 bg-emerald-50 text-emerald-700",
-    PENDING: "border-amber-200 bg-amber-50 text-amber-700",
-    REQUESTED: "border-amber-200 bg-amber-50 text-amber-700",
-    REJECTED: "border-red-200 bg-red-50 text-red-700",
-    PROCESSING: "border-blue-200 bg-blue-50 text-blue-700",
-    FAILED: "border-red-200 bg-red-50 text-red-700",
+    COMPLETED: "border-[color-mix(in_srgb,var(--success)_30%,transparent)] bg-[color-mix(in_srgb,var(--success)_10%,white)] text-[var(--success)]",
+    PENDING: "border-[color-mix(in_srgb,var(--warning)_35%,transparent)] bg-[color-mix(in_srgb,var(--warning)_12%,white)] text-[var(--warning)]",
+    REQUESTED: "border-[color-mix(in_srgb,var(--warning)_35%,transparent)] bg-[color-mix(in_srgb,var(--warning)_12%,white)] text-[var(--warning)]",
+    REJECTED: "border-[color-mix(in_srgb,var(--destructive)_30%,transparent)] bg-[color-mix(in_srgb,var(--destructive)_10%,white)] text-destructive",
+    PROCESSING: "border-[color-mix(in_srgb,var(--primary)_30%,transparent)] bg-[var(--theme-primary-soft)] text-primary",
+    FAILED: "border-[color-mix(in_srgb,var(--destructive)_30%,transparent)] bg-[color-mix(in_srgb,var(--destructive)_10%,white)] text-destructive",
   };
 
   const styleKey = isPendingPayoutStatus(status) ? "PENDING" : status;
 
   return (
-    <Badge variant="outline" className={cn("font-medium capitalize", styles[styleKey] ?? "border-slate-200 bg-slate-50 text-slate-600")}>
+    <Badge variant="outline" className={cn("font-medium capitalize", styles[styleKey] ?? "border-border bg-muted text-muted-foreground")}>
       {payoutStatusLabel(status)}
     </Badge>
   );
@@ -141,13 +141,13 @@ export function PayoutStatusBadge({ status }: { status: string }) {
 
 export function KycStatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
-    APPROVED: "border-emerald-200 bg-emerald-50 text-emerald-700",
-    PENDING: "border-amber-200 bg-amber-50 text-amber-700",
-    REJECTED: "border-red-200 bg-red-50 text-red-700",
+    APPROVED: "border-[color-mix(in_srgb,var(--success)_30%,transparent)] bg-[color-mix(in_srgb,var(--success)_10%,white)] text-[var(--success)]",
+    PENDING: "border-[color-mix(in_srgb,var(--warning)_35%,transparent)] bg-[color-mix(in_srgb,var(--warning)_12%,white)] text-[var(--warning)]",
+    REJECTED: "border-[color-mix(in_srgb,var(--destructive)_30%,transparent)] bg-[color-mix(in_srgb,var(--destructive)_10%,white)] text-destructive",
   };
 
   return (
-    <Badge variant="outline" className={cn("text-xs font-medium capitalize", styles[status] ?? "border-slate-200 bg-slate-50 text-slate-600")}>
+    <Badge variant="outline" className={cn("text-xs font-medium capitalize", styles[status] ?? "border-border bg-muted text-muted-foreground")}>
       KYC: {status.toLowerCase()}
     </Badge>
   );
@@ -161,14 +161,14 @@ export function spamScoreLevel(score: number): "low" | "medium" | "high" {
 
 export function SpamScoreBadge({ score }: { score: number | null | undefined }) {
   if (score === null || score === undefined) {
-    return <span className="text-sm text-slate-400">N/A</span>;
+    return <span className="text-sm text-muted-foreground">N/A</span>;
   }
 
   const level = spamScoreLevel(score);
   const styles = {
-    low: "border-emerald-200 bg-emerald-50 text-emerald-700",
-    medium: "border-amber-200 bg-amber-50 text-amber-800",
-    high: "border-red-200 bg-red-50 text-red-700",
+    low: "border-[color-mix(in_srgb,var(--success)_30%,transparent)] bg-[color-mix(in_srgb,var(--success)_10%,white)] text-[var(--success)]",
+    medium: "border-[color-mix(in_srgb,var(--warning)_35%,transparent)] bg-[color-mix(in_srgb,var(--warning)_12%,white)] text-[var(--warning)]",
+    high: "border-[color-mix(in_srgb,var(--destructive)_30%,transparent)] bg-[color-mix(in_srgb,var(--destructive)_10%,white)] text-destructive",
   } as const;
 
   return (
@@ -185,16 +185,16 @@ const SPAM_SCORE_GUIDE = [
 ];
 
 const spamGuideStyles = {
-  low: "border-emerald-200 bg-emerald-50 text-emerald-700",
-  medium: "border-amber-200 bg-amber-50 text-amber-800",
-  high: "border-red-200 bg-red-50 text-red-700",
+  low: "border-[color-mix(in_srgb,var(--success)_30%,transparent)] bg-[color-mix(in_srgb,var(--success)_10%,white)] text-[var(--success)]",
+  medium: "border-[color-mix(in_srgb,var(--warning)_35%,transparent)] bg-[color-mix(in_srgb,var(--warning)_12%,white)] text-[var(--warning)]",
+  high: "border-[color-mix(in_srgb,var(--destructive)_30%,transparent)] bg-[color-mix(in_srgb,var(--destructive)_10%,white)] text-destructive",
 } as const;
 
 export function SpamScoreGuide({ compact = false }: { compact?: boolean }) {
   if (compact) {
     return (
-      <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600">
-        <span className="font-medium text-slate-700">Score guide:</span>
+      <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+        <span className="font-medium text-foreground">Score guide:</span>
         {SPAM_SCORE_GUIDE.map((item) => (
           <span
             key={item.range}
@@ -208,9 +208,9 @@ export function SpamScoreGuide({ compact = false }: { compact?: boolean }) {
   }
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-4">
-      <p className="text-sm font-semibold text-slate-900">Spam score guide</p>
-      <p className="mt-1 text-xs text-slate-500">
+    <div className="rounded-xl border border-border bg-muted/80 p-4">
+      <p className="text-sm font-semibold text-foreground">Spam score guide</p>
+      <p className="mt-1 text-xs text-muted-foreground">
         30-day average lead risk (0 = safe, 100 = risky). Same scale as Fraud Center lead scores.
       </p>
       <div className="mt-3 grid gap-2 sm:grid-cols-3">

@@ -82,12 +82,12 @@ export function AdminCreateAdvertiserForm() {
         </p>
       )}
       {tempPassword && (
-        <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+        <div className="rounded-lg border border-border bg-muted px-3 py-2">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Temporary password
           </p>
           <div className="mt-2 flex flex-wrap items-center gap-2">
-            <span className="rounded-md bg-white px-3 py-1 text-sm font-semibold text-slate-900 shadow-sm">
+            <span className="rounded-md bg-card px-3 py-1 text-sm font-semibold text-foreground shadow-sm">
               {tempPassword}
             </span>
             <Button type="button" variant="outline" size="sm" onClick={copyPassword} className="gap-1">
@@ -98,8 +98,8 @@ export function AdminCreateAdvertiserForm() {
         </div>
       )}
 
-      <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
-        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+      <div className="rounded-xl border border-border bg-muted/60 p-4">
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           Advertiser details
         </p>
         <div className="mt-4 grid gap-4 md:grid-cols-2">
@@ -116,7 +116,7 @@ export function AdminCreateAdvertiserForm() {
           <div className="space-y-2">
             <Label htmlFor="advertiser-email">Email</Label>
             <div className="relative">
-              <MailPlus className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <MailPlus className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 id="advertiser-email"
                 type="email"
@@ -132,7 +132,7 @@ export function AdminCreateAdvertiserForm() {
           <div className="space-y-2">
             <Label htmlFor="advertiser-company">Company</Label>
             <div className="relative">
-              <Building2 className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Building2 className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 id="advertiser-company"
                 value={company}
@@ -162,7 +162,7 @@ export function AdminCreateAdvertiserForm() {
           value={status}
           onChange={(e) => setStatus(e.target.value)}
           className={cn(
-            "h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 shadow-sm outline-none",
+            "h-10 w-full rounded-lg border border-border bg-card px-3 text-sm text-foreground shadow-sm outline-none",
             "focus:border-[var(--theme-primary)] focus:ring-2 focus:ring-[var(--theme-primary)]/15",
           )}
         >

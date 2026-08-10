@@ -172,7 +172,7 @@ function FlowInner({ state, flowApiRef }: Props) {
       minZoom={0.4}
       maxZoom={1.6}
       proOptions={{ hideAttribution: true }}
-      className="bg-[radial-gradient(ellipse_at_top,_#f8fafc_0%,_#eef2f7_55%,_#e8eef5_100%)]"
+      className="bg-[radial-gradient(ellipse_at_top,_var(--background)_0%,_#eef2f7_55%,_#e8eef5_100%)]"
       defaultEdgeOptions={{
         style: { stroke: "#94a3b8", strokeWidth: 2 },
       }}
@@ -180,14 +180,14 @@ function FlowInner({ state, flowApiRef }: Props) {
       <Background gap={20} size={1} color="#cbd5e1" />
       <Controls
         showInteractive={false}
-        className="!overflow-hidden !rounded-xl !border-slate-200 !bg-white !shadow-sm"
+        className="!overflow-hidden !rounded-xl !border-border !bg-white !shadow-sm"
       />
       <MiniMap
-        className="!overflow-hidden !rounded-xl !border-slate-200 !bg-white/90 !shadow-sm"
+        className="!overflow-hidden !rounded-xl !border-border !bg-card/90 !shadow-sm"
         nodeColor={(n) => {
           if (n.type === NODE.trigger) return "#f59e0b";
           if (n.type === NODE.wait) return "#8b5cf6";
-          if (n.type === NODE.email) return "#10b981";
+          if (n.type === NODE.email) return "var(--theme-success)";
           return "#94a3b8";
         }}
         maskColor="rgb(15 23 42 / 0.08)"

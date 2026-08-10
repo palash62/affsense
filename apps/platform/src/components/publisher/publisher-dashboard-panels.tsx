@@ -35,7 +35,7 @@ export function PublisherRecentLeadsTable({
       gradient="leads"
     >
       {leads.length === 0 ? (
-        <div className="px-6 py-12 text-center text-sm text-slate-500">
+        <div className="px-6 py-12 text-center text-sm text-muted-foreground">
           No leads yet. Share your Smart Link to start generating leads.
         </div>
       ) : (
@@ -45,18 +45,18 @@ export function PublisherRecentLeadsTable({
               className="border-none hover:bg-transparent"
               style={{ background: "var(--theme-primary-soft)" }}
             >
-              <TableHead className="h-11 px-6 text-slate-600">Date</TableHead>
-              <TableHead className="h-11 px-4 text-right text-slate-600">Payout</TableHead>
-              <TableHead className="h-11 px-6 text-slate-600">Status</TableHead>
+              <TableHead className="h-11 px-6 text-muted-foreground">Date</TableHead>
+              <TableHead className="h-11 px-4 text-right text-muted-foreground">Payout</TableHead>
+              <TableHead className="h-11 px-6 text-muted-foreground">Status</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {leads.map((lead) => (
               <TableRow
                 key={lead.id}
-                className="border-slate-100 transition-colors hover:bg-blue-50/40"
+                className="border-border transition-colors hover:bg-blue-50/40"
               >
-                <TableCell className="whitespace-nowrap px-6 py-4 text-sm text-slate-600">
+                <TableCell className="whitespace-nowrap px-6 py-4 text-sm text-muted-foreground">
                   {formatUserDateTime(lead.createdAt, timezone, "MMM d, yyyy HH:mm")}
                 </TableCell>
                 <TableCell

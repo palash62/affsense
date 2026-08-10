@@ -24,7 +24,7 @@ export function CpaOfferThumb({
         src={thumbnailUrl}
         alt=""
         className={cn(
-          "shrink-0 rounded-md border border-slate-200 bg-slate-50 object-cover",
+          "shrink-0 rounded-md border border-border bg-muted object-cover",
           dim,
           className,
         )}
@@ -35,7 +35,7 @@ export function CpaOfferThumb({
   return (
     <div
       className={cn(
-        "flex shrink-0 items-center justify-center rounded-md border border-slate-200 bg-sky-50 font-semibold text-sky-800",
+        "flex shrink-0 items-center justify-center rounded-md border border-border bg-sky-50 font-semibold text-sky-800",
         dim,
         className,
       )}

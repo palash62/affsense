@@ -51,7 +51,7 @@ export function PublisherLeadsFilters() {
     (searchParams.has("page") && searchParams.get("page") !== "1");
 
   return (
-    <div className="border-b border-slate-100 bg-slate-50/80 px-4 py-2.5">
+    <div className="border-b border-border bg-muted/80 px-4 py-2.5">
       <div className="flex w-full flex-nowrap items-center gap-2 overflow-x-auto">
         <Select
           value={source}
@@ -61,7 +61,7 @@ export function PublisherLeadsFilters() {
             applyFilters({ source: next });
           }}
         >
-          <SelectTrigger className="h-8 w-[140px] rounded-md border-slate-200 bg-white text-xs">
+          <SelectTrigger className="h-8 w-[140px] rounded-md border-border bg-card text-xs">
             <SelectValue placeholder="Source" />
           </SelectTrigger>
           <SelectContent>
@@ -80,7 +80,7 @@ export function PublisherLeadsFilters() {
             variant="outline"
             onClick={clearFilters}
             disabled={isPending}
-            className="h-8 gap-1 rounded-md border-slate-200 bg-white px-2.5 text-xs"
+            className="h-8 gap-1 rounded-md border-border bg-card px-2.5 text-xs"
           >
             <FilterX className="h-3 w-3" />
             Clear

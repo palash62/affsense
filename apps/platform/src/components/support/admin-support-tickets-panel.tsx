@@ -146,7 +146,7 @@ export function AdminSupportTicketsPanel() {
   }
 
   if (loading) {
-    return <p className="text-slate-500">Loading tickets...</p>;
+    return <p className="text-muted-foreground">Loading tickets...</p>;
   }
 
   return (
@@ -172,17 +172,17 @@ export function AdminSupportTicketsPanel() {
                 style={{ background: "var(--theme-primary-soft)" }}
               >
                 <TableHead className="h-11 w-10 px-4" />
-                <TableHead className="h-11 px-4 text-slate-600">User</TableHead>
-                <TableHead className="h-11 px-4 text-slate-600">Subject</TableHead>
-                <TableHead className="h-11 px-4 text-slate-600">Category</TableHead>
-                <TableHead className="h-11 px-4 text-slate-600">Status</TableHead>
-                <TableHead className="h-11 px-4 text-slate-600">Last Message</TableHead>
+                <TableHead className="h-11 px-4 text-muted-foreground">User</TableHead>
+                <TableHead className="h-11 px-4 text-muted-foreground">Subject</TableHead>
+                <TableHead className="h-11 px-4 text-muted-foreground">Category</TableHead>
+                <TableHead className="h-11 px-4 text-muted-foreground">Status</TableHead>
+                <TableHead className="h-11 px-4 text-muted-foreground">Last Message</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {tickets.length === 0 ? (
                 <TableRow className="hover:bg-transparent">
-                  <TableCell colSpan={6} className="px-6 py-16 text-center text-slate-500">
+                  <TableCell colSpan={6} className="px-6 py-16 text-center text-muted-foreground">
                     No support tickets yet
                   </TableCell>
                 </TableRow>
@@ -195,14 +195,14 @@ export function AdminSupportTicketsPanel() {
                   return (
                     <Fragment key={ticket.id}>
                       <TableRow
-                        className="cursor-pointer border-slate-100 transition-colors hover:bg-blue-50/40"
+                        className="cursor-pointer border-border transition-colors hover:bg-blue-50/40"
                         onClick={() => toggleExpand(ticket.id)}
                       >
                         <TableCell className="px-4 py-4">
                           {isExpanded ? (
-                            <ChevronDown className="h-4 w-4 text-slate-500" />
+                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
                           ) : (
-                            <ChevronRight className="h-4 w-4 text-slate-500" />
+                            <ChevronRight className="h-4 w-4 text-muted-foreground" />
                           )}
                         </TableCell>
                         <TableCell className="px-4 py-4">
@@ -219,13 +219,13 @@ export function AdminSupportTicketsPanel() {
                                 </AvatarFallback>
                               </Avatar>
                               <div>
-                                <p className="text-sm font-medium text-slate-900">{ticket.user.name}</p>
-                                <p className="text-xs text-slate-500">{ticket.user.email}</p>
+                                <p className="text-sm font-medium text-foreground">{ticket.user.name}</p>
+                                <p className="text-xs text-muted-foreground">{ticket.user.email}</p>
                               </div>
                             </div>
                           )}
                         </TableCell>
-                        <TableCell className="px-4 py-4 font-medium text-slate-900">
+                        <TableCell className="px-4 py-4 font-medium text-foreground">
                           {ticket.subject}
                         </TableCell>
                         <TableCell className="px-4 py-4">
@@ -236,12 +236,12 @@ export function AdminSupportTicketsPanel() {
                         <TableCell className="px-4 py-4">
                           <Badge
                             variant="outline"
-                            className={SUPPORT_STATUS_STYLES[ticket.status] ?? "border-slate-200 bg-slate-50 text-slate-600"}
+                            className={SUPPORT_STATUS_STYLES[ticket.status] ?? "border-border bg-muted text-muted-foreground"}
                           >
                             {formatTicketStatus(ticket.status)}
                           </Badge>
                         </TableCell>
-                        <TableCell className="max-w-xs px-4 py-4 text-sm text-slate-600">
+                        <TableCell className="max-w-xs px-4 py-4 text-sm text-muted-foreground">
                           {lastMessage
                             ? truncateTicketMessage(lastMessage.body, 60)
                             : "—"}
@@ -249,9 +249,9 @@ export function AdminSupportTicketsPanel() {
                       </TableRow>
                       {isExpanded && (
                         <TableRow className="hover:bg-transparent">
-                          <TableCell colSpan={6} className="bg-slate-50/60 px-6 py-5">
+                          <TableCell colSpan={6} className="bg-muted/60 px-6 py-5">
                             <div onClick={(e) => e.stopPropagation()}>
-                              <div className="mb-4 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                              <div className="mb-4 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                                 <Users className="h-3.5 w-3.5" />
                                 <span>
                                   {ticket.user?.name} · {ticket.user?.role} ·{" "}
@@ -291,7 +291,7 @@ export function AdminSupportTicketsPanel() {
                                 hideReplyTrigger
                               />
                               {!isClosed && (
-                                <div className="mt-4 flex flex-wrap gap-2 border-t border-slate-200 pt-4">
+                                <div className="mt-4 flex flex-wrap gap-2 border-t border-border pt-4">
                                   <Button
                                     size="sm"
                                     variant="outline"
@@ -306,7 +306,7 @@ export function AdminSupportTicketsPanel() {
                                   <Button
                                     size="sm"
                                     variant="outline"
-                                    className="gap-1.5 border-slate-300 text-slate-700 hover:border-red-200 hover:bg-red-50 hover:text-red-700"
+                                    className="gap-1.5 border-border text-foreground hover:border-red-200 hover:bg-red-50 hover:text-red-700"
                                     disabled={closingId === ticket.id}
                                     onClick={() => closeTicket(ticket.id)}
                                   >

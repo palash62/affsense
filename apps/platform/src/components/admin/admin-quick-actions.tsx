@@ -73,7 +73,7 @@ const actions = [
 export function AdminQuickActions() {
   return (
     <div>
-      <h2 className="mb-3 text-sm font-semibold text-slate-700">Quick Actions</h2>
+      <h2 className="mb-3 text-sm font-semibold text-foreground">Quick Actions</h2>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4">
         {actions.map((action) => {
           const Icon = action.icon;
@@ -81,7 +81,7 @@ export function AdminQuickActions() {
             <Link
               key={action.href + action.label}
               href={action.href}
-              className="group flex items-start gap-3.5 rounded-[18px] border border-slate-200/80 bg-white p-4 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md"
+              className="group flex items-start gap-3.5 rounded-[18px] border border-border bg-card p-4 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-border hover:shadow-md"
             >
               <div
                 className={cn(
@@ -92,8 +92,8 @@ export function AdminQuickActions() {
                 <Icon className="h-5 w-5" />
               </div>
               <div className="min-w-0">
-                <p className="text-sm font-semibold text-slate-900">{action.label}</p>
-                <p className="mt-0.5 text-xs leading-relaxed text-slate-500">
+                <p className="text-sm font-semibold text-foreground">{action.label}</p>
+                <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
                   {action.description}
                 </p>
               </div>

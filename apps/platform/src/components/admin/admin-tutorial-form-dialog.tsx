@@ -104,7 +104,7 @@ export function AdminTutorialFormDialog({
               placeholder="Brief summary of what this video covers"
               rows={4}
               className={cn(
-                "w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none",
+                "w-full rounded-lg border border-border bg-card px-3 py-2 text-sm outline-none",
                 "focus:border-[var(--theme-primary)] focus:ring-2 focus:ring-[var(--theme-primary)]/15",
               )}
             />
@@ -161,7 +161,7 @@ export function AdminTutorialFormDialog({
           </div>
         </div>
 
-        <div className="flex justify-end gap-2 border-t border-slate-100 pt-4">
+        <div className="flex justify-end gap-2 border-t border-border pt-4">
           <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={loading}>
             Cancel
           </Button>

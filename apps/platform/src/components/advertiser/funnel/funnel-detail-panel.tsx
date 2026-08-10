@@ -258,7 +258,7 @@ export function FunnelDetailPanel({ initialFunnel, appUrl }: FunnelDetailPanelPr
       />
 
       <Tabs value="steps">
-        <TabsList className="h-auto w-full justify-start rounded-none border-b border-slate-200 bg-transparent p-0">
+        <TabsList className="h-auto w-full justify-start rounded-none border-b border-border bg-transparent p-0">
           <TabsTrigger
             value="steps"
             className="rounded-none border-b-2 border-transparent px-4 py-2.5 data-[state=active]:border-blue-600 data-[state=active]:bg-transparent data-[state=active]:text-blue-600 data-[state=active]:shadow-none"
@@ -358,12 +358,12 @@ export function FunnelDetailPanel({ initialFunnel, appUrl }: FunnelDetailPanelPr
                 </a>
               </div>
             )}
-            <Label className="text-xs font-medium text-slate-600">Public URL domain</Label>
+            <Label className="text-xs font-medium text-muted-foreground">Public URL domain</Label>
             <select
               value={domainDialogSelection ?? ""}
               disabled={savingDomain}
               onChange={(e) => setDomainDialogSelection(e.target.value || null)}
-              className="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-800"
+              className="h-9 w-full rounded-lg border border-border bg-card px-3 text-sm text-foreground"
             >
               <option value="">Default (platform domain)</option>
               {verifiedDomains.map((domain) => (
@@ -372,7 +372,7 @@ export function FunnelDetailPanel({ initialFunnel, appUrl }: FunnelDetailPanelPr
                 </option>
               ))}
             </select>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-muted-foreground">
               <Link href="/advertiser/domains" className="font-medium text-blue-600 hover:underline">
                 + Connect new domain
               </Link>

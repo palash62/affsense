@@ -36,13 +36,13 @@ export function AdvertiserPeriodFilter({ current }: { current: string }) {
           <Button
             variant="outline"
             disabled={isPending}
-            className="h-9 gap-2 rounded-lg border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm"
+            className="h-9 gap-2 rounded-lg border-border bg-card px-3 text-sm font-medium text-foreground shadow-sm"
           />
         }
       >
         <CalendarDays className="h-4 w-4 text-[var(--theme-primary)]" />
         {label}
-        <ChevronDown className="h-4 w-4 text-slate-400" />
+        <ChevronDown className="h-4 w-4 text-muted-foreground" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-44">
         <DropdownMenuRadioGroup value={current} onValueChange={setPeriod}>

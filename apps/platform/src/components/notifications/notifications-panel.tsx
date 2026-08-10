@@ -49,14 +49,14 @@ export function NotificationsPanel() {
     load();
   }
 
-  if (loading) return <p className="text-slate-500">Loading notifications...</p>;
+  if (loading) return <p className="text-muted-foreground">Loading notifications...</p>;
 
   const unread = notifications.filter((n) => !n.readAt).length;
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-muted-foreground">
           <span className="font-semibold text-[var(--theme-primary)]">{unread}</span> unread
         </p>
         {unread > 0 && (
@@ -74,9 +74,9 @@ export function NotificationsPanel() {
               className={`flex items-start justify-between px-6 py-4 transition-colors hover:bg-violet-50/30 ${!n.readAt ? "bg-[var(--theme-primary-soft)]/50" : ""}`}
             >
               <div>
-                <p className="font-medium text-slate-900">{n.title}</p>
-                <p className="text-sm text-slate-500">{n.body}</p>
-                <p className="mt-1 text-xs text-slate-400">
+                <p className="font-medium text-foreground">{n.title}</p>
+                <p className="text-sm text-muted-foreground">{n.body}</p>
+                <p className="mt-1 text-xs text-muted-foreground">
                   {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true })}
                 </p>
               </div>
@@ -93,7 +93,7 @@ export function NotificationsPanel() {
             </div>
           ))}
           {notifications.length === 0 && (
-            <p className="px-6 py-12 text-center text-slate-500">No notifications</p>
+            <p className="px-6 py-12 text-center text-muted-foreground">No notifications</p>
           )}
         </div>
       </PageSection>

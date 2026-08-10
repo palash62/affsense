@@ -87,7 +87,7 @@ export default async function AdvertiserCampaignsPage({ searchParams }: PageProp
       />
 
       <div
-        className="flex gap-3 rounded-xl border px-4 py-3 text-sm text-slate-700"
+        className="flex gap-3 rounded-xl border px-4 py-3 text-sm text-foreground"
         style={{
           borderColor: "color-mix(in srgb, var(--theme-primary) 20%, transparent)",
           background: "var(--theme-primary-soft)",
@@ -111,7 +111,7 @@ export default async function AdvertiserCampaignsPage({ searchParams }: PageProp
         icon={Megaphone}
         gradient="approved"
       >
-        <Suspense fallback={<div className="px-6 py-4 text-sm text-slate-500">Loading filters...</div>}>
+        <Suspense fallback={<div className="px-6 py-4 text-sm text-muted-foreground">Loading filters...</div>}>
           <AdvertiserCampaignsFilters />
         </Suspense>
 
@@ -123,10 +123,10 @@ export default async function AdvertiserCampaignsPage({ searchParams }: PageProp
             >
               <Megaphone className="h-7 w-7 text-[var(--theme-primary)]" />
             </div>
-            <h3 className="text-lg font-semibold text-slate-900">
+            <h3 className="text-lg font-semibold text-foreground">
               {hasFilters ? "No matching campaigns" : "No campaigns yet"}
             </h3>
-            <p className="mt-1 max-w-sm text-sm text-slate-500">
+            <p className="mt-1 max-w-sm text-sm text-muted-foreground">
               {hasFilters
                 ? "Try adjusting your search or date range."
                 : "Create your first campaign to start collecting leads from publishers."}
@@ -149,29 +149,29 @@ export default async function AdvertiserCampaignsPage({ searchParams }: PageProp
                   className="border-none hover:bg-transparent"
                   style={{ background: "var(--theme-primary-soft)" }}
                 >
-                  <TableHead className="h-11 w-[90px] px-6 text-slate-600">ID</TableHead>
-                  <TableHead className="h-11 px-4 text-slate-600">
+                  <TableHead className="h-11 w-[90px] px-6 text-muted-foreground">ID</TableHead>
+                  <TableHead className="h-11 px-4 text-muted-foreground">
                     <Suspense fallback={<span>Name</span>}>
                       <AdvertiserCampaignsSortHeader field="name" label="Name" />
                     </Suspense>
                   </TableHead>
-                  <TableHead className="h-11 px-4 text-right text-slate-600">
+                  <TableHead className="h-11 px-4 text-right text-muted-foreground">
                     <Suspense fallback={<span>Leads</span>}>
                       <AdvertiserCampaignsSortHeader field="leads" label="Leads" align="right" />
                     </Suspense>
                   </TableHead>
-                  <TableHead className="h-11 px-4 text-right text-slate-600">
+                  <TableHead className="h-11 px-4 text-right text-muted-foreground">
                     <Suspense fallback={<span>CPL</span>}>
                       <AdvertiserCampaignsSortHeader field="cpl" label="CPL" align="right" />
                     </Suspense>
                   </TableHead>
-                  <TableHead className="h-11 px-4 text-right text-slate-600">
+                  <TableHead className="h-11 px-4 text-right text-muted-foreground">
                     <Suspense fallback={<span>Cost</span>}>
                       <AdvertiserCampaignsSortHeader field="spent" label="Cost" align="right" />
                     </Suspense>
                   </TableHead>
-                  <TableHead className="h-11 px-4 text-slate-600">Status</TableHead>
-                  <TableHead className="h-11 min-w-[220px] px-6 text-right text-slate-600">
+                  <TableHead className="h-11 px-4 text-muted-foreground">Status</TableHead>
+                  <TableHead className="h-11 min-w-[220px] px-6 text-right text-muted-foreground">
                     Actions
                   </TableHead>
                 </TableRow>
@@ -180,14 +180,14 @@ export default async function AdvertiserCampaignsPage({ searchParams }: PageProp
                 {campaigns.map((c) => (
                   <TableRow
                     key={c.id}
-                    className="border-slate-100 transition-colors hover:bg-blue-50/40"
+                    className="border-border transition-colors hover:bg-blue-50/40"
                   >
-                    <TableCell className="px-6 py-4 font-mono text-xs text-slate-500">
+                    <TableCell className="px-6 py-4 font-mono text-xs text-muted-foreground">
                       {shortId(c.id)}
                     </TableCell>
                     <TableCell className="px-4 py-4">
-                      <p className="font-medium text-slate-900">{c.name}</p>
-                      <p className="text-xs capitalize text-slate-500">{c.category.toLowerCase()}</p>
+                      <p className="font-medium text-foreground">{c.name}</p>
+                      <p className="text-xs capitalize text-muted-foreground">{c.category.toLowerCase()}</p>
                     </TableCell>
                     <TableCell className="px-4 py-4 text-right">
                       <span className="inline-flex min-w-8 items-center justify-center rounded-md bg-indigo-50 px-2.5 py-1 text-sm font-semibold text-indigo-700">
@@ -199,7 +199,7 @@ export default async function AdvertiserCampaignsPage({ searchParams }: PageProp
                         {formatCurrency(Number(c.cpl))}
                       </span>
                     </TableCell>
-                    <TableCell className="px-4 py-4 text-right text-sm font-medium text-slate-700">
+                    <TableCell className="px-4 py-4 text-right text-sm font-medium text-foreground">
                       {formatCurrency(Number(c.spent))}
                     </TableCell>
                     <TableCell className="px-4 py-4">

@@ -25,16 +25,16 @@ export function FunnelDetailHeader({
   return (
     <div className="flex flex-wrap items-center justify-between gap-4">
       <div className="flex min-w-0 items-center gap-3">
-        <ButtonLink href={backHref} variant="ghost" size="sm" className="shrink-0 text-slate-600">
+        <ButtonLink href={backHref} variant="ghost" size="sm" className="shrink-0 text-muted-foreground">
           <ArrowLeft className="mr-1.5 h-4 w-4" />
           Back
         </ButtonLink>
-        <h1 className="truncate text-xl font-semibold text-slate-900">{funnelName}</h1>
+        <h1 className="truncate text-xl font-semibold text-foreground">{funnelName}</h1>
         {statusLabel ? (
           <span
             className={
               statusClassName ??
-              "rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600"
+              "rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground"
             }
           >
             {statusLabel}
@@ -45,7 +45,7 @@ export function FunnelDetailHeader({
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger
-              className="inline-flex h-9 w-9 items-center justify-center rounded-md text-slate-500 opacity-50"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground opacity-50"
               disabled
             >
               <Share2 className="h-4 w-4" />

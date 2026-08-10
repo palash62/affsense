@@ -75,40 +75,40 @@ export function AdminDepositReviewDialog({ deposit }: { deposit: AdminDepositRow
         </DialogHeader>
 
         <div className="space-y-5">
-          <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
+          <div className="rounded-xl border border-border bg-muted/60 p-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="text-2xl font-bold text-emerald-600">
                   {formatCurrency(deposit.amount)}
                 </p>
-                <p className="text-sm text-slate-500">{formatDepositMethod(deposit.method)}</p>
+                <p className="text-sm text-muted-foreground">{formatDepositMethod(deposit.method)}</p>
               </div>
               <DepositStatusBadge status={status} />
             </div>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
-                <p className="text-xs text-slate-500">Submitted</p>
-                <p className="text-sm font-medium text-slate-900">
+              <div className="rounded-lg border border-border bg-card px-3 py-2">
+                <p className="text-xs text-muted-foreground">Submitted</p>
+                <p className="text-sm font-medium text-foreground">
                   {formatUserDateTime(deposit.createdAt, session?.user?.timezone, "MMM d, yyyy HH:mm")}
                 </p>
               </div>
-              <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
-                <p className="text-xs text-slate-500">Wise reference</p>
-                <p className="font-mono text-sm font-medium text-slate-900">
+              <div className="rounded-lg border border-border bg-card px-3 py-2">
+                <p className="text-xs text-muted-foreground">Wise reference</p>
+                <p className="font-mono text-sm font-medium text-foreground">
                   {deposit.wiseReference ?? "—"}
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="rounded-xl border border-slate-200 p-4">
-            <h4 className="mb-3 text-sm font-semibold text-slate-900">Advertiser</h4>
+          <div className="rounded-xl border border-border p-4">
+            <h4 className="mb-3 text-sm font-semibold text-foreground">Advertiser</h4>
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="flex items-start gap-2">
-                <User className="mt-0.5 h-4 w-4 text-slate-400" />
+                <User className="mt-0.5 h-4 w-4 text-muted-foreground" />
                 <div>
-                  <p className="text-sm font-medium text-slate-900">{deposit.user.name}</p>
-                  <p className="flex items-center gap-1 text-xs text-slate-500">
+                  <p className="text-sm font-medium text-foreground">{deposit.user.name}</p>
+                  <p className="flex items-center gap-1 text-xs text-muted-foreground">
                     <Mail className="h-3 w-3" />
                     {deposit.user.email}
                   </p>
@@ -116,11 +116,11 @@ export function AdminDepositReviewDialog({ deposit }: { deposit: AdminDepositRow
               </div>
               {profile && (
                 <div className="flex items-start gap-2">
-                  <Building2 className="mt-0.5 h-4 w-4 text-slate-400" />
+                  <Building2 className="mt-0.5 h-4 w-4 text-muted-foreground" />
                   <div>
-                    <p className="text-sm font-medium text-slate-900">{profile.company}</p>
+                    <p className="text-sm font-medium text-foreground">{profile.company}</p>
                     {profile.industry && (
-                      <p className="text-xs text-slate-500">{profile.industry}</p>
+                      <p className="text-xs text-muted-foreground">{profile.industry}</p>
                     )}
                   </div>
                 </div>
@@ -128,21 +128,21 @@ export function AdminDepositReviewDialog({ deposit }: { deposit: AdminDepositRow
             </div>
           </div>
 
-          <div className="rounded-xl border border-slate-200 p-4">
-            <h4 className="mb-3 text-sm font-semibold text-slate-900">Payment details</h4>
+          <div className="rounded-xl border border-border p-4">
+            <h4 className="mb-3 text-sm font-semibold text-foreground">Payment details</h4>
             <dl className="grid gap-2 text-sm">
               <div className="flex justify-between gap-4">
-                <dt className="text-slate-500">Payer name</dt>
-                <dd className="font-medium text-slate-900">{details?.payerName ?? "—"}</dd>
+                <dt className="text-muted-foreground">Payer name</dt>
+                <dd className="font-medium text-foreground">{details?.payerName ?? "—"}</dd>
               </div>
               <div className="flex justify-between gap-4">
-                <dt className="text-slate-500">Advertiser note</dt>
-                <dd className="max-w-xs text-right font-medium text-slate-900">{details?.note ?? "—"}</dd>
+                <dt className="text-muted-foreground">Advertiser note</dt>
+                <dd className="max-w-xs text-right font-medium text-foreground">{details?.note ?? "—"}</dd>
               </div>
               {profile?.billingInfo != null && (
-                <div className="mt-2 rounded-lg border border-slate-100 bg-slate-50 px-3 py-2">
-                  <p className="text-xs font-medium text-slate-500">Billing profile</p>
-                  <pre className="mt-1 whitespace-pre-wrap break-all text-xs text-slate-700">
+                <div className="mt-2 rounded-lg border border-border bg-muted px-3 py-2">
+                  <p className="text-xs font-medium text-muted-foreground">Billing profile</p>
+                  <pre className="mt-1 whitespace-pre-wrap break-all text-xs text-foreground">
                     {JSON.stringify(profile.billingInfo, null, 2)}
                   </pre>
                 </div>
@@ -157,13 +157,13 @@ export function AdminDepositReviewDialog({ deposit }: { deposit: AdminDepositRow
           )}
 
           {canDecide && (
-            <div className="space-y-3 border-t border-slate-100 pt-4">
+            <div className="space-y-3 border-t border-border pt-4">
               <textarea
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
                 placeholder="Rejection note (required if rejecting)"
                 rows={2}
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-[var(--theme-primary)] focus:ring-2 focus:ring-[var(--theme-primary)]/15"
+                className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-[var(--theme-primary)] focus:ring-2 focus:ring-[var(--theme-primary)]/15"
               />
               {error && <p className="text-sm text-red-600">{error}</p>}
               <div className="flex flex-wrap gap-2">

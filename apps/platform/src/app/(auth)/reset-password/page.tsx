@@ -75,7 +75,7 @@ function ResetPasswordForm() {
           type="password"
           value={newPassword}
           onChange={(e) => setNewPassword(e.target.value)}
-          className="rounded-xl border-slate-200 bg-transparent"
+          className="rounded-xl border-border bg-transparent"
           minLength={8}
           autoComplete="new-password"
           required
@@ -89,7 +89,7 @@ function ResetPasswordForm() {
           type="password"
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
-          className="rounded-xl border-slate-200 bg-transparent"
+          className="rounded-xl border-border bg-transparent"
           minLength={8}
           autoComplete="new-password"
           required

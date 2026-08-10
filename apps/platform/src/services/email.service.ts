@@ -183,7 +183,7 @@ export async function testSmtpConnection(testTo?: string) {
 
   const result = await sendEmail({
     to,
-    subject: mailgunReady ? "LeadVix Mailgun test" : "LeadVix SMTP test",
+    subject: mailgunReady ? "Affsense Mailgun test" : "Affsense SMTP test",
     html: `<p>Email test successful at ${new Date().toISOString()}</p>`,
     text: `Email test successful at ${new Date().toISOString()}`,
     template: "generic",

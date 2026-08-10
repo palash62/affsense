@@ -49,8 +49,8 @@ export function OptinFunnelTemplateCard({
   const page = templateToPreviewPage(template);
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:border-slate-300 hover:shadow-md">
-      <div className="relative aspect-[4/3] shrink-0 overflow-hidden bg-slate-100">
+    <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition hover:border-border hover:shadow-md">
+      <div className="relative aspect-[4/3] shrink-0 overflow-hidden bg-muted">
         <div className="pointer-events-none absolute left-1/2 top-0 h-[720px] w-[960px] origin-top -translate-x-1/2 scale-[0.34]">
           <OptinPageLayout
             page={page}
@@ -68,8 +68,8 @@ export function OptinFunnelTemplateCard({
 
       <div className="flex flex-1 flex-col gap-3 p-4">
         <div className="flex-1">
-          <p className="font-semibold text-slate-900">{template.name}</p>
-          <p className="mt-1 text-sm leading-relaxed text-slate-500">{template.description}</p>
+          <p className="font-semibold text-foreground">{template.name}</p>
+          <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{template.description}</p>
         </div>
         <Button className="w-full" disabled={loading} onClick={onUse}>
           <LayoutTemplate className="mr-1.5 h-4 w-4" />

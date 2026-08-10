@@ -41,7 +41,7 @@ function statusConfig(status: LeadStatus) {
     REJECTED: { icon: XCircle, color: "text-red-600", bg: "bg-red-50" },
     PENDING: { icon: Clock, color: "text-orange-600", bg: "bg-orange-50" },
   };
-  return map[status] ?? { icon: FileText, color: "text-slate-600", bg: "bg-slate-50" };
+  return map[status] ?? { icon: FileText, color: "text-muted-foreground", bg: "bg-muted" };
 }
 
 export function AdminActivityTimeline({
@@ -73,10 +73,10 @@ export function AdminActivityTimeline({
   }>;
 
   return (
-    <div className="rounded-[18px] border border-slate-200/80 bg-white p-6 shadow-sm transition-shadow duration-300 hover:shadow-md">
+    <div className="rounded-[18px] border border-border bg-card p-6 shadow-sm transition-shadow duration-300 hover:shadow-md">
       <div className="mb-5">
-        <h3 className="text-base font-semibold text-slate-900">Activity Timeline</h3>
-        <p className="mt-0.5 text-sm text-slate-500">Recent platform events</p>
+        <h3 className="text-base font-semibold text-foreground">Activity Timeline</h3>
+        <p className="mt-0.5 text-sm text-muted-foreground">Recent platform events</p>
       </div>
 
       <div className="space-y-0.5">
@@ -85,7 +85,7 @@ export function AdminActivityTimeline({
           return (
             <div
               key={event.id}
-              className="group flex gap-3.5 rounded-xl p-2.5 transition-colors duration-150 hover:bg-slate-50"
+              className="group flex gap-3.5 rounded-xl p-2.5 transition-colors duration-150 hover:bg-muted"
             >
               <div
                 className={cn(
@@ -96,8 +96,8 @@ export function AdminActivityTimeline({
                 <Icon className={cn("h-4 w-4", event.color)} />
               </div>
               <div className="min-w-0 flex-1 pb-3">
-                <p className="text-sm font-medium text-slate-800">{event.title}</p>
-                <p className="mt-0.5 text-xs text-slate-500">Requires attention</p>
+                <p className="text-sm font-medium text-foreground">{event.title}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">Requires attention</p>
               </div>
             </div>
           );
@@ -110,7 +110,7 @@ export function AdminActivityTimeline({
           return (
             <div
               key={lead.id}
-              className="group flex gap-3.5 rounded-xl p-2.5 transition-colors duration-150 hover:bg-slate-50"
+              className="group flex gap-3.5 rounded-xl p-2.5 transition-colors duration-150 hover:bg-muted"
             >
               <Avatar size="sm">
                 <AvatarFallback className={cn("text-xs font-semibold", config.bg, config.color)}>
@@ -120,11 +120,11 @@ export function AdminActivityTimeline({
               <div className="min-w-0 flex-1 pb-3">
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <p className="text-sm font-medium text-slate-800">
+                    <p className="text-sm font-medium text-foreground">
                       New lead on{" "}
                       <span className="text-[var(--theme-primary)]">{lead.campaign.name}</span>
                     </p>
-                    <p className="mt-0.5 text-xs text-slate-500">by {lead.publisher.name}</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">by {lead.publisher.name}</p>
                   </div>
                   <span
                     className={cn(
@@ -137,7 +137,7 @@ export function AdminActivityTimeline({
                     {lead.status.toLowerCase()}
                   </span>
                 </div>
-                <p className="mt-1 text-xs text-slate-400">
+                <p className="mt-1 text-xs text-muted-foreground">
                   {formatDistanceToNow(new Date(lead.createdAt), { addSuffix: true })}
                 </p>
               </div>
@@ -146,7 +146,7 @@ export function AdminActivityTimeline({
         })}
 
         {recentLeads.length === 0 && systemEvents.length === 0 && (
-          <p className="py-8 text-center text-sm text-slate-500">No recent activity</p>
+          <p className="py-8 text-center text-sm text-muted-foreground">No recent activity</p>
         )}
       </div>
     </div>

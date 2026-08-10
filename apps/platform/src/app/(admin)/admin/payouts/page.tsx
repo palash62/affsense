@@ -105,23 +105,23 @@ export default async function AdminPayoutsPage({ searchParams }: PageProps) {
                 className="border-none hover:bg-transparent"
                 style={{ background: "var(--theme-primary-soft)" }}
               >
-                <TableHead className="h-11 px-6 text-slate-600">Requested</TableHead>
-                <TableHead className="h-11 px-4 text-slate-600">Kind</TableHead>
-                <TableHead className="h-11 px-4 text-slate-600">User</TableHead>
-                <TableHead className="h-11 px-4 text-right text-slate-600">Amount</TableHead>
-                <TableHead className="h-11 px-4 text-slate-600">Method</TableHead>
-                <TableHead className="h-11 px-4 text-slate-600">Destination</TableHead>
-                <TableHead className="h-11 px-4 text-slate-600">Status</TableHead>
-                <TableHead className="h-11 px-6 text-right text-slate-600">Actions</TableHead>
+                <TableHead className="h-11 px-6 text-muted-foreground">Requested</TableHead>
+                <TableHead className="h-11 px-4 text-muted-foreground">Kind</TableHead>
+                <TableHead className="h-11 px-4 text-muted-foreground">User</TableHead>
+                <TableHead className="h-11 px-4 text-right text-muted-foreground">Amount</TableHead>
+                <TableHead className="h-11 px-4 text-muted-foreground">Method</TableHead>
+                <TableHead className="h-11 px-4 text-muted-foreground">Destination</TableHead>
+                <TableHead className="h-11 px-4 text-muted-foreground">Status</TableHead>
+                <TableHead className="h-11 px-6 text-right text-muted-foreground">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {pendingPayouts.map((payout) => (
                 <TableRow
                   key={payout.id}
-                  className="border-slate-100 transition-colors hover:bg-emerald-50/40"
+                  className="border-border transition-colors hover:bg-emerald-50/40"
                 >
-                  <TableCell className="px-6 py-4 text-sm text-slate-600">
+                  <TableCell className="px-6 py-4 text-sm text-muted-foreground">
                     {formatUserDateTime(payout.createdAt, tz, "MMM d, yyyy HH:mm")}
                   </TableCell>
                   <TableCell className="px-4 py-4">
@@ -130,18 +130,18 @@ export default async function AdminPayoutsPage({ searchParams }: PageProps) {
                     </Badge>
                   </TableCell>
                   <TableCell className="px-4 py-4">
-                    <p className="font-medium text-slate-900">{payout.publisher.name}</p>
-                    <p className="text-xs text-slate-500">{payout.publisher.email}</p>
+                    <p className="font-medium text-foreground">{payout.publisher.name}</p>
+                    <p className="text-xs text-muted-foreground">{payout.publisher.email}</p>
                   </TableCell>
                   <TableCell className="px-4 py-4 text-right">
                     <span className="text-lg font-bold text-emerald-600">
                       {formatCurrency(Number(payout.amount))}
                     </span>
                   </TableCell>
-                  <TableCell className="px-4 py-4 text-sm text-slate-600">
+                  <TableCell className="px-4 py-4 text-sm text-muted-foreground">
                     {formatPayoutMethod(payout.method)}
                   </TableCell>
-                  <TableCell className="max-w-[180px] truncate px-4 py-4 text-xs text-slate-500">
+                  <TableCell className="max-w-[180px] truncate px-4 py-4 text-xs text-muted-foreground">
                     {payoutDetailsSummary(payout.method, payout.paymentDetails)}
                   </TableCell>
                   <TableCell className="px-4 py-4">
@@ -176,8 +176,8 @@ export default async function AdminPayoutsPage({ searchParams }: PageProps) {
             >
               <Banknote className="h-7 w-7 text-[var(--theme-primary)]" />
             </div>
-            <h3 className="text-lg font-semibold text-slate-900">No payouts found</h3>
-            <p className="mt-1 max-w-sm text-sm text-slate-500">
+            <h3 className="text-lg font-semibold text-foreground">No payouts found</h3>
+            <p className="mt-1 max-w-sm text-sm text-muted-foreground">
               Try adjusting the publisher, status, or date filters.
             </p>
           </div>
@@ -190,24 +190,24 @@ export default async function AdminPayoutsPage({ searchParams }: PageProps) {
                     className="border-none hover:bg-transparent"
                     style={{ background: "var(--theme-primary-soft)" }}
                   >
-                    <TableHead className="h-11 px-6 text-slate-600">Requested</TableHead>
-                    <TableHead className="h-11 px-4 text-slate-600">Kind</TableHead>
-                <TableHead className="h-11 px-4 text-slate-600">User</TableHead>
-                    <TableHead className="h-11 px-4 text-right text-slate-600">Amount</TableHead>
-                    <TableHead className="h-11 px-4 text-slate-600">Method</TableHead>
-                    <TableHead className="h-11 px-4 text-slate-600">Destination</TableHead>
-                    <TableHead className="h-11 px-4 text-slate-600">Status</TableHead>
-                    <TableHead className="h-11 px-4 text-slate-600">Processed</TableHead>
-                    <TableHead className="h-11 px-6 text-right text-slate-600">Actions</TableHead>
+                    <TableHead className="h-11 px-6 text-muted-foreground">Requested</TableHead>
+                    <TableHead className="h-11 px-4 text-muted-foreground">Kind</TableHead>
+                <TableHead className="h-11 px-4 text-muted-foreground">User</TableHead>
+                    <TableHead className="h-11 px-4 text-right text-muted-foreground">Amount</TableHead>
+                    <TableHead className="h-11 px-4 text-muted-foreground">Method</TableHead>
+                    <TableHead className="h-11 px-4 text-muted-foreground">Destination</TableHead>
+                    <TableHead className="h-11 px-4 text-muted-foreground">Status</TableHead>
+                    <TableHead className="h-11 px-4 text-muted-foreground">Processed</TableHead>
+                    <TableHead className="h-11 px-6 text-right text-muted-foreground">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {history.data.map((payout) => (
                     <TableRow
                       key={payout.id}
-                      className="border-slate-100 transition-colors hover:bg-emerald-50/40"
+                      className="border-border transition-colors hover:bg-emerald-50/40"
                     >
-                      <TableCell className="px-6 py-4 text-sm text-slate-600">
+                      <TableCell className="px-6 py-4 text-sm text-muted-foreground">
                         {formatUserDateTime(payout.createdAt, tz, "MMM d, yyyy HH:mm")}
                       </TableCell>
                       <TableCell className="px-4 py-4">
@@ -216,10 +216,10 @@ export default async function AdminPayoutsPage({ searchParams }: PageProps) {
                         </Badge>
                       </TableCell>
                       <TableCell className="px-4 py-4">
-                        <p className="font-medium text-slate-900">{payout.publisher.name}</p>
-                        <p className="text-xs text-slate-500">{payout.publisher.email}</p>
+                        <p className="font-medium text-foreground">{payout.publisher.name}</p>
+                        <p className="text-xs text-muted-foreground">{payout.publisher.email}</p>
                         {payout.publisher.publisherProfile?.website && (
-                          <p className="text-xs text-slate-400">
+                          <p className="text-xs text-muted-foreground">
                             {payout.publisher.publisherProfile.website}
                           </p>
                         )}
@@ -229,10 +229,10 @@ export default async function AdminPayoutsPage({ searchParams }: PageProps) {
                           {formatCurrency(Number(payout.amount))}
                         </span>
                       </TableCell>
-                      <TableCell className="px-4 py-4 text-sm text-slate-600">
+                      <TableCell className="px-4 py-4 text-sm text-muted-foreground">
                         {formatPayoutMethod(payout.method)}
                       </TableCell>
-                      <TableCell className="max-w-[180px] truncate px-4 py-4 text-xs text-slate-500">
+                      <TableCell className="max-w-[180px] truncate px-4 py-4 text-xs text-muted-foreground">
                         {payoutDetailsSummary(payout.method, payout.paymentDetails)}
                       </TableCell>
                       <TableCell className="px-4 py-4">
@@ -243,7 +243,7 @@ export default async function AdminPayoutsPage({ searchParams }: PageProps) {
                           )}
                         </div>
                       </TableCell>
-                      <TableCell className="px-4 py-4 text-sm text-slate-600">
+                      <TableCell className="px-4 py-4 text-sm text-muted-foreground">
                         {payout.processedAt
                           ? formatUserDateTime(payout.processedAt, tz, "MMM d, yyyy HH:mm")
                           : "—"}

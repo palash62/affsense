@@ -28,7 +28,7 @@ const COUNTRY_OPTIONS = Object.keys(COUNTRY_BY_CODE).sort((a, b) =>
   getCountryName(a).localeCompare(getCountryName(b)),
 );
 
-const inputClassName = "rounded-xl border-slate-200 bg-transparent";
+const inputClassName = "rounded-xl border-border bg-transparent";
 
 export function RegisterForm() {
   const router = useRouter();
@@ -112,7 +112,7 @@ export function RegisterForm() {
       title="Create your account"
       description={
         isReferralSignup
-          ? "You were referred to join as an advertiser on LeadVix"
+          ? "You were referred to join as an advertiser on Affsense"
           : "Buy verified leads with pay-per-lead campaigns"
       }
     >

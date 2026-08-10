@@ -150,7 +150,7 @@ export function AdminFunnelTemplateDetailPanel({
       />
 
       <Tabs value="steps">
-        <TabsList className="h-auto w-full justify-start rounded-none border-b border-slate-200 bg-transparent p-0">
+        <TabsList className="h-auto w-full justify-start rounded-none border-b border-border bg-transparent p-0">
           <TabsTrigger
             value="steps"
             className="rounded-none border-b-2 border-transparent px-4 py-2.5 data-[state=active]:border-blue-600 data-[state=active]:bg-transparent data-[state=active]:text-blue-600 data-[state=active]:shadow-none"

@@ -166,7 +166,7 @@ export function AdminGlobalPostbackForm() {
   }
 
   if (loading) {
-    return <p className="text-sm text-slate-500">Loading postback settings…</p>;
+    return <p className="text-sm text-muted-foreground">Loading postback settings…</p>;
   }
 
   return (
@@ -177,9 +177,9 @@ export function AdminGlobalPostbackForm() {
         description="Configure postback security and parallel webhook delivery for CPA conversions."
       />
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
-        <h2 className="text-base font-semibold text-slate-900">Postback URL Info</h2>
-        <p className="mt-1 text-sm text-slate-500">
+      <section className="rounded-2xl border border-border bg-card p-5 sm:p-6">
+        <h2 className="text-base font-semibold text-foreground">Postback URL Info</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
           These settings apply platform-wide to inbound CPA network postbacks and optional parallel
           delivery. Inbound postbacks hit the <strong>tracking domain</strong> (not leadvix.io).
         </p>
@@ -187,8 +187,8 @@ export function AdminGlobalPostbackForm() {
         <div className="mt-6 space-y-5">
           <div className="grid gap-2 sm:grid-cols-[240px_minmax(0,1fr)] sm:items-start sm:gap-6">
             <div>
-              <Label className="text-sm font-semibold text-slate-800">Use Postback Security Key?</Label>
-              <p className="mt-1 text-xs text-slate-500">
+              <Label className="text-sm font-semibold text-foreground">Use Postback Security Key?</Label>
+              <p className="mt-1 text-xs text-muted-foreground">
                 Require networks to include <code className="font-mono">&amp;secure=&#123;key&#125;</code> on
                 inbound postbacks.
               </p>
@@ -211,8 +211,8 @@ export function AdminGlobalPostbackForm() {
 
           <div className="grid gap-2 sm:grid-cols-[240px_minmax(0,1fr)] sm:items-start sm:gap-6">
             <div>
-              <Label className="text-sm font-semibold text-slate-800">Postback Security Key</Label>
-              <p className="mt-1 text-xs text-slate-500">
+              <Label className="text-sm font-semibold text-foreground">Postback Security Key</Label>
+              <p className="mt-1 text-xs text-muted-foreground">
                 Include this parameter on S2S postbacks:{" "}
                 <code className="font-mono">&amp;secure=&#123;PostbackSecurityKey&#125;</code>
               </p>
@@ -227,8 +227,8 @@ export function AdminGlobalPostbackForm() {
 
           <div className="grid gap-2 sm:grid-cols-[240px_minmax(0,1fr)] sm:items-start sm:gap-6">
             <div>
-              <Label className="text-sm font-semibold text-slate-800">Parallel Postback</Label>
-              <p className="mt-1 text-xs text-slate-500">
+              <Label className="text-sm font-semibold text-foreground">Parallel Postback</Label>
+              <p className="mt-1 text-xs text-muted-foreground">
                 Optional webhook fired on every CPA conversion. Include {"{click_id}"} in the URL to
                 receive the platform click id on outbound fires.
               </p>
@@ -245,34 +245,34 @@ export function AdminGlobalPostbackForm() {
 
           <div className="grid gap-2 sm:grid-cols-[240px_minmax(0,1fr)] sm:items-start sm:gap-6">
             <div>
-              <Label className="text-sm font-semibold text-slate-800">S2S Postback Url</Label>
-              <p className="mt-1 text-xs text-slate-500">
+              <Label className="text-sm font-semibold text-foreground">S2S Postback Url</Label>
+              <p className="mt-1 text-xs text-muted-foreground">
                 Network-wide inbound URL on the tracking server. Replace {"{click_id}"} with a real
                 platform click id from a CPA tracking link — do not fire the macro literally.
               </p>
             </div>
-            <Input readOnly value={values.s2sPostbackUrlExample} className="bg-slate-50 font-mono text-xs" />
+            <Input readOnly value={values.s2sPostbackUrlExample} className="bg-muted font-mono text-xs" />
           </div>
 
           <div className="grid gap-2 sm:grid-cols-[240px_minmax(0,1fr)] sm:items-start sm:gap-6">
             <div>
-              <Label className="text-sm font-semibold text-slate-800">Impression pixel</Label>
+              <Label className="text-sm font-semibold text-foreground">Impression pixel</Label>
             </div>
             <Input
               readOnly
               value={values.impressionPixelExample}
-              className="bg-slate-50 font-mono text-xs"
+              className="bg-muted font-mono text-xs"
             />
           </div>
 
           <div className="grid gap-2 sm:grid-cols-[240px_minmax(0,1fr)] sm:items-start sm:gap-6">
             <div>
-              <Label className="text-sm font-semibold text-slate-800">Conversion pixel</Label>
+              <Label className="text-sm font-semibold text-foreground">Conversion pixel</Label>
             </div>
             <Input
               readOnly
               value={values.conversionPixelExample}
-              className="bg-slate-50 font-mono text-xs"
+              className="bg-muted font-mono text-xs"
             />
           </div>
         </div>
@@ -284,9 +284,9 @@ export function AdminGlobalPostbackForm() {
         </div>
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
-        <h2 className="text-base font-semibold text-slate-900">Test postback</h2>
-        <p className="mt-1 text-sm text-slate-500">
+      <section className="rounded-2xl border border-border bg-card p-5 sm:p-6">
+        <h2 className="text-base font-semibold text-foreground">Test postback</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
           Fire a real conversion against the tracking server using an existing CPA click. Outbound
           parallel and advertiser postbacks will run as in production.
         </p>
@@ -295,7 +295,7 @@ export function AdminGlobalPostbackForm() {
           <div className="space-y-2 sm:col-span-2">
             <Label>Recent CPA click</Label>
             {testClicksLoading ? (
-              <div className="flex h-10 items-center gap-2 text-sm text-slate-500">
+              <div className="flex h-10 items-center gap-2 text-sm text-muted-foreground">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 Loading clicks…
               </div>
@@ -369,37 +369,37 @@ export function AdminGlobalPostbackForm() {
         </div>
 
         {testResult && (
-          <div className="mt-6 space-y-4 rounded-xl border border-slate-100 bg-slate-50 p-4 text-sm">
+          <div className="mt-6 space-y-4 rounded-xl border border-border bg-muted p-4 text-sm">
             <div>
-              <p className="font-medium text-slate-800">Inbound URL</p>
-              <p className="mt-1 break-all font-mono text-xs text-slate-600">{testResult.testUrl}</p>
+              <p className="font-medium text-foreground">Inbound URL</p>
+              <p className="mt-1 break-all font-mono text-xs text-muted-foreground">{testResult.testUrl}</p>
             </div>
             <div>
-              <p className="font-medium text-slate-800">
+              <p className="font-medium text-foreground">
                 Tracking response (HTTP {testResult.httpStatus})
               </p>
-              <pre className="mt-1 overflow-x-auto rounded bg-white p-2 font-mono text-xs text-slate-700">
+              <pre className="mt-1 overflow-x-auto rounded bg-white p-2 font-mono text-xs text-foreground">
                 {JSON.stringify(testResult.response, null, 2)}
               </pre>
             </div>
             {testResult.deliveries.length > 0 ? (
               <div>
-                <p className="font-medium text-slate-800">Outbound deliveries</p>
+                <p className="font-medium text-foreground">Outbound deliveries</p>
                 <ul className="mt-2 space-y-2">
                   {testResult.deliveries.map((d) => (
-                    <li key={`${d.target}-${d.url}`} className="rounded border border-slate-200 bg-white p-2">
-                      <p className="font-medium text-slate-700">
+                    <li key={`${d.target}-${d.url}`} className="rounded border border-border bg-card p-2">
+                      <p className="font-medium text-foreground">
                         {d.target} — {d.status}
                         {d.httpStatus != null ? ` (HTTP ${d.httpStatus})` : ""}
                       </p>
-                      <p className="mt-1 break-all font-mono text-xs text-slate-600">{d.url}</p>
+                      <p className="mt-1 break-all font-mono text-xs text-muted-foreground">{d.url}</p>
                       {d.error ? <p className="mt-1 text-xs text-red-600">{d.error}</p> : null}
                     </li>
                   ))}
                 </ul>
               </div>
             ) : testResult.conversionId ? (
-              <p className="text-slate-500">Conversion recorded; no outbound deliveries logged.</p>
+              <p className="text-muted-foreground">Conversion recorded; no outbound deliveries logged.</p>
             ) : null}
           </div>
         )}

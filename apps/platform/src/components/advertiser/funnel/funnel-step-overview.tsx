@@ -135,9 +135,9 @@ export function FunnelStepOverview({
   }
 
   return (
-    <div className="flex flex-col rounded-xl border border-slate-200 bg-white shadow-sm">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
-        <h2 className="text-lg font-semibold capitalize text-slate-900">{stepName}</h2>
+    <div className="flex flex-col rounded-xl border border-border bg-card shadow-sm">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-4">
+        <h2 className="text-lg font-semibold capitalize text-foreground">{stepName}</h2>
         <div className="flex flex-wrap items-center gap-2">
           <ButtonLink href={editHref} size="default" className="h-8 gap-1.5 px-3">
             <Pencil className="h-4 w-4" />
@@ -174,8 +174,8 @@ export function FunnelStepOverview({
 
         <div className="flex gap-2">
           <div className="relative flex-1">
-            <Settings className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <Input readOnly value={previewUrl} className="h-10 border-slate-200 bg-slate-50 pl-9 pr-10 font-mono text-xs" />
+            <Settings className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input readOnly value={previewUrl} className="h-10 border-border bg-muted pl-9 pr-10 font-mono text-xs" />
           </div>
           <a
             href={previewHref}
@@ -188,10 +188,10 @@ export function FunnelStepOverview({
         </div>
 
         <div className="space-y-3">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Control</p>
-          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
-            <div className="bg-slate-50 p-4">
-              <div className="relative mx-auto aspect-[16/10] w-full max-w-md overflow-hidden rounded-lg border border-slate-200 bg-slate-100 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Control</p>
+          <div className="overflow-hidden rounded-xl border border-border bg-card">
+            <div className="bg-muted p-4">
+              <div className="relative mx-auto aspect-[16/10] w-full max-w-md overflow-hidden rounded-lg border border-border bg-muted shadow-sm">
                 {showCraft && !isBlankThankYou ? (
                   <OptinFunnelCraftThumbnail
                     key={`${stepId}-${thumbnailRevision}`}
@@ -202,7 +202,7 @@ export function FunnelStepOverview({
                   />
                 ) : (
                   <div className="flex h-full flex-col items-center justify-center gap-3 p-6 text-center">
-                    <p className="text-sm text-slate-500">No page design yet</p>
+                    <p className="text-sm text-muted-foreground">No page design yet</p>
                     <ButtonLink href={editHref} size="sm">
                       Create from blank
                     </ButtonLink>
@@ -214,7 +214,7 @@ export function FunnelStepOverview({
         </div>
       </div>
 
-      <div className="flex flex-wrap justify-end gap-2 border-t border-slate-100 px-5 py-4">
+      <div className="flex flex-wrap justify-end gap-2 border-t border-border px-5 py-4">
         <Button
           variant="outline"
           size="sm"

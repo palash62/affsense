@@ -96,7 +96,7 @@ export function PublisherProfileForm({
           <div className="space-y-2">
             <Label htmlFor="publisher-website">Website</Label>
             <div className="relative">
-              <Globe className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Globe className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 id="publisher-website"
                 value={website}
@@ -120,8 +120,8 @@ export function PublisherProfileForm({
 
         <div className="space-y-2">
           <Label htmlFor="publisher-email">Email</Label>
-          <Input id="publisher-email" value={email} disabled className="bg-slate-50 text-slate-500" />
-          <p className="text-xs text-slate-500">Email cannot be changed here. Contact support if needed.</p>
+          <Input id="publisher-email" value={email} disabled className="bg-muted text-muted-foreground" />
+          <p className="text-xs text-muted-foreground">Email cannot be changed here. Contact support if needed.</p>
         </div>
 
         <TimezoneSelect value={timezone} onChange={setTimezone} disabled={saving} />

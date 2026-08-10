@@ -70,8 +70,8 @@ export function LeadForm({
       <div className="premium-card w-full max-w-md text-center shadow-lg">
         <CardContent className="py-12">
           <CheckCircle className="mx-auto h-12 w-12 text-emerald-500" />
-          <h2 className="mt-4 text-xl font-bold text-slate-900">Thank you!</h2>
-          <p className="text-slate-500">Your information has been submitted.</p>
+          <h2 className="mt-4 text-xl font-bold text-foreground">Thank you!</h2>
+          <p className="text-muted-foreground">Your information has been submitted.</p>
         </CardContent>
       </div>
     );
@@ -81,7 +81,7 @@ export function LeadForm({
     <div className="premium-card w-full max-w-md shadow-lg">
       <div className="h-1.5 rounded-t-[18px] bg-gradient-to-r from-[var(--theme-gradient-from)] to-[var(--theme-gradient-to)]" />
       <CardHeader>
-        <CardTitle className="text-slate-900">{campaignName}</CardTitle>
+        <CardTitle className="text-foreground">{campaignName}</CardTitle>
         <CardDescription>Fill out the form below to get started</CardDescription>
       </CardHeader>
       <CardContent>

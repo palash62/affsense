@@ -81,7 +81,7 @@ export function AdvertiserBlockPublisherButton({
         type="button"
         variant="outline"
         size="sm"
-        className="h-8 gap-1.5 border-slate-200 text-slate-600"
+        className="h-8 gap-1.5 border-border text-muted-foreground"
         onClick={() => setOpen(true)}
       >
         <Ban className="h-3.5 w-3.5" />

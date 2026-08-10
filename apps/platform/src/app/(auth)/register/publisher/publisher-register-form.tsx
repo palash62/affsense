@@ -27,7 +27,7 @@ const COUNTRY_OPTIONS = Object.keys(COUNTRY_BY_CODE).sort((a, b) =>
   getCountryName(a).localeCompare(getCountryName(b)),
 );
 
-const inputClassName = "rounded-xl border-slate-200 bg-transparent";
+const inputClassName = "rounded-xl border-border bg-transparent";
 
 export function PublisherRegisterForm() {
   const router = useRouter();
@@ -158,7 +158,7 @@ export function PublisherRegisterForm() {
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-1.5">
             <Label htmlFor="website">
-              Website <span className="font-normal text-slate-400">(optional)</span>
+              Website <span className="font-normal text-muted-foreground">(optional)</span>
             </Label>
             <Input
               id="website"
@@ -171,7 +171,7 @@ export function PublisherRegisterForm() {
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="trafficSource">
-              Traffic source <span className="font-normal text-slate-400">(optional)</span>
+              Traffic source <span className="font-normal text-muted-foreground">(optional)</span>
             </Label>
             <Input
               id="trafficSource"
@@ -185,7 +185,7 @@ export function PublisherRegisterForm() {
 
         <div className="space-y-1.5">
           <Label htmlFor="country">
-            Country <span className="font-normal text-slate-400">(optional)</span>
+            Country <span className="font-normal text-muted-foreground">(optional)</span>
           </Label>
           <Select value={country} onValueChange={(value) => value && setCountry(value)}>
             <SelectTrigger id="country" className={`w-full ${inputClassName}`}>
@@ -201,9 +201,9 @@ export function PublisherRegisterForm() {
           </Select>
         </div>
 
-        <div className="space-y-3 border-t border-slate-100 pt-3">
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-            Address <span className="font-normal normal-case tracking-normal text-slate-400">(optional)</span>
+        <div className="space-y-3 border-t border-border pt-3">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            Address <span className="font-normal normal-case tracking-normal text-muted-foreground">(optional)</span>
           </p>
 
           <div className="space-y-1.5">

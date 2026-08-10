@@ -1,5 +1,6 @@
 export const THEME_IDS = [
   "enterprise-blue",
+  "marketing-saas",
   "performance-green",
   "marketplace-purple",
   "slate-pro",
@@ -26,6 +27,12 @@ export const THEMES: ThemeMeta[] = [
     inspiredBy: "Corporate CRM, trustworthy B2B",
   },
   {
+    id: "marketing-saas",
+    name: "Marketing SaaS",
+    tagline: "Black + electric orange · performance marketing",
+    inspiredBy: "Premium growth platform, confident and conversion-focused",
+  },
+  {
     id: "performance-green",
     name: "Performance Green",
     tagline: "Earnings-first CPA dashboard",
@@ -39,9 +46,9 @@ export const THEMES: ThemeMeta[] = [
   },
   {
     id: "slate-pro",
-    name: "Slate Pro",
-    tagline: "Linear · Monittor analytics",
-    inspiredBy: "Dark sidebar, data-first pro",
+    name: "Affsense",
+    tagline: "Deep navy sidebar · indigo + purple accents",
+    inspiredBy: "Affsense premium SaaS dashboard",
   },
 ];
 

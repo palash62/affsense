@@ -25,12 +25,12 @@ function CopyUrlField({ label, value }: { label: string; value: string }) {
 
   return (
     <div className="space-y-2">
-      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</p>
+      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
       <div className="flex flex-col gap-2 sm:flex-row">
         <input
           readOnly
           value={value}
-          className="h-10 min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-3 font-mono text-xs text-slate-700"
+          className="h-10 min-w-0 flex-1 rounded-lg border border-border bg-card px-3 font-mono text-xs text-foreground"
         />
         <Button
           type="button"
@@ -77,13 +77,13 @@ export function AdvertiserCpaOfferDetail({ offerId }: { offerId: string }) {
   }, [offerId]);
 
   if (loading) {
-    return <p className="py-12 text-center text-sm text-slate-500">Loading offer…</p>;
+    return <p className="py-12 text-center text-sm text-muted-foreground">Loading offer…</p>;
   }
 
   if (error || !offer) {
     return (
       <div className="space-y-4 py-8 text-center">
-        <p className="text-sm text-slate-600">{error || "Offer not found"}</p>
+        <p className="text-sm text-muted-foreground">{error || "Offer not found"}</p>
         <Link
           href="/advertiser/cpa-offers"
           className={cn(buttonVariants({ variant: "outline" }), "inline-flex")}
@@ -103,7 +103,7 @@ export function AdvertiserCpaOfferDetail({ offerId }: { offerId: string }) {
       <div>
         <Link
           href="/advertiser/cpa-offers"
-          className="mb-4 inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-800"
+          className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
           Offer Marketplace
@@ -137,31 +137,31 @@ export function AdvertiserCpaOfferDetail({ offerId }: { offerId: string }) {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <section className="space-y-4 rounded-xl border border-slate-200 bg-white p-5">
-          <h2 className="text-sm font-semibold text-slate-900">Offer details</h2>
+        <section className="space-y-4 rounded-xl border border-border bg-card p-5">
+          <h2 className="text-sm font-semibold text-foreground">Offer details</h2>
           <dl className="space-y-3 text-sm">
-            <div className="flex justify-between gap-4 border-b border-slate-100 pb-2">
-              <dt className="text-slate-500">Advertiser</dt>
-              <dd className="font-medium text-slate-900">{offer.advertiserLabel}</dd>
+            <div className="flex justify-between gap-4 border-b border-border pb-2">
+              <dt className="text-muted-foreground">Advertiser</dt>
+              <dd className="font-medium text-foreground">{offer.advertiserLabel}</dd>
             </div>
-            <div className="flex justify-between gap-4 border-b border-slate-100 pb-2">
-              <dt className="text-slate-500">Network</dt>
-              <dd className="font-medium text-slate-900">{offer.network}</dd>
+            <div className="flex justify-between gap-4 border-b border-border pb-2">
+              <dt className="text-muted-foreground">Network</dt>
+              <dd className="font-medium text-foreground">{offer.network}</dd>
             </div>
-            <div className="flex justify-between gap-4 border-b border-slate-100 pb-2">
-              <dt className="text-slate-500">Category</dt>
-              <dd className="font-medium text-slate-900">{offer.category}</dd>
+            <div className="flex justify-between gap-4 border-b border-border pb-2">
+              <dt className="text-muted-foreground">Category</dt>
+              <dd className="font-medium text-foreground">{offer.category}</dd>
             </div>
-            <div className="flex justify-between gap-4 border-b border-slate-100 pb-2">
-              <dt className="text-slate-500">Geo</dt>
-              <dd className="font-medium text-slate-900">{offer.country}</dd>
+            <div className="flex justify-between gap-4 border-b border-border pb-2">
+              <dt className="text-muted-foreground">Geo</dt>
+              <dd className="font-medium text-foreground">{offer.country}</dd>
             </div>
-            <div className="flex justify-between gap-4 border-b border-slate-100 pb-2">
-              <dt className="text-slate-500">Payout</dt>
-              <dd className="font-mono font-medium text-slate-900">${offer.payout}</dd>
+            <div className="flex justify-between gap-4 border-b border-border pb-2">
+              <dt className="text-muted-foreground">Payout</dt>
+              <dd className="font-mono font-medium text-foreground">${offer.payout}</dd>
             </div>
             <div className="flex justify-between gap-4">
-              <dt className="text-slate-500">Status</dt>
+              <dt className="text-muted-foreground">Status</dt>
               <dd>
                 <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100">
                   {offer.status}
@@ -179,10 +179,10 @@ export function AdvertiserCpaOfferDetail({ offerId }: { offerId: string }) {
           </a>
         </section>
 
-        <section className="space-y-5 rounded-xl border border-slate-200 bg-white p-5">
-          <h2 className="text-sm font-semibold text-slate-900">Tracking</h2>
+        <section className="space-y-5 rounded-xl border border-border bg-card p-5">
+          <h2 className="text-sm font-semibold text-foreground">Tracking</h2>
           <CopyUrlField label="Leadvix tracking URL" value={platformTrackingUrl} />
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-muted-foreground">
             Use the Leadvix tracking URL in your ads (not the raw network URL below). Networks
             fire conversions to the platform Global Postback URL using the click id injected on
             redirect — include {"{click_id}"} or {"[click_id]"} in the offer&apos;s network URL

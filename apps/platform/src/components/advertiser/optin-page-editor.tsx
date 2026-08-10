@@ -115,11 +115,11 @@ export function OptinPageEditor({
         >
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Public page link
               </p>
-              <p className="mt-1 break-all font-mono text-sm text-slate-800">{publicUrl}</p>
-              <p className="mt-2 text-sm text-slate-600">
+              <p className="mt-1 break-all font-mono text-sm text-foreground">{publicUrl}</p>
+              <p className="mt-2 text-sm text-muted-foreground">
                 {page.isPublished
                   ? "Live — visitors can submit leads on this page."
                   : "Draft — publish when you're ready to go live."}
@@ -158,20 +158,20 @@ export function OptinPageEditor({
           </div>
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-5">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Status</p>
+        <div className="rounded-2xl border border-border bg-card p-5">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Status</p>
           <button
             type="button"
             onClick={() => updateField("isPublished", !page.isPublished)}
-            className="mt-3 flex w-full items-center justify-between rounded-xl border border-slate-200 px-4 py-3 text-left transition hover:bg-slate-50"
+            className="mt-3 flex w-full items-center justify-between rounded-xl border border-border px-4 py-3 text-left transition hover:bg-muted"
           >
-            <span className="font-medium text-slate-900">
+            <span className="font-medium text-foreground">
               {page.isPublished ? "Published" : "Draft"}
             </span>
             {page.isPublished ? (
               <ToggleRight className="h-6 w-6 text-emerald-600" />
             ) : (
-              <ToggleLeft className="h-6 w-6 text-slate-400" />
+              <ToggleLeft className="h-6 w-6 text-muted-foreground" />
             )}
           </button>
         </div>
@@ -208,15 +208,15 @@ export function OptinPageEditor({
               onChange={(e) => updateField("title", e.target.value)}
               placeholder="My Lead Magnet"
             />
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-muted-foreground">
               Shown on the optin form and browser tab.
             </p>
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="optin-slug">Optin page URL</Label>
-            <div className="flex overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm focus-within:border-[var(--theme-primary)] focus-within:ring-2 focus-within:ring-[var(--theme-primary)]/15">
-              <span className="flex items-center border-r border-slate-200 bg-slate-50 px-3 text-sm text-slate-500">
+            <div className="flex overflow-hidden rounded-lg border border-border bg-card shadow-sm focus-within:border-[var(--theme-primary)] focus-within:ring-2 focus-within:ring-[var(--theme-primary)]/15">
+              <span className="flex items-center border-r border-border bg-muted px-3 text-sm text-muted-foreground">
                 {publicBaseUrl}/o/
               </span>
               <Input
@@ -227,7 +227,7 @@ export function OptinPageEditor({
                 placeholder="my-company"
               />
             </div>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-muted-foreground">
               Where visitors land before they submit the form.
             </p>
           </div>
@@ -241,7 +241,7 @@ export function OptinPageEditor({
               onChange={(e) => updateField("destinationUrl", e.target.value || null)}
               placeholder="https://example.com/thank-you"
             />
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-muted-foreground">
               Visitors are redirected here after they submit the form. Leave empty to show a success
               message on this page instead.
             </p>
@@ -283,7 +283,7 @@ export function OptinPageEditor({
               rows={3}
               value={page.description ?? ""}
               onChange={(e) => updateField("description", e.target.value || null)}
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-[var(--theme-primary)] focus:ring-2 focus:ring-[var(--theme-primary)]/15"
+              className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-[var(--theme-primary)] focus:ring-2 focus:ring-[var(--theme-primary)]/15"
             />
           </div>
 
@@ -294,7 +294,7 @@ export function OptinPageEditor({
               rows={4}
               value={bulletText}
               onChange={(e) => setBulletText(e.target.value)}
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-[var(--theme-primary)] focus:ring-2 focus:ring-[var(--theme-primary)]/15"
+              className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-[var(--theme-primary)] focus:ring-2 focus:ring-[var(--theme-primary)]/15"
             />
           </div>
 
@@ -343,7 +343,7 @@ export function OptinPageEditor({
                 type="color"
                 value={page.primaryColor}
                 onChange={(e) => updateField("primaryColor", e.target.value)}
-                className="h-11 w-14 cursor-pointer rounded-lg border border-slate-200 bg-white"
+                className="h-11 w-14 cursor-pointer rounded-lg border border-border bg-card"
               />
               <Input
                 value={page.primaryColor}
@@ -360,7 +360,7 @@ export function OptinPageEditor({
                 type="color"
                 value={page.accentColor}
                 onChange={(e) => updateField("accentColor", e.target.value)}
-                className="h-11 w-14 cursor-pointer rounded-lg border border-slate-200 bg-white"
+                className="h-11 w-14 cursor-pointer rounded-lg border border-border bg-card"
               />
               <Input
                 value={page.accentColor}
@@ -380,7 +380,7 @@ export function OptinPageEditor({
           <p className="text-xs uppercase tracking-wide text-white/70">{page.title}</p>
           <p className="mt-2 text-2xl font-bold">{page.headline}</p>
           <p className="mt-1 text-white/85">{page.subheadline}</p>
-          <div className="mt-4 inline-flex rounded-xl bg-white px-4 py-2 text-sm font-semibold text-slate-900">
+          <div className="mt-4 inline-flex rounded-xl bg-card px-4 py-2 text-sm font-semibold text-foreground">
             {page.ctaText}
           </div>
         </div>

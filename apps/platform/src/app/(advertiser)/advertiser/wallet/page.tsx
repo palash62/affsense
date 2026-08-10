@@ -77,7 +77,7 @@ export default async function WalletPage({ searchParams }: PageProps) {
             icon={Mail}
             accent="purple"
           />
-          <p className="-mt-1 px-1 pb-1 text-center text-xs text-slate-500">
+          <p className="-mt-1 px-1 pb-1 text-center text-xs text-muted-foreground">
             {emailWallet.emailsRemaining.toLocaleString()} emails you can send · Top up
           </p>
         </Link>
@@ -112,18 +112,18 @@ export default async function WalletPage({ searchParams }: PageProps) {
                 className="border-none hover:bg-transparent"
                 style={{ background: "var(--theme-primary-soft)" }}
               >
-                <TableHead className="h-11 px-6 text-slate-600">Date</TableHead>
-                <TableHead className="h-11 px-4 text-slate-600">ID</TableHead>
-                <TableHead className="h-11 px-4 text-slate-600">Method</TableHead>
-                <TableHead className="h-11 px-4 text-right text-slate-600">Amount</TableHead>
-                <TableHead className="h-11 px-4 text-right text-slate-600">Balance After</TableHead>
-                <TableHead className="h-11 px-4 text-slate-600">Status</TableHead>
+                <TableHead className="h-11 px-6 text-muted-foreground">Date</TableHead>
+                <TableHead className="h-11 px-4 text-muted-foreground">ID</TableHead>
+                <TableHead className="h-11 px-4 text-muted-foreground">Method</TableHead>
+                <TableHead className="h-11 px-4 text-right text-muted-foreground">Amount</TableHead>
+                <TableHead className="h-11 px-4 text-right text-muted-foreground">Balance After</TableHead>
+                <TableHead className="h-11 px-4 text-muted-foreground">Status</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {deposits.data.length === 0 ? (
                 <TableRow className="hover:bg-transparent">
-                  <TableCell colSpan={6} className="px-6 py-16 text-center text-slate-500">
+                  <TableCell colSpan={6} className="px-6 py-16 text-center text-muted-foreground">
                     No deposits yet. Use <strong>Add Funds</strong> above to make your first
                     deposit.
                   </TableCell>
@@ -132,23 +132,23 @@ export default async function WalletPage({ searchParams }: PageProps) {
                 deposits.data.map((deposit) => (
                   <TableRow
                     key={deposit.id}
-                    className="border-slate-100 transition-colors hover:bg-blue-50/40"
+                    className="border-border transition-colors hover:bg-blue-50/40"
                   >
-                    <TableCell className="px-6 py-4 text-sm text-slate-700">
+                    <TableCell className="px-6 py-4 text-sm text-foreground">
                       {formatUserDateTime(deposit.createdAt, tz, "MMM d, yyyy HH:mm")}
                     </TableCell>
                     <TableCell className="px-4 py-4">
-                      <span className="font-mono text-xs font-medium text-slate-600">
+                      <span className="font-mono text-xs font-medium text-muted-foreground">
                         {shortDepositId(deposit.id)}
                       </span>
                     </TableCell>
-                    <TableCell className="px-4 py-4 text-sm text-slate-600">
+                    <TableCell className="px-4 py-4 text-sm text-muted-foreground">
                       {formatDepositMethod(deposit.method)}
                     </TableCell>
                     <TableCell className="px-4 py-4 text-right text-sm font-semibold tabular-nums text-emerald-600">
                       +{formatCurrency(deposit.amount)}
                     </TableCell>
-                    <TableCell className="px-4 py-4 text-right text-sm font-medium tabular-nums text-slate-700">
+                    <TableCell className="px-4 py-4 text-right text-sm font-medium tabular-nums text-foreground">
                       {deposit.balanceAfter !== null
                         ? formatCurrency(deposit.balanceAfter)
                         : "—"}

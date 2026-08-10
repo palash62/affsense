@@ -97,25 +97,25 @@ export default async function AdminDepositsPage({ searchParams }: PageProps) {
                 className="border-none hover:bg-transparent"
                 style={{ background: "var(--theme-primary-soft)" }}
               >
-                <TableHead className="h-11 px-6 text-slate-600">Submitted</TableHead>
-                <TableHead className="h-11 px-4 text-slate-600">Advertiser</TableHead>
-                <TableHead className="h-11 px-4 text-right text-slate-600">Amount</TableHead>
-                <TableHead className="h-11 px-4 text-slate-600">Reference</TableHead>
-                <TableHead className="h-11 px-4 text-slate-600">Status</TableHead>
-                <TableHead className="h-11 px-6 text-right text-slate-600">Actions</TableHead>
+                <TableHead className="h-11 px-6 text-muted-foreground">Submitted</TableHead>
+                <TableHead className="h-11 px-4 text-muted-foreground">Advertiser</TableHead>
+                <TableHead className="h-11 px-4 text-right text-muted-foreground">Amount</TableHead>
+                <TableHead className="h-11 px-4 text-muted-foreground">Reference</TableHead>
+                <TableHead className="h-11 px-4 text-muted-foreground">Status</TableHead>
+                <TableHead className="h-11 px-6 text-right text-muted-foreground">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {pendingDeposits.map((deposit) => (
-                <TableRow key={deposit.id} className="border-slate-100 transition-colors hover:bg-blue-50/40">
-                  <TableCell className="px-6 py-4 text-sm text-slate-600">
+                <TableRow key={deposit.id} className="border-border transition-colors hover:bg-blue-50/40">
+                  <TableCell className="px-6 py-4 text-sm text-muted-foreground">
                     {formatUserDateTime(deposit.createdAt, tz, "MMM d, yyyy HH:mm")}
                   </TableCell>
                   <TableCell className="px-4 py-4">
-                    <p className="font-medium text-slate-900">{deposit.user.name}</p>
-                    <p className="text-xs text-slate-500">{deposit.user.email}</p>
+                    <p className="font-medium text-foreground">{deposit.user.name}</p>
+                    <p className="text-xs text-muted-foreground">{deposit.user.email}</p>
                     {deposit.user.advertiserProfile?.company && (
-                      <p className="text-xs text-slate-400">{deposit.user.advertiserProfile.company}</p>
+                      <p className="text-xs text-muted-foreground">{deposit.user.advertiserProfile.company}</p>
                     )}
                   </TableCell>
                   <TableCell className="px-4 py-4 text-right">
@@ -123,7 +123,7 @@ export default async function AdminDepositsPage({ searchParams }: PageProps) {
                       {formatCurrency(Number(deposit.amount))}
                     </span>
                   </TableCell>
-                  <TableCell className="px-4 py-4 font-mono text-xs text-slate-600">
+                  <TableCell className="px-4 py-4 font-mono text-xs text-muted-foreground">
                     {deposit.wiseReference ?? "—"}
                   </TableCell>
                   <TableCell className="px-4 py-4">
@@ -158,8 +158,8 @@ export default async function AdminDepositsPage({ searchParams }: PageProps) {
             >
               <History className="h-7 w-7 text-[var(--theme-primary)]" />
             </div>
-            <h3 className="text-lg font-semibold text-slate-900">No deposits found</h3>
-            <p className="mt-1 max-w-sm text-sm text-slate-500">
+            <h3 className="text-lg font-semibold text-foreground">No deposits found</h3>
+            <p className="mt-1 max-w-sm text-sm text-muted-foreground">
               Try adjusting the advertiser or date filters.
             </p>
           </div>
@@ -172,26 +172,26 @@ export default async function AdminDepositsPage({ searchParams }: PageProps) {
                     className="border-none hover:bg-transparent"
                     style={{ background: "var(--theme-primary-soft)" }}
                   >
-                    <TableHead className="h-11 px-6 text-slate-600">Date</TableHead>
-                    <TableHead className="h-11 px-4 text-slate-600">Advertiser</TableHead>
-                    <TableHead className="h-11 px-4 text-right text-slate-600">Amount</TableHead>
-                    <TableHead className="h-11 px-4 text-slate-600">Method</TableHead>
-                    <TableHead className="h-11 px-4 text-slate-600">Reference</TableHead>
-                    <TableHead className="h-11 px-4 text-slate-600">Status</TableHead>
-                    <TableHead className="h-11 px-6 text-right text-slate-600">Actions</TableHead>
+                    <TableHead className="h-11 px-6 text-muted-foreground">Date</TableHead>
+                    <TableHead className="h-11 px-4 text-muted-foreground">Advertiser</TableHead>
+                    <TableHead className="h-11 px-4 text-right text-muted-foreground">Amount</TableHead>
+                    <TableHead className="h-11 px-4 text-muted-foreground">Method</TableHead>
+                    <TableHead className="h-11 px-4 text-muted-foreground">Reference</TableHead>
+                    <TableHead className="h-11 px-4 text-muted-foreground">Status</TableHead>
+                    <TableHead className="h-11 px-6 text-right text-muted-foreground">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {history.data.map((deposit) => (
-                    <TableRow key={deposit.id} className="border-slate-100 transition-colors hover:bg-blue-50/40">
-                      <TableCell className="px-6 py-4 text-sm text-slate-600">
+                    <TableRow key={deposit.id} className="border-border transition-colors hover:bg-blue-50/40">
+                      <TableCell className="px-6 py-4 text-sm text-muted-foreground">
                         {formatUserDateTime(deposit.createdAt, tz, "MMM d, yyyy HH:mm")}
                       </TableCell>
                       <TableCell className="px-4 py-4">
-                        <p className="font-medium text-slate-900">{deposit.user.name}</p>
-                        <p className="text-xs text-slate-500">{deposit.user.email}</p>
+                        <p className="font-medium text-foreground">{deposit.user.name}</p>
+                        <p className="text-xs text-muted-foreground">{deposit.user.email}</p>
                         {deposit.user.advertiserProfile?.company && (
-                          <p className="text-xs text-slate-400">{deposit.user.advertiserProfile.company}</p>
+                          <p className="text-xs text-muted-foreground">{deposit.user.advertiserProfile.company}</p>
                         )}
                       </TableCell>
                       <TableCell className="px-4 py-4 text-right">
@@ -199,10 +199,10 @@ export default async function AdminDepositsPage({ searchParams }: PageProps) {
                           {formatCurrency(Number(deposit.amount))}
                         </span>
                       </TableCell>
-                      <TableCell className="px-4 py-4 text-sm text-slate-600">
+                      <TableCell className="px-4 py-4 text-sm text-muted-foreground">
                         {formatDepositMethod(deposit.method)}
                       </TableCell>
-                      <TableCell className="px-4 py-4 font-mono text-xs text-slate-600">
+                      <TableCell className="px-4 py-4 font-mono text-xs text-muted-foreground">
                         {deposit.method === "WISE" ? (deposit.wiseReference ?? "—") : "—"}
                       </TableCell>
                       <TableCell className="px-4 py-4">
@@ -212,7 +212,7 @@ export default async function AdminDepositsPage({ searchParams }: PageProps) {
                         {deposit.method === "WISE" ? (
                           <AdminDepositReviewDialog deposit={depositDialogProps(deposit)} />
                         ) : (
-                          <span className="text-xs text-slate-400">Auto-approved</span>
+                          <span className="text-xs text-muted-foreground">Auto-approved</span>
                         )}
                       </TableCell>
                     </TableRow>

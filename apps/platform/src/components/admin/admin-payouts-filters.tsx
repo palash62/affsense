@@ -104,11 +104,11 @@ export function AdminPayoutsFilters({ publishers }: { publishers: PublisherOptio
     searchParams.has("to");
 
   return (
-    <div className="border-b border-slate-100 bg-slate-50/60 px-6 py-4">
+    <div className="border-b border-border bg-muted/60 px-6 py-4">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end">
         <div className="grid flex-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
           <div className="space-y-1.5">
-            <label className="text-xs font-medium uppercase tracking-wide text-slate-500">
+            <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               User
             </label>
             <Select value={publisherId} onValueChange={(value) => value && setPublisherId(value)}>
@@ -127,7 +127,7 @@ export function AdminPayoutsFilters({ publishers }: { publishers: PublisherOptio
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-medium uppercase tracking-wide text-slate-500">
+            <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Kind
             </label>
             <Select value={kind} onValueChange={(value) => value && setKind(value)}>
@@ -145,7 +145,7 @@ export function AdminPayoutsFilters({ publishers }: { publishers: PublisherOptio
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-medium uppercase tracking-wide text-slate-500">
+            <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Status
             </label>
             <Select value={status} onValueChange={(value) => value && setStatus(value)}>
@@ -163,7 +163,7 @@ export function AdminPayoutsFilters({ publishers }: { publishers: PublisherOptio
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-medium uppercase tracking-wide text-slate-500">
+            <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               From date
             </label>
             <Input
@@ -175,7 +175,7 @@ export function AdminPayoutsFilters({ publishers }: { publishers: PublisherOptio
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-medium uppercase tracking-wide text-slate-500">
+            <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               To date
             </label>
             <Input

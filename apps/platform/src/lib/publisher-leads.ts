@@ -129,7 +129,7 @@ export function formatPublisherLeadPayout(
     return { label: "Pending", className: "text-amber-700" };
   }
 
-  return { label: "—", className: "text-slate-400" };
+  return { label: "—", className: "text-muted-foreground" };
 }
 
 export function formatLeadRejectReason(lead: {

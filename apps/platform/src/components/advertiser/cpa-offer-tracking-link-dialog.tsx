@@ -68,28 +68,28 @@ export function CpaOfferTrackingLinkDialog({
           <DialogTitle className="pr-8 text-base leading-snug">
             ({shortId})-{offer.name}
           </DialogTitle>
-          <div className="flex flex-wrap items-center gap-2 pt-1 text-sm text-slate-600">
+          <div className="flex flex-wrap items-center gap-2 pt-1 text-sm text-muted-foreground">
             <span className="font-medium">Tracking Link</span>
             <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100">Active</Badge>
-            <span className="font-mono text-xs text-slate-500">OFFER #{offer.id}</span>
+            <span className="font-mono text-xs text-muted-foreground">OFFER #{offer.id}</span>
           </div>
         </DialogHeader>
 
         <div className="space-y-5">
-          <section className="space-y-3 rounded-xl border border-slate-200 p-4">
+          <section className="space-y-3 rounded-xl border border-border p-4">
             <div className="flex items-start gap-2">
-              <Settings2 className="mt-0.5 h-4 w-4 text-slate-500" />
+              <Settings2 className="mt-0.5 h-4 w-4 text-muted-foreground" />
               <div>
-                <p className="text-sm font-semibold text-slate-900">Configure your link</p>
-                <p className="text-xs text-slate-500">
+                <p className="text-sm font-semibold text-foreground">Configure your link</p>
+                <p className="text-xs text-muted-foreground">
                   Choose a tracking domain and optional landing page.
                 </p>
               </div>
             </div>
             <div className="space-y-1.5">
               <Label>Tracking domain</Label>
-              <Input readOnly value={trackingDomain} className="bg-slate-50 font-mono text-xs" />
-              <p className="text-xs text-slate-500">
+              <Input readOnly value={trackingDomain} className="bg-muted font-mono text-xs" />
+              <p className="text-xs text-muted-foreground">
                 Select the domain that will appear in your tracking URL.
               </p>
             </div>
@@ -101,8 +101,8 @@ export function CpaOfferTrackingLinkDialog({
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
-                    <p className="text-sm font-semibold text-slate-900">Your generated links</p>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-sm font-semibold text-foreground">Your generated links</p>
+                    <p className="text-xs text-muted-foreground">
                       Copy the link you need and use it in your campaigns.
                     </p>
                   </div>
@@ -114,29 +114,29 @@ export function CpaOfferTrackingLinkDialog({
               </div>
             </div>
             <div className="space-y-1.5">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Tracking Link
               </p>
-              <p className="text-xs text-slate-500">Full tracking URL with all selected parameters.</p>
-              <div className="rounded-lg border border-sky-200 bg-white px-3 py-2.5 font-mono text-xs break-all text-slate-800">
+              <p className="text-xs text-muted-foreground">Full tracking URL with all selected parameters.</p>
+              <div className="rounded-lg border border-sky-200 bg-card px-3 py-2.5 font-mono text-xs break-all text-foreground">
                 {trackingLink}
               </div>
             </div>
           </section>
 
-          <section className="space-y-3 rounded-xl border border-slate-200 p-4">
+          <section className="space-y-3 rounded-xl border border-border p-4">
             <div>
-              <p className="text-sm font-semibold text-slate-900">Optional parameters</p>
-              <p className="text-xs text-slate-500">
+              <p className="text-sm font-semibold text-foreground">Optional parameters</p>
+              <p className="text-xs text-muted-foreground">
                 Add sub-IDs, source tags, or other params before copying.
               </p>
             </div>
-            <label className="flex items-center gap-2 text-sm text-slate-700">
+            <label className="flex items-center gap-2 text-sm text-foreground">
               <input
                 type="checkbox"
                 checked={includeParams}
                 onChange={(e) => setIncludeParams(e.target.checked)}
-                className="rounded border-slate-300"
+                className="rounded border-border"
               />
               Add tracking parameters (sub-IDs & source)
             </label>

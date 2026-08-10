@@ -214,7 +214,7 @@ export function AdvertiserCampaignActions({
           <DialogHeader>
             <DialogTitle>Delete campaign</DialogTitle>
           </DialogHeader>
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-muted-foreground">
             Permanently delete <strong>{campaign.name}</strong>? This cannot be undone.
           </p>
           {error ? <p className="text-sm text-red-600">{error}</p> : null}
@@ -237,13 +237,13 @@ export function AdvertiserCampaignActions({
             aria-label="Close"
             onClick={() => setPixelOpen(false)}
           />
-          <div className="relative z-10 max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-slate-200 bg-white p-5 shadow-xl">
+          <div className="relative z-10 max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-border bg-card p-5 shadow-xl">
             <div className="mb-4 flex items-start justify-between gap-3">
               <div>
-                <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                   Tracking pixel
                 </p>
-                <h3 className="mt-1 text-lg font-semibold text-slate-900">{campaign.name}</h3>
+                <h3 className="mt-1 text-lg font-semibold text-foreground">{campaign.name}</h3>
               </div>
               <Button
                 type="button"
@@ -255,7 +255,7 @@ export function AdvertiserCampaignActions({
                 Close
               </Button>
             </div>
-            {pixelLoading ? <p className="text-sm text-slate-500">Loading pixel...</p> : null}
+            {pixelLoading ? <p className="text-sm text-muted-foreground">Loading pixel...</p> : null}
             {!pixelLoading && pixelToken ? (
               <CampaignTrackingPixelPanel pixelToken={pixelToken} compact />
             ) : null}

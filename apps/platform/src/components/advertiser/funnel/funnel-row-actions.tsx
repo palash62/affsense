@@ -32,7 +32,7 @@ export function FunnelRowActions({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "h-8 w-8 text-slate-500")}
+        className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "h-8 w-8 text-muted-foreground")}
       >
         <MoreHorizontal className="h-4 w-4" />
       </DropdownMenuTrigger>

@@ -119,7 +119,7 @@ export function CpaOfferGeoFlags({
         <span
           key={code}
           title={code}
-          className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-1.5 py-0.5 text-[11px] font-medium text-slate-700"
+          className="inline-flex items-center gap-1 rounded-md border border-border bg-card px-1.5 py-0.5 text-[11px] font-medium text-foreground"
         >
           <span aria-hidden>{flagForCountry(code)}</span>
           {code}

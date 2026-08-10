@@ -127,63 +127,63 @@ export function AdminTutorialsList() {
         </Button>
       </div>
 
-      <div className="overflow-hidden rounded-[18px] border border-slate-200/80 bg-white shadow-sm">
+      <div className="overflow-hidden rounded-[18px] border border-border bg-card shadow-sm">
         {loading ? (
-          <div className="px-6 py-16 text-center text-sm text-slate-500">Loading tutorials…</div>
+          <div className="px-6 py-16 text-center text-sm text-muted-foreground">Loading tutorials…</div>
         ) : tutorials.length === 0 ? (
           <div className="px-6 py-16 text-center">
-            <p className="text-sm font-medium text-slate-700">No tutorials yet</p>
-            <p className="mt-1 text-xs text-slate-500">Add your first tutorial video for advertisers.</p>
+            <p className="text-sm font-medium text-foreground">No tutorials yet</p>
+            <p className="mt-1 text-xs text-muted-foreground">Add your first tutorial video for advertisers.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow className="border-slate-100 hover:bg-transparent">
-                  <TableHead className="h-10 px-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <TableRow className="border-border hover:bg-transparent">
+                  <TableHead className="h-10 px-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     Thumbnail
                   </TableHead>
-                  <TableHead className="h-10 min-w-[180px] px-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <TableHead className="h-10 min-w-[180px] px-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     Title
                   </TableHead>
-                  <TableHead className="h-10 px-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <TableHead className="h-10 px-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     Status
                   </TableHead>
-                  <TableHead className="h-10 px-4 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <TableHead className="h-10 px-4 text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     Order
                   </TableHead>
-                  <TableHead className="h-10 px-4 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <TableHead className="h-10 px-4 text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     Actions
                   </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {tutorials.map((tutorial) => (
-                  <TableRow key={tutorial.id} className="border-slate-100 hover:bg-slate-50/80">
+                  <TableRow key={tutorial.id} className="border-border hover:bg-muted/80">
                     <TableCell className="px-4 py-3">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={tutorial.thumbnailUrl}
                         alt=""
-                        className="h-14 w-24 rounded-md border border-slate-200 object-cover"
+                        className="h-14 w-24 rounded-md border border-border object-cover"
                       />
                     </TableCell>
                     <TableCell className="px-4 py-3">
-                      <p className="text-sm font-medium text-slate-900">{tutorial.title}</p>
-                      <p className="mt-1 line-clamp-2 text-xs text-slate-500">{tutorial.description}</p>
+                      <p className="text-sm font-medium text-foreground">{tutorial.title}</p>
+                      <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{tutorial.description}</p>
                     </TableCell>
                     <TableCell className="px-4 py-3">
                       <Badge
                         className={
                           tutorial.isPublished
                             ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                            : "border-slate-200 bg-slate-50 text-slate-600"
+                            : "border-border bg-muted text-muted-foreground"
                         }
                       >
                         {tutorial.isPublished ? "Published" : "Draft"}
                       </Badge>
                     </TableCell>
-                    <TableCell className="px-4 py-3 text-right text-sm text-slate-700">
+                    <TableCell className="px-4 py-3 text-right text-sm text-foreground">
                       {tutorial.sortOrder}
                     </TableCell>
                     <TableCell className="px-4 py-3">

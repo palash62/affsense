@@ -43,7 +43,7 @@ export function PublisherCampaignsSortHeader({
     <Link
       href={`${pathname}?${params.toString()}`}
       className={cn(
-        "inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-slate-600 hover:text-slate-900",
+        "inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground hover:text-foreground",
         alignClass,
         active && "text-[var(--theme-primary)]",
       )}

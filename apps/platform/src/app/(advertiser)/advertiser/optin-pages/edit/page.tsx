@@ -51,7 +51,7 @@ export default async function AdvertiserOptinEditPage({ searchParams }: PageProp
           <ArrowLeft className="mr-1.5 h-4 w-4" />
           All templates
         </ButtonLink>
-        <Badge variant="outline" className="border-slate-200 bg-slate-50 text-slate-600">
+        <Badge variant="outline" className="border-border bg-muted text-muted-foreground">
           {template.name}
         </Badge>
       </div>
@@ -80,7 +80,7 @@ export default async function AdvertiserOptinEditPage({ searchParams }: PageProp
         >
           {page.isPublished ? "Published" : "Draft"}
         </Badge>
-        <Badge variant="outline" className="border-slate-200 bg-slate-50 text-slate-600">
+        <Badge variant="outline" className="border-border bg-muted text-muted-foreground">
           <LayoutTemplate className="mr-1 h-3 w-3" />
           {page.title} · /o/{page.slug}
         </Badge>

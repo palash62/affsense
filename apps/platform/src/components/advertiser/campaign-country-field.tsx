@@ -257,7 +257,7 @@ function SingleTierCountryField({
   return (
     <div className="space-y-2">
       <Label>{label}</Label>
-      {hint && <p className="text-xs text-slate-500">{hint}</p>}
+      {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
 
       {disabledTiers.length > 0 && (
         <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
@@ -315,7 +315,7 @@ function SingleTierCountryField({
             <Badge
               key={code}
               variant="outline"
-              className="gap-1 border-slate-200 bg-slate-50 pr-1 text-xs font-normal text-slate-700"
+              className="gap-1 border-border bg-muted pr-1 text-xs font-normal text-foreground"
             >
               {getCountryName(code)} ({code})
               <button
@@ -331,19 +331,19 @@ function SingleTierCountryField({
         </div>
       )}
 
-      <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
-        <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50/80 px-3 py-2">
+      <div className="overflow-hidden rounded-lg border border-border bg-card">
+        <div className="flex items-center gap-2 border-b border-border bg-muted/80 px-3 py-2">
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={searchPlaceholder}
-            className="min-w-0 flex-1 border-0 bg-transparent text-sm outline-none placeholder:text-slate-400"
+            className="min-w-0 flex-1 border-0 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
           />
           <button
             type="button"
             onClick={() => setExpanded((value) => !value)}
-            className="flex shrink-0 items-center gap-1 text-xs font-medium text-slate-500 hover:text-slate-700"
+            className="flex shrink-0 items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground"
           >
             {expanded ? (
               <>
@@ -360,7 +360,7 @@ function SingleTierCountryField({
         {expanded && (
           <div className="max-h-72 overflow-y-auto p-3">
             {filteredGroups.length === 0 ? (
-              <p className="px-1 py-4 text-center text-sm text-slate-500">
+              <p className="px-1 py-4 text-center text-sm text-muted-foreground">
                 No countries match your search.
               </p>
             ) : (
@@ -377,13 +377,13 @@ function SingleTierCountryField({
                     <div
                       key={group.tier}
                       className={cn(
-                        "rounded-lg border border-t-2 bg-slate-50/40",
+                        "rounded-lg border border-t-2 bg-muted/40",
                         group.accent,
                         locked && "opacity-60",
                       )}
                     >
-                      <div className="flex items-center justify-between gap-2 border-b border-slate-100 px-3 py-2">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+                      <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-2">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                           {group.label}
                           {externallyDisabled && (
                             <span className="ml-2 font-normal normal-case text-amber-700">
@@ -391,12 +391,12 @@ function SingleTierCountryField({
                             </span>
                           )}
                           {!externallyDisabled && locked && (
-                            <span className="ml-2 font-normal normal-case text-slate-400">
+                            <span className="ml-2 font-normal normal-case text-muted-foreground">
                               (locked)
                             </span>
                           )}
                           {selectAllOnly && !externallyDisabled && (
-                            <span className="ml-2 font-normal normal-case text-slate-400">
+                            <span className="ml-2 font-normal normal-case text-muted-foreground">
                               (Select all to add)
                             </span>
                           )}
@@ -415,7 +415,7 @@ function SingleTierCountryField({
                             {fullySelected ? "Remove tier" : "Select all"}
                           </button>
                         ) : (
-                          <span className="text-xs text-slate-400">Select all</span>
+                          <span className="text-xs text-muted-foreground">Select all</span>
                         )}
                       </div>
                       <div className="grid gap-1 p-2 sm:grid-cols-2">
@@ -433,7 +433,7 @@ function SingleTierCountryField({
                                   "flex items-center gap-2 rounded-md border border-transparent px-2.5 py-2 text-left text-sm",
                                   active
                                     ? "text-[var(--theme-primary)]"
-                                    : "cursor-not-allowed text-slate-400",
+                                    : "cursor-not-allowed text-muted-foreground",
                                 )}
                               >
                                 <span
@@ -441,7 +441,7 @@ function SingleTierCountryField({
                                     "flex h-4 w-4 shrink-0 items-center justify-center rounded border",
                                     active
                                       ? "border-[var(--theme-primary)] bg-[var(--theme-primary)] text-white"
-                                      : "border-slate-200 bg-slate-100",
+                                      : "border-border bg-muted",
                                   )}
                                 >
                                   {active && <Check className="h-3 w-3" />}
@@ -463,7 +463,7 @@ function SingleTierCountryField({
                                 "flex items-center gap-2 rounded-md border px-2.5 py-2 text-left text-sm transition-colors",
                                 active
                                   ? "border-[var(--theme-primary)] bg-[var(--theme-primary-soft)] text-[var(--theme-primary)]"
-                                  : "border-transparent text-slate-700 hover:border-slate-200 hover:bg-white",
+                                  : "border-transparent text-foreground hover:border-border hover:bg-white",
                               )}
                             >
                               <span
@@ -471,14 +471,14 @@ function SingleTierCountryField({
                                   "flex h-4 w-4 shrink-0 items-center justify-center rounded border",
                                   active
                                     ? "border-[var(--theme-primary)] bg-[var(--theme-primary)] text-white"
-                                    : "border-slate-300 bg-white",
+                                    : "border-border bg-white",
                                 )}
                               >
                                 {active && <Check className="h-3 w-3" />}
                               </span>
                               <span className="min-w-0 truncate">
                                 {getCountryName(code)}{" "}
-                                <span className="text-xs text-slate-500">({code})</span>
+                                <span className="text-xs text-muted-foreground">({code})</span>
                               </span>
                             </button>
                           );
@@ -495,7 +495,7 @@ function SingleTierCountryField({
 
       {showTierButtons && (
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs text-slate-500">Full tier</span>
+          <span className="text-xs text-muted-foreground">Full tier</span>
           {(Object.keys(TIER_META) as CountryTier[]).map((tier) => (
             <button
               key={tier}
@@ -509,7 +509,7 @@ function SingleTierCountryField({
                 "rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40",
                 isTierFullySelected(tier)
                   ? "border-[var(--theme-primary)] bg-[var(--theme-primary-soft)] text-[var(--theme-primary)]"
-                  : "border-slate-200 text-slate-600 hover:bg-slate-50",
+                  : "border-border text-muted-foreground hover:bg-muted",
               )}
             >
               {TIER_META[tier].label}
@@ -523,7 +523,7 @@ function SingleTierCountryField({
                 setTierNotice(null);
                 onChange([]);
               }}
-              className="text-xs font-medium text-slate-500 hover:text-slate-700 hover:underline"
+              className="text-xs font-medium text-muted-foreground hover:text-foreground hover:underline"
             >
               Clear all
             </button>
@@ -618,7 +618,7 @@ function CountrySearchMultiSelect({
   return (
     <div className="space-y-2">
       <Label>{label}</Label>
-      {hint && <p className="text-xs text-slate-500">{hint}</p>}
+      {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
 
       {disabledTiers.length > 0 && (
         <p className="text-xs text-amber-800">
@@ -633,7 +633,7 @@ function CountrySearchMultiSelect({
             <Badge
               key={code}
               variant="outline"
-              className="gap-1 border-slate-200 bg-slate-50 pr-1 text-xs font-normal text-slate-700"
+              className="gap-1 border-border bg-muted pr-1 text-xs font-normal text-foreground"
             >
               {getCountryName(code)} ({code})
               <button
@@ -649,19 +649,19 @@ function CountrySearchMultiSelect({
         </div>
       )}
 
-      <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
-        <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50/80 px-3 py-2">
+      <div className="overflow-hidden rounded-lg border border-border bg-card">
+        <div className="flex items-center gap-2 border-b border-border bg-muted/80 px-3 py-2">
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={searchPlaceholder}
-            className="min-w-0 flex-1 border-0 bg-transparent text-sm outline-none placeholder:text-slate-400"
+            className="min-w-0 flex-1 border-0 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
           />
           <button
             type="button"
             onClick={() => setExpanded((value) => !value)}
-            className="flex shrink-0 items-center gap-1 text-xs font-medium text-slate-500 hover:text-slate-700"
+            className="flex shrink-0 items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground"
           >
             {expanded ? (
               <>
@@ -685,13 +685,13 @@ function CountrySearchMultiSelect({
                   <div
                     key={group.tier}
                     className={cn(
-                      "rounded-lg border border-t-2 bg-slate-50/40",
+                      "rounded-lg border border-t-2 bg-muted/40",
                       group.accent,
                       externallyDisabled && "opacity-60",
                     )}
                   >
-                    <div className="flex items-center justify-between gap-2 border-b border-slate-100 px-3 py-2">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+                    <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-2">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                         {group.label}
                         {externallyDisabled && (
                           <span className="ml-2 font-normal normal-case text-amber-700">
@@ -717,9 +717,9 @@ function CountrySearchMultiSelect({
                           return (
                             <div
                               key={code}
-                              className="flex cursor-not-allowed items-center gap-2 rounded-md border border-transparent px-2.5 py-2 text-left text-sm text-slate-400"
+                              className="flex cursor-not-allowed items-center gap-2 rounded-md border border-transparent px-2.5 py-2 text-left text-sm text-muted-foreground"
                             >
-                              <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded border border-slate-200 bg-slate-100" />
+                              <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded border border-border bg-muted" />
                               <span className="min-w-0 truncate">
                                 {getCountryName(code)}{" "}
                                 <span className="text-xs">({code})</span>
@@ -736,7 +736,7 @@ function CountrySearchMultiSelect({
                               "flex items-center gap-2 rounded-md border px-2.5 py-2 text-left text-sm transition-colors",
                               active
                                 ? "border-[var(--theme-primary)] bg-[var(--theme-primary-soft)] text-[var(--theme-primary)]"
-                                : "border-transparent text-slate-700 hover:border-slate-200 hover:bg-white",
+                                : "border-transparent text-foreground hover:border-border hover:bg-white",
                             )}
                           >
                             <span
@@ -744,14 +744,14 @@ function CountrySearchMultiSelect({
                                 "flex h-4 w-4 shrink-0 items-center justify-center rounded border",
                                 active
                                   ? "border-[var(--theme-primary)] bg-[var(--theme-primary)] text-white"
-                                  : "border-slate-300 bg-white",
+                                  : "border-border bg-white",
                               )}
                             >
                               {active && <Check className="h-3 w-3" />}
                             </span>
                             <span className="min-w-0 truncate">
                               {getCountryName(code)}{" "}
-                              <span className="text-xs text-slate-500">({code})</span>
+                              <span className="text-xs text-muted-foreground">({code})</span>
                             </span>
                           </button>
                         );

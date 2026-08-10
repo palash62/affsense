@@ -11,10 +11,10 @@ function WaitNodeComponent({ data }: NodeProps) {
   return (
     <div
       className={cn(
-        "min-w-[200px] max-w-[240px] rounded-2xl border bg-white px-4 py-3 shadow-sm transition-shadow",
+        "min-w-[200px] max-w-[240px] rounded-2xl border bg-card px-4 py-3 shadow-sm transition-shadow",
         d.selected
           ? "border-violet-500 ring-2 ring-violet-500/20"
-          : "border-slate-200 hover:border-slate-300",
+          : "border-border hover:border-border",
       )}
     >
       <Handle
@@ -26,11 +26,11 @@ function WaitNodeComponent({ data }: NodeProps) {
         <span className="flex size-7 items-center justify-center rounded-lg bg-violet-50 text-violet-700">
           <Clock className="size-3.5" />
         </span>
-        <span className="text-[11px] font-semibold tracking-wide text-slate-500 uppercase">
+        <span className="text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
           Wait
         </span>
       </div>
-      <p className="text-sm font-semibold text-slate-900">{d.waitLabel}</p>
+      <p className="text-sm font-semibold text-foreground">{d.waitLabel}</p>
       <Handle
         type="source"
         position={Position.Bottom}

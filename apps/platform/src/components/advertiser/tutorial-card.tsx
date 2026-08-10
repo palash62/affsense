@@ -13,8 +13,8 @@ export function TutorialCard({ tutorial, onPlay }: TutorialCardProps) {
   return (
     <article
       className={cn(
-        "group overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm transition-all duration-200",
-        "hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-lg",
+        "group overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all duration-200",
+        "hover:-translate-y-0.5 hover:border-border hover:shadow-lg",
       )}
     >
       <button
@@ -41,7 +41,7 @@ export function TutorialCard({ tutorial, onPlay }: TutorialCardProps) {
         </div>
       </button>
 
-      <div className="relative border-t border-slate-100 bg-gradient-to-br from-white via-slate-50/80 to-[color-mix(in_srgb,var(--theme-primary)_6%,white)] px-5 py-5">
+      <div className="relative border-t border-border bg-gradient-to-br from-white via-slate-50/80 to-[color-mix(in_srgb,var(--theme-primary)_6%,white)] px-5 py-5">
         <div
           className="absolute left-0 top-0 h-full w-1 bg-[var(--theme-primary)]"
           aria-hidden
@@ -50,10 +50,10 @@ export function TutorialCard({ tutorial, onPlay }: TutorialCardProps) {
           <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--theme-primary)]">
             Tutorial
           </p>
-          <h3 className="line-clamp-2 text-[17px] font-semibold leading-snug tracking-tight text-slate-900">
+          <h3 className="line-clamp-2 text-[17px] font-semibold leading-snug tracking-tight text-foreground">
             {tutorial.title}
           </h3>
-          <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-slate-500">
+          <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-muted-foreground">
             {tutorial.description}
           </p>
         </div>

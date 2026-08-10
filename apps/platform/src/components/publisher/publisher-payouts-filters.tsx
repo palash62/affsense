@@ -92,10 +92,10 @@ export function PublisherPayoutsFilters() {
     searchParams.has("to");
 
   return (
-    <div className="border-b border-slate-100 bg-slate-50/80 px-4 py-2.5">
+    <div className="border-b border-border bg-muted/80 px-4 py-2.5">
       <div className="flex w-full flex-wrap items-center gap-2">
         <Select value={status} onValueChange={(value) => value && setStatus(value)}>
-          <SelectTrigger className="h-8 min-w-[130px] flex-1 rounded-md border-slate-200 bg-white text-xs">
+          <SelectTrigger className="h-8 min-w-[130px] flex-1 rounded-md border-border bg-card text-xs">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
@@ -108,7 +108,7 @@ export function PublisherPayoutsFilters() {
         </Select>
 
         <Select value={method} onValueChange={(value) => value && setMethod(value)}>
-          <SelectTrigger className="h-8 min-w-[130px] flex-1 rounded-md border-slate-200 bg-white text-xs">
+          <SelectTrigger className="h-8 min-w-[130px] flex-1 rounded-md border-border bg-card text-xs">
             <SelectValue placeholder="Method" />
           </SelectTrigger>
           <SelectContent>
@@ -125,14 +125,14 @@ export function PublisherPayoutsFilters() {
             type="date"
             value={dateFrom}
             onChange={(e) => setDateFrom(e.target.value)}
-            className="h-8 w-[132px] rounded-md border-slate-200 bg-white text-xs"
+            className="h-8 w-[132px] rounded-md border-border bg-card text-xs"
           />
-          <span className="text-xs text-slate-400">to</span>
+          <span className="text-xs text-muted-foreground">to</span>
           <Input
             type="date"
             value={dateTo}
             onChange={(e) => setDateTo(e.target.value)}
-            className="h-8 w-[132px] rounded-md border-slate-200 bg-white text-xs"
+            className="h-8 w-[132px] rounded-md border-border bg-card text-xs"
           />
         </div>
 
@@ -152,7 +152,7 @@ export function PublisherPayoutsFilters() {
               variant="outline"
               onClick={clearFilters}
               disabled={isPending}
-              className="h-8 gap-1 rounded-md border-slate-200 bg-white px-2.5 text-xs"
+              className="h-8 gap-1 rounded-md border-border bg-card px-2.5 text-xs"
             >
               <FilterX className="h-3 w-3" />
               Clear

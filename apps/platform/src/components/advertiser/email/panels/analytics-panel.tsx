@@ -160,9 +160,9 @@ export function AnalyticsPanel() {
       ]}
       showToolbar={false}
     >
-      <div className="mb-6 flex flex-wrap items-end gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="mb-6 flex flex-wrap items-end gap-4 rounded-xl border border-border bg-card p-4 shadow-sm">
         <div className="space-y-1.5">
-          <Label className="text-xs font-medium text-slate-500">Source</Label>
+          <Label className="text-xs font-medium text-muted-foreground">Source</Label>
           <Select
             value={source}
             onValueChange={(v) => {
@@ -183,7 +183,7 @@ export function AnalyticsPanel() {
 
         {source !== "all" ? (
           <div className="space-y-1.5">
-            <Label className="text-xs font-medium text-slate-500">
+            <Label className="text-xs font-medium text-muted-foreground">
               {source === "broadcast" ? "Broadcast" : "Automation"}
             </Label>
             <Select
@@ -221,7 +221,7 @@ export function AnalyticsPanel() {
       <div className="premium-card p-6">
         <div className="mb-4 flex items-center gap-2">
           <BarChart3 className="h-5 w-5 text-[var(--theme-primary)]" />
-          <h3 className="text-base font-semibold text-slate-900">Delivery overview</h3>
+          <h3 className="text-base font-semibold text-foreground">Delivery overview</h3>
         </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {[
@@ -251,10 +251,10 @@ export function AnalyticsPanel() {
           ].map((item) => (
             <div
               key={item.label}
-              className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 transition-colors hover:bg-slate-50"
+              className="rounded-xl border border-border bg-muted/50 p-4 transition-colors hover:bg-muted"
             >
-              <p className="text-sm text-slate-500">{item.label}</p>
-              <p className="mt-1 text-xl font-bold text-slate-900">{item.value.toLocaleString()}</p>
+              <p className="text-sm text-muted-foreground">{item.label}</p>
+              <p className="mt-1 text-xl font-bold text-foreground">{item.value.toLocaleString()}</p>
               <p className="text-xs text-[var(--theme-primary)]">{item.pct}</p>
             </div>
           ))}

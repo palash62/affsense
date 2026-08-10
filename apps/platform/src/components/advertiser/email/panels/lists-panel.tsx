@@ -199,7 +199,7 @@ export function ListsPanel() {
       showToolbar={false}
     >
       <PageSection title="Subscriber Lists" icon={List} gradient="leads">
-        <div className="flex items-center justify-end border-b border-slate-100 px-6 py-3">
+        <div className="flex items-center justify-end border-b border-border px-6 py-3">
           <Button
             type="button"
             onClick={openCreate}
@@ -228,15 +228,15 @@ export function ListsPanel() {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="h-32 text-center text-slate-500">
+                  <TableCell colSpan={4} className="h-32 text-center text-muted-foreground">
                     Loading...
                   </TableCell>
                 </TableRow>
               ) : rows.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={4} className="h-40 px-6 text-center">
-                    <p className="text-slate-600">No lists yet.</p>
-                    <p className="mt-1 text-sm text-slate-500">
+                    <p className="text-muted-foreground">No lists yet.</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
                       Create a list tied to a lead campaign, then bind an automation to it.
                       Subscribers appear when leads are captured on that campaign.
                     </p>
@@ -254,7 +254,7 @@ export function ListsPanel() {
                 </TableRow>
               ) : (
                 rows.map((list) => (
-                  <TableRow key={list.id} className="transition-colors hover:bg-slate-50">
+                  <TableRow key={list.id} className="transition-colors hover:bg-muted">
                     <TableCell className="font-medium">
                       {list.system ? (
                         list.name
@@ -267,7 +267,7 @@ export function ListsPanel() {
                         </Link>
                       )}
                     </TableCell>
-                    <TableCell className="text-slate-600">
+                    <TableCell className="text-muted-foreground">
                       {list.system ? "—" : (list.campaignName ?? "—")}
                     </TableCell>
                     <TableCell>{list.subscribers.toLocaleString()}</TableCell>
@@ -390,7 +390,7 @@ export function ListsPanel() {
                     <SelectItem key={c.id} value={c.id}>
                       <span className="flex w-full items-center justify-between gap-3">
                         <span className="truncate">{c.name}</span>
-                        <span className="text-xs text-slate-500">
+                        <span className="text-xs text-muted-foreground">
                           {c.contactCount.toLocaleString()} contacts
                         </span>
                       </span>
@@ -399,7 +399,7 @@ export function ListsPanel() {
                 </SelectContent>
               </Select>
               {form.campaignId ? (
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-muted-foreground">
                   This campaign currently has{" "}
                   {(
                     campaigns.find((c) => c.id === form.campaignId)?.contactCount ?? 0
@@ -408,7 +408,7 @@ export function ListsPanel() {
                 </p>
               ) : null}
               {campaignOptions.length === 0 ? (
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-muted-foreground">
                   All campaigns already have a list, or you have no campaigns yet.
                 </p>
               ) : null}

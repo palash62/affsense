@@ -64,7 +64,7 @@ export default async function PublisherLeadReportPage({ searchParams }: PageProp
       />
 
       <div
-        className="flex gap-3 rounded-xl border px-4 py-3 text-sm text-slate-700"
+        className="flex gap-3 rounded-xl border px-4 py-3 text-sm text-foreground"
         style={{
           borderColor: "color-mix(in srgb, var(--theme-primary) 20%, transparent)",
           background: "var(--theme-primary-soft)",
@@ -72,7 +72,7 @@ export default async function PublisherLeadReportPage({ searchParams }: PageProp
       >
         <Info className="mt-0.5 h-4 w-4 shrink-0 text-[var(--theme-primary)]" />
         <p>
-          Use <code className="rounded bg-white/80 px-1">?sub_id=</code> on your Smart Link to tag
+          Use <code className="rounded bg-card/80 px-1">?sub_id=</code> on your Smart Link to tag
           traffic sources. Earnings include approved and paid leads in the selected date range. For
           individual lead records, see{" "}
           <Link
@@ -91,7 +91,7 @@ export default async function PublisherLeadReportPage({ searchParams }: PageProp
         icon={FileText}
         gradient="leads"
       >
-        <Suspense fallback={<div className="px-6 py-4 text-sm text-slate-500">Loading filters...</div>}>
+        <Suspense fallback={<div className="px-6 py-4 text-sm text-muted-foreground">Loading filters...</div>}>
           <PublisherLeadReportFilters />
         </Suspense>
 
@@ -102,33 +102,33 @@ export default async function PublisherLeadReportPage({ searchParams }: PageProp
                 className="border-none hover:bg-transparent"
                 style={{ background: "var(--theme-primary-soft)" }}
               >
-                <TableHead className="h-11 px-6 text-slate-600">Sub ID</TableHead>
-                <TableHead className="h-11 px-4 text-right text-slate-600">Total</TableHead>
-                <TableHead className="h-11 px-4 text-right text-slate-600">Approved</TableHead>
-                <TableHead className="h-11 px-4 text-right text-slate-600">Pending</TableHead>
-                <TableHead className="h-11 px-4 text-right text-slate-600">Rejected</TableHead>
-                <TableHead className="h-11 px-4 text-right text-slate-600">Paid</TableHead>
-                <TableHead className="h-11 px-4 text-right text-slate-600">Earnings</TableHead>
-                <TableHead className="h-11 px-6 text-slate-600">Last Lead</TableHead>
+                <TableHead className="h-11 px-6 text-muted-foreground">Sub ID</TableHead>
+                <TableHead className="h-11 px-4 text-right text-muted-foreground">Total</TableHead>
+                <TableHead className="h-11 px-4 text-right text-muted-foreground">Approved</TableHead>
+                <TableHead className="h-11 px-4 text-right text-muted-foreground">Pending</TableHead>
+                <TableHead className="h-11 px-4 text-right text-muted-foreground">Rejected</TableHead>
+                <TableHead className="h-11 px-4 text-right text-muted-foreground">Paid</TableHead>
+                <TableHead className="h-11 px-4 text-right text-muted-foreground">Earnings</TableHead>
+                <TableHead className="h-11 px-6 text-muted-foreground">Last Lead</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {subIdReport.length === 0 ? (
                 <TableRow className="hover:bg-transparent">
                   <TableCell colSpan={8} className="h-48 px-6 py-16 text-center">
-                    <p className="text-base font-medium text-slate-500">No Data Found</p>
+                    <p className="text-base font-medium text-muted-foreground">No Data Found</p>
                   </TableCell>
                 </TableRow>
               ) : (
                 subIdReport.map((row) => (
                   <TableRow
                     key={row.subId}
-                    className="border-slate-100 transition-colors hover:bg-blue-50/40"
+                    className="border-border transition-colors hover:bg-blue-50/40"
                   >
-                    <TableCell className="px-6 py-4 font-mono text-sm font-medium text-slate-800">
+                    <TableCell className="px-6 py-4 font-mono text-sm font-medium text-foreground">
                       {row.subId}
                     </TableCell>
-                    <TableCell className="px-4 py-4 text-right text-sm text-slate-700">
+                    <TableCell className="px-4 py-4 text-right text-sm text-foreground">
                       {row.totalLeads}
                     </TableCell>
                     <TableCell className="px-4 py-4 text-right text-sm text-emerald-700">
@@ -140,13 +140,13 @@ export default async function PublisherLeadReportPage({ searchParams }: PageProp
                     <TableCell className="px-4 py-4 text-right text-sm text-red-700">
                       {row.rejectedLeads}
                     </TableCell>
-                    <TableCell className="px-4 py-4 text-right text-sm text-slate-700">
+                    <TableCell className="px-4 py-4 text-right text-sm text-foreground">
                       {row.paidLeads}
                     </TableCell>
                     <TableCell className="px-4 py-4 text-right text-sm font-medium text-emerald-700">
                       {formatCurrency(row.earnings)}
                     </TableCell>
-                    <TableCell className="whitespace-nowrap px-6 py-4 text-sm text-slate-600">
+                    <TableCell className="whitespace-nowrap px-6 py-4 text-sm text-muted-foreground">
                       {row.lastLeadAt
                         ? formatUserDateTime(row.lastLeadAt, tz, "MMM d, yyyy HH:mm")
                         : "—"}

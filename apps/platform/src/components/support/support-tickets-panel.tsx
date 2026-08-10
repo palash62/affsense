@@ -157,7 +157,7 @@ export function SupportTicketsPanel() {
     return (
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="h-28 animate-pulse rounded-[18px] bg-slate-100" />
+          <div key={i} className="h-28 animate-pulse rounded-[18px] bg-muted" />
         ))}
       </div>
     );
@@ -215,7 +215,7 @@ export function SupportTicketsPanel() {
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
                   className={cn(
-                    "h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 shadow-sm outline-none",
+                    "h-10 w-full rounded-lg border border-border bg-card px-3 text-sm text-foreground shadow-sm outline-none",
                     "focus:border-[var(--theme-primary)] focus:ring-2 focus:ring-[var(--theme-primary)]/15",
                   )}
                 >
@@ -237,10 +237,10 @@ export function SupportTicketsPanel() {
                 minLength={10}
                 required
                 rows={4}
-                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition-colors focus:border-[var(--theme-primary)] focus:ring-2 focus:ring-[var(--theme-primary)]/15"
+                className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground outline-none transition-colors focus:border-[var(--theme-primary)] focus:ring-2 focus:ring-[var(--theme-primary)]/15"
                 placeholder="Describe your issue in detail..."
               />
-              <p className="text-xs text-slate-500">Minimum 10 characters</p>
+              <p className="text-xs text-muted-foreground">Minimum 10 characters</p>
             </div>
             <Button
               type="submit"
@@ -267,17 +267,17 @@ export function SupportTicketsPanel() {
                 style={{ background: "var(--theme-primary-soft)" }}
               >
                 <TableHead className="h-11 w-10 px-4" />
-                <TableHead className="h-11 px-4 text-slate-600">Date</TableHead>
-                <TableHead className="h-11 px-4 text-slate-600">Subject</TableHead>
-                <TableHead className="h-11 px-4 text-slate-600">Category</TableHead>
-                <TableHead className="h-11 px-4 text-slate-600">Status</TableHead>
-                <TableHead className="h-11 px-4 text-slate-600">Last Message</TableHead>
+                <TableHead className="h-11 px-4 text-muted-foreground">Date</TableHead>
+                <TableHead className="h-11 px-4 text-muted-foreground">Subject</TableHead>
+                <TableHead className="h-11 px-4 text-muted-foreground">Category</TableHead>
+                <TableHead className="h-11 px-4 text-muted-foreground">Status</TableHead>
+                <TableHead className="h-11 px-4 text-muted-foreground">Last Message</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {tickets.length === 0 ? (
                 <TableRow className="hover:bg-transparent">
-                  <TableCell colSpan={6} className="px-6 py-16 text-center text-slate-500">
+                  <TableCell colSpan={6} className="px-6 py-16 text-center text-muted-foreground">
                     No tickets yet. Create one above to get help from our support team.
                   </TableCell>
                 </TableRow>
@@ -291,22 +291,22 @@ export function SupportTicketsPanel() {
                   return (
                     <Fragment key={ticket.id}>
                       <TableRow
-                        className="cursor-pointer border-slate-100 transition-colors hover:bg-blue-50/40"
+                        className="cursor-pointer border-border transition-colors hover:bg-blue-50/40"
                         onClick={() => toggleExpand(ticket.id)}
                       >
                         <TableCell className="px-4 py-4">
                           {isExpanded ? (
-                            <ChevronDown className="h-4 w-4 text-slate-500" />
+                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
                           ) : (
-                            <ChevronRight className="h-4 w-4 text-slate-500" />
+                            <ChevronRight className="h-4 w-4 text-muted-foreground" />
                           )}
                         </TableCell>
-                        <TableCell className="px-4 py-4 text-sm text-slate-600">
+                        <TableCell className="px-4 py-4 text-sm text-muted-foreground">
                           {formatUserDateTime(ticket.createdAt, session?.user?.timezone, "MMM d, yyyy")}
                         </TableCell>
                         <TableCell className="px-4 py-4">
                           <div className="flex items-center gap-2">
-                            <span className="font-medium text-slate-900">{ticket.subject}</span>
+                            <span className="font-medium text-foreground">{ticket.subject}</span>
                             {hasAdminReply && !isExpanded && (
                               <span className="rounded-full bg-[var(--theme-primary-soft)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--theme-primary)]">
                                 Replied
@@ -322,15 +322,15 @@ export function SupportTicketsPanel() {
                         <TableCell className="px-4 py-4">
                           <Badge
                             variant="outline"
-                            className={SUPPORT_STATUS_STYLES[ticket.status] ?? "border-slate-200 bg-slate-50 text-slate-600"}
+                            className={SUPPORT_STATUS_STYLES[ticket.status] ?? "border-border bg-muted text-muted-foreground"}
                           >
                             {formatTicketStatus(ticket.status)}
                           </Badge>
                         </TableCell>
-                        <TableCell className="max-w-xs px-4 py-4 text-sm text-slate-600">
+                        <TableCell className="max-w-xs px-4 py-4 text-sm text-muted-foreground">
                           {lastMessage ? (
                             <>
-                              <span className="font-medium text-slate-700">
+                              <span className="font-medium text-foreground">
                                 {lastMessage.sender?.role === "ADMIN" ? "Support: " : "You: "}
                               </span>
                               {truncateTicketMessage(lastMessage.body, 60)}
@@ -342,7 +342,7 @@ export function SupportTicketsPanel() {
                       </TableRow>
                       {isExpanded && (
                         <TableRow className="hover:bg-transparent">
-                          <TableCell colSpan={6} className="bg-slate-50/60 px-6 py-5">
+                          <TableCell colSpan={6} className="bg-muted/60 px-6 py-5">
                             <div onClick={(e) => e.stopPropagation()}>
                               {replyError && (
                                 <p className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">

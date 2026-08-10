@@ -50,56 +50,64 @@
 
 :root,
 [data-theme="slate-pro"] {
-  --background: #F5F7FB;
-  --foreground: #0F172A;
+  --background: #F7F9FC;
+  --foreground: #111827;
   --card: #FFFFFF;
-  --card-foreground: #0F172A;
+  --card-foreground: #111827;
   --popover: #FFFFFF;
-  --popover-foreground: #0F172A;
-  --primary: #3B82F6;
+  --popover-foreground: #111827;
+  --primary: #4F46F5;
   --primary-foreground: #FFFFFF;
-  --secondary: #1E293B;
+  --secondary: #07162D;
   --secondary-foreground: #FFFFFF;
-  --muted: #F1F5F9;
-  --muted-foreground: #64748B;
-  --accent: #EFF6FF;
-  --accent-foreground: #1E40AF;
+  --muted: #F1F4F9;
+  --muted-foreground: #667085;
+  --accent: #EEF2FF;
+  --accent-foreground: #3730A3;
   --destructive: #EF4444;
-  --border: #E2E8F0;
-  --input: #E2E8F0;
-  --ring: #3B82F6;
-  --radius: 0.75rem;
-  --sidebar: #0F172A;
+  --border: #E7EAF0;
+  --input: #E7EAF0;
+  --ring: #4F46F5;
+  --radius: 0.5rem;
+  --radius-card: 0.875rem;
+  --shadow-card: 0 1px 2px rgba(17, 24, 39, 0.05), 0 1px 3px rgba(17, 24, 39, 0.04);
+  --shadow-card-hover: 0 4px 12px rgba(17, 24, 39, 0.08);
+  --sidebar: #07162D;
   --sidebar-foreground: #FFFFFF;
   --sidebar-primary: #FFFFFF;
-  --sidebar-primary-foreground: #2563EB;
-  --sidebar-accent: rgba(255, 255, 255, 0.1);
+  --sidebar-primary-foreground: #4F46F5;
+  --sidebar-accent: rgba(255, 255, 255, 0.08);
   --sidebar-accent-foreground: #FFFFFF;
-  --sidebar-border: rgba(255, 255, 255, 0.1);
-  --sidebar-ring: #3B82F6;
-  --success: #22C55E;
-  --warning: #F97316;
-  --chart-1: #3B82F6;
-  --chart-2: #06B6D4;
-  --chart-3: #22C55E;
-  --chart-4: #F97316;
+  --sidebar-border: rgba(255, 255, 255, 0.08);
+  --sidebar-ring: #4F46F5;
+  --success: #12A150;
+  --warning: #F59E0B;
+  --chart-1: #4F46F5;
+  --chart-2: #12A150;
+  --chart-3: #F59E0B;
+  --chart-4: #713BFF;
   --chart-5: #EF4444;
 
-  --theme-bg: #F5F7FB;
-  --theme-sidebar-from: #0F172A;
-  --theme-sidebar-to: #1E293B;
-  --theme-sidebar-active-text: #2563EB;
-  --theme-hero-from: #1E40AF;
-  --theme-hero-to: #6366F1;
-  --theme-primary: #3B82F6;
-  --theme-primary-soft: #EFF6FF;
-  --theme-success: #22C55E;
-  --theme-gradient-revenue: linear-gradient(135deg, #1E40AF, #3B82F6);
-  --theme-gradient-leads: linear-gradient(135deg, #6366F1, #818CF8);
-  --theme-gradient-approved: linear-gradient(135deg, #059669, #06B6D4);
-  --theme-chart-1: #3B82F6;
-  --theme-chart-2: #06B6D4;
-  --theme-hero-btn-text: #1E40AF;
+  --theme-bg: #F7F9FC;
+  --theme-sidebar-from: #07162D;
+  --theme-sidebar-to: #07162D;
+  --theme-sidebar-active-from: #4F46F5;
+  --theme-sidebar-active-to: #713BFF;
+  --theme-sidebar-active-text: #FFFFFF;
+  --theme-hero-from: #4F46F5;
+  --theme-hero-to: #713BFF;
+  --theme-primary: #4F46F5;
+  --theme-primary-soft: #EEF2FF;
+  --theme-accent-purple: #713BFF;
+  --theme-success: #12A150;
+  --theme-gradient-revenue: linear-gradient(135deg, #4F46F5, #713BFF);
+  --theme-gradient-leads: linear-gradient(135deg, #713BFF, #A78BFA);
+  --theme-gradient-approved: linear-gradient(135deg, #0E8A42, #12A150);
+  --theme-chart-1: #4F46F5;
+  --theme-chart-2: #12A150;
+  --theme-chart-3: #F59E0B;
+  --theme-chart-4: #713BFF;
+  --theme-hero-btn-text: #4F46F5;
 }
 
 [data-theme="enterprise-blue"] {
@@ -118,7 +126,9 @@
   --theme-bg: #F5F7FB;
   --theme-sidebar-from: #1E3A8A;
   --theme-sidebar-to: #4338CA;
-  --theme-sidebar-active-text: #1D4ED8;
+  --theme-sidebar-active-from: #2563EB;
+  --theme-sidebar-active-to: #4338CA;
+  --theme-sidebar-active-text: #FFFFFF;
   --theme-hero-from: #1D4ED8;
   --theme-hero-to: #7C3AED;
   --theme-primary: #2563EB;
@@ -148,7 +158,9 @@
   --theme-bg: #F4F7F5;
   --theme-sidebar-from: #0F3D2E;
   --theme-sidebar-to: #166534;
-  --theme-sidebar-active-text: #047857;
+  --theme-sidebar-active-from: #059669;
+  --theme-sidebar-active-to: #10B981;
+  --theme-sidebar-active-text: #FFFFFF;
   --theme-hero-from: #047857;
   --theme-hero-to: #10B981;
   --theme-primary: #059669;
@@ -178,7 +190,9 @@
   --theme-bg: #F7F5FB;
   --theme-sidebar-from: #4C1D95;
   --theme-sidebar-to: #7C3AED;
-  --theme-sidebar-active-text: #6D28D9;
+  --theme-sidebar-active-from: #7C3AED;
+  --theme-sidebar-active-to: #A855F7;
+  --theme-sidebar-active-text: #FFFFFF;
   --theme-hero-from: #6D28D9;
   --theme-hero-to: #A855F7;
   --theme-primary: #7C3AED;
@@ -190,6 +204,68 @@
   --theme-chart-1: #7C3AED;
   --theme-chart-2: #3B82F6;
   --theme-hero-btn-text: #6D28D9;
+}
+
+[data-theme="marketing-saas"] {
+  --background: #FAF8F5;
+  --foreground: #0A0A0A;
+  --card: #FFFFFF;
+  --card-foreground: #0A0A0A;
+  --popover: #FFFFFF;
+  --popover-foreground: #0A0A0A;
+  --primary: #FF5A1F;
+  --primary-foreground: #FFFFFF;
+  --secondary: #141414;
+  --secondary-foreground: #FFFFFF;
+  --muted: #F1F1EF;
+  --muted-foreground: #737373;
+  --accent: #FFF0EA;
+  --accent-foreground: #0A0A0A;
+  --destructive: #DC2626;
+  --border: #E5E5E5;
+  --input: #D4D4D4;
+  --ring: #FF5A1F;
+  --radius: 0.875rem;
+  --sidebar: #0A0A0A;
+  --sidebar-foreground: #FFFFFF;
+  --sidebar-primary: #FF5A1F;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: rgba(255, 255, 255, 0.06);
+  --sidebar-accent-foreground: #FFFFFF;
+  --sidebar-border: #292929;
+  --sidebar-ring: #FF5A1F;
+  --success: #16A34A;
+  --warning: #D97706;
+  --chart-1: #FF5A1F;
+  --chart-2: #0A0A0A;
+  --chart-3: #737373;
+  --chart-4: #16A34A;
+  --chart-5: #D97706;
+
+  --theme-bg: #FAF8F5;
+  --theme-sidebar-from: #0A0A0A;
+  --theme-sidebar-to: #0A0A0A;
+  --theme-sidebar-active-from: #1C1C1C;
+  --theme-sidebar-active-to: #1C1C1C;
+  --theme-sidebar-active-text: #FFFFFF;
+  --theme-hero-from: #0A0A0A;
+  --theme-hero-to: #141414;
+  --theme-primary: #FF5A1F;
+  --theme-primary-hover: #E94B16;
+  --theme-primary-soft: #FFF0EA;
+  --theme-success: #16A34A;
+  --theme-gradient-revenue: linear-gradient(135deg, #FF5A1F, #E94B16);
+  --theme-gradient-leads: linear-gradient(135deg, #0A0A0A, #292929);
+  --theme-gradient-approved: linear-gradient(135deg, #16A34A, #22C55E);
+  --theme-chart-1: #FF5A1F;
+  --theme-chart-2: #0A0A0A;
+  --theme-hero-btn-text: #0A0A0A;
+}
+
+[data-theme="marketing-saas"] .sidebar-nav-link-active {
+  background-image: none !important;
+  background-color: var(--theme-sidebar-active-from) !important;
+  box-shadow: inset 3px 0 0 var(--theme-primary);
 }
 
 .dark {
@@ -231,7 +307,7 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-sm text-foreground antialiased;
   }
   html {
     @apply font-sans;
@@ -310,15 +386,21 @@
   }
 
   .premium-card {
-    @apply rounded-[18px] border border-slate-200/80 bg-white shadow-sm transition-shadow duration-300 hover:shadow-md;
+    border-radius: var(--radius-card, 0.875rem);
+    @apply border border-border bg-card transition-shadow duration-300;
+    box-shadow: var(--shadow-card, 0 1px 2px rgba(17, 24, 39, 0.05), 0 1px 3px rgba(17, 24, 39, 0.04));
+  }
+
+  .premium-card:hover {
+    box-shadow: var(--shadow-card-hover, 0 4px 12px rgba(17, 24, 39, 0.08));
   }
 
   .premium-page-title {
-    @apply text-2xl font-bold tracking-tight text-slate-900;
+    @apply text-2xl font-bold tracking-tight text-foreground;
   }
 
   .premium-page-subtitle {
-    @apply mt-1 text-sm text-slate-500;
+    @apply mt-1 text-sm text-muted-foreground;
   }
 
   .optin-float {

@@ -187,17 +187,17 @@ function AdvertiserSearchSelect({
               minWidth: "18rem",
               maxWidth: "min(22rem, calc(100vw - 16px))",
             }}
-            className="z-[100] overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg"
+            className="z-[100] overflow-hidden rounded-lg border border-border bg-card shadow-lg"
           >
-            <div className="border-b border-slate-100 p-2">
+            <div className="border-b border-border p-2">
               <div className="relative">
-                <Search className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+                <Search className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
                 <input
                   autoFocus
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search name, company, email…"
-                  className="h-8 w-full rounded-md border border-slate-200 bg-slate-50/80 py-1 pr-2 pl-8 text-sm outline-none focus:border-slate-300 focus:bg-white"
+                  className="h-8 w-full rounded-md border border-border bg-muted/80 py-1 pr-2 pl-8 text-sm outline-none focus:border-border focus:bg-white"
                 />
               </div>
             </div>
@@ -205,7 +205,7 @@ function AdvertiserSearchSelect({
               <button
                 type="button"
                 className={cn(
-                  "flex w-full px-3 py-2 text-left text-sm hover:bg-slate-50",
+                  "flex w-full px-3 py-2 text-left text-sm hover:bg-muted",
                   !value && "bg-sky-50 font-medium text-sky-800",
                 )}
                 onClick={() => {
@@ -217,14 +217,14 @@ function AdvertiserSearchSelect({
                 All advertisers
               </button>
               {suggestions.length === 0 ? (
-                <p className="px-3 py-3 text-xs text-slate-500">No advertisers match</p>
+                <p className="px-3 py-3 text-xs text-muted-foreground">No advertisers match</p>
               ) : (
                 suggestions.map((advertiser) => (
                   <button
                     key={advertiser.id}
                     type="button"
                     className={cn(
-                      "flex w-full px-3 py-2 text-left text-sm hover:bg-slate-50",
+                      "flex w-full px-3 py-2 text-left text-sm hover:bg-muted",
                       value === advertiser.id && "bg-sky-50 font-medium text-sky-800",
                     )}
                     onClick={() => {
@@ -252,12 +252,12 @@ function AdvertiserSearchSelect({
         aria-expanded={open}
         onClick={() => setOpen((prev) => !prev)}
         className={cn(
-          "flex h-9 w-full items-center justify-between gap-2 rounded-md border border-input bg-white px-3 text-left text-sm shadow-xs outline-none transition-[color,box-shadow]",
+          "flex h-9 w-full items-center justify-between gap-2 rounded-md border border-input bg-card px-3 text-left text-sm shadow-xs outline-none transition-[color,box-shadow]",
           "focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50",
           open && "border-ring ring-[3px] ring-ring/50",
         )}
       >
-        <span className={cn("min-w-0 truncate", !selected && "text-slate-400")}>
+        <span className={cn("min-w-0 truncate", !selected && "text-muted-foreground")}>
           {selected ? formatAdvertiserOptionLabel(selected) : "All advertisers"}
         </span>
         <span className="flex shrink-0 items-center gap-1">
@@ -266,7 +266,7 @@ function AdvertiserSearchSelect({
               role="button"
               tabIndex={0}
               aria-label="Clear advertiser"
-              className="rounded p-0.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+              className="rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-muted-foreground"
               onClick={(e) => {
                 e.stopPropagation();
                 onChange("");
@@ -284,7 +284,7 @@ function AdvertiserSearchSelect({
               <X className="h-3.5 w-3.5" />
             </span>
           ) : null}
-          <ChevronDown className={cn("h-4 w-4 text-slate-400 transition-transform", open && "rotate-180")} />
+          <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", open && "rotate-180")} />
         </span>
       </button>
       {panel}
@@ -431,7 +431,7 @@ export function AdminCpaOffersReport({
         />
       </div>
 
-      <div className="rounded-[18px] border border-slate-200/80 bg-white shadow-sm">
+      <div className="rounded-[18px] border border-border bg-card shadow-sm">
         <div
           className="flex items-center gap-2 rounded-t-[18px] px-5 py-3.5 text-white"
           style={{
@@ -451,7 +451,7 @@ export function AdminCpaOffersReport({
         <div className="bg-gradient-to-br from-slate-50/80 to-white p-4">
           <div className="grid grid-cols-1 items-end gap-3 sm:grid-cols-2 xl:grid-cols-12">
             <div className="space-y-1 sm:col-span-2 xl:col-span-3">
-              <label className="text-xs font-medium text-slate-500">Advertiser</label>
+              <label className="text-xs font-medium text-muted-foreground">Advertiser</label>
               <AdvertiserSearchSelect
                 advertisers={advertisers}
                 value={draft.advertiserId}
@@ -461,7 +461,7 @@ export function AdminCpaOffersReport({
               />
             </div>
             <div className="space-y-1 xl:col-span-2">
-              <label className="text-xs font-medium text-slate-500">From</label>
+              <label className="text-xs font-medium text-muted-foreground">From</label>
               <Input
                 type="date"
                 value={draft.from}
@@ -470,7 +470,7 @@ export function AdminCpaOffersReport({
               />
             </div>
             <div className="space-y-1 xl:col-span-2">
-              <label className="text-xs font-medium text-slate-500">To</label>
+              <label className="text-xs font-medium text-muted-foreground">To</label>
               <Input
                 type="date"
                 value={draft.to}
@@ -479,7 +479,7 @@ export function AdminCpaOffersReport({
               />
             </div>
             <div className="space-y-1 xl:col-span-1">
-              <label className="text-xs font-medium text-slate-500">Offer ID</label>
+              <label className="text-xs font-medium text-muted-foreground">Offer ID</label>
               <Input
                 value={draft.offerId}
                 onChange={(e) => setDraft((prev) => ({ ...prev, offerId: e.target.value }))}
@@ -488,9 +488,9 @@ export function AdminCpaOffersReport({
               />
             </div>
             <div className="space-y-1 sm:col-span-2 xl:col-span-2">
-              <label className="text-xs font-medium text-slate-500">Search</label>
+              <label className="text-xs font-medium text-muted-foreground">Search</label>
               <div className="relative">
-                <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   className="h-9 bg-white pl-9"
                   value={draft.q}
@@ -514,11 +514,11 @@ export function AdminCpaOffersReport({
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-[18px] border border-slate-200/80 bg-white shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 bg-gradient-to-r from-sky-50 via-white to-emerald-50 px-5 py-3.5">
+      <div className="overflow-hidden rounded-[18px] border border-border bg-card shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-gradient-to-r from-sky-50 via-white to-emerald-50 px-5 py-3.5">
           <div>
-            <p className="text-sm font-semibold text-slate-900">Conversion log</p>
-            <p className="text-xs text-slate-500">
+            <p className="text-sm font-semibold text-foreground">Conversion log</p>
+            <p className="text-xs text-muted-foreground">
               {loading
                 ? "Loading…"
                 : `Showing ${items.length} of ${total} conversions · page ${page} of ${totalPages}`}
@@ -533,7 +533,7 @@ export function AdminCpaOffersReport({
 
         <Table>
           <TableHeader>
-            <TableRow className="bg-slate-50/90 hover:bg-slate-50/90">
+            <TableRow className="bg-muted/90 hover:bg-muted/90">
               <TableHead>Date</TableHead>
               <TableHead>Advertiser</TableHead>
               <TableHead>Offer</TableHead>
@@ -547,7 +547,7 @@ export function AdminCpaOffersReport({
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={8} className="py-12 text-center text-sm text-slate-500">
+                <TableCell colSpan={8} className="py-12 text-center text-sm text-muted-foreground">
                   Loading conversions…
                 </TableCell>
               </TableRow>
@@ -557,8 +557,8 @@ export function AdminCpaOffersReport({
                   <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-50 text-violet-600">
                     <Activity className="h-5 w-5" />
                   </div>
-                  <p className="text-sm font-medium text-slate-700">No conversions found</p>
-                  <p className="mt-1 text-xs text-slate-500">
+                  <p className="text-sm font-medium text-foreground">No conversions found</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
                     Try widening the date range or clearing filters.
                   </p>
                 </TableCell>
@@ -566,7 +566,7 @@ export function AdminCpaOffersReport({
             ) : (
               items.map((row) => (
                 <TableRow key={row.id} className="hover:bg-sky-50/40">
-                  <TableCell className="whitespace-nowrap text-sm text-slate-700">
+                  <TableCell className="whitespace-nowrap text-sm text-foreground">
                     <span className="rounded-md bg-sky-50 px-2 py-0.5 text-xs font-medium text-sky-800">
                       {formatDateTime(row.createdAt)}
                     </span>
@@ -574,29 +574,29 @@ export function AdminCpaOffersReport({
                   <TableCell>
                     {row.advertiserName ? (
                       <div>
-                        <p className="font-medium text-slate-900">{row.advertiserName}</p>
+                        <p className="font-medium text-foreground">{row.advertiserName}</p>
                         {row.advertiserId ? (
-                          <p className="font-mono text-[11px] text-slate-400">
+                          <p className="font-mono text-[11px] text-muted-foreground">
                             #{row.advertiserId.slice(-8)}
                           </p>
                         ) : null}
                       </div>
                     ) : (
-                      <span className="text-slate-400">—</span>
+                      <span className="text-muted-foreground">—</span>
                     )}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2.5">
                       <CpaOfferStatusDot status={row.offerStatus} />
                       <div>
-                        <p className="font-medium text-slate-900">{row.offerName}</p>
-                        <p className="font-mono text-[11px] text-slate-400">
+                        <p className="font-medium text-foreground">{row.offerName}</p>
+                        <p className="font-mono text-[11px] text-muted-foreground">
                           #{row.offerId.slice(-8)}
                         </p>
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell className="max-w-[10rem] truncate font-mono text-xs text-slate-600">
+                  <TableCell className="max-w-[10rem] truncate font-mono text-xs text-muted-foreground">
                     {row.clickId ? (
                       <span className="rounded bg-violet-50 px-1.5 py-0.5 text-violet-700">
                         {row.clickId}
@@ -639,7 +639,7 @@ export function AdminCpaOffersReport({
                     )}
                   </TableCell>
                   <TableCell
-                    className="max-w-[14rem] truncate font-mono text-[11px] text-slate-400"
+                    className="max-w-[14rem] truncate font-mono text-[11px] text-muted-foreground"
                     title={
                       typeof row.rawQuery === "string"
                         ? row.rawQuery
@@ -655,8 +655,8 @@ export function AdminCpaOffersReport({
         </Table>
 
         {totalPages > 1 ? (
-          <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50/50 px-5 py-3">
-            <p className="text-xs text-slate-500">
+          <div className="flex items-center justify-between border-t border-border bg-muted/50 px-5 py-3">
+            <p className="text-xs text-muted-foreground">
               Page {page} of {totalPages}
             </p>
             <div className="flex gap-2">

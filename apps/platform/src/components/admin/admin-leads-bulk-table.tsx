@@ -55,7 +55,7 @@ export type AdminLeadTableRow = {
 };
 
 function riskBadge(score: number | null) {
-  if (score === null) return <span className="text-slate-400">—</span>;
+  if (score === null) return <span className="text-muted-foreground">—</span>;
   const cls =
     score > 50
       ? "bg-red-100 text-red-700"
@@ -149,8 +149,8 @@ export function AdminLeadsBulkTable({ rows }: { rows: AdminLeadTableRow[] }) {
   return (
     <>
       {selectedRejectable.length > 0 ? (
-        <div className="flex flex-wrap items-center gap-3 border-b border-slate-100 bg-white px-4 py-2.5">
-          <span className="text-sm font-medium text-slate-700">
+        <div className="flex flex-wrap items-center gap-3 border-b border-border bg-card px-4 py-2.5">
+          <span className="text-sm font-medium text-foreground">
             {selectedRejectable.length} selected
           </span>
           <Button
@@ -175,7 +175,7 @@ export function AdminLeadsBulkTable({ rows }: { rows: AdminLeadTableRow[] }) {
               className="border-none hover:bg-transparent"
               style={{ background: "var(--theme-primary-soft)" }}
             >
-              <TableHead className="h-11 w-10 px-4 text-slate-600">
+              <TableHead className="h-11 w-10 px-4 text-muted-foreground">
                 <Checkbox
                   checked={allRejectableSelected}
                   disabled={rejectableIds.length === 0}
@@ -183,38 +183,38 @@ export function AdminLeadsBulkTable({ rows }: { rows: AdminLeadTableRow[] }) {
                   aria-label="Select all rejectable leads on this page"
                 />
               </TableHead>
-              <TableHead className="h-11 whitespace-nowrap px-4 text-slate-600">
+              <TableHead className="h-11 whitespace-nowrap px-4 text-muted-foreground">
                 <Suspense fallback={<span>Date / Time</span>}>
                   <AdvertiserLeadsSortHeader field="at" label="Date / Time" />
                 </Suspense>
               </TableHead>
-              <TableHead className="h-11 whitespace-nowrap px-4 text-slate-600">Lead ID</TableHead>
-              <TableHead className="h-11 whitespace-nowrap px-4 text-slate-600">Advertiser</TableHead>
-              <TableHead className="h-11 whitespace-nowrap px-4 text-slate-600">
+              <TableHead className="h-11 whitespace-nowrap px-4 text-muted-foreground">Lead ID</TableHead>
+              <TableHead className="h-11 whitespace-nowrap px-4 text-muted-foreground">Advertiser</TableHead>
+              <TableHead className="h-11 whitespace-nowrap px-4 text-muted-foreground">
                 <Suspense fallback={<span>Campaign</span>}>
                   <AdvertiserLeadsSortHeader field="campaign" label="Campaign" />
                 </Suspense>
               </TableHead>
-              <TableHead className="h-11 whitespace-nowrap px-4 text-slate-600">Publisher</TableHead>
-              <TableHead className="h-11 whitespace-nowrap px-4 text-slate-600">Lead Data</TableHead>
-              <TableHead className="h-11 whitespace-nowrap px-4 text-slate-600">Country</TableHead>
-              <TableHead className="h-11 whitespace-nowrap px-4 text-slate-600">IP</TableHead>
-              <TableHead className="h-11 whitespace-nowrap px-4 text-slate-600">Source</TableHead>
-              <TableHead className="h-11 whitespace-nowrap px-4 text-slate-600">Sub ID</TableHead>
-              <TableHead className="h-11 whitespace-nowrap px-4 text-slate-600">Device</TableHead>
-              <TableHead className="h-11 whitespace-nowrap px-4 text-slate-600">OS</TableHead>
-              <TableHead className="h-11 whitespace-nowrap px-4 text-right text-slate-600">CPL</TableHead>
-              <TableHead className="h-11 whitespace-nowrap px-4 text-right text-slate-600">Sales</TableHead>
-              <TableHead className="h-11 whitespace-nowrap px-4 text-right text-slate-600">Revenue</TableHead>
-              <TableHead className="h-11 whitespace-nowrap px-4 text-slate-600">CTA</TableHead>
-              <TableHead className="h-11 whitespace-nowrap px-4 text-slate-600">Risk</TableHead>
-              <TableHead className="h-11 whitespace-nowrap px-4 text-slate-600">Flags</TableHead>
-              <TableHead className="h-11 whitespace-nowrap px-4 text-slate-600">
+              <TableHead className="h-11 whitespace-nowrap px-4 text-muted-foreground">Publisher</TableHead>
+              <TableHead className="h-11 whitespace-nowrap px-4 text-muted-foreground">Lead Data</TableHead>
+              <TableHead className="h-11 whitespace-nowrap px-4 text-muted-foreground">Country</TableHead>
+              <TableHead className="h-11 whitespace-nowrap px-4 text-muted-foreground">IP</TableHead>
+              <TableHead className="h-11 whitespace-nowrap px-4 text-muted-foreground">Source</TableHead>
+              <TableHead className="h-11 whitespace-nowrap px-4 text-muted-foreground">Sub ID</TableHead>
+              <TableHead className="h-11 whitespace-nowrap px-4 text-muted-foreground">Device</TableHead>
+              <TableHead className="h-11 whitespace-nowrap px-4 text-muted-foreground">OS</TableHead>
+              <TableHead className="h-11 whitespace-nowrap px-4 text-right text-muted-foreground">CPL</TableHead>
+              <TableHead className="h-11 whitespace-nowrap px-4 text-right text-muted-foreground">Sales</TableHead>
+              <TableHead className="h-11 whitespace-nowrap px-4 text-right text-muted-foreground">Revenue</TableHead>
+              <TableHead className="h-11 whitespace-nowrap px-4 text-muted-foreground">CTA</TableHead>
+              <TableHead className="h-11 whitespace-nowrap px-4 text-muted-foreground">Risk</TableHead>
+              <TableHead className="h-11 whitespace-nowrap px-4 text-muted-foreground">Flags</TableHead>
+              <TableHead className="h-11 whitespace-nowrap px-4 text-muted-foreground">
                 <Suspense fallback={<span>Status</span>}>
                   <AdvertiserLeadsSortHeader field="status" label="Status" />
                 </Suspense>
               </TableHead>
-              <TableHead className="h-11 min-w-[160px] whitespace-nowrap px-4 text-slate-600">
+              <TableHead className="h-11 min-w-[160px] whitespace-nowrap px-4 text-muted-foreground">
                 Notes
               </TableHead>
             </TableRow>
@@ -223,8 +223,8 @@ export function AdminLeadsBulkTable({ rows }: { rows: AdminLeadTableRow[] }) {
             {rows.length === 0 ? (
               <TableRow className="hover:bg-transparent">
                 <TableCell colSpan={21} className="h-48 px-6 py-16 text-center">
-                  <p className="text-base font-medium text-slate-500">No leads found</p>
-                  <p className="mt-1 text-sm text-slate-400">
+                  <p className="text-base font-medium text-muted-foreground">No leads found</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
                     Try adjusting the filters or date range.
                   </p>
                 </TableCell>
@@ -235,7 +235,7 @@ export function AdminLeadsBulkTable({ rows }: { rows: AdminLeadTableRow[] }) {
                 return (
                   <TableRow
                     key={lead.id}
-                    className="border-slate-100 transition-colors hover:bg-violet-50/40"
+                    className="border-border transition-colors hover:bg-violet-50/40"
                   >
                     <TableCell className="px-4 py-4">
                       {rejectable ? (
@@ -248,57 +248,57 @@ export function AdminLeadsBulkTable({ rows }: { rows: AdminLeadTableRow[] }) {
                         <span className="inline-block size-4" />
                       )}
                     </TableCell>
-                    <TableCell className="whitespace-nowrap px-4 py-4 text-sm text-slate-600">
+                    <TableCell className="whitespace-nowrap px-4 py-4 text-sm text-muted-foreground">
                       {lead.createdAtLabel}
                     </TableCell>
-                    <TableCell className="whitespace-nowrap px-4 py-4 font-mono text-xs text-slate-500">
+                    <TableCell className="whitespace-nowrap px-4 py-4 font-mono text-xs text-muted-foreground">
                       {lead.shortId}
                     </TableCell>
-                    <TableCell className="max-w-[120px] px-4 py-4 text-sm text-slate-700">
+                    <TableCell className="max-w-[120px] px-4 py-4 text-sm text-foreground">
                       <span className="line-clamp-2" title={lead.advertiserName}>
                         {lead.advertiserName}
                       </span>
                     </TableCell>
-                    <TableCell className="max-w-[140px] px-4 py-4 text-sm font-medium text-slate-800">
+                    <TableCell className="max-w-[140px] px-4 py-4 text-sm font-medium text-foreground">
                       <span className="line-clamp-2" title={lead.campaignName}>
                         {lead.campaignName}
                       </span>
                     </TableCell>
-                    <TableCell className="max-w-[120px] px-4 py-4 text-sm text-slate-700">
+                    <TableCell className="max-w-[120px] px-4 py-4 text-sm text-foreground">
                       <span className="line-clamp-2" title={lead.publisherName}>
                         {lead.publisherName}
                       </span>
                     </TableCell>
-                    <TableCell className="max-w-[220px] px-4 py-4 text-sm text-slate-700">
+                    <TableCell className="max-w-[220px] px-4 py-4 text-sm text-foreground">
                       <span className="line-clamp-2" title={lead.leadData}>
                         {lead.leadData}
                       </span>
                     </TableCell>
-                    <TableCell className="whitespace-nowrap px-4 py-4 text-sm text-slate-600">
+                    <TableCell className="whitespace-nowrap px-4 py-4 text-sm text-muted-foreground">
                       {lead.country}
                     </TableCell>
-                    <TableCell className="whitespace-nowrap px-4 py-4 font-mono text-xs text-slate-600">
+                    <TableCell className="whitespace-nowrap px-4 py-4 font-mono text-xs text-muted-foreground">
                       {lead.ip}
                     </TableCell>
-                    <TableCell className="whitespace-nowrap px-4 py-4 text-sm text-slate-600">
+                    <TableCell className="whitespace-nowrap px-4 py-4 text-sm text-muted-foreground">
                       {lead.source}
                     </TableCell>
-                    <TableCell className="max-w-[100px] truncate px-4 py-4 text-sm text-slate-600">
+                    <TableCell className="max-w-[100px] truncate px-4 py-4 text-sm text-muted-foreground">
                       {lead.subId}
                     </TableCell>
-                    <TableCell className="whitespace-nowrap px-4 py-4 text-sm text-slate-600">
+                    <TableCell className="whitespace-nowrap px-4 py-4 text-sm text-muted-foreground">
                       {lead.device}
                     </TableCell>
-                    <TableCell className="whitespace-nowrap px-4 py-4 text-sm text-slate-600">
+                    <TableCell className="whitespace-nowrap px-4 py-4 text-sm text-muted-foreground">
                       {lead.os}
                     </TableCell>
-                    <TableCell className="whitespace-nowrap px-4 py-4 text-right text-sm text-slate-700">
+                    <TableCell className="whitespace-nowrap px-4 py-4 text-right text-sm text-foreground">
                       {lead.cpl}
                     </TableCell>
-                    <TableCell className="whitespace-nowrap px-4 py-4 text-right text-sm text-slate-700">
+                    <TableCell className="whitespace-nowrap px-4 py-4 text-right text-sm text-foreground">
                       {lead.sales}
                     </TableCell>
-                    <TableCell className="whitespace-nowrap px-4 py-4 text-right text-sm text-slate-700">
+                    <TableCell className="whitespace-nowrap px-4 py-4 text-right text-sm text-foreground">
                       {lead.revenue}
                     </TableCell>
                     <TableCell className="whitespace-nowrap px-4 py-4">
@@ -307,7 +307,7 @@ export function AdminLeadsBulkTable({ rows }: { rows: AdminLeadTableRow[] }) {
                           Yes
                         </span>
                       ) : (
-                        <span className="rounded-full bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-500 ring-1 ring-slate-200">
+                        <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground ring-1 ring-slate-200">
                           No
                         </span>
                       )}
@@ -326,13 +326,13 @@ export function AdminLeadsBulkTable({ rows }: { rows: AdminLeadTableRow[] }) {
                           ))}
                         </div>
                       ) : (
-                        <span className="text-xs text-slate-400">—</span>
+                        <span className="text-xs text-muted-foreground">—</span>
                       )}
                     </TableCell>
                     <TableCell className="px-4 py-4">
                       <LeadStatusBadge status={lead.status} />
                     </TableCell>
-                    <TableCell className="max-w-[180px] px-4 py-4 text-sm text-slate-600">
+                    <TableCell className="max-w-[180px] px-4 py-4 text-sm text-muted-foreground">
                       <span className="line-clamp-2" title={lead.notes}>
                         {lead.notes}
                       </span>
@@ -358,7 +358,7 @@ export function AdminLeadsBulkTable({ rows }: { rows: AdminLeadTableRow[] }) {
               publisher and referral earnings, and reduce campaign spend for those leads.
             </p>
           ) : (
-            <p className="text-sm text-slate-600">
+            <p className="text-sm text-muted-foreground">
               Selected leads will be marked as rejected. No payment will be processed.
             </p>
           )}
@@ -370,7 +370,7 @@ export function AdminLeadsBulkTable({ rows }: { rows: AdminLeadTableRow[] }) {
               onChange={(e) => setReason(e.target.value)}
               placeholder="Why are these leads being rejected?"
               rows={3}
-              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+              className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
             />
           </div>
           {error ? <p className="text-sm text-red-600">{error}</p> : null}

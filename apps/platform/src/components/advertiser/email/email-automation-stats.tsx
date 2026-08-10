@@ -27,9 +27,9 @@ export function EmailAutomationStats({ automationId }: { automationId: string })
   return (
     <div className="grid gap-3 sm:grid-cols-3">
       {stats.steps.map((s) => (
-        <div key={s.stepId} className="rounded-lg border border-slate-200 bg-white p-4 text-sm">
-          <p className="font-medium text-slate-900">Step {s.order + 1}</p>
-          <p className="text-slate-500">{s.sent} sent · {s.openRate}% opens · {s.clickRate}% clicks</p>
+        <div key={s.stepId} className="rounded-lg border border-border bg-card p-4 text-sm">
+          <p className="font-medium text-foreground">Step {s.order + 1}</p>
+          <p className="text-muted-foreground">{s.sent} sent · {s.openRate}% opens · {s.clickRate}% clicks</p>
         </div>
       ))}
     </div>

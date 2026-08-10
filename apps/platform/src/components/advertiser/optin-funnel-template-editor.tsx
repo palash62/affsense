@@ -66,7 +66,7 @@ export function OptinFunnelTemplateEditor({
         contentClassName="p-6"
       >
         <div className="space-y-4">
-          <label className="flex items-center gap-2 text-sm text-slate-700">
+          <label className="flex items-center gap-2 text-sm text-foreground">
             <input
               type="checkbox"
               checked={thankYouEnabled}
@@ -75,7 +75,7 @@ export function OptinFunnelTemplateEditor({
             Enable thank-you page redirect after optin submit
           </label>
 
-          <label className="flex items-center gap-2 text-sm text-slate-700">
+          <label className="flex items-center gap-2 text-sm text-foreground">
             <input
               type="checkbox"
               checked={thankYouUseCampaignPixel}
@@ -90,7 +90,7 @@ export function OptinFunnelTemplateEditor({
               value={thankYouPixelHtml}
               onChange={(e) => setThankYouPixelHtml(e.target.value)}
               rows={5}
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 font-mono text-xs"
+              className="w-full rounded-lg border border-border px-3 py-2 font-mono text-xs"
               placeholder="Paste Facebook Pixel, Google tag, or image pixel HTML"
             />
           </div>
@@ -108,7 +108,7 @@ export function OptinFunnelTemplateEditor({
           )}
 
           {thankYouMessage && (
-            <p className="text-sm text-slate-600">{thankYouMessage}</p>
+            <p className="text-sm text-muted-foreground">{thankYouMessage}</p>
           )}
 
           <Button disabled={savingThankYou} onClick={saveThankYouSettings}>

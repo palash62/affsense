@@ -175,10 +175,10 @@ export function AdminBulkEmailForm({ onSent }: { onSent?: () => void }) {
 
   return (
     <form onSubmit={handleSubmit} className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-      <div className="space-y-6 rounded-[18px] border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="space-y-6 rounded-[18px] border border-border bg-card p-6 shadow-sm">
         <div>
-          <h2 className="text-lg font-semibold text-slate-900">Compose message</h2>
-          <p className="mt-1 text-sm text-slate-500">
+          <h2 className="text-lg font-semibold text-foreground">Compose message</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
             Send a one-off email to one or more active advertisers or publishers.
           </p>
         </div>
@@ -217,7 +217,7 @@ export function AdminBulkEmailForm({ onSent }: { onSent?: () => void }) {
           <EmailComposeEditor value={message} onChange={setMessage} />
         </div>
 
-        <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50/80 p-3">
+        <div className="space-y-2 rounded-xl border border-border bg-muted/80 p-3">
           <Label htmlFor="testTo">Test email</Label>
           <div className="flex flex-wrap gap-2">
             <Input
@@ -252,7 +252,7 @@ export function AdminBulkEmailForm({ onSent }: { onSent?: () => void }) {
               {testMsg}
             </p>
           ) : (
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-muted-foreground">
               Sends the current subject and body to one address without selecting recipients.
             </p>
           )}
@@ -285,12 +285,12 @@ export function AdminBulkEmailForm({ onSent }: { onSent?: () => void }) {
         </Button>
       </div>
 
-      <div className="rounded-[18px] border border-slate-200 bg-white shadow-sm">
-        <div className="border-b border-slate-100 px-5 py-4">
+      <div className="rounded-[18px] border border-border bg-card shadow-sm">
+        <div className="border-b border-border px-5 py-4">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <Users className="h-4 w-4 text-[var(--theme-primary)]" />
-              <h3 className="font-semibold text-slate-900">Recipients</h3>
+              <h3 className="font-semibold text-foreground">Recipients</h3>
             </div>
             <Badge variant="outline">
               {selectedIds.length} selected · {recipients.length} total
@@ -305,7 +305,7 @@ export function AdminBulkEmailForm({ onSent }: { onSent?: () => void }) {
             </Button>
           </div>
           <div className="relative mt-3">
-            <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -317,9 +317,9 @@ export function AdminBulkEmailForm({ onSent }: { onSent?: () => void }) {
 
         <div className="max-h-[520px] divide-y divide-slate-100 overflow-y-auto">
           {loadingRecipients ? (
-            <p className="px-5 py-8 text-sm text-slate-500">Loading recipients...</p>
+            <p className="px-5 py-8 text-sm text-muted-foreground">Loading recipients...</p>
           ) : filteredRecipients.length === 0 ? (
-            <p className="px-5 py-8 text-sm text-slate-500">No active recipients found.</p>
+            <p className="px-5 py-8 text-sm text-muted-foreground">No active recipients found.</p>
           ) : (
             filteredRecipients.map((user) => {
               const checked = selectedIds.includes(user.id);
@@ -327,7 +327,7 @@ export function AdminBulkEmailForm({ onSent }: { onSent?: () => void }) {
                 <label
                   key={user.id}
                   className={cn(
-                    "flex cursor-pointer items-start gap-3 px-5 py-3 hover:bg-slate-50",
+                    "flex cursor-pointer items-start gap-3 px-5 py-3 hover:bg-muted",
                     checked && "bg-[var(--theme-primary-soft)]/40",
                   )}
                 >
@@ -335,13 +335,13 @@ export function AdminBulkEmailForm({ onSent }: { onSent?: () => void }) {
                     type="checkbox"
                     checked={checked}
                     onChange={() => toggleRecipient(user.id)}
-                    className="mt-1 rounded border-slate-300"
+                    className="mt-1 rounded border-border"
                   />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-slate-900">{user.name}</p>
-                    <p className="truncate text-xs text-slate-500">{user.email}</p>
+                    <p className="truncate text-sm font-medium text-foreground">{user.name}</p>
+                    <p className="truncate text-xs text-muted-foreground">{user.email}</p>
                   </div>
-                  <Mail className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
+                  <Mail className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
                 </label>
               );
             })

@@ -108,7 +108,7 @@ export default async function PublisherLeadsPage({ searchParams }: PageProps) {
         icon={FileText}
         gradient="leads"
       >
-        <Suspense fallback={<div className="px-6 py-4 text-sm text-slate-500">Loading filters...</div>}>
+        <Suspense fallback={<div className="px-6 py-4 text-sm text-muted-foreground">Loading filters...</div>}>
           <PublisherLeadsFilters />
         </Suspense>
 
@@ -119,26 +119,26 @@ export default async function PublisherLeadsPage({ searchParams }: PageProps) {
                 className="border-none hover:bg-transparent"
                 style={{ background: "var(--theme-primary-soft)" }}
               >
-                <TableHead className="h-11 whitespace-nowrap px-4 text-slate-600">
+                <TableHead className="h-11 whitespace-nowrap px-4 text-muted-foreground">
                   <Suspense fallback={<span>Date / Time</span>}>
                     <PublisherLeadsSortHeader field="at" label="Date / Time" />
                   </Suspense>
                 </TableHead>
-                <TableHead className="h-11 whitespace-nowrap px-4 text-slate-600">Lead ID</TableHead>
-                <TableHead className="h-11 whitespace-nowrap px-4 text-right text-slate-600">
+                <TableHead className="h-11 whitespace-nowrap px-4 text-muted-foreground">Lead ID</TableHead>
+                <TableHead className="h-11 whitespace-nowrap px-4 text-right text-muted-foreground">
                   Payout
                 </TableHead>
-                <TableHead className="h-11 whitespace-nowrap px-4 text-slate-600">Country</TableHead>
-                <TableHead className="h-11 whitespace-nowrap px-4 text-slate-600">
+                <TableHead className="h-11 whitespace-nowrap px-4 text-muted-foreground">Country</TableHead>
+                <TableHead className="h-11 whitespace-nowrap px-4 text-muted-foreground">
                   <Suspense fallback={<span>Status</span>}>
                     <PublisherLeadsSortHeader field="status" label="Status" />
                   </Suspense>
                 </TableHead>
-                <TableHead className="h-11 whitespace-nowrap px-4 text-slate-600">Device</TableHead>
-                <TableHead className="h-11 whitespace-nowrap px-4 text-slate-600">OS</TableHead>
-                <TableHead className="h-11 whitespace-nowrap px-4 text-slate-600">Source</TableHead>
-                <TableHead className="h-11 whitespace-nowrap px-4 text-slate-600">CTA</TableHead>
-                <TableHead className="h-11 min-w-[180px] whitespace-nowrap px-4 text-slate-600">
+                <TableHead className="h-11 whitespace-nowrap px-4 text-muted-foreground">Device</TableHead>
+                <TableHead className="h-11 whitespace-nowrap px-4 text-muted-foreground">OS</TableHead>
+                <TableHead className="h-11 whitespace-nowrap px-4 text-muted-foreground">Source</TableHead>
+                <TableHead className="h-11 whitespace-nowrap px-4 text-muted-foreground">CTA</TableHead>
+                <TableHead className="h-11 min-w-[180px] whitespace-nowrap px-4 text-muted-foreground">
                   Reject Reason
                 </TableHead>
               </TableRow>
@@ -147,8 +147,8 @@ export default async function PublisherLeadsPage({ searchParams }: PageProps) {
               {leads.length === 0 ? (
                 <TableRow className="hover:bg-transparent">
                   <TableCell colSpan={10} className="h-48 px-6 py-16 text-center">
-                    <p className="text-base font-medium text-slate-500">No leads found</p>
-                    <p className="mt-1 text-sm text-slate-400">
+                    <p className="text-base font-medium text-muted-foreground">No leads found</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
                       Share your Smart Link to start generating leads.
                     </p>
                   </TableCell>
@@ -163,18 +163,18 @@ export default async function PublisherLeadsPage({ searchParams }: PageProps) {
                   return (
                     <TableRow
                       key={lead.id}
-                      className="border-slate-100 transition-colors hover:bg-blue-50/40"
+                      className="border-border transition-colors hover:bg-blue-50/40"
                     >
-                      <TableCell className="whitespace-nowrap px-4 py-4 text-sm text-slate-600">
+                      <TableCell className="whitespace-nowrap px-4 py-4 text-sm text-muted-foreground">
                         {formatUserDateTime(lead.createdAt, tz, "MMM d, yyyy HH:mm:ss")}
                       </TableCell>
-                      <TableCell className="whitespace-nowrap px-4 py-4 font-mono text-xs text-slate-500">
+                      <TableCell className="whitespace-nowrap px-4 py-4 font-mono text-xs text-muted-foreground">
                         {shortLeadId(lead.id)}
                       </TableCell>
                       <TableCell className={cn("whitespace-nowrap px-4 py-4 text-right text-sm", payout.className)}>
                         {payout.label}
                       </TableCell>
-                      <TableCell className="whitespace-nowrap px-4 py-4 text-sm text-slate-700">
+                      <TableCell className="whitespace-nowrap px-4 py-4 text-sm text-foreground">
                         {extractLeadCountry(
                           lead.data,
                           lead.country,
@@ -185,13 +185,13 @@ export default async function PublisherLeadsPage({ searchParams }: PageProps) {
                       <TableCell className="whitespace-nowrap px-4 py-4">
                         <LeadStatusBadge status={lead.status} />
                       </TableCell>
-                      <TableCell className="whitespace-nowrap px-4 py-4 text-sm text-slate-600">
+                      <TableCell className="whitespace-nowrap px-4 py-4 text-sm text-muted-foreground">
                         {device}
                       </TableCell>
-                      <TableCell className="whitespace-nowrap px-4 py-4 text-sm text-slate-600">
+                      <TableCell className="whitespace-nowrap px-4 py-4 text-sm text-muted-foreground">
                         {os}
                       </TableCell>
-                      <TableCell className="whitespace-nowrap px-4 py-4 text-sm capitalize text-slate-600">
+                      <TableCell className="whitespace-nowrap px-4 py-4 text-sm capitalize text-muted-foreground">
                         {lead.source ?? "—"}
                       </TableCell>
                       <TableCell className="whitespace-nowrap px-4 py-4">
@@ -200,12 +200,12 @@ export default async function PublisherLeadsPage({ searchParams }: PageProps) {
                             Yes
                           </span>
                         ) : (
-                          <span className="rounded-full bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-500 ring-1 ring-slate-200">
+                          <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground ring-1 ring-slate-200">
                             No
                           </span>
                         )}
                       </TableCell>
-                      <TableCell className="max-w-[220px] px-4 py-4 text-sm text-slate-600">
+                      <TableCell className="max-w-[220px] px-4 py-4 text-sm text-muted-foreground">
                         <p
                           className={cn(
                             "truncate",

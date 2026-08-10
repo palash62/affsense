@@ -23,7 +23,7 @@ type FraudLeadRow = {
 };
 
 function riskBadge(score: number | null) {
-  if (score === null) return <span className="text-slate-400">—</span>;
+  if (score === null) return <span className="text-muted-foreground">—</span>;
   const color =
     score > 50 ? "bg-red-100 text-red-700" : score > 20 ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-800";
   return (
@@ -80,15 +80,15 @@ export function FraudLeadActions({ lead }: { lead: FraudLeadRow }) {
         )}
       </div>
       {open && (
-        <div className="rounded-lg border border-slate-200 bg-slate-50/80 p-3 text-xs">
-          <p className="font-medium text-slate-700">
+        <div className="rounded-lg border border-border bg-muted/80 p-3 text-xs">
+          <p className="font-medium text-foreground">
             {lead.campaign.name} · {lead.publisher.name}
           </p>
           {lead.fraudDecision && (
-            <p className="mt-1 text-slate-500">Decision: {lead.fraudDecision}</p>
+            <p className="mt-1 text-muted-foreground">Decision: {lead.fraudDecision}</p>
           )}
           {failedRules.length > 0 ? (
-            <ul className="mt-2 space-y-1 text-slate-600">
+            <ul className="mt-2 space-y-1 text-muted-foreground">
               {failedRules.map((r) => (
                 <li key={r.rule}>
                   <span className="font-mono text-red-600">{r.rule}</span>
@@ -98,7 +98,7 @@ export function FraudLeadActions({ lead }: { lead: FraudLeadRow }) {
               ))}
             </ul>
           ) : (
-            <p className="mt-2 text-slate-500">No failed fraud rules.</p>
+            <p className="mt-2 text-muted-foreground">No failed fraud rules.</p>
           )}
         </div>
       )}

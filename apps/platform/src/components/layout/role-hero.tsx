@@ -30,7 +30,7 @@ export function RoleHero({ eyebrow, title, description, action }: RoleHeroProps)
         {action && ActionIcon && (
           <ButtonLink
             href={action.href}
-            className="shrink-0 rounded-xl bg-white px-4 text-[var(--theme-hero-btn-text)] shadow-sm hover:bg-white/90"
+            className="shrink-0 rounded-xl bg-card px-4 text-[var(--theme-hero-btn-text)] shadow-sm hover:bg-card/90"
           >
             <ActionIcon className="mr-2 h-4 w-4" />
             {action.label}
