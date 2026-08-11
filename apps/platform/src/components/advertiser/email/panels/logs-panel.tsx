@@ -17,6 +17,7 @@ import {
 import { formatUserDateTime } from "@/lib/user-timezone";
 import { useEmailModuleFilters } from "../email-module-filter-context";
 import { EmailModuleShell } from "../email-module-shell";
+import { EmailWalletWarningBanner } from "../email-wallet-warning";
 
 const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
   SENT: "default",
@@ -88,6 +89,9 @@ function LogsContent() {
 
   return (
     <PageSection title={`Delivery History (${total})`} icon={ScrollText} gradient="leads">
+      <div className="border-b border-slate-100 px-6 pt-4">
+        <EmailWalletWarningBanner />
+      </div>
       {provider === "mailgun" ? (
         <p className="border-b border-slate-100 px-6 py-3 text-sm text-slate-600">
           Delivery, bounce, and complaint status update from Mailgun webhooks. Opens and clicks use

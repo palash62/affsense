@@ -29,3 +29,9 @@ export function canAdvertiserAccessAutoresponder(email: string | null | undefine
   if (allowlist === "live") return true;
   return allowlist.includes(email.trim().toLowerCase());
 }
+
+/** Demo advertiser may send without Autoresponder wallet balance. */
+export function isAutoresponderDemoAdvertiser(email: string | null | undefined): boolean {
+  if (!email?.trim()) return false;
+  return email.trim().toLowerCase() === AUTORESPONDER_DEMO_ADVERTISER_EMAIL;
+}

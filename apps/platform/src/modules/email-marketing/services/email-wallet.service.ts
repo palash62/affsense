@@ -2,11 +2,20 @@ import { randomUUID } from "crypto";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { Errors } from "@/lib/errors";
+import { isAutoresponderDemoAdvertiser } from "@/lib/autoresponder-access";
 import { debitWallet } from "@/services/wallet.service";
 import { getEmailMarketingPlatformConfig } from "./email-marketing-config.service";
 
 const SEND_REF = "email_send";
 const TOPUP_REF = "email_wallet_topup";
+
+async function isDemoAdvertiserId(advertiserId: string): Promise<boolean> {
+  const user = await prisma.user.findUnique({
+    where: { id: advertiserId },
+    select: { email: true },
+  });
+  return isAutoresponderDemoAdvertiser(user?.email);
+}
 
 export function emailCostUsd(emailsPerDollar: number): number {
   if (!Number.isFinite(emailsPerDollar) || emailsPerDollar <= 0) {
@@ -133,6 +142,9 @@ export async function hasEmailSendFunds(
   const rate =
     emailsPerDollar ?? (await getEmailMarketingPlatformConfig()).emailsPerDollar;
   const cost = emailCostUsd(rate);
+  if (await isDemoAdvertiserId(advertiserId)) {
+    return { ok: true, cost: 0, balance: Number.POSITIVE_INFINITY };
+  }
   const wallet = await ensureEmailWallet(prisma, advertiserId);
   const balance = Number(wallet.balance);
   return { ok: balance + 1e-9 >= cost, cost, balance };
@@ -142,6 +154,10 @@ export async function hasEmailSendFunds(
  * Debit one email cost after a successful send. Idempotent by EmailSend id.
  */
 export async function debitForSend(advertiserId: string, sendId: string) {
+  if (await isDemoAdvertiserId(advertiserId)) {
+    return { cost: 0 };
+  }
+
   const config = await getEmailMarketingPlatformConfig();
   const cost = emailCostUsd(config.emailsPerDollar);
 

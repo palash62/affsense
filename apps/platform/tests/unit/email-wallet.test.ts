@@ -5,6 +5,9 @@ const prismaMock = {
   wallet: {
     findUnique: vi.fn(),
   },
+  user: {
+    findUnique: vi.fn(),
+  },
   emailWallet: {
     findUnique: vi.fn(),
     create: vi.fn(),
@@ -47,6 +50,7 @@ describe("email wallet math", () => {
 describe("email wallet top-up and debit", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    prismaMock.user.findUnique.mockResolvedValue({ email: "other@example.com" });
     prismaMock.platformSetting.findUnique.mockResolvedValue({
       value: {
         enabled: true,
@@ -144,6 +148,7 @@ describe("email wallet top-up and debit", () => {
       "@/modules/email-marketing/services/email-wallet.service"
     );
 
+    prismaMock.user.findUnique.mockResolvedValue({ email: "other@example.com" });
     prismaMock.emailWalletLedger.findFirst.mockResolvedValue(null);
     prismaMock.emailWallet.findUnique.mockResolvedValue({
       id: "ew1",
@@ -155,5 +160,49 @@ describe("email wallet top-up and debit", () => {
     await expect(debitForSend("adv1", "send-2")).rejects.toMatchObject({
       code: "WALLET_INSUFFICIENT_FUNDS",
     });
+  });
+
+  it("demo advertiser bypasses hasEmailSendFunds with $0 balance", async () => {
+    const { hasEmailSendFunds } = await import(
+      "@/modules/email-marketing/services/email-wallet.service"
+    );
+
+    prismaMock.user.findUnique.mockResolvedValue({ email: "advertiser@cpl.local" });
+
+    const funds = await hasEmailSendFunds("demo-adv", 100);
+    expect(funds.ok).toBe(true);
+    expect(funds.cost).toBe(0);
+    expect(prismaMock.emailWallet.findUnique).not.toHaveBeenCalled();
+  });
+
+  it("non-demo advertiser with $0 balance fails hasEmailSendFunds", async () => {
+    const { hasEmailSendFunds } = await import(
+      "@/modules/email-marketing/services/email-wallet.service"
+    );
+
+    prismaMock.user.findUnique.mockResolvedValue({ email: "paid@example.com" });
+    prismaMock.emailWallet.findUnique.mockResolvedValue({
+      id: "ew1",
+      advertiserId: "adv2",
+      balance: 0,
+      currency: "USD",
+    });
+
+    const funds = await hasEmailSendFunds("adv2", 100);
+    expect(funds.ok).toBe(false);
+    expect(funds.cost).toBe(0.01);
+    expect(funds.balance).toBe(0);
+  });
+
+  it("demo advertiser debitForSend is a no-op", async () => {
+    const { debitForSend } = await import(
+      "@/modules/email-marketing/services/email-wallet.service"
+    );
+
+    prismaMock.user.findUnique.mockResolvedValue({ email: "advertiser@cpl.local" });
+
+    const result = await debitForSend("demo-adv", "send-demo");
+    expect(result.cost).toBe(0);
+    expect(prismaMock.$transaction).not.toHaveBeenCalled();
   });
 });

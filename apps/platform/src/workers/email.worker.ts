@@ -1,4 +1,5 @@
 import { DelayedError, Worker } from "bullmq";
+import { prisma } from "@/lib/prisma";
 import { processEmailSend } from "@/modules/email-marketing/services/send.service";
 import { QUEUE_NAME } from "@/modules/email-marketing/config/defaults";
 
@@ -49,6 +50,27 @@ worker.on("failed", (job, err) => {
   if (job?.name === "tag-action") return;
   if (err?.message === "DelayedError" || err?.name === "DelayedError") return;
   console.error(`[email-worker] failed send ${job?.data?.sendId}:`, err.message);
+
+  // Final attempt: keep UI in sync (DB would otherwise stay QUEUED forever).
+  const sendId = job?.data?.sendId as string | undefined;
+  if (!sendId || !job) return;
+  const maxAttempts = job.opts.attempts ?? 1;
+  if (job.attemptsMade < maxAttempts) return;
+
+  void prisma.emailSend
+    .updateMany({
+      where: { id: sendId, status: "QUEUED" },
+      data: {
+        status: "FAILED",
+        error: err?.message?.slice(0, 500) || "Email worker failed after retries",
+      },
+    })
+    .catch((updateErr) => {
+      console.error(
+        `[email-worker] failed to mark send ${sendId} FAILED:`,
+        updateErr instanceof Error ? updateErr.message : updateErr,
+      );
+    });
 });
 
 console.log(`[email-worker] listening on queue "${QUEUE_NAME}" (${redisUrl})`);
