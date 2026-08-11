@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   ADMIN_PORTAL_ROLES,
   canAccessAdminPath,
+  canImpersonateUser,
   isAdminPortalRole,
   parseStaffMenuAccess,
   STAFF_USERS_PATH,
@@ -69,5 +70,37 @@ describe("admin portal roles", () => {
     const hrefs = getNavForRole("ADMIN").map((item) => item.href);
     expect(hrefs).toContain("/admin/users");
     expect(hrefs).toContain("/admin/advertisers");
+  });
+
+  it("lets admins impersonate publishers and advertisers", () => {
+    expect(canImpersonateUser("ADMIN", [], "PUBLISHER")).toBe(true);
+    expect(canImpersonateUser("ADMIN", [], "ADVERTISER")).toBe(true);
+    expect(canImpersonateUser("ADMIN", [], "ADMIN")).toBe(false);
+  });
+
+  it("lets managers impersonate only when matching menu is granted", () => {
+    expect(
+      canImpersonateUser("PLATFORM_MANAGER", ["/admin/publishers"], "PUBLISHER"),
+    ).toBe(true);
+    expect(
+      canImpersonateUser("PLATFORM_MANAGER", ["/admin/publishers"], "ADVERTISER"),
+    ).toBe(false);
+    expect(
+      canImpersonateUser("PLATFORM_MANAGER", ["/admin/advertisers"], "ADVERTISER"),
+    ).toBe(true);
+    expect(
+      canImpersonateUser("PLATFORM_MANAGER", ["/admin/advertisers"], "PUBLISHER"),
+    ).toBe(false);
+    expect(canImpersonateUser("PLATFORM_MANAGER", ["/admin/leads"], "PUBLISHER")).toBe(
+      false,
+    );
+    expect(canImpersonateUser("PLATFORM_MANAGER", [], "PUBLISHER")).toBe(false);
+  });
+
+  it("denies impersonation for non-portal actors", () => {
+    expect(canImpersonateUser("ADVERTISER", ["/admin/publishers"], "PUBLISHER")).toBe(
+      false,
+    );
+    expect(canImpersonateUser("PUBLISHER", [], "ADVERTISER")).toBe(false);
   });
 });

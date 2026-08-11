@@ -72,6 +72,22 @@ async function hasValidUserSession(userId: string, role: UserRole, tokenVersion?
   return true;
 }
 
+/** ADMIN or PLATFORM_MANAGER may hold a view-as cookie as the impersonator. */
+async function isValidImpersonator(userId: string, tokenVersion?: number) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true, role: true, status: true, tokenVersion: true },
+  });
+
+  if (!user) return false;
+  if (!isAdminPortalRole(user.role)) return false;
+  if (user.status === "SUSPENDED") return false;
+  if (typeof tokenVersion === "number" && user.tokenVersion !== tokenVersion) {
+    return false;
+  }
+  return true;
+}
+
 /**
  * Validates the JWT identity for normal sessions and admin view-as.
  * In view-as mode, tokenVersion is checked against the admin (impersonator), not the target user.
@@ -80,12 +96,11 @@ export async function isAuthorizedAppSession(session: AppSession): Promise<boole
   if (!session.user) return false;
 
   if (session.viewAsMode && session.impersonatorId) {
-    const adminOk = await hasValidUserSession(
+    const impersonatorOk = await isValidImpersonator(
       session.impersonatorId,
-      "ADMIN",
       session.tokenVersion,
     );
-    if (!adminOk) return false;
+    if (!impersonatorOk) return false;
     // Target advertiser/publisher: role + status only — do not compare admin JWT tokenVersion.
     return hasValidUserSession(session.user.id, session.user.role);
   }

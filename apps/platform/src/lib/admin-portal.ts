@@ -72,3 +72,21 @@ export function canAccessAdminPath(
 
   return false;
 }
+
+/**
+ * Whether an admin-portal actor may start view-as (Login) for a target user role.
+ * Managers need the matching Publishers/Advertisers menu; admins always may.
+ */
+export function canImpersonateUser(
+  actorRole: UserRole | string,
+  staffMenuAccess: string[] | null | undefined,
+  targetRole: UserRole | string,
+): boolean {
+  if (targetRole !== "PUBLISHER" && targetRole !== "ADVERTISER") return false;
+  if (actorRole === "ADMIN") return true;
+  if (actorRole !== "PLATFORM_MANAGER") return false;
+
+  const access = parseStaffMenuAccess(staffMenuAccess);
+  if (targetRole === "PUBLISHER") return access.includes("/admin/publishers");
+  return access.includes("/admin/advertisers");
+}
