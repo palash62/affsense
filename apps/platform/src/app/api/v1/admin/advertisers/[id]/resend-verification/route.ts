@@ -1,5 +1,6 @@
-import { withRealAdmin } from "@/lib/api-handler";
-import { errorResponse } from "@/lib/errors";
+import { withAuth, ADMIN_PORTAL_ROLES } from "@/lib/api-handler";
+import { canManagePortalUsers } from "@/lib/admin-portal";
+import { errorResponse, Errors } from "@/lib/errors";
 import { resendAdvertiserVerificationEmail } from "@/services/admin.service";
 
 export async function POST(
@@ -8,8 +9,18 @@ export async function POST(
 ) {
   const { id } = await params;
 
-  return withRealAdmin(async (session) => {
+  return withAuth(async (session) => {
     try {
+      if (
+        !canManagePortalUsers(
+          session.user.role,
+          session.user.staffMenuAccess,
+          "ADVERTISER",
+        )
+      ) {
+        return errorResponse(Errors.forbidden());
+      }
+
       const result = await resendAdvertiserVerificationEmail(id, session.user.id);
       return Response.json({
         success: true,
@@ -19,5 +30,5 @@ export async function POST(
     } catch (error) {
       return errorResponse(error);
     }
-  });
+  }, ADMIN_PORTAL_ROLES);
 }

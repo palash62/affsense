@@ -3,6 +3,7 @@ import {
   ADMIN_PORTAL_ROLES,
   canAccessAdminPath,
   canImpersonateUser,
+  canManagePortalUsers,
   isAdminPortalRole,
   parseStaffMenuAccess,
   STAFF_USERS_PATH,
@@ -102,5 +103,31 @@ describe("admin portal roles", () => {
       false,
     );
     expect(canImpersonateUser("PUBLISHER", [], "ADVERTISER")).toBe(false);
+  });
+
+  it("lets admins manage publishers and advertisers", () => {
+    expect(canManagePortalUsers("ADMIN", [], "PUBLISHER")).toBe(true);
+    expect(canManagePortalUsers("ADMIN", [], "ADVERTISER")).toBe(true);
+    expect(canManagePortalUsers("ADMIN", [], "ADMIN")).toBe(false);
+    expect(canManagePortalUsers("ADMIN", [], "PLATFORM_MANAGER")).toBe(false);
+  });
+
+  it("lets managers manage users only when matching menu is granted", () => {
+    expect(
+      canManagePortalUsers("PLATFORM_MANAGER", ["/admin/publishers"], "PUBLISHER"),
+    ).toBe(true);
+    expect(
+      canManagePortalUsers("PLATFORM_MANAGER", ["/admin/publishers"], "ADVERTISER"),
+    ).toBe(false);
+    expect(
+      canManagePortalUsers("PLATFORM_MANAGER", ["/admin/advertisers"], "ADVERTISER"),
+    ).toBe(true);
+    expect(
+      canManagePortalUsers("PLATFORM_MANAGER", ["/admin/advertisers"], "PUBLISHER"),
+    ).toBe(false);
+    expect(canManagePortalUsers("PLATFORM_MANAGER", ["/admin/leads"], "PUBLISHER")).toBe(
+      false,
+    );
+    expect(canManagePortalUsers("PLATFORM_MANAGER", [], "ADVERTISER")).toBe(false);
   });
 });

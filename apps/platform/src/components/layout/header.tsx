@@ -29,7 +29,10 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { ThemeSwitcher } from "@/components/theme/theme-switcher";
-import { shouldShowAdminQuickActions } from "@/lib/header-quick-actions";
+import {
+  filterAdminQuickActionLinks,
+  shouldShowAdminQuickActions,
+} from "@/lib/header-quick-actions";
 import { cn } from "@/lib/utils";
 import type { UserRole } from "@prisma/client";
 
@@ -80,7 +83,13 @@ export function Header({ role, title, breadcrumbs, premium, onOpenMobileNav }: H
         ? "/advertiser/tutorials"
         : null;
 
-  const showQuickActions = premium && shouldShowAdminQuickActions(role);
+  const visibleQuickActions = filterAdminQuickActionLinks(
+    quickActionLinks,
+    role,
+    session?.user?.staffMenuAccess,
+  );
+  const showQuickActions =
+    premium && shouldShowAdminQuickActions(role) && visibleQuickActions.length > 0;
 
   return (
     <header
@@ -153,7 +162,7 @@ export function Header({ role, title, breadcrumbs, premium, onOpenMobileNav }: H
               Quick Actions
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-52 rounded-xl">
-              {quickActionLinks.map((item) => {
+              {visibleQuickActions.map((item) => {
                 const Icon = item.icon;
                 return (
                   <DropdownMenuItem key={item.href} render={<Link href={item.href} />}>
