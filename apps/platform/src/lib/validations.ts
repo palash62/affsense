@@ -1322,3 +1322,14 @@ export const adminPromotionReportQuerySchema = z.object({
   from: z.string().trim().optional(),
   to: z.string().trim().optional(),
 });
+
+export const promotionVisitSchema = z.object({
+  utmSource: z.string().trim().max(120).optional(),
+  utmMedium: z.string().trim().max(120).optional(),
+  utmCampaign: z.string().trim().max(120).optional(),
+  utmContent: z.string().trim().max(120).optional(),
+  utmTerm: z.string().trim().max(120).optional(),
+  landingPath: z.string().trim().max(500).optional(),
+  landingUrl: z.string().trim().max(2000).optional(),
+  visitorKey: z.string().trim().max(64).optional(),
+});

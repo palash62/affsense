@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Fragment, Suspense } from "react";
-import { BarChart3, Link2, Megaphone, Users, Wallet } from "lucide-react";
+import { BarChart3, Eye, Link2, Megaphone, MousePointerClick, Users, Wallet } from "lucide-react";
 import { PageHero } from "@/components/admin/page-hero";
 import { PageSection } from "@/components/admin/page-section";
 import { GradientStatCard, NeutralStatCard } from "@/components/admin/gradient-stat-card";
@@ -42,21 +42,39 @@ export default async function AdminPromotionPage({ searchParams }: PageProps) {
       <PageHero
         eyebrow="Marketing"
         title="Promotion"
-        description="Generate UTM tracking links for Facebook and other channels, then see which sources drive advertiser signups and deposits"
-        badge={`${report.stats.attributedSignups} attributed`}
+        description="Generate tracked promotion links for Facebook and other channels, then see clicks, visits, signups, and deposits"
+        badge={`${report.stats.totalClicks} clicks`}
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <GradientStatCard
           variant="leads"
+          label="Clicks"
+          value={report.stats.totalClicks}
+          icon={MousePointerClick}
+        />
+        <NeutralStatCard
+          label="Visits"
+          value={report.stats.totalVisits}
+          icon={Eye}
+          accent="green"
+        />
+        <NeutralStatCard
+          label="Unique visitors"
+          value={report.stats.uniqueVisitors}
+          icon={Users}
+          accent="purple"
+        />
+        <GradientStatCard
+          variant="leads"
           label="Attributed signups"
           value={report.stats.attributedSignups}
-          icon={Users}
+          icon={Megaphone}
         />
         <NeutralStatCard
           label="Unattributed signups"
           value={report.stats.unattributedSignups}
-          icon={Megaphone}
+          icon={Users}
           accent="orange"
         />
         <GradientStatCard
@@ -85,7 +103,7 @@ export default async function AdminPromotionPage({ searchParams }: PageProps) {
 
       <PageSection
         title="Attribution report"
-        description="Advertiser signups and completed wallet deposits grouped by full UTM"
+        description="Clicks, visits, advertiser signups, and completed wallet deposits grouped by full UTM"
         icon={BarChart3}
         gradient="revenue"
         contentClassName="space-y-4 p-6"
@@ -106,7 +124,11 @@ export default async function AdminPromotionPage({ searchParams }: PageProps) {
                 <TableHead className="h-11 px-4 text-slate-600">Campaign</TableHead>
                 <TableHead className="h-11 px-4 text-slate-600">Content</TableHead>
                 <TableHead className="h-11 px-4 text-slate-600">Term</TableHead>
+                <TableHead className="h-11 px-4 text-right text-slate-600">Clicks</TableHead>
+                <TableHead className="h-11 px-4 text-right text-slate-600">Visits</TableHead>
+                <TableHead className="h-11 px-4 text-right text-slate-600">Unique</TableHead>
                 <TableHead className="h-11 px-4 text-right text-slate-600">Signups</TableHead>
+                <TableHead className="h-11 px-4 text-right text-slate-600">Signup %</TableHead>
                 <TableHead className="h-11 px-4 text-right text-slate-600">Deposits</TableHead>
                 <TableHead className="h-11 px-4 text-right text-slate-600">Avg deposit</TableHead>
               </TableRow>
@@ -114,8 +136,8 @@ export default async function AdminPromotionPage({ searchParams }: PageProps) {
             <TableBody>
               {report.rows.length === 0 ? (
                 <TableRow className="hover:bg-transparent">
-                  <TableCell colSpan={8} className="px-6 py-16 text-center text-slate-500">
-                    No attributed advertiser signups yet.
+                  <TableCell colSpan={12} className="px-6 py-16 text-center text-slate-500">
+                    No promotion clicks, visits, or attributed signups yet.
                   </TableCell>
                 </TableRow>
               ) : (
@@ -139,7 +161,19 @@ export default async function AdminPromotionPage({ searchParams }: PageProps) {
                         <TableCell className="px-4 py-4 text-sm text-slate-700">{row.utmContent}</TableCell>
                         <TableCell className="px-4 py-4 text-sm text-slate-700">{row.utmTerm}</TableCell>
                         <TableCell className="px-4 py-4 text-right text-sm font-medium tabular-nums text-slate-700">
+                          {row.clickCount}
+                        </TableCell>
+                        <TableCell className="px-4 py-4 text-right text-sm font-medium tabular-nums text-slate-700">
+                          {row.visitCount}
+                        </TableCell>
+                        <TableCell className="px-4 py-4 text-right text-sm font-medium tabular-nums text-slate-700">
+                          {row.uniqueVisits}
+                        </TableCell>
+                        <TableCell className="px-4 py-4 text-right text-sm font-medium tabular-nums text-slate-700">
                           {row.signupCount}
+                        </TableCell>
+                        <TableCell className="px-4 py-4 text-right text-sm tabular-nums text-slate-600">
+                          {row.signupRate === null ? "—" : `${row.signupRate}%`}
                         </TableCell>
                         <TableCell className="px-4 py-4 text-right text-sm font-semibold tabular-nums text-emerald-600">
                           {formatCurrency(row.totalDeposits)}
@@ -159,10 +193,10 @@ export default async function AdminPromotionPage({ searchParams }: PageProps) {
                             </Link>
                             <p className="text-xs text-slate-500">{advertiser.email}</p>
                           </TableCell>
-                          <TableCell className="px-4 py-3 text-sm text-slate-600" colSpan={2}>
+                          <TableCell className="px-4 py-3 text-sm text-slate-600" colSpan={5}>
                             {formatUserDateTime(advertiser.createdAt, tz, "MMM d, yyyy")}
                           </TableCell>
-                          <TableCell className="px-4 py-3">
+                          <TableCell className="px-4 py-3" colSpan={3}>
                             <UserStatusBadge
                               status={advertiser.status as "ACTIVE" | "PENDING" | "SUSPENDED"}
                             />

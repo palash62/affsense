@@ -1618,6 +1618,11 @@ model CpaPostbackDelivery {
   @@map("cpa_postback_deliveries")
 }
 
+enum PromotionEventType {
+  CLICK
+  VISIT
+}
+
 model Promotion {
   id           String   @id @default(cuid())
   name         String
@@ -1634,8 +1639,35 @@ model Promotion {
 
   createdBy User?  @relation("PromotionCreator", fields: [createdById], references: [id], onDelete: SetNull)
   signups   User[] @relation("PromotionSignups")
+  events    PromotionEvent[]
 
   @@index([utmSource, utmMedium, utmCampaign])
   @@index([isActive, createdAt])
   @@map("promotions")
+}
+
+model PromotionEvent {
+  id           String              @id @default(cuid())
+  promotionId  String?             @map("promotion_id")
+  eventType    PromotionEventType  @map("event_type")
+  utmSource    String?             @map("utm_source")
+  utmMedium    String?             @map("utm_medium")
+  utmCampaign  String?             @map("utm_campaign")
+  utmContent   String?             @map("utm_content")
+  utmTerm      String?             @map("utm_term")
+  landingPath  String?             @map("landing_path")
+  landingUrl   String?             @map("landing_url") @db.Text
+  ip           String?
+  userAgent    String?             @map("user_agent") @db.Text
+  referrer     String?             @db.Text
+  visitorKey   String?             @map("visitor_key")
+  createdAt    DateTime            @default(now()) @map("created_at")
+
+  promotion Promotion? @relation(fields: [promotionId], references: [id], onDelete: SetNull)
+
+  @@index([promotionId, eventType, createdAt])
+  @@index([eventType, createdAt])
+  @@index([utmSource, utmMedium, utmCampaign])
+  @@index([visitorKey, promotionId, eventType, createdAt])
+  @@map("promotion_events")
 }

@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+
 export type PromotionAttribution = {
   utmSource?: string;
   utmMedium?: string;
@@ -9,6 +11,8 @@ export type PromotionAttribution = {
 
 export const PROMOTION_UTM_COOKIE_NAME = "lv_promo_utm";
 export const PROMOTION_UTM_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 30; // 30 days
+export const PROMOTION_VISIT_COOKIE_NAME = "lv_promo_visit";
+export const PROMOTION_VISIT_DEDUPE_SECONDS = 30 * 60; // 30 minutes
 
 const UTM_PARAM_MAP = {
   utm_source: "utmSource",
@@ -133,7 +137,12 @@ export function buildPromotionUrl(
     utmContent?: string | null;
     utmTerm?: string | null;
   },
+  options?: { promotionId?: string },
 ): string {
+  if (options?.promotionId) {
+    return buildPromotionClickUrl(origin, options.promotionId);
+  }
+
   const path = promotion.landingPath.startsWith("/")
     ? promotion.landingPath
     : `/${promotion.landingPath}`;
@@ -144,6 +153,66 @@ export function buildPromotionUrl(
   if (promotion.utmContent) url.searchParams.set("utm_content", promotion.utmContent);
   if (promotion.utmTerm) url.searchParams.set("utm_term", promotion.utmTerm);
   return url.toString();
+}
+
+export function buildPromotionClickUrl(origin: string, promotionId: string): string {
+  return new URL(`/api/v1/promo/click/${promotionId}`, origin).toString();
+}
+
+export function utmKeyFromFields(fields: {
+  utmSource?: string | null;
+  utmMedium?: string | null;
+  utmCampaign?: string | null;
+  utmContent?: string | null;
+  utmTerm?: string | null;
+}): string {
+  return [
+    fields.utmSource ?? "",
+    fields.utmMedium ?? "",
+    fields.utmCampaign ?? "",
+    fields.utmContent ?? "",
+    fields.utmTerm ?? "",
+  ].join("|");
+}
+
+export function buildPromotionVisitorKey(ip: string | null, userAgent: string | null): string {
+  return createHash("sha256")
+    .update(`${ip ?? ""}|${userAgent ?? ""}`)
+    .digest("hex")
+    .slice(0, 32);
+}
+
+function readPromotionVisitCookie(): { key: string } | null {
+  if (typeof document === "undefined") return null;
+  const match = document.cookie
+    .split("; ")
+    .find((row) => row.startsWith(`${PROMOTION_VISIT_COOKIE_NAME}=`));
+  if (!match) return null;
+
+  try {
+    const raw = decodeURIComponent(match.split("=").slice(1).join("="));
+    const parsed = JSON.parse(raw) as { key?: string };
+    return parsed.key ? { key: parsed.key } : null;
+  } catch {
+    return null;
+  }
+}
+
+export function shouldRecordPromotionVisit(attribution: PromotionAttribution): boolean {
+  const key = utmKeyFromFields(attribution);
+  if (!key.replace(/\|/g, "")) return false;
+  const existing = readPromotionVisitCookie();
+  return existing?.key !== key;
+}
+
+export function markPromotionVisitRecorded(attribution: PromotionAttribution) {
+  if (typeof document === "undefined") return;
+  const key = utmKeyFromFields(attribution);
+  if (!key.replace(/\|/g, "")) return;
+
+  const secure =
+    typeof window !== "undefined" && window.location.protocol === "https:" ? "; Secure" : "";
+  document.cookie = `${PROMOTION_VISIT_COOKIE_NAME}=${encodeURIComponent(JSON.stringify({ key }))}; Path=/; Max-Age=${PROMOTION_VISIT_DEDUPE_SECONDS}; SameSite=Lax${secure}`;
 }
 
 export function normalizeAttributionForStorage(

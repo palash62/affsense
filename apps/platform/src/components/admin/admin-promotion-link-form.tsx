@@ -15,10 +15,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
+  buildPromotionClickUrl,
   buildPromotionUrl,
   FACEBOOK_PROMOTION_PRESET,
 } from "@/lib/promotion-attribution";
-import type { PromotionRecord } from "@/services/promotion.service";
+import type { PromotionRecordWithStats } from "@/services/promotion.service";
 
 type FormState = {
   name: string;
@@ -41,7 +42,7 @@ const emptyForm: FormState = {
 export function AdminPromotionLinkForm({ appOrigin }: { appOrigin: string }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [promotions, setPromotions] = useState<PromotionRecord[]>([]);
+  const [promotions, setPromotions] = useState<PromotionRecordWithStats[]>([]);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
@@ -124,7 +125,7 @@ export function AdminPromotionLinkForm({ appOrigin }: { appOrigin: string }) {
     }
   }
 
-  async function toggleActive(promotion: PromotionRecord) {
+  async function toggleActive(promotion: PromotionRecordWithStats) {
     const res = await fetch(`/api/v1/admin/promotions/${promotion.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -143,8 +144,8 @@ export function AdminPromotionLinkForm({ appOrigin }: { appOrigin: string }) {
       <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
         <p className="text-sm font-medium text-slate-900">UTM tracking links</p>
         <p className="mt-1 text-sm text-slate-600">
-          Links point to the home page. UTM params are stored in a 30-day cookie when
-          visitors arrive, then attached to advertiser signups.
+          Saved links use click tracking, then land on the home page with UTM params. Visits and
+          signups are attributed from the 30-day cookie.
         </p>
       </div>
 
@@ -259,6 +260,9 @@ export function AdminPromotionLinkForm({ appOrigin }: { appOrigin: string }) {
             <TableRow className="border-none hover:bg-transparent" style={{ background: "var(--theme-primary-soft)" }}>
               <TableHead className="h-11 px-6 text-slate-600">Name</TableHead>
               <TableHead className="h-11 px-4 text-slate-600">UTM</TableHead>
+              <TableHead className="h-11 px-4 text-right text-slate-600">Clicks</TableHead>
+              <TableHead className="h-11 px-4 text-right text-slate-600">Visits</TableHead>
+              <TableHead className="h-11 px-4 text-right text-slate-600">Signups</TableHead>
               <TableHead className="h-11 px-4 text-slate-600">Status</TableHead>
               <TableHead className="h-11 px-4 text-right text-slate-600">Link</TableHead>
             </TableRow>
@@ -266,19 +270,19 @@ export function AdminPromotionLinkForm({ appOrigin }: { appOrigin: string }) {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={4} className="px-6 py-10 text-center text-slate-500">
+                <TableCell colSpan={7} className="px-6 py-10 text-center text-slate-500">
                   Loading promotions…
                 </TableCell>
               </TableRow>
             ) : promotions.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="px-6 py-10 text-center text-slate-500">
+                <TableCell colSpan={7} className="px-6 py-10 text-center text-slate-500">
                   No saved promotions yet.
                 </TableCell>
               </TableRow>
             ) : (
               promotions.map((promotion) => {
-                const url = buildPromotionUrl(appOrigin, promotion);
+                const url = buildPromotionClickUrl(appOrigin, promotion.id);
                 return (
                   <TableRow key={promotion.id} className="border-slate-100">
                     <TableCell className="px-6 py-4 font-medium text-slate-900">{promotion.name}</TableCell>
@@ -290,6 +294,15 @@ export function AdminPromotionLinkForm({ appOrigin }: { appOrigin: string }) {
                         <p>content: {promotion.utmContent ?? "—"}</p>
                         <p>term: {promotion.utmTerm ?? "—"}</p>
                       </div>
+                    </TableCell>
+                    <TableCell className="px-4 py-4 text-right text-sm tabular-nums text-slate-700">
+                      {promotion.clickCount}
+                    </TableCell>
+                    <TableCell className="px-4 py-4 text-right text-sm tabular-nums text-slate-700">
+                      {promotion.visitCount}
+                    </TableCell>
+                    <TableCell className="px-4 py-4 text-right text-sm tabular-nums text-slate-700">
+                      {promotion.signupCount}
                     </TableCell>
                     <TableCell className="px-4 py-4">
                       <Button
