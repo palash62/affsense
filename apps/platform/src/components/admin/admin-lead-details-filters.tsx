@@ -15,6 +15,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { LeadExportButton } from "@/components/leads/lead-export-button";
+import {
+  LEAD_SOURCE_FILTER_OPTIONS,
+  normalizeLeadSourceFilter,
+} from "@/lib/lead-source-filters";
 
 const SELECT_TRIGGER_CLASS =
   "h-8 !w-full min-w-0 bg-white text-xs *:data-[slot=select-value]:line-clamp-none";
@@ -70,6 +74,7 @@ export function AdminLeadDetailsFilters({
   const [publisherId, setPublisherId] = useState(() =>
     normalizeSelectValue(searchParams.get("publisherId"), ["all", ...publishers.map((p) => p.id)]),
   );
+  const [source, setSource] = useState(() => normalizeLeadSourceFilter(searchParams.get("source")));
   const [status, setStatus] = useState(() =>
     normalizeSelectValue(searchParams.get("status"), STATUSES.map((s) => s.value)),
   );
@@ -82,6 +87,7 @@ export function AdminLeadDetailsFilters({
         advertiserId: string;
         campaignId: string;
         publisherId: string;
+        source: string;
         status: string;
         from: string;
         to: string;
@@ -93,6 +99,7 @@ export function AdminLeadDetailsFilters({
         advertiserId: overrides?.advertiserId ?? advertiserId,
         campaignId: overrides?.campaignId ?? campaignId,
         publisherId: overrides?.publisherId ?? publisherId,
+        source: overrides?.source ?? source,
         status: overrides?.status ?? status,
         from: overrides?.from ?? dateFrom,
         to: overrides?.to ?? dateTo,
@@ -113,6 +120,9 @@ export function AdminLeadDetailsFilters({
         params.delete("publisherId");
       }
 
+      if (values.source && values.source !== "all") params.set("source", values.source);
+      else params.delete("source");
+
       if (values.status && values.status !== "all") params.set("status", values.status);
       else params.delete("status");
 
@@ -132,6 +142,7 @@ export function AdminLeadDetailsFilters({
       advertiserId,
       campaignId,
       publisherId,
+      source,
       status,
       dateFrom,
       dateTo,
@@ -147,6 +158,7 @@ export function AdminLeadDetailsFilters({
     setAdvertiserId("all");
     setCampaignId("all");
     setPublisherId("all");
+    setSource("all");
     setStatus("all");
     setDateFrom(from);
     setDateTo(to);
@@ -159,6 +171,7 @@ export function AdminLeadDetailsFilters({
     searchParams.has("advertiserId") ||
     searchParams.has("campaignId") ||
     searchParams.has("publisherId") ||
+    searchParams.has("source") ||
     searchParams.has("status") ||
     searchParams.has("sort") ||
     (searchParams.has("page") && searchParams.get("page") !== "1");
@@ -232,6 +245,29 @@ export function AdminLeadDetailsFilters({
               {publishers.map((p) => (
                 <SelectItem key={p.id} value={p.id}>
                   {formatPublisherOptionLabel(p)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="min-w-[160px] space-y-1">
+          <label className={LABEL_CLASS}>Source</label>
+          <Select
+            value={source}
+            onValueChange={(value) => {
+              if (!value) return;
+              setSource(value);
+              applyFilters({ source: value });
+            }}
+          >
+            <SelectTrigger className={SELECT_TRIGGER_CLASS}>
+              <SelectValue placeholder="All sources" />
+            </SelectTrigger>
+            <SelectContent align="start" alignItemWithTrigger={false} className={SELECT_MENU_CLASS}>
+              {LEAD_SOURCE_FILTER_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
                 </SelectItem>
               ))}
             </SelectContent>

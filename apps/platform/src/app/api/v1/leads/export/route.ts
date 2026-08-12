@@ -36,6 +36,8 @@ export async function GET(request: Request) {
     const leads = await listLeadsForExport({
       advertiserId: isAdmin ? (searchParams.get("advertiserId") ?? undefined) : session.user.id,
       campaignId: searchParams.get("campaignId") ?? undefined,
+      publisherId: searchParams.get("publisherId") ?? undefined,
+      source: searchParams.get("source") ?? undefined,
       status: parseStatus(searchParams.get("status")),
       dateFrom: new Date(searchParams.get("from") ?? defaultCampaignDateFrom()),
       dateTo: new Date(searchParams.get("to") ?? defaultCampaignDateTo()),

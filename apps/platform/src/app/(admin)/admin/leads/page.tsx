@@ -38,6 +38,7 @@ interface PageProps {
     advertiserId?: string;
     campaignId?: string;
     publisherId?: string;
+    source?: string;
     status?: string;
     from?: string;
     to?: string;
@@ -116,6 +117,7 @@ export default async function AdminLeadsPage({ searchParams }: PageProps) {
       advertiserId: params.advertiserId,
       campaignId: params.campaignId,
       publisherId: params.publisherId,
+      source: params.source,
       status,
       dateFrom: new Date(dateFrom),
       dateTo: new Date(dateTo),
