@@ -51,16 +51,16 @@ export function RegisterForm() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const fromUrl = searchParams.get("referral_by") ?? searchParams.get("ref") ?? "";
-    const ref = fromUrl.trim() || readReferralCookie();
-    if (fromUrl.trim()) {
-      writeReferralCookie(fromUrl.trim());
+    const referralFromUrl = searchParams.get("referral_by") ?? searchParams.get("ref") ?? "";
+    const ref = referralFromUrl.trim() || readReferralCookie();
+    if (referralFromUrl.trim()) {
+      writeReferralCookie(referralFromUrl.trim());
     }
     setReferralRef(ref);
 
-    const fromUrl = readPromotionAttributionFromUrl(searchParams.toString());
+    const promotionFromUrl = readPromotionAttributionFromUrl(searchParams.toString());
     const fromCookie = readPromotionAttributionCookie();
-    setSignupAttribution(mergePromotionAttribution(fromUrl, fromCookie));
+    setSignupAttribution(mergePromotionAttribution(promotionFromUrl, fromCookie));
   }, [searchParams]);
 
   const isReferralSignup = Boolean(referralRef.trim());
