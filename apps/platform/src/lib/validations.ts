@@ -2,6 +2,15 @@ import { z } from "zod";
 import { strongPasswordSchema } from "@/lib/password-policy";
 import { parseYouTubeVideoId } from "@/lib/youtube";
 
+export const signupAttributionSchema = z.object({
+  utmSource: z.string().max(120).optional(),
+  utmMedium: z.string().max(120).optional(),
+  utmCampaign: z.string().max(120).optional(),
+  utmContent: z.string().max(120).optional(),
+  utmTerm: z.string().max(120).optional(),
+  landingUrl: z.string().max(500).optional(),
+});
+
 export const registerSchema = z
   .object({
     email: z.string().email(),
@@ -12,6 +21,7 @@ export const registerSchema = z
     country: z.string().min(2, "Select your country"),
     role: z.literal("ADVERTISER").default("ADVERTISER"),
     referralRef: z.string().optional(),
+    signupAttribution: signupAttributionSchema.optional(),
   })
   .refine((data) => !data.referralRef?.trim() || data.role === "ADVERTISER", {
     message: "Referral sign-up is for advertisers only.",
@@ -1282,4 +1292,33 @@ export const advertiserGlobalPostbackSchema = z.object({
   type: z.enum(["S2S", "IMAGE", "HTML"]),
   status: z.enum(["ACTIVE", "INACTIVE"]),
   endpoint: z.string().trim().max(20_000).optional().default(""),
+});
+
+const promotionUtmField = z.string().trim().min(1).max(120);
+
+export const adminPromotionCreateSchema = z.object({
+  name: z.string().trim().min(2, "Name must be at least 2 characters.").max(120),
+  utmSource: promotionUtmField,
+  utmMedium: z.string().trim().max(120).optional(),
+  utmCampaign: promotionUtmField,
+  utmContent: z.string().trim().max(120).optional(),
+  utmTerm: z.string().trim().max(120).optional(),
+  landingPath: z.string().trim().max(200).optional().default("/"),
+});
+
+export const adminPromotionUpdateSchema = z.object({
+  name: z.string().trim().min(2).max(120).optional(),
+  utmSource: promotionUtmField.optional(),
+  utmMedium: z.string().trim().max(120).nullable().optional(),
+  utmCampaign: promotionUtmField.optional(),
+  utmContent: z.string().trim().max(120).nullable().optional(),
+  utmTerm: z.string().trim().max(120).nullable().optional(),
+  landingPath: z.string().trim().max(200).optional(),
+  isActive: z.boolean().optional(),
+});
+
+export const adminPromotionReportQuerySchema = z.object({
+  q: z.string().trim().optional(),
+  from: z.string().trim().optional(),
+  to: z.string().trim().optional(),
 });

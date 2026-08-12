@@ -19,6 +19,7 @@ export const ASSIGNABLE_STAFF_MENU_HREFS = [
   "/admin/deposits",
   "/admin/payouts",
   "/admin/referrals",
+  "/admin/promotion",
   "/admin/reports",
   "/admin/support",
   "/admin/settings",

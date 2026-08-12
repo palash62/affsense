@@ -20,6 +20,12 @@ import { isStrongPassword } from "@/lib/password-policy";
 import { COUNTRY_BY_CODE, getCountryName } from "@/lib/campaign-form";
 import { readReferralCookie, writeReferralCookie } from "@/lib/referral";
 import {
+  clearPromotionAttributionCookie,
+  mergePromotionAttribution,
+  readPromotionAttributionCookie,
+  readPromotionAttributionFromUrl,
+} from "@/lib/promotion-attribution";
+import {
   metaUserDataFromSignup,
   trackSignupLead,
 } from "@/lib/tracking/public-page-tracking";
@@ -40,6 +46,7 @@ export function RegisterForm() {
   const [country, setCountry] = useState("");
   const [password, setPassword] = useState("");
   const [referralRef, setReferralRef] = useState("");
+  const [signupAttribution, setSignupAttribution] = useState<ReturnType<typeof mergePromotionAttribution>>({});
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -50,6 +57,10 @@ export function RegisterForm() {
       writeReferralCookie(fromUrl.trim());
     }
     setReferralRef(ref);
+
+    const fromUrl = readPromotionAttributionFromUrl(searchParams.toString());
+    const fromCookie = readPromotionAttributionCookie();
+    setSignupAttribution(mergePromotionAttribution(fromUrl, fromCookie));
   }, [searchParams]);
 
   const isReferralSignup = Boolean(referralRef.trim());
@@ -79,6 +90,7 @@ export function RegisterForm() {
         password,
         role: "ADVERTISER",
         referralRef,
+        signupAttribution,
       }),
     });
 
@@ -101,8 +113,12 @@ export function RegisterForm() {
         name,
         country,
       }),
+      utmSource: signupAttribution.utmSource,
+      utmMedium: signupAttribution.utmMedium,
+      utmCampaign: signupAttribution.utmCampaign,
     });
 
+    clearPromotionAttributionCookie();
     router.push("/login?registered=verify");
   }
 

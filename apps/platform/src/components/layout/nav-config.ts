@@ -26,6 +26,7 @@ import {
   Store,
   Webhook,
   UserCog,
+  Target,
 } from "lucide-react";
 import { STAFF_USERS_PATH } from "@/lib/admin-portal";
 
@@ -62,6 +63,7 @@ export const ADMIN_NAV: NavItem[] = [
   { label: "Deposits", href: "/admin/deposits", icon: ArrowDownToLine },
   { label: "Payouts", href: "/admin/payouts", icon: Banknote },
   { label: "Referrals", href: "/admin/referrals", icon: Gift },
+  { label: "Promotion", href: "/admin/promotion", icon: Target },
   { label: "Reports", href: "/admin/reports", icon: BarChart3 },
   { label: "Support", href: "/admin/support", icon: LifeBuoy },
   { label: "Settings", href: "/admin/settings", icon: Settings },

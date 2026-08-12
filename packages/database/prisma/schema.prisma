@@ -303,10 +303,21 @@ model User {
   cpaWallet                CpaWallet?
   cpaEarnings              CpaEarning[]
   emailWallet              EmailWallet?
+  signupUtmSource          String?    @map("signup_utm_source")
+  signupUtmMedium          String?    @map("signup_utm_medium")
+  signupUtmCampaign        String?    @map("signup_utm_campaign")
+  signupUtmContent         String?    @map("signup_utm_content")
+  signupUtmTerm            String?    @map("signup_utm_term")
+  signupLandingUrl         String?    @map("signup_landing_url") @db.Text
+  promotionId              String?    @map("promotion_id")
+  promotion                Promotion? @relation("PromotionSignups", fields: [promotionId], references: [id], onDelete: SetNull)
+  promotionsCreated        Promotion[] @relation("PromotionCreator")
 
   @@index([role])
   @@index([status])
   @@index([referredById])
+  @@index([promotionId])
+  @@index([signupUtmSource, signupUtmMedium, signupUtmCampaign])
   @@map("users")
 }
 
@@ -1605,4 +1616,26 @@ model CpaPostbackDelivery {
   @@index([conversionId])
   @@index([status, createdAt])
   @@map("cpa_postback_deliveries")
+}
+
+model Promotion {
+  id           String   @id @default(cuid())
+  name         String
+  utmSource    String   @map("utm_source")
+  utmMedium    String?  @map("utm_medium")
+  utmCampaign  String   @map("utm_campaign")
+  utmContent   String?  @map("utm_content")
+  utmTerm      String?  @map("utm_term")
+  landingPath  String   @default("/") @map("landing_path")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdById  String?  @map("created_by_id")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  createdBy User?  @relation("PromotionCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  signups   User[] @relation("PromotionSignups")
+
+  @@index([utmSource, utmMedium, utmCampaign])
+  @@index([isActive, createdAt])
+  @@map("promotions")
 }

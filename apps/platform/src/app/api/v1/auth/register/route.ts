@@ -4,6 +4,11 @@ import { registerSchema } from "@/lib/validations";
 import { errorResponse } from "@/lib/errors";
 import { validateEmailDeliverability } from "@/lib/email-deliverability";
 import { resolveReferrerId } from "@/services/referral.service";
+import {
+  parseSignupAttributionFromRequest,
+  resolvePromotionId,
+  signupAttributionToUserFields,
+} from "@/services/promotion.service";
 import { createEmailVerificationToken } from "@/services/auth-token.service";
 import { getResolvedEmailConfig } from "@/services/smtp-settings.service";
 import {
@@ -60,6 +65,9 @@ export async function POST(request: Request) {
     const referredById = await resolveReferrerId(parsed.data.referralRef);
     const role = "ADVERTISER" as const;
     const passwordHash = await bcrypt.hash(parsed.data.password, 12);
+    const signupAttribution = parseSignupAttributionFromRequest(parsed.data.signupAttribution);
+    const promotionId = signupAttribution ? await resolvePromotionId(signupAttribution) : null;
+    const attributionFields = signupAttributionToUserFields(signupAttribution, promotionId);
 
     const user = await prisma.$transaction(async (tx) => {
       const created = await tx.user.create({
@@ -70,6 +78,7 @@ export async function POST(request: Request) {
           role,
           status: "PENDING",
           referredById: referredById ?? undefined,
+          ...attributionFields,
           wallet: { create: {} },
           advertiserProfile: {
             create: {
