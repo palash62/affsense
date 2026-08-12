@@ -35,6 +35,7 @@ type Props = {
   automationId?: string;
   lists: EmailListOption[];
   initialCreate?: { name: string; trigger: Trigger };
+  readOnly?: boolean;
 };
 
 const HISTORY_LIMIT = 50;
@@ -88,6 +89,7 @@ export function useAutomationBuilderState({
   automationId: initialId,
   lists,
   initialCreate,
+  readOnly = false,
 }: Props) {
   const router = useRouter();
   const [automationId, setAutomationId] = useState<string | undefined>(initialId);
@@ -479,6 +481,7 @@ export function useAutomationBuilderState({
   );
 
   useEffect(() => {
+    if (readOnly) return;
     if (!hydratedRef.current) return;
     if (saveStatus !== "dirty") return;
     if (!canPersist(form, steps, templates, tags)) {
@@ -489,7 +492,7 @@ export function useAutomationBuilderState({
       void persist(false);
     }, AUTOSAVE_MS);
     return () => window.clearTimeout(t);
-  }, [form, steps, templates, tags, saveStatus, persist]);
+  }, [form, steps, templates, tags, saveStatus, persist, readOnly]);
 
   const addEmailAt = useCallback(
     async (index: number) => {
@@ -856,6 +859,7 @@ export function useAutomationBuilderState({
     persist,
     canSave: canPersist(form, steps, templates, tags, validationOptions),
     maxSteps: MAX_STEPS,
+    readOnly,
   };
 }
 

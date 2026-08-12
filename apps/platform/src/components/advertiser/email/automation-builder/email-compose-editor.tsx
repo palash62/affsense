@@ -139,6 +139,7 @@ type Props = {
   value: string;
   onChange: (html: string) => void;
   className?: string;
+  readOnly?: boolean;
 };
 
 function ToolbarBtn({
@@ -537,7 +538,7 @@ function countText(html: string) {
   return { characters: text.length, words };
 }
 
-export function EmailComposeEditor({ value, onChange, className }: Props) {
+export function EmailComposeEditor({ value, onChange, className, readOnly = false }: Props) {
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -554,6 +555,7 @@ export function EmailComposeEditor({ value, onChange, className }: Props) {
       Image.configure({ inline: false, allowBase64: false }),
     ],
     content: value || "",
+    editable: !readOnly,
     immediatelyRender: false,
     editorProps: {
       attributes: {
@@ -562,9 +564,15 @@ export function EmailComposeEditor({ value, onChange, className }: Props) {
       },
     },
     onUpdate: ({ editor: ed }: { editor: Editor }) => {
+      if (readOnly) return;
       onChange(ed.getHTML());
     },
   } as any);
+
+  useEffect(() => {
+    if (!editor) return;
+    editor.setEditable(!readOnly);
+  }, [editor, readOnly]);
 
   useEffect(() => {
     if (!editor) return;
@@ -586,7 +594,7 @@ export function EmailComposeEditor({ value, onChange, className }: Props) {
 
   return (
     <div className={cn("overflow-hidden rounded-lg border border-slate-200 bg-white", className)}>
-      <ComposeToolbar editor={editor} />
+      {!readOnly ? <ComposeToolbar editor={editor} /> : null}
       <EditorContent editor={editor} />
       <div className="flex items-center justify-end border-t border-slate-100 px-3 py-1.5 text-[11px] text-slate-500">
         {counts.characters} characters · {counts.words} words

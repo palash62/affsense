@@ -18,6 +18,7 @@ import type { AutomationBuilderState } from "./use-automation-builder-state";
 
 type Props = {
   state: AutomationBuilderState;
+  readOnly?: boolean;
   onFitView: () => void;
   onZoomIn: () => void;
   onZoomOut: () => void;
@@ -43,6 +44,7 @@ function statusLabel(state: AutomationBuilderState) {
 
 export function BuilderToolbar({
   state,
+  readOnly = false,
   onFitView,
   onZoomIn,
   onZoomOut,
@@ -84,36 +86,42 @@ export function BuilderToolbar({
         <p
           className={cn(
             "truncate text-[11px]",
-            saveStatus === "error" || saveStatus === "blocked"
-              ? "text-amber-700"
-              : "text-slate-500",
+            readOnly
+              ? "text-slate-600"
+              : saveStatus === "error" || saveStatus === "blocked"
+                ? "text-amber-700"
+                : "text-slate-500",
           )}
         >
-          {statusLabel(state)}
+          {readOnly ? "View only" : statusLabel(state)}
         </p>
       </div>
 
       <div className="flex items-center gap-0.5">
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          disabled={!canUndo}
-          onClick={undo}
-          title="Undo (Ctrl+Z)"
-        >
-          <Undo2 className="size-4" />
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          disabled={!canRedo}
-          onClick={redo}
-          title="Redo (Ctrl+Shift+Z)"
-        >
-          <Redo2 className="size-4" />
-        </Button>
+        {!readOnly ? (
+          <>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              disabled={!canUndo}
+              onClick={undo}
+              title="Undo (Ctrl+Z)"
+            >
+              <Undo2 className="size-4" />
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              disabled={!canRedo}
+              onClick={redo}
+              title="Redo (Ctrl+Shift+Z)"
+            >
+              <Redo2 className="size-4" />
+            </Button>
+          </>
+        ) : null}
         <Button
           type="button"
           variant="ghost"
@@ -147,63 +155,67 @@ export function BuilderToolbar({
         </Button>
       </div>
 
-      <div className="mx-1 hidden h-6 w-px bg-slate-200 sm:block" />
+      {!readOnly ? (
+        <>
+          <div className="mx-1 hidden h-6 w-px bg-slate-200 sm:block" />
 
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        onClick={() => {
-          const ok = runValidate();
-          if (ok) {
-            // brief feedback via status
-          }
-        }}
-      >
-        <CheckCircle2 className="size-3.5" />
-        Validate
-        {issues.length > 0 ? (
-          <span className="ml-1 rounded-full bg-red-100 px-1.5 text-[10px] font-semibold text-red-700">
-            {issues.length}
-          </span>
-        ) : null}
-      </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              const ok = runValidate();
+              if (ok) {
+                // brief feedback via status
+              }
+            }}
+          >
+            <CheckCircle2 className="size-3.5" />
+            Validate
+            {issues.length > 0 ? (
+              <span className="ml-1 rounded-full bg-red-100 px-1.5 text-[10px] font-semibold text-red-700">
+                {issues.length}
+              </span>
+            ) : null}
+          </Button>
 
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        disabled={saveStatus === "saving"}
-        onClick={() => void persist(false)}
-      >
-        {saveStatus === "saving" ? (
-          <Loader2 className="size-3.5 animate-spin" />
-        ) : (
-          <Save className="size-3.5" />
-        )}
-        Save
-      </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={saveStatus === "saving"}
+            onClick={() => void persist(false)}
+          >
+            {saveStatus === "saving" ? (
+              <Loader2 className="size-3.5 animate-spin" />
+            ) : (
+              <Save className="size-3.5" />
+            )}
+            Save
+          </Button>
 
-      <Button
-        type="button"
-        size="sm"
-        disabled={
-          saveStatus === "saving" ||
-          !form.listId.trim() ||
-          steps.length < 1 ||
-          issues.some((i) => i.path === "listId")
-        }
-        title={
-          !form.listId.trim()
-            ? "Select a list before publishing"
-            : steps.length < 1
-              ? "Add at least one email step"
-              : undefined
-        }
-        onClick={() => void persist(true)}
-      >
-        Publish
-      </Button>
+          <Button
+            type="button"
+            size="sm"
+            disabled={
+              saveStatus === "saving" ||
+              !form.listId.trim() ||
+              steps.length < 1 ||
+              issues.some((i) => i.path === "listId")
+            }
+            title={
+              !form.listId.trim()
+                ? "Select a list before publishing"
+                : steps.length < 1
+                  ? "Add at least one email step"
+                  : undefined
+            }
+            onClick={() => void persist(true)}
+          >
+            Publish
+          </Button>
+        </>
+      ) : null}
     </header>
   );
 }

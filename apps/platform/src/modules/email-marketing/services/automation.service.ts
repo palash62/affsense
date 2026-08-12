@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { AppError } from "@/lib/errors";
 import { EMAIL_MARKETING_CONFIG_KEY } from "@/lib/email/email-marketing-settings";
 import { parseEmailMarketingConfig } from "../config/platform-config";
+import { backfillAutomationForExistingContacts } from "./dispatch.service";
 
 export type AutomationStepInput = {
   id?: string;
@@ -401,13 +402,24 @@ export async function activateAutomation(advertiserId: string, id: string) {
       );
     }
   }
-  return prisma.emailAutomation.update({
+  const updated = await prisma.emailAutomation.update({
     where: { id },
     data: { status: "ACTIVE" },
     include: {
       steps: stepInclude,
     },
   });
+
+  try {
+    await backfillAutomationForExistingContacts(id);
+  } catch (error) {
+    console.error("Failed to backfill automation for existing contacts", {
+      automationId: id,
+      error,
+    });
+  }
+
+  return updated;
 }
 
 export async function deleteAutomation(advertiserId: string, id: string) {

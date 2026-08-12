@@ -63,6 +63,7 @@ export function stepsToFlow(
   selection: Selection,
   maxSteps: number,
   invalidStepIds: Set<string>,
+  readOnly = false,
 ): { nodes: Node[]; edges: Edge[] } {
   const templateMap = new Map(templates.map((t) => [t.id, t.name]));
   const tagMap = new Map(tags.map((t) => [t.id, t.name]));
@@ -113,7 +114,7 @@ export function stepsToFlow(
         source: prevId,
         target: wId,
         type: "insert",
-        data: { insertIndex: i },
+        data: { insertIndex: i, readOnly },
       });
       prevId = wId;
     }
@@ -149,7 +150,7 @@ export function stepsToFlow(
         source: prevId,
         target: eId,
         type: "insert",
-        data: { insertIndex: i },
+        data: { insertIndex: i, readOnly },
       });
     }
 
@@ -163,7 +164,7 @@ export function stepsToFlow(
     position: { x: X, y: ySlot * Y_GAP },
     data: {
       label: steps.length === 0 ? "Add first action" : "Add action",
-      disabled: !canAdd,
+      disabled: !canAdd || readOnly,
     } satisfies AddActionNodeData,
     draggable: false,
     selectable: false,

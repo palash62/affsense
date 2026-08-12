@@ -446,6 +446,7 @@ function EmailContentForm({ state }: { state: AutomationBuilderState }) {
     revertStepContent,
     saveStepAction,
     applyLibraryTemplate,
+    readOnly,
   } = state;
 
   const selectedStep =
@@ -522,6 +523,8 @@ function EmailContentForm({ state }: { state: AutomationBuilderState }) {
             <Input
               className="mt-1.5 h-10"
               value={template.name}
+              readOnly={readOnly}
+              disabled={readOnly}
               onChange={(e) =>
                 void updateStepTemplate(selectedStep.clientId, { name: e.target.value })
               }
@@ -539,6 +542,8 @@ function EmailContentForm({ state }: { state: AutomationBuilderState }) {
             <Input
               className="mt-1.5 h-10"
               value={selectedStep.fromName}
+              readOnly={readOnly}
+              disabled={readOnly}
               onChange={(e) =>
                 updateStep(selectedStep.clientId, { fromName: e.target.value })
               }
@@ -554,6 +559,7 @@ function EmailContentForm({ state }: { state: AutomationBuilderState }) {
             ) : (
               <Select
                 value={selectedStep.fromEmail || "__default__"}
+                disabled={readOnly}
                 onValueChange={(v) => {
                   const next = !v || v === "__default__" ? "" : v;
                   const match = verifiedMailboxes.find((m) => m.email === next);
@@ -596,6 +602,8 @@ function EmailContentForm({ state }: { state: AutomationBuilderState }) {
             <Input
               className="mt-1.5 h-10"
               value={template.subject}
+              readOnly={readOnly}
+              disabled={readOnly}
               onChange={(e) =>
                 void updateStepTemplate(selectedStep.clientId, {
                   subject: e.target.value,
@@ -609,6 +617,8 @@ function EmailContentForm({ state }: { state: AutomationBuilderState }) {
             <Input
               className="mt-1.5 h-10"
               value={template.previewText}
+              readOnly={readOnly}
+              disabled={readOnly}
               onChange={(e) =>
                 void updateStepTemplate(selectedStep.clientId, {
                   previewText: e.target.value,
@@ -619,65 +629,67 @@ function EmailContentForm({ state }: { state: AutomationBuilderState }) {
             <FieldHint>Shown as preview text in some email clients.</FieldHint>
           </div>
 
-          <div>
-            <p className="mb-2 text-xs font-medium text-slate-500">Create email</p>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => setCreateMode("quick")}
-                className={cn(
-                  "rounded-lg border px-3 py-2.5 text-left text-sm transition",
-                  createMode === "quick"
-                    ? "border-[var(--theme-primary)] bg-[var(--theme-primary-soft)] ring-1 ring-[var(--theme-primary)]"
-                    : "border-slate-200 hover:border-slate-300",
-                )}
-              >
-                <span className="flex items-center gap-2 font-medium text-slate-900">
-                  <span
-                    className={cn(
-                      "flex size-3.5 items-center justify-center rounded-full border",
-                      createMode === "quick"
-                        ? "border-[var(--theme-primary)]"
-                        : "border-slate-300",
-                    )}
-                  >
-                    {createMode === "quick" ? (
-                      <span className="size-2 rounded-full bg-[var(--theme-primary)]" />
-                    ) : null}
+          {!readOnly ? (
+            <div>
+              <p className="mb-2 text-xs font-medium text-slate-500">Create email</p>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setCreateMode("quick")}
+                  className={cn(
+                    "rounded-lg border px-3 py-2.5 text-left text-sm transition",
+                    createMode === "quick"
+                      ? "border-[var(--theme-primary)] bg-[var(--theme-primary-soft)] ring-1 ring-[var(--theme-primary)]"
+                      : "border-slate-200 hover:border-slate-300",
+                  )}
+                >
+                  <span className="flex items-center gap-2 font-medium text-slate-900">
+                    <span
+                      className={cn(
+                        "flex size-3.5 items-center justify-center rounded-full border",
+                        createMode === "quick"
+                          ? "border-[var(--theme-primary)]"
+                          : "border-slate-300",
+                      )}
+                    >
+                      {createMode === "quick" ? (
+                        <span className="size-2 rounded-full bg-[var(--theme-primary)]" />
+                      ) : null}
+                    </span>
+                    Quick compose
                   </span>
-                  Quick compose
-                </span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setCreateMode("library")}
-                className={cn(
-                  "rounded-lg border px-3 py-2.5 text-left text-sm transition",
-                  createMode === "library"
-                    ? "border-[var(--theme-primary)] bg-[var(--theme-primary-soft)] ring-1 ring-[var(--theme-primary)]"
-                    : "border-slate-200 hover:border-slate-300",
-                )}
-              >
-                <span className="flex items-center gap-2 font-medium text-slate-900">
-                  <span
-                    className={cn(
-                      "flex size-3.5 items-center justify-center rounded-full border",
-                      createMode === "library"
-                        ? "border-[var(--theme-primary)]"
-                        : "border-slate-300",
-                    )}
-                  >
-                    {createMode === "library" ? (
-                      <span className="size-2 rounded-full bg-[var(--theme-primary)]" />
-                    ) : null}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCreateMode("library")}
+                  className={cn(
+                    "rounded-lg border px-3 py-2.5 text-left text-sm transition",
+                    createMode === "library"
+                      ? "border-[var(--theme-primary)] bg-[var(--theme-primary-soft)] ring-1 ring-[var(--theme-primary)]"
+                      : "border-slate-200 hover:border-slate-300",
+                  )}
+                >
+                  <span className="flex items-center gap-2 font-medium text-slate-900">
+                    <span
+                      className={cn(
+                        "flex size-3.5 items-center justify-center rounded-full border",
+                        createMode === "library"
+                          ? "border-[var(--theme-primary)]"
+                          : "border-slate-300",
+                      )}
+                    >
+                      {createMode === "library" ? (
+                        <span className="size-2 rounded-full bg-[var(--theme-primary)]" />
+                      ) : null}
+                    </span>
+                    Select template
                   </span>
-                  Select template
-                </span>
-              </button>
+                </button>
+              </div>
             </div>
-          </div>
+          ) : null}
 
-          {createMode === "library" ? (
+          {!readOnly && createMode === "library" ? (
             <div>
               <FieldLabel>Template</FieldLabel>
               <Select
@@ -700,23 +712,25 @@ function EmailContentForm({ state }: { state: AutomationBuilderState }) {
                 </SelectContent>
               </Select>
             </div>
-          ) : (
+          ) : readOnly || createMode === "quick" ? (
             <div>
               <FieldLabel required>Type your message</FieldLabel>
               <div className="mt-1.5">
                 <EmailComposeEditor
                   key={selectedStep.clientId + selectedStep.templateId}
                   value={template.htmlBody}
+                  readOnly={readOnly}
                   onChange={(html) =>
                     void updateStepTemplate(selectedStep.clientId, { htmlBody: html })
                   }
                 />
               </div>
             </div>
-          )}
+          ) : null}
         </PanelSection>
 
-        <PanelSection title="Test send" description="Send a preview to your inbox before publishing.">
+        {!readOnly ? (
+          <PanelSection title="Test send" description="Send a preview to your inbox before publishing.">
           <div>
             <FieldLabel>Test email</FieldLabel>
             <div className="mt-1.5 flex gap-2">
@@ -750,38 +764,41 @@ function EmailContentForm({ state }: { state: AutomationBuilderState }) {
             ) : null}
           </div>
         </PanelSection>
+        ) : null}
       </div>
 
-      <StickyFooter>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="text-red-600 hover:bg-red-50 hover:text-red-700"
-          onClick={() => removeStep(selectedStep.clientId)}
-        >
-          <Trash2 className="size-3.5" />
-          Delete
-        </Button>
-        <div className="flex gap-2">
+      {!readOnly ? (
+        <StickyFooter>
           <Button
             type="button"
-            variant="outline"
+            variant="ghost"
             size="sm"
-            onClick={() => void revertStepContent(selectedStep.clientId)}
+            className="text-red-600 hover:bg-red-50 hover:text-red-700"
+            onClick={() => removeStep(selectedStep.clientId)}
           >
-            Cancel
+            <Trash2 className="size-3.5" />
+            Delete
           </Button>
-          <Button
-            type="button"
-            size="sm"
-            disabled={savingAction}
-            onClick={() => void onSaveAction()}
-          >
-            {savingAction ? "Saving…" : "Save action"}
-          </Button>
-        </div>
-      </StickyFooter>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => void revertStepContent(selectedStep.clientId)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              disabled={savingAction}
+              onClick={() => void onSaveAction()}
+            >
+              {savingAction ? "Saving…" : "Save action"}
+            </Button>
+          </div>
+        </StickyFooter>
+      ) : null}
     </div>
   );
 }
@@ -794,6 +811,7 @@ function WaitContentForm({ state }: { state: AutomationBuilderState }) {
     clearWait,
     saveStepAction,
     selectCanvas,
+    readOnly,
   } = state;
 
   const selectedStep =
@@ -835,7 +853,7 @@ function WaitContentForm({ state }: { state: AutomationBuilderState }) {
                 variant="outline"
                 size="icon"
                 className="size-10 shrink-0"
-                disabled={days <= 0}
+                disabled={readOnly || days <= 0}
                 onClick={() => setDays(days - 1)}
                 aria-label="Decrease days"
               >
@@ -848,6 +866,8 @@ function WaitContentForm({ state }: { state: AutomationBuilderState }) {
                 step={1}
                 className="h-10 text-center"
                 value={days}
+                readOnly={readOnly}
+                disabled={readOnly}
                 onChange={(e) => setDays(Number(e.target.value) || 0)}
               />
               <Button
@@ -855,7 +875,7 @@ function WaitContentForm({ state }: { state: AutomationBuilderState }) {
                 variant="outline"
                 size="icon"
                 className="size-10 shrink-0"
-                disabled={days >= 365}
+                disabled={readOnly || days >= 365}
                 onClick={() => setDays(days + 1)}
                 aria-label="Increase days"
               >
@@ -878,31 +898,33 @@ function WaitContentForm({ state }: { state: AutomationBuilderState }) {
         </PanelSection>
       </div>
 
-      <StickyFooter>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="text-red-600 hover:bg-red-50 hover:text-red-700"
-          onClick={() => clearWait(selectedStep.clientId)}
-        >
-          <Trash2 className="size-3.5" />
-          Delete
-        </Button>
-        <div className="flex gap-2">
-          <Button type="button" variant="outline" size="sm" onClick={() => selectCanvas()}>
-            Cancel
-          </Button>
+      {!readOnly ? (
+        <StickyFooter>
           <Button
             type="button"
+            variant="ghost"
             size="sm"
-            disabled={savingAction}
-            onClick={() => void onSaveAction()}
+            className="text-red-600 hover:bg-red-50 hover:text-red-700"
+            onClick={() => clearWait(selectedStep.clientId)}
           >
-            {savingAction ? "Saving…" : "Save action"}
+            <Trash2 className="size-3.5" />
+            Delete
           </Button>
-        </div>
-      </StickyFooter>
+          <div className="flex gap-2">
+            <Button type="button" variant="outline" size="sm" onClick={() => selectCanvas()}>
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              disabled={savingAction}
+              onClick={() => void onSaveAction()}
+            >
+              {savingAction ? "Saving…" : "Save action"}
+            </Button>
+          </div>
+        </StickyFooter>
+      ) : null}
     </div>
   );
 }
@@ -919,6 +941,7 @@ export function InspectorPanel({ state }: Props) {
     automationId,
     validateFlash,
     issues,
+    readOnly,
   } = state;
 
   const [open, setOpen] = useState(true);
@@ -1135,6 +1158,8 @@ export function InspectorPanel({ state }: Props) {
                   <Input
                     className="mt-1.5 h-10"
                     value={form.name}
+                    readOnly={readOnly}
+                    disabled={readOnly}
                     onChange={(e) => setForm({ name: e.target.value })}
                     placeholder="Welcome sequence"
                   />
@@ -1149,6 +1174,7 @@ export function InspectorPanel({ state }: Props) {
                   <FieldLabel required>Audience list</FieldLabel>
                   <Select
                     value={form.listId || ""}
+                    disabled={readOnly}
                     onValueChange={(listId) => {
                       if (listId) setForm({ listId });
                     }}
@@ -1222,6 +1248,7 @@ export function InspectorPanel({ state }: Props) {
                       <FieldLabel>Tag on open</FieldLabel>
                       <Select
                         value={form.openTagId || "__none__"}
+                        disabled={readOnly}
                         onValueChange={(v) => {
                           if (!v || v === "__none__") {
                             setForm({ openTagId: "" });
@@ -1254,6 +1281,7 @@ export function InspectorPanel({ state }: Props) {
                       <FieldLabel>Tag on click</FieldLabel>
                       <Select
                         value={form.clickTagId || "__none__"}
+                        disabled={readOnly}
                         onValueChange={(v) => {
                           if (!v || v === "__none__") {
                             setForm({ clickTagId: "" });
@@ -1299,6 +1327,8 @@ export function InspectorPanel({ state }: Props) {
                   <Input
                     className="mt-1.5 h-10"
                     value={form.fromName}
+                    readOnly={readOnly}
+                    disabled={readOnly}
                     onChange={(e) => setForm({ fromName: e.target.value })}
                     placeholder="Your brand"
                   />
@@ -1311,6 +1341,8 @@ export function InspectorPanel({ state }: Props) {
                       type="email"
                       className="h-10 pl-9"
                       value={form.replyTo}
+                      readOnly={readOnly}
+                      disabled={readOnly}
                       onChange={(e) => setForm({ replyTo: e.target.value })}
                       placeholder="you@example.com"
                     />

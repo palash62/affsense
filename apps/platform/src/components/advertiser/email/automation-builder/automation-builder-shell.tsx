@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import { BuilderToolbar } from "./builder-toolbar";
 import { ActionPickerDialog } from "./action-picker-dialog";
 import { InspectorPanel } from "./inspector-panel";
@@ -17,10 +18,17 @@ type Props = {
   initialCreate?: { name: string; trigger: Trigger };
 };
 
-function BuilderKeyboardShortcuts({ state }: { state: AutomationBuilderState }) {
+function BuilderKeyboardShortcuts({
+  state,
+  readOnly,
+}: {
+  state: AutomationBuilderState;
+  readOnly: boolean;
+}) {
   const { undo, redo, persist, runValidate, selection, removeStep, clearWait } = state;
 
   useEffect(() => {
+    if (readOnly) return;
     function onKeyDown(e: KeyboardEvent) {
       const target = e.target as HTMLElement | null;
       const typing =
@@ -65,7 +73,7 @@ function BuilderKeyboardShortcuts({ state }: { state: AutomationBuilderState }) 
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [undo, redo, persist, runValidate, selection, removeStep, clearWait]);
+  }, [undo, redo, persist, runValidate, selection, removeStep, clearWait, readOnly]);
 
   return null;
 }
@@ -75,10 +83,14 @@ export function AutomationBuilderShell({
   lists,
   initialCreate,
 }: Props) {
+  const searchParams = useSearchParams();
+  const readOnly = searchParams.get("view") === "1";
+
   const state = useAutomationBuilderState({
     automationId,
     lists,
     initialCreate,
+    readOnly,
   });
 
   const flowApiRef = useRef<{
@@ -98,9 +110,10 @@ export function AutomationBuilderShell({
 
   return (
     <div className="flex h-[min(780px,calc(100vh-6.5rem))] min-h-[560px] flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
-      <BuilderKeyboardShortcuts state={state} />
+      <BuilderKeyboardShortcuts state={state} readOnly={readOnly} />
       <BuilderToolbar
         state={state}
+        readOnly={readOnly}
         onFitView={() => flowApiRef.current?.fitView()}
         onZoomIn={() => flowApiRef.current?.zoomIn()}
         onZoomOut={() => flowApiRef.current?.zoomOut()}
@@ -111,17 +124,19 @@ export function AutomationBuilderShell({
         <InspectorPanel state={state} />
       </div>
 
-      <ActionPickerDialog
-        open={state.pickerOpen}
-        onOpenChange={state.setPickerOpen}
-        atCapacity={state.steps.length >= state.maxSteps}
-        canAddWait={
-          state.insertIndex < state.steps.length ||
-          state.steps.length < state.maxSteps
-        }
-        onSelectEmail={() => void state.addEmailAt(state.insertIndex)}
-        onSelectWait={() => void state.addWaitAt(state.insertIndex)}
-      />
+      {!readOnly ? (
+        <ActionPickerDialog
+          open={state.pickerOpen}
+          onOpenChange={state.setPickerOpen}
+          atCapacity={state.steps.length >= state.maxSteps}
+          canAddWait={
+            state.insertIndex < state.steps.length ||
+            state.steps.length < state.maxSteps
+          }
+          onSelectEmail={() => void state.addEmailAt(state.insertIndex)}
+          onSelectWait={() => void state.addWaitAt(state.insertIndex)}
+        />
+      ) : null}
 
       {state.addingStep ? (
         <div className="border-t border-slate-100 bg-slate-50 px-4 py-2 text-sm text-slate-600">

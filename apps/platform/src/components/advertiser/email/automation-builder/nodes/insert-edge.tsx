@@ -9,7 +9,11 @@ import {
 } from "@xyflow/react";
 import { Plus } from "lucide-react";
 
-type InsertEdgeData = { insertIndex?: number; onInsert?: (index: number) => void };
+type InsertEdgeData = {
+  insertIndex?: number;
+  onInsert?: (index: number) => void;
+  readOnly?: boolean;
+};
 
 function InsertEdgeComponent({
   id,
@@ -47,17 +51,19 @@ function InsertEdgeComponent({
   return (
     <>
       <BaseEdge id={id} path={edgePath} markerEnd={markerEnd} style={style} />
-      <EdgeLabelRenderer>
-        <button
-          type="button"
-          className="nodrag nopan absolute flex size-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-emerald-200 bg-white text-emerald-700 shadow-sm transition hover:scale-105 hover:border-emerald-400 hover:bg-emerald-50"
-          style={{ left: labelX, top: labelY, pointerEvents: "all" }}
-          onClick={onClick}
-          aria-label="Add action"
-        >
-          <Plus className="size-3.5" />
-        </button>
-      </EdgeLabelRenderer>
+      {!d.readOnly ? (
+        <EdgeLabelRenderer>
+          <button
+            type="button"
+            className="nodrag nopan absolute flex size-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-emerald-200 bg-white text-emerald-700 shadow-sm transition hover:scale-105 hover:border-emerald-400 hover:bg-emerald-50"
+            style={{ left: labelX, top: labelY, pointerEvents: "all" }}
+            onClick={onClick}
+            aria-label="Add action"
+          >
+            <Plus className="size-3.5" />
+          </button>
+        </EdgeLabelRenderer>
+      ) : null}
     </>
   );
 }
