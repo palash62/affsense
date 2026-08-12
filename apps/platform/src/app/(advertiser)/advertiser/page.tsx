@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { Suspense } from "react";
 import { DollarSign, FileText, LineChart, Megaphone, Wallet } from "lucide-react";
 import { getSession } from "@/lib/session";
+import { canAdvertiserAccessAutoresponder } from "@/lib/autoresponder-access";
 import { ADVERTISER_PERIODS, parseAdvertiserPeriod } from "@/lib/advertiser-periods";
 import { ensureReferralCode } from "@/services/referral.service";
 import { getAdvertiserDashboardData } from "@/services/report.service";
@@ -14,6 +15,7 @@ import { RoleHero } from "@/components/layout/role-hero";
 import { AdvertiserPeriodFilter } from "@/components/advertiser/advertiser-period-filter";
 import { AdvertiserReferralCard } from "@/components/advertiser/advertiser-referral-card";
 import { AdvertiserDashboardAlerts } from "@/components/advertiser/advertiser-dashboard-alerts";
+import { AutoresponderAnnouncementBanner } from "@/components/advertiser/autoresponder-announcement-banner";
 import {
   AdvertiserPendingQueue,
   AdvertiserSummaryTable,
@@ -37,6 +39,7 @@ export default async function AdvertiserDashboardPage({ searchParams }: PageProp
     listAdvertiserDashboardAlerts(userId),
   ]);
   const firstName = session?.user?.name?.split(" ")[0] ?? "Advertiser";
+  const showAutoresponderAnnouncement = canAdvertiserAccessAutoresponder(session?.user?.email);
 
   return (
     <div className="space-y-5">
@@ -46,6 +49,8 @@ export default async function AdvertiserDashboardPage({ searchParams }: PageProp
         description={`Campaign performance for ${periodLabel.toLowerCase()}.`}
         action={{ label: "Create Campaign", href: "/advertiser/campaigns/new", icon: Megaphone }}
       />
+
+      {showAutoresponderAnnouncement ? <AutoresponderAnnouncementBanner /> : null}
 
       <AdvertiserDashboardAlerts alerts={alerts} />
 
