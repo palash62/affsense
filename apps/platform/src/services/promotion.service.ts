@@ -1,12 +1,12 @@
 import { prisma } from "@/lib/prisma";
 import {
   buildPromotionUrl,
-  buildPromotionVisitorKey,
   normalizeAttributionForStorage,
   type PromotionAttribution,
   sanitizeUtmValue,
   utmKeyFromFields,
 } from "@/lib/promotion-attribution";
+import { buildPromotionVisitorKey } from "@/lib/promotion-visitor-key";
 
 export type PromotionRecord = {
   id: string;

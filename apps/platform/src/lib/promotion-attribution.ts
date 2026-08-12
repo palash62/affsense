@@ -1,5 +1,3 @@
-import { createHash } from "node:crypto";
-
 export type PromotionAttribution = {
   utmSource?: string;
   utmMedium?: string;
@@ -173,13 +171,6 @@ export function utmKeyFromFields(fields: {
     fields.utmContent ?? "",
     fields.utmTerm ?? "",
   ].join("|");
-}
-
-export function buildPromotionVisitorKey(ip: string | null, userAgent: string | null): string {
-  return createHash("sha256")
-    .update(`${ip ?? ""}|${userAgent ?? ""}`)
-    .digest("hex")
-    .slice(0, 32);
 }
 
 function readPromotionVisitCookie(): { key: string } | null {

@@ -2,13 +2,13 @@ import { describe, expect, it } from "vitest";
 import {
   buildPromotionClickUrl,
   buildPromotionUrl,
-  buildPromotionVisitorKey,
   mergePromotionAttribution,
   normalizeAttributionForStorage,
   readPromotionAttributionFromUrl,
   sanitizeUtmValue,
   utmKeyFromFields,
 } from "@/lib/promotion-attribution";
+import { buildPromotionVisitorKey } from "@/lib/promotion-visitor-key";
 
 describe("promotion attribution", () => {
   it("parses UTM params from search string", () => {
