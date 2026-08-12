@@ -1144,6 +1144,30 @@ export async function listLeadsForExport(filters: LeadListFilters) {
   return attachCpaMetricsToLeadRows(await enrichLeadListRows(data));
 }
 
+export async function listDistinctLeadSources(
+  filters: LeadListFilters & { search?: string },
+) {
+  const { search, source: _source, email: _email, sort: _sort, ...scope } = filters;
+  const where = buildLeadListWhere(scope);
+  const trimmedSearch = search?.trim();
+
+  const rows = await prisma.lead.findMany({
+    where: {
+      ...where,
+      source: {
+        not: null,
+        ...(trimmedSearch ? { contains: trimmedSearch } : {}),
+      },
+    },
+    select: { source: true },
+    distinct: ["source"],
+    orderBy: { source: "asc" },
+    take: 50,
+  });
+
+  return rows.map((row) => row.source).filter((value): value is string => Boolean(value));
+}
+
 export type AdvertiserPublisherLeadReportRow = {
   publisherId: string;
   totalLeads: number;
