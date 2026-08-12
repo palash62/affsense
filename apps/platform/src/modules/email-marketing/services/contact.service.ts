@@ -1,6 +1,7 @@
 import type { EmailContactStatus, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { generateUnsubscribeToken } from "../lib/tokens";
+import { getListCampaignIds } from "./list.service";
 
 function extractLeadFields(data: Record<string, unknown>) {
   const get = (...keys: string[]) => {
@@ -94,15 +95,14 @@ export async function listContacts(
   },
 ) {
   let sourceCampaignId = opts.sourceCampaignId;
+  let sourceCampaignIds: string[] | undefined;
   if (opts.listId && opts.listId !== "all") {
-    const list = await prisma.emailList.findFirst({
-      where: { id: opts.listId, advertiserId },
-      select: { campaignId: true },
-    });
-    if (!list) {
+    const campaignIds = await getListCampaignIds(advertiserId, opts.listId);
+    if (!campaignIds.length) {
       return { items: [], total: 0, page: opts.page, limit: opts.limit };
     }
-    sourceCampaignId = list.campaignId;
+    sourceCampaignIds = campaignIds;
+    sourceCampaignId = undefined;
   }
 
   if (opts.tagId) {
@@ -118,7 +118,11 @@ export async function listContacts(
   const where: Prisma.EmailContactWhereInput = {
     advertiserId,
     ...(opts.status ? { status: opts.status } : {}),
-    ...(sourceCampaignId ? { sourceCampaignId } : {}),
+    ...(sourceCampaignIds
+      ? { sourceCampaignId: { in: sourceCampaignIds } }
+      : sourceCampaignId
+        ? { sourceCampaignId }
+        : {}),
     ...(opts.tagId
       ? { contactTags: { some: { tagId: opts.tagId } } }
       : {}),

@@ -59,7 +59,16 @@ export async function dispatchLeadEmailAutomations(input: {
       advertiserId: lead.campaign.advertiserId,
       status: "ACTIVE",
       trigger: input.event,
-      campaignId: lead.campaign.id,
+      OR: [
+        { campaignId: lead.campaign.id },
+        {
+          list: {
+            campaigns: {
+              some: { campaignId: lead.campaign.id },
+            },
+          },
+        },
+      ],
     },
     include: {
       steps: { orderBy: { order: "asc" }, include: { template: true } },

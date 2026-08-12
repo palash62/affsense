@@ -6,8 +6,11 @@ export type AutomationStepType = "SEND_EMAIL";
 export type EmailListOption = {
   id: string;
   name: string;
-  campaignId: string;
-  /** Lead campaign that feeds this list (context only). */
+  campaignIds: string[];
+  campaignNames: string[];
+  /** @deprecated Use campaignIds */
+  campaignId?: string;
+  /** @deprecated Use campaignNames */
   campaignName?: string | null;
 };
 
@@ -89,7 +92,7 @@ export type AutomationStep = {
 export type AutomationForm = {
   name: string;
   trigger: Trigger;
-  /** UI audience — mapped to campaignId on persist. */
+  /** UI audience — persisted as listId. */
   listId: string;
   fromName: string;
   replyTo: string;

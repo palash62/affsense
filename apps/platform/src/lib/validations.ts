@@ -736,15 +736,46 @@ export const emailTemplateSchema = z.object({
 
 export const emailTemplateUpdateSchema = emailTemplateSchema.partial();
 
-export const emailListSchema = z.object({
-  name: z.string().trim().min(2).max(80),
-  campaignId: z.string().trim().min(1, "Campaign is required"),
-});
+export const emailListSchema = z
+  .object({
+    name: z.string().trim().min(2).max(80),
+    campaignIds: z
+      .array(z.string().trim().min(1))
+      .min(1, "Select at least one campaign")
+      .optional(),
+    campaignId: z.string().trim().min(1, "Campaign is required").optional(),
+  })
+  .transform((value) => ({
+    name: value.name,
+    campaignIds:
+      value.campaignIds ??
+      (value.campaignId ? [value.campaignId] : []),
+  }))
+  .superRefine((value, ctx) => {
+    if (!value.campaignIds.length) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Select at least one campaign",
+        path: ["campaignIds"],
+      });
+    }
+  });
 
-export const emailListUpdateSchema = z.object({
-  name: z.string().trim().min(2).max(80).optional(),
-  campaignId: z.string().trim().min(1, "Campaign is required").optional(),
-});
+export const emailListUpdateSchema = z
+  .object({
+    name: z.string().trim().min(2).max(80).optional(),
+    campaignIds: z
+      .array(z.string().trim().min(1))
+      .min(1, "Select at least one campaign")
+      .optional(),
+    campaignId: z.string().trim().min(1, "Campaign is required").optional(),
+  })
+  .transform((value) => ({
+    name: value.name,
+    campaignIds:
+      value.campaignIds ??
+      (value.campaignId ? [value.campaignId] : undefined),
+  }));
 
 export const emailTagSchema = z.object({
   name: z.string().trim().min(1).max(40),
@@ -786,21 +817,33 @@ export const emailAutomationStepSchema = z
     }
   });
 
-export const emailAutomationSchema = z.object({
-  name: z.string().trim().min(2).max(80),
-  trigger: z.enum(["LEAD_CAPTURED", "LEAD_APPROVED"]),
-  campaignId: z.string().trim().min(1, "Select a list"),
-  fromName: z.string().trim().min(2).max(80),
-  replyTo: z.string().email().optional().nullable().or(z.literal("")),
-  openTagId: z.union([z.string().cuid(), z.literal(""), z.null()]).optional(),
-  clickTagId: z.union([z.string().cuid(), z.literal(""), z.null()]).optional(),
-  steps: z.array(emailAutomationStepSchema).min(1).max(20),
-});
+export const emailAutomationSchema = z
+  .object({
+    name: z.string().trim().min(2).max(80),
+    trigger: z.enum(["LEAD_CAPTURED", "LEAD_APPROVED"]),
+    listId: z.string().trim().min(1, "Select a list").optional(),
+    campaignId: z.string().trim().min(1, "Select a list").optional(),
+    fromName: z.string().trim().min(2).max(80),
+    replyTo: z.string().email().optional().nullable().or(z.literal("")),
+    openTagId: z.union([z.string().cuid(), z.literal(""), z.null()]).optional(),
+    clickTagId: z.union([z.string().cuid(), z.literal(""), z.null()]).optional(),
+    steps: z.array(emailAutomationStepSchema).min(1).max(20),
+  })
+  .superRefine((value, ctx) => {
+    if (!(value.listId?.trim() || value.campaignId?.trim())) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Select a list",
+        path: ["listId"],
+      });
+    }
+  });
 
 export const emailAutomationUpdateSchema = z.object({
   name: z.string().trim().min(2).max(80).optional(),
   trigger: z.enum(["LEAD_CAPTURED", "LEAD_APPROVED"]).optional(),
-  campaignId: z.string().trim().min(1, "Select a list").optional(),
+  listId: z.string().trim().min(1, "Select a list").optional().nullable(),
+  campaignId: z.string().trim().min(1, "Select a list").optional().nullable(),
   fromName: z.string().trim().min(2).max(80).optional(),
   replyTo: z.string().email().optional().nullable().or(z.literal("")),
   openTagId: z.union([z.string().cuid(), z.literal(""), z.null()]).optional(),

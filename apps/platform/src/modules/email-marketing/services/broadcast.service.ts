@@ -128,6 +128,7 @@ async function resolveAudienceContactIds(
 
     const list = await prisma.emailList.findFirst({
       where: { id: listId, advertiserId },
+      include: { campaigns: { select: { campaignId: true } } },
     });
     if (!list) {
       if (opts?.soft) {
@@ -141,11 +142,21 @@ async function resolveAudienceContactIds(
       throw new AppError("NOT_FOUND", "List not found", 404);
     }
 
+    const campaignIds = list.campaigns.map((c) => c.campaignId);
+    if (!campaignIds.length) {
+      return {
+        contactIds: [] as string[],
+        listId: list.id,
+        tagIds: [] as string[],
+        allSubscribers: false,
+      };
+    }
+
     const contacts = await prisma.emailContact.findMany({
       where: {
         advertiserId,
         status: "SUBSCRIBED",
-        sourceCampaignId: list.campaignId,
+        sourceCampaignId: { in: campaignIds },
       },
       select: { id: true },
     });

@@ -6,6 +6,7 @@ import { List, Loader2, Pencil, Plus, Trash2, Users, Zap } from "lucide-react";
 import { ButtonLink } from "@/components/ui/button-link";
 import { PageSection } from "@/components/admin/page-section";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -16,13 +17,6 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -36,6 +30,8 @@ import { EmailModuleShell } from "../email-module-shell";
 type ListRow = {
   id: string;
   name: string;
+  campaignIds: string[];
+  campaigns: { id: string; name: string }[];
   campaignId: string | null;
   campaignName: string | null;
   subscribers: number;
@@ -46,10 +42,10 @@ type CampaignOption = { id: string; name: string; contactCount: number };
 
 type FormState = {
   name: string;
-  campaignId: string;
+  campaignIds: string[];
 };
 
-const emptyForm: FormState = { name: "", campaignId: "" };
+const emptyForm: FormState = { name: "", campaignIds: [] };
 
 export function ListsPanel() {
   const [rows, setRows] = useState<ListRow[]>([]);
@@ -58,6 +54,7 @@ export function ListsPanel() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(emptyForm);
+  const [editBaselineCampaignIds, setEditBaselineCampaignIds] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -100,26 +97,56 @@ export function ListsPanel() {
     const usedByOthers = new Set(
       managedLists
         .filter((r) => r.id !== editingId)
-        .map((r) => r.campaignId)
-        .filter((id): id is string => Boolean(id)),
+        .flatMap((r) =>
+          r.campaignIds.length > 0
+            ? r.campaignIds
+            : r.campaigns.map((c) => c.id),
+        ),
     );
     return campaigns.filter(
-      (c) => !usedByOthers.has(c.id) || c.id === form.campaignId,
+      (c) =>
+        !usedByOthers.has(c.id) ||
+        editBaselineCampaignIds.includes(c.id) ||
+        form.campaignIds.includes(c.id),
     );
-  }, [campaigns, managedLists, editingId, form.campaignId]);
+  }, [campaigns, managedLists, editingId, editBaselineCampaignIds, form.campaignIds]);
+
+  const selectedContactCount = useMemo(
+    () =>
+      form.campaignIds.reduce((sum, id) => {
+        const campaign = campaigns.find((c) => c.id === id);
+        return sum + (campaign?.contactCount ?? 0);
+      }, 0),
+    [form.campaignIds, campaigns],
+  );
+
+  function toggleCampaign(campaignId: string, checked: boolean) {
+    setForm((f) => ({
+      ...f,
+      campaignIds: checked
+        ? [...new Set([...f.campaignIds, campaignId])]
+        : f.campaignIds.filter((id) => id !== campaignId),
+    }));
+  }
 
   function openCreate() {
     setEditingId(null);
+    setEditBaselineCampaignIds([]);
     setForm(emptyForm);
     setError(null);
     setDialogOpen(true);
   }
 
   function openEdit(row: ListRow) {
+    const baseline =
+      row.campaignIds.length > 0
+        ? row.campaignIds
+        : row.campaigns.map((c) => c.id);
     setEditingId(row.id);
+    setEditBaselineCampaignIds(baseline);
     setForm({
       name: row.name,
-      campaignId: row.campaignId ?? "",
+      campaignIds: baseline,
     });
     setError(null);
     setDialogOpen(true);
@@ -127,8 +154,8 @@ export function ListsPanel() {
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.name.trim() || !form.campaignId) {
-      setError("Name and campaign are required");
+    if (!form.name.trim() || form.campaignIds.length === 0) {
+      setError("Name and at least one campaign are required");
       return;
     }
     setSaving(true);
@@ -143,7 +170,7 @@ export function ListsPanel() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             name: form.name.trim(),
-            campaignId: form.campaignId,
+            campaignIds: form.campaignIds,
           }),
         },
       );
@@ -187,7 +214,7 @@ export function ListsPanel() {
   return (
     <EmailModuleShell
       title="Lists"
-      description="Create named lists tied to a lead campaign. Subscribers from that campaign feed the list."
+      description="Create named lists tied to one or more lead campaigns. Subscribers from those campaigns feed the list."
       breadcrumbs={[
         { label: "Autoresponder", href: "/advertiser/email" },
         { label: "Lists" },
@@ -220,7 +247,7 @@ export function ListsPanel() {
             <TableHeader>
               <TableRow>
                 <TableHead>List Name</TableHead>
-                <TableHead>Campaign</TableHead>
+                <TableHead>Campaigns</TableHead>
                 <TableHead>Subscribers</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -237,8 +264,8 @@ export function ListsPanel() {
                   <TableCell colSpan={4} className="h-40 px-6 text-center">
                     <p className="text-slate-600">No lists yet.</p>
                     <p className="mt-1 text-sm text-slate-500">
-                      Create a list tied to a lead campaign, then bind an automation to it.
-                      Subscribers appear when leads are captured on that campaign.
+                      Create a list tied to one or more lead campaigns, then bind an automation to it.
+                      Subscribers appear when leads are captured on those campaigns.
                     </p>
                     <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
                       <Button type="button" onClick={openCreate} disabled={campaigns.length === 0}>
@@ -268,7 +295,22 @@ export function ListsPanel() {
                       )}
                     </TableCell>
                     <TableCell className="text-slate-600">
-                      {list.system ? "—" : (list.campaignName ?? "—")}
+                      {list.system ? (
+                        "—"
+                      ) : list.campaigns.length > 0 ? (
+                        <div className="flex flex-wrap gap-1">
+                          {list.campaigns.map((c) => (
+                            <span
+                              key={c.id}
+                              className="inline-flex rounded-md bg-slate-100 px-2 py-0.5 text-xs text-slate-700"
+                            >
+                              {c.name}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        "—"
+                      )}
                     </TableCell>
                     <TableCell>{list.subscribers.toLocaleString()}</TableCell>
                     <TableCell className="text-right">
@@ -335,6 +377,7 @@ export function ListsPanel() {
           if (!open) {
             setError(null);
             setEditingId(null);
+            setEditBaselineCampaignIds([]);
             setForm(emptyForm);
           }
         }}
@@ -344,7 +387,9 @@ export function ListsPanel() {
             <DialogHeader>
               <DialogTitle>{editingId ? "Edit list" : "Create list"}</DialogTitle>
               <DialogDescription>
-                Choose a name and the lead campaign whose subscribers feed this list.
+                {editingId
+                  ? "Update the list name or change which campaigns feed it. Uncheck campaigns to remove them from this list."
+                  : "Choose one or more lead campaigns whose subscribers feed this list."}
               </DialogDescription>
             </DialogHeader>
 
@@ -368,48 +413,56 @@ export function ListsPanel() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="list-campaign">Campaign</Label>
-              <Select
-                value={form.campaignId}
-                onValueChange={(value) => {
-                  if (value) setForm((f) => ({ ...f, campaignId: value }));
-                }}
-                disabled={saving}
-              >
-                <SelectTrigger id="list-campaign" className="w-full">
-                  <SelectValue placeholder="Select a campaign">
-                    {(() => {
-                      const selected = campaigns.find((c) => c.id === form.campaignId);
-                      if (!selected) return "Select a campaign";
-                      return `${selected.name} (${selected.contactCount.toLocaleString()} contacts)`;
-                    })()}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {campaignOptions.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>
-                      <span className="flex w-full items-center justify-between gap-3">
-                        <span className="truncate">{c.name}</span>
-                        <span className="text-xs text-slate-500">
-                          {c.contactCount.toLocaleString()} contacts
-                        </span>
-                      </span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {form.campaignId ? (
+              <Label>Campaigns</Label>
+              <div className="max-h-48 space-y-2 overflow-y-auto rounded-lg border border-slate-200 p-3">
+                {campaignOptions.length === 0 ? (
+                  <p className="text-sm text-slate-500">
+                    All campaigns already have a list, or you have no campaigns yet.
+                  </p>
+                ) : (
+                  campaignOptions.map((c) => {
+                    const checked = form.campaignIds.includes(c.id);
+                    const inputId = `list-campaign-${c.id}`;
+                    return (
+                      <div
+                        key={c.id}
+                        className="flex items-start gap-3 rounded-md px-1 py-1.5 hover:bg-slate-50"
+                      >
+                        <Checkbox
+                          id={inputId}
+                          checked={checked}
+                          onCheckedChange={(value) =>
+                            toggleCampaign(c.id, value === true)
+                          }
+                          disabled={saving}
+                          className="mt-0.5"
+                        />
+                        <Label
+                          htmlFor={inputId}
+                          className="min-w-0 flex-1 cursor-pointer font-normal"
+                        >
+                          <span className="block text-sm font-medium text-slate-900">
+                            {c.name}
+                          </span>
+                          <span className="text-xs text-slate-500">
+                            {c.contactCount.toLocaleString()} subscribed contacts
+                          </span>
+                        </Label>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+              {editingId ? (
                 <p className="text-xs text-slate-500">
-                  This campaign currently has{" "}
-                  {(
-                    campaigns.find((c) => c.id === form.campaignId)?.contactCount ?? 0
-                  ).toLocaleString()}{" "}
-                  subscribed contacts.
+                  Uncheck a campaign to remove it from this list. At least one campaign is
+                  required.
                 </p>
               ) : null}
-              {campaignOptions.length === 0 ? (
+              {form.campaignIds.length > 0 ? (
                 <p className="text-xs text-slate-500">
-                  All campaigns already have a list, or you have no campaigns yet.
+                  Selected campaigns have{" "}
+                  {selectedContactCount.toLocaleString()} subscribed contacts combined.
                 </p>
               ) : null}
             </div>
@@ -425,7 +478,7 @@ export function ListsPanel() {
               </Button>
               <Button
                 type="submit"
-                disabled={saving || !form.campaignId}
+                disabled={saving || form.campaignIds.length === 0}
                 className="gap-2 bg-[var(--theme-primary)] hover:opacity-90"
               >
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}

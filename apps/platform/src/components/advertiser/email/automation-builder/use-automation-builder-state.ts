@@ -290,7 +290,9 @@ export function useAutomationBuilderState({
           name: a.name,
           trigger: "LEAD_CAPTURED",
           listId:
-            lists.find((l) => l.campaignId === (a.campaignId ?? ""))?.id ?? "",
+            (a.listId as string | null) ??
+            lists.find((l) => l.campaignId === (a.campaignId ?? ""))?.id ??
+            "",
           fromName: a.fromName,
           replyTo: a.replyTo ?? "",
           openTagId: a.openTagId ?? "",
@@ -357,12 +359,10 @@ export function useAutomationBuilderState({
   }, [automationId]);
 
   const buildPayload = useCallback(() => {
-    const campaignId =
-      lists.find((l) => l.id === form.listId)?.campaignId?.trim() ?? "";
     return {
       name: form.name.trim(),
       trigger: "LEAD_CAPTURED" as const,
-      campaignId,
+      listId: form.listId.trim(),
       fromName: form.fromName.trim(),
       replyTo: form.replyTo.trim() || null,
       openTagId: form.openTagId.trim() || null,
@@ -378,7 +378,7 @@ export function useAutomationBuilderState({
         fromEmail: s.fromEmail.trim() || null,
       })),
     };
-  }, [form, lists, steps]);
+  }, [form, steps]);
 
   const syncStepsFromServer = useCallback(
     (

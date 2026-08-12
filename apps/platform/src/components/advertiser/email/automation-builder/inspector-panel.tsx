@@ -1143,7 +1143,7 @@ export function InspectorPanel({ state }: Props) {
 
               <PanelSection
                 title="Audience"
-                description="Connect a list — submitted leads for that list’s campaign enter this flow."
+                description="Connect a list — submitted leads for any of that list’s campaigns enter this flow."
               >
                 <div>
                   <FieldLabel required>Audience list</FieldLabel>
@@ -1191,9 +1191,11 @@ export function InspectorPanel({ state }: Props) {
                     </FieldHint>
                   ) : (
                     <FieldHint tone="success">
-                      {selectedList?.campaignName?.trim()
-                        ? `Feeds from lead campaign: ${selectedList.campaignName.trim()}`
-                        : "Subscribers on this list enter when a matching lead is submitted."}
+                      {selectedList?.campaignNames?.length
+                        ? `Feeds from lead campaigns: ${selectedList.campaignNames.join(", ")}`
+                        : selectedList?.campaignName?.trim()
+                          ? `Feeds from lead campaign: ${selectedList.campaignName.trim()}`
+                          : "Subscribers on this list enter when a matching lead is submitted."}
                     </FieldHint>
                   )}
                 </div>

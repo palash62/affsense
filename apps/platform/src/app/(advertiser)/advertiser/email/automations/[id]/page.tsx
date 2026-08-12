@@ -11,11 +11,13 @@ export default async function EditEmailAutomationPage({ params }: Props) {
   const session = await getSession();
   const allLists = await listEmailLists(session!.user.id);
   const lists = allLists
-    .filter((l) => !l.system && l.campaignId)
+    .filter((l) => !l.system && l.campaignIds.length > 0)
     .map((l) => ({
       id: l.id,
       name: l.name,
-      campaignId: l.campaignId!,
+      campaignIds: l.campaignIds,
+      campaignNames: l.campaigns.map((c) => c.name),
+      campaignId: l.campaignIds[0],
       campaignName: l.campaignName,
     }));
 
