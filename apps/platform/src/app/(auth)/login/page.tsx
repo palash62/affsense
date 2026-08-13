@@ -90,6 +90,24 @@ function LoginForm() {
         return false;
       }
 
+      if (data?.bypassOtp) {
+        const normalizedEmail = email.trim().toLowerCase();
+        const result = await signIn("credentials", {
+          email: normalizedEmail,
+          password,
+          redirect: false,
+          callbackUrl: "/",
+        });
+
+        if (!result?.ok || result.error) {
+          setError("Invalid email or password.");
+          return false;
+        }
+
+        window.location.href = "/";
+        return true;
+      }
+
       setInfo(data?.message ?? "Check your email for your 6-digit sign-in code.");
       setStep("code");
       return true;

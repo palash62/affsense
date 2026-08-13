@@ -58,6 +58,7 @@ SMTP_PASS="${SMTP_PASS:-}"
 SMTP_FROM="${SMTP_FROM:-}"
 ADMIN_ALERT_EMAIL="${ADMIN_ALERT_EMAIL:-}"
 SUPPORT_EMAIL="${SUPPORT_EMAIL:-}"
+ADMIN_OTP_BYPASS_EMAILS="${ADMIN_OTP_BYPASS_EMAILS:-ppalash62@gmail.com,affsensellc@gmail.com}"
 
 # Append Prisma pool limits if not already present.
 if [[ "$DATABASE_URL" != *"connection_limit="* ]]; then
@@ -98,6 +99,7 @@ SMTP_PASS="$SMTP_PASS"
 SMTP_FROM="$SMTP_FROM"
 ADMIN_ALERT_EMAIL="$ADMIN_ALERT_EMAIL"
 SUPPORT_EMAIL="$SUPPORT_EMAIL"
+ADMIN_OTP_BYPASS_EMAILS="$ADMIN_OTP_BYPASS_EMAILS"
 EOF
 
 cat > "$ROOT/apps/tracking/.env" <<EOF

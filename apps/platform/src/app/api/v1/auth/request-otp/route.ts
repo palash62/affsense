@@ -8,6 +8,7 @@ import {
   clientIpFromRequest,
   rateLimitResponse,
 } from "@/lib/rate-limit";
+import { canBypassAdminOtp } from "@/lib/admin-otp-bypass";
 import { createLoginOtp } from "@/services/auth-token.service";
 import { notifyLoginOtp } from "@/services/notify.service";
 
@@ -86,6 +87,14 @@ export async function POST(request: Request) {
         { error: { code: "AUTH_INVALID", message: "Invalid email or password", status: 401 } },
         { status: 401 },
       );
+    }
+
+    if (canBypassAdminOtp(user)) {
+      return Response.json({
+        success: true,
+        bypassOtp: true,
+        message: "Signing you in...",
+      });
     }
 
     const { code, expiresMinutes } = await createLoginOtp(user.id);
