@@ -159,22 +159,18 @@ export function Header({ role, title, breadcrumbs, premium, onOpenMobileNav }: H
       </div>
 
       <div className="flex shrink-0 items-center gap-1.5 sm:gap-2.5">
-        <div className="relative hidden md:block">
-          <Input
-            placeholder="Search anything..."
-            className={cn(
-              "h-10 rounded-full border-border bg-muted/80 text-sm shadow-sm transition-colors focus:bg-card",
-              affsenseChrome ? "w-80 pr-10 pl-4" : "w-72 pl-10",
-              !premium && !affsenseChrome && "w-64",
-            )}
-          />
-          <Search
-            className={cn(
-              "absolute top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground",
-              affsenseChrome ? "right-3.5" : "left-3.5",
-            )}
-          />
-        </div>
+        {!affsenseChrome && (
+          <div className="relative hidden md:block">
+            <Input
+              placeholder="Search anything..."
+              className={cn(
+                "h-10 rounded-full border-border bg-muted/80 text-sm shadow-sm transition-colors focus:bg-card",
+                premium ? "w-72 pl-10" : "w-64 pl-10",
+              )}
+            />
+            <Search className="absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          </div>
+        )}
 
         {showTutorial && tutorialsHref && (
           <ButtonLink

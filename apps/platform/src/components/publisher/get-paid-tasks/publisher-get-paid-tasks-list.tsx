@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { ListTodo } from "lucide-react";
 import { toast } from "sonner";
 import { PublisherGetPaidTasksFilters } from "./publisher-get-paid-tasks-filters";
-import { PublisherGetPaidTaskCard } from "./publisher-get-paid-task-card";
+import { PublisherGetPaidTasksTable } from "./publisher-get-paid-tasks-table";
 import { PublisherHowItWorksPanel } from "./publisher-how-it-works-panel";
 import { PublisherTaskDetailSheet } from "./publisher-task-detail-sheet";
 import type { PublisherTaskListItem } from "@/services/publisher-task-submission.service";
@@ -61,52 +61,35 @@ function PublisherGetPaidTasksListInner() {
 
   return (
     <div className="space-y-5">
-      <div className="grid gap-5 xl:grid-cols-12">
-        <div className="space-y-5 xl:col-span-8">
-          <PublisherGetPaidTasksFilters categories={categories} />
+      <PublisherGetPaidTasksFilters categories={categories} />
 
-          <p className="text-sm text-muted-foreground">
+      <p className="text-sm text-muted-foreground">
+        {hasFilters
+          ? `Showing ${total} matching task${total === 1 ? "" : "s"}`
+          : `${total} available task${total === 1 ? "" : "s"}`}
+      </p>
+
+      {loading ? (
+        <div className="h-64 animate-pulse rounded-[var(--radius-card,0.875rem)] bg-muted" />
+      ) : tasks.length === 0 ? (
+        <div className="flex flex-col items-center justify-center rounded-[var(--radius-card,0.875rem)] border border-dashed border-border bg-card px-6 py-16 text-center shadow-[var(--shadow-card)]">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--theme-primary-soft)]">
+            <ListTodo className="h-6 w-6 text-[var(--theme-primary)]" />
+          </div>
+          <h3 className="mt-4 text-base font-semibold text-foreground">
+            {hasFilters ? "No tasks match your filters" : "No tasks available yet"}
+          </h3>
+          <p className="mt-1 max-w-sm text-sm text-muted-foreground">
             {hasFilters
-              ? `Showing ${total} matching task${total === 1 ? "" : "s"}`
-              : `${total} available task${total === 1 ? "" : "s"}`}
+              ? "Try adjusting search or filters."
+              : "Check back soon for new earning opportunities."}
           </p>
-
-          {loading ? (
-            <div className="grid gap-5 sm:grid-cols-2">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="h-48 animate-pulse rounded-[var(--radius-card,0.875rem)] bg-muted"
-                />
-              ))}
-            </div>
-          ) : tasks.length === 0 ? (
-            <div className="flex flex-col items-center justify-center rounded-[var(--radius-card,0.875rem)] border border-dashed border-border bg-card px-6 py-16 text-center shadow-[var(--shadow-card)]">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--theme-primary-soft)]">
-                <ListTodo className="h-6 w-6 text-[var(--theme-primary)]" />
-              </div>
-              <h3 className="mt-4 text-base font-semibold text-foreground">
-                {hasFilters ? "No tasks match your filters" : "No tasks available yet"}
-              </h3>
-              <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-                {hasFilters
-                  ? "Try adjusting search or filters."
-                  : "Check back soon for new earning opportunities."}
-              </p>
-            </div>
-          ) : (
-            <div className="grid gap-5 sm:grid-cols-2">
-              {tasks.map((task) => (
-                <PublisherGetPaidTaskCard key={task.id} task={task} onOpen={openTask} />
-              ))}
-            </div>
-          )}
         </div>
+      ) : (
+        <PublisherGetPaidTasksTable tasks={tasks} onOpen={openTask} />
+      )}
 
-        <div className="xl:col-span-4">
-          <PublisherHowItWorksPanel />
-        </div>
-      </div>
+      <PublisherHowItWorksPanel />
 
       <PublisherTaskDetailSheet
         taskId={selectedTaskId}
@@ -122,13 +105,9 @@ export function PublisherGetPaidTasksList() {
   return (
     <Suspense
       fallback={
-        <div className="grid gap-5 sm:grid-cols-2">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div
-              key={i}
-              className="h-48 animate-pulse rounded-[var(--radius-card,0.875rem)] bg-muted"
-            />
-          ))}
+        <div className="space-y-5">
+          <div className="h-14 animate-pulse rounded-[var(--radius-card,0.875rem)] bg-muted" />
+          <div className="h-64 animate-pulse rounded-[var(--radius-card,0.875rem)] bg-muted" />
         </div>
       }
     >

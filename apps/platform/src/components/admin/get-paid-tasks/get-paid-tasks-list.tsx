@@ -6,7 +6,7 @@ import { ListTodo, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { ButtonLink } from "@/components/ui/button-link";
-import { GetPaidTaskCard } from "./get-paid-task-card";
+import { GetPaidTasksTable } from "./get-paid-tasks-table";
 import { GetPaidTasksFilters } from "./get-paid-tasks-filters";
 import { filterGetPaidTasks, type GetPaidTaskListItem } from "./get-paid-task-list-utils";
 
@@ -97,11 +97,7 @@ function GetPaidTasksListInner() {
           )}
         </div>
       ) : (
-        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-          {filtered.map((task) => (
-            <GetPaidTaskCard key={task.id} task={task} />
-          ))}
-        </div>
+        <GetPaidTasksTable tasks={filtered} />
       )}
     </div>
   );
@@ -113,14 +109,7 @@ export function GetPaidTasksList() {
       fallback={
         <div className="space-y-5">
           <div className="h-14 animate-pulse rounded-[var(--radius-card,0.875rem)] bg-muted" />
-          <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div
-                key={i}
-                className="h-44 animate-pulse rounded-[var(--radius-card,0.875rem)] bg-muted"
-              />
-            ))}
-          </div>
+          <div className="h-64 animate-pulse rounded-[var(--radius-card,0.875rem)] bg-muted" />
         </div>
       }
     >
