@@ -40,6 +40,15 @@ jobs:
         run: npm run build:production
         env:
           NODE_ENV: production
+          DATABASE_URL: mysql://build:build@127.0.0.1:3306/build
+          AUTH_SECRET: ci-docker-build-placeholder-min-32-chars
+          AUTH_URL: https://leadvix.io
+          APP_URL: https://leadvix.io
+          PLATFORM_URL: https://leadvix.io
+          TRACKING_URL: https://leadgenlink.site
+          NEXT_PUBLIC_PLATFORM_URL: https://leadvix.io
+          NEXT_PUBLIC_TRACKING_URL: https://leadgenlink.site
+          INTERNAL_SERVICE_TOKEN: ci-internal-service-token-placeholder
 
       - name: Prepare standalone
         run: bash deploy/prepare-standalone.sh
@@ -60,8 +69,8 @@ jobs:
           OWNER="${{ github.repository_owner }}"
           OWNER_LC="$(echo "$OWNER" | tr '[:upper:]' '[:lower:]')"
           SHA_SHORT="$(echo "${{ github.sha }}" | cut -c1-7)"
-          echo "platform=ghcr.io/${OWNER_LC}/cpl-platform" >> "$GITHUB_OUTPUT"
-          echo "tracking=ghcr.io/${OWNER_LC}/cpl-tracking" >> "$GITHUB_OUTPUT"
+          echo "platform=ghcr.io/${OWNER_LC}/affsense-platform" >> "$GITHUB_OUTPUT"
+          echo "tracking=ghcr.io/${OWNER_LC}/affsense-tracking" >> "$GITHUB_OUTPUT"
           echo "sha=$SHA_SHORT" >> "$GITHUB_OUTPUT"
 
       - name: Build platform (load only)
