@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronDown, Send } from "lucide-react";
 import { toast } from "sonner";
@@ -26,10 +26,7 @@ import { cn } from "@/lib/utils";
 import {
   DEFAULT_FORM_VALUES,
   REQUIRED_ACTIONS,
-  SEED_CATEGORIES,
   TASK_TYPES,
-  formValuesToTaskItem,
-  saveMockGetPaidTask,
   type GetPaidTaskFormValues,
 } from "./mock-data";
 import { SettingToggle } from "./setting-toggle";
@@ -65,7 +62,16 @@ export function GetPaidTaskForm() {
   const [reviewOpen, setReviewOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  const categories = useMemo(() => SEED_CATEGORIES.map((c) => c.name), []);
+  const [categories, setCategories] = useState<string[]>([]);
+
+  useEffect(() => {
+    fetch("/api/v1/admin/get-paid-tasks/categories")
+      .then((r) => r.json())
+      .then((json) => {
+        setCategories((json.data ?? []).map((c: { name: string }) => c.name));
+      })
+      .catch(() => {});
+  }, []);
 
   const canPublish = useMemo(
     () =>
@@ -82,12 +88,37 @@ export function GetPaidTaskForm() {
     setValues((prev) => ({ ...prev, ...partial }));
   }
 
-  function persist(status: "Active" | "Draft", message: string) {
+  async function persist(status: "Active" | "Draft", message: string) {
     if (saving) return;
     setSaving(true);
     try {
-      const item = formValuesToTaskItem({ ...values, status });
-      saveMockGetPaidTask(item);
+      const res = await fetch("/api/v1/admin/get-paid-tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: values.title,
+          category: values.category,
+          descriptionHtml: values.descriptionHtml,
+          descriptionText: values.descriptionText,
+          taskType: values.taskType,
+          requiredAction: values.requiredAction,
+          requiredLink: values.requiredLink,
+          additionalInstructions: values.additionalInstructions,
+          rewardAmount: Number(values.rewardAmount) || 0,
+          dailyLimit: values.dailyLimit ? Number(values.dailyLimit) : undefined,
+          totalLimit: values.totalLimit ? Number(values.totalLimit) : undefined,
+          proofRequired: values.proofRequired,
+          deductPoints: values.deductPoints,
+          disallowedCountries: values.disallowedCountries,
+          status,
+          showOnDashboard: values.showOnDashboard,
+          featured: values.featured,
+          isNew: values.isNew,
+          startDate: values.startDate || undefined,
+          endDate: values.endDate || undefined,
+        }),
+      });
+      if (!res.ok) throw new Error("save failed");
       toast.success(message);
       router.push("/admin/get-paid-tasks");
     } catch {

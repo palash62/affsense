@@ -303,6 +303,7 @@ model User {
   cpaWallet                CpaWallet?
   cpaEarnings              CpaEarning[]
   emailWallet              EmailWallet?
+  publisherTaskSubmissions PublisherTaskSubmission[]
 
   @@index([role])
   @@index([status])
@@ -1590,4 +1591,148 @@ model CpaPostbackDelivery {
   @@index([conversionId])
   @@index([status, createdAt])
   @@map("cpa_postback_deliveries")
+}
+
+enum CatalogCategoryStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum DigitalProductStatus {
+  ACTIVE
+  DRAFT
+}
+
+enum GetPaidTaskStatus {
+  ACTIVE
+  DRAFT
+  PAUSED
+}
+
+enum PublisherAnnouncementStatus {
+  DRAFT
+  PUBLISHED
+}
+
+enum PublisherTaskSubmissionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model DigitalProductCategory {
+  id        String                @id @default(cuid())
+  name      String                @unique
+  status    CatalogCategoryStatus @default(ACTIVE)
+  createdAt DateTime              @default(now()) @map("created_at")
+  updatedAt DateTime              @updatedAt @map("updated_at")
+  products  DigitalProduct[]
+
+  @@map("digital_product_categories")
+}
+
+model DigitalProduct {
+  id                    String               @id @default(cuid())
+  name                  String
+  categoryId            String               @map("category_id")
+  shortDescription      String               @map("short_description") @db.Text
+  productType           String               @map("product_type")
+  niche                 String
+  status                DigitalProductStatus @default(DRAFT)
+  featured              Boolean              @default(false)
+  isNew                 Boolean              @default(false) @map("is_new")
+  salesPageUrl          String?              @map("sales_page_url") @db.Text
+  affiliateTrackingParam String?             @map("affiliate_tracking_param")
+  previewUrl            String?              @map("preview_url") @db.Text
+  frontEndCommission    Decimal              @map("front_end_commission") @db.Decimal(5, 2)
+  upsellCommission      Decimal?             @map("upsell_commission") @db.Decimal(5, 2)
+  referralReward        Decimal?             @map("referral_reward") @db.Decimal(10, 2)
+  price                 Decimal              @db.Decimal(10, 2)
+  vendor                String?
+  webhookSecret         String?              @map("webhook_secret")
+  imageUrl              String?              @map("image_url") @db.Text
+  thumbTone             String?              @map("thumb_tone")
+  createdAt             DateTime             @default(now()) @map("created_at")
+  updatedAt             DateTime             @updatedAt @map("updated_at")
+  category              DigitalProductCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+
+  @@index([status])
+  @@index([categoryId])
+  @@index([featured])
+  @@map("digital_products")
+}
+
+model GetPaidTaskCategory {
+  id        String                @id @default(cuid())
+  name      String                @unique
+  status    CatalogCategoryStatus @default(ACTIVE)
+  createdAt DateTime              @default(now()) @map("created_at")
+  updatedAt DateTime              @updatedAt @map("updated_at")
+  tasks     GetPaidTask[]
+
+  @@map("get_paid_task_categories")
+}
+
+model GetPaidTask {
+  id                     String            @id @default(cuid())
+  title                  String
+  categoryId             String            @map("category_id")
+  descriptionHtml        String            @map("description_html") @db.Text
+  descriptionText        String            @map("description_text") @db.Text
+  taskType               String            @map("task_type")
+  requiredAction         String            @map("required_action")
+  requiredLink           String?           @map("required_link") @db.Text
+  additionalInstructions String?           @map("additional_instructions") @db.Text
+  rewardAmount           Decimal           @map("reward_amount") @db.Decimal(10, 2)
+  dailyLimit             Int?              @map("daily_limit")
+  totalLimit             Int?              @map("total_limit")
+  proofRequired          Boolean           @default(true) @map("proof_required")
+  deductPoints           Boolean           @default(false) @map("deduct_points")
+  disallowedCountries    Json?             @map("disallowed_countries")
+  status                 GetPaidTaskStatus @default(DRAFT)
+  showOnDashboard        Boolean           @default(false) @map("show_on_dashboard")
+  featured               Boolean           @default(false)
+  isNew                  Boolean           @default(false) @map("is_new")
+  startDate              DateTime?         @map("start_date")
+  endDate                DateTime?         @map("end_date")
+  createdAt              DateTime          @default(now()) @map("created_at")
+  updatedAt              DateTime          @updatedAt @map("updated_at")
+  category               GetPaidTaskCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  submissions            PublisherTaskSubmission[]
+
+  @@index([status])
+  @@index([categoryId])
+  @@index([showOnDashboard])
+  @@map("get_paid_tasks")
+}
+
+model PublisherAnnouncement {
+  id          String                      @id @default(cuid())
+  title       String
+  body        String                      @db.Text
+  iconKey     String?                     @map("icon_key")
+  status      PublisherAnnouncementStatus @default(DRAFT)
+  publishedAt DateTime?                   @map("published_at")
+  createdAt   DateTime                    @default(now()) @map("created_at")
+  updatedAt   DateTime                    @updatedAt @map("updated_at")
+
+  @@index([status, publishedAt])
+  @@map("publisher_announcements")
+}
+
+model PublisherTaskSubmission {
+  id           String                      @id @default(cuid())
+  publisherId  String                      @map("publisher_id")
+  taskId       String                      @map("task_id")
+  status       PublisherTaskSubmissionStatus @default(PENDING)
+  rewardAmount Decimal                     @map("reward_amount") @db.Decimal(10, 2)
+  proofUrl     String?                     @map("proof_url") @db.Text
+  createdAt    DateTime                    @default(now()) @map("created_at")
+  updatedAt    DateTime                    @updatedAt @map("updated_at")
+  publisher    User                        @relation(fields: [publisherId], references: [id], onDelete: Cascade)
+  task         GetPaidTask                 @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([publisherId, status])
+  @@index([taskId])
+  @@map("publisher_task_submissions")
 }

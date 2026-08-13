@@ -12,6 +12,7 @@ interface SidebarNavLinkProps {
   icon: LucideIcon;
   active: boolean;
   collapsed?: boolean;
+  badge?: string;
 }
 
 function SidebarNavLinkContent({
@@ -19,6 +20,7 @@ function SidebarNavLinkContent({
   icon: Icon,
   active,
   collapsed,
+  badge,
 }: Omit<SidebarNavLinkProps, "href">) {
   const { pending } = useLinkStatus();
 
@@ -28,6 +30,11 @@ function SidebarNavLinkContent({
       {!collapsed && (
         <span className={cn("flex-1", pending && "opacity-70")}>{label}</span>
       )}
+      {!collapsed && badge ? (
+        <span className="rounded-full bg-[var(--theme-primary)] px-1.5 py-0.5 text-[10px] font-bold uppercase text-white">
+          {badge}
+        </span>
+      ) : null}
       {pending && !collapsed && (
         <span className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-card/80" />
       )}
@@ -42,6 +49,7 @@ export function SidebarNavLink({
   icon,
   active,
   collapsed,
+  badge,
 }: SidebarNavLinkProps) {
   const { startNavigation } = useNavigationPending();
 
@@ -62,6 +70,7 @@ export function SidebarNavLink({
         icon={icon}
         active={active}
         collapsed={collapsed}
+        badge={badge}
       />
     </Link>
   );

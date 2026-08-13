@@ -14,8 +14,6 @@ import {
 } from "@/components/ui/select";
 import {
   DIGITAL_PRODUCT_TYPES,
-  SEED_PRODUCT_CATEGORIES,
-  loadMockProductCategories,
 } from "./mock-data";
 
 export function DigitalProductsFilters() {
@@ -28,16 +26,19 @@ export function DigitalProductsFilters() {
   const [status, setStatus] = useState(searchParams.get("status") ?? "all");
   const [category, setCategory] = useState(searchParams.get("category") ?? "all");
   const [type, setType] = useState(searchParams.get("type") ?? "all");
-  const [categories, setCategories] = useState(
-    () => SEED_PRODUCT_CATEGORIES.map((c) => c.name),
-  );
+  const [categories, setCategories] = useState<string[]>([]);
 
   useEffect(() => {
-    setCategories(
-      loadMockProductCategories()
-        .filter((c) => c.status === "Active")
-        .map((c) => c.name),
-    );
+    fetch("/api/v1/admin/digital-products/categories")
+      .then((r) => r.json())
+      .then((json) => {
+        setCategories(
+          (json.data ?? [])
+            .filter((c: { status: string }) => c.status === "Active")
+            .map((c: { name: string }) => c.name),
+        );
+      })
+      .catch(() => {});
   }, []);
 
   const applyFilters = useCallback(

@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
 import { PrismaClient } from "@prisma/client";
+import { seedAffsenseCatalog } from "./seed-affsense-catalog";
 
 const prisma = new PrismaClient();
 
@@ -191,6 +192,8 @@ async function main() {
       },
     });
   }
+
+  await seedAffsenseCatalog(prisma);
 
   console.log("Seed complete:");
   console.log("  Admin:      admin@cpl.local / password123");

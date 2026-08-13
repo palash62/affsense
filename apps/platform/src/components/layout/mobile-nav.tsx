@@ -6,8 +6,9 @@ import { usePathname } from "next/navigation";
 import type { UserRole } from "@prisma/client";
 import { PlatformLogo } from "@/components/brand/platform-logo";
 import { isAdminPortalRole } from "@/lib/admin-portal";
+import { isPublisherPortalRole } from "@/lib/publisher-page-title";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
-import { SidebarNavList, SidebarStatusCard } from "./sidebar-nav-list";
+import { SidebarNavList, SidebarStatusCard, SidebarAffiliateTierCard } from "./sidebar-nav-list";
 import { useNavigationPending } from "./navigation-pending";
 import { cn } from "@/lib/utils";
 
@@ -28,7 +29,7 @@ export function MobileNav({
 }) {
   const pathname = usePathname();
   const { startNavigation } = useNavigationPending();
-  const affsenseChrome = isAdminPortalRole(role);
+  const affsenseChrome = isAdminPortalRole(role) || isPublisherPortalRole(role);
 
   useEffect(() => {
     onOpenChange(false);
@@ -65,7 +66,7 @@ export function MobileNav({
             )}
           >
             <Link
-              href={affsenseChrome ? "/admin" : "/"}
+              href={affsenseChrome ? (isPublisherPortalRole(role) ? "/publisher" : "/admin") : "/"}
               prefetch={true}
               onClick={() => {
                 startNavigation();
@@ -83,7 +84,7 @@ export function MobileNav({
             staffMenuAccess={staffMenuAccess}
             onNavigate={() => onOpenChange(false)}
           />
-          <SidebarStatusCard />
+          {isPublisherPortalRole(role) ? <SidebarAffiliateTierCard /> : <SidebarStatusCard />}
         </div>
       </SheetContent>
     </Sheet>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { useCallback, useState, useTransition } from "react";
+import { useCallback, useEffect, useState, useTransition } from "react";
 import { Search, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +12,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { SEED_CATEGORIES } from "./mock-data";
 
 export function GetPaidTasksFilters() {
   const router = useRouter();
@@ -23,6 +22,16 @@ export function GetPaidTasksFilters() {
   const [search, setSearch] = useState(searchParams.get("q") ?? "");
   const [status, setStatus] = useState(searchParams.get("status") ?? "all");
   const [category, setCategory] = useState(searchParams.get("category") ?? "all");
+  const [categories, setCategories] = useState<string[]>([]);
+
+  useEffect(() => {
+    fetch("/api/v1/admin/get-paid-tasks/categories")
+      .then((r) => r.json())
+      .then((json) => {
+        setCategories((json.data ?? []).map((c: { name: string }) => c.name));
+      })
+      .catch(() => {});
+  }, []);
 
   const applyFilters = useCallback(
     (overrides?: { q?: string; status?: string; category?: string }) => {
@@ -99,9 +108,9 @@ export function GetPaidTasksFilters() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All categories</SelectItem>
-              {SEED_CATEGORIES.map((c) => (
-                <SelectItem key={c.id} value={c.name}>
-                  {c.name}
+              {categories.map((name) => (
+                <SelectItem key={name} value={name}>
+                  {name}
                 </SelectItem>
               ))}
             </SelectContent>

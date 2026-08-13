@@ -19,6 +19,8 @@ import {
   ClipboardList,
   BarChart3,
   ChevronDown,
+  Wallet,
+  Receipt,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -33,6 +35,7 @@ import { Input } from "@/components/ui/input";
 import { ThemeSwitcher } from "@/components/theme/theme-switcher";
 import { shouldShowAdminQuickActions } from "@/lib/header-quick-actions";
 import { isAdminPortalRole } from "@/lib/admin-portal";
+import { getPublisherPageMeta, isPublisherPortalRole } from "@/lib/publisher-page-title";
 import { getAdminPageMeta, getAdminRoleLabel } from "@/lib/admin-page-title";
 import { cn } from "@/lib/utils";
 import type { UserRole } from "@prisma/client";
@@ -44,6 +47,13 @@ interface HeaderProps {
   premium?: boolean;
   onOpenMobileNav?: () => void;
 }
+
+const publisherQuickLinks = [
+  { label: "Request Payout", href: "/publisher/payouts/request", icon: Wallet },
+  { label: "Payment History", href: "/publisher/transactions", icon: Receipt },
+  { label: "Marketing Materials", href: "/publisher/marketplace", icon: PackagePlus },
+  { label: "Leaderboard", href: "/publisher/reports/performance", icon: BarChart3 },
+];
 
 const quickActionLinks = [
   { label: "Add New User", href: "/admin/advertisers", icon: UserPlus },
@@ -73,12 +83,16 @@ export function Header({ role, title, breadcrumbs, premium, onOpenMobileNav }: H
 
   const firstName = session?.user?.name?.split(" ")[0] ?? "Admin";
   const affsenseAdmin = isAdminPortalRole(role);
+  const affsensePublisher = isPublisherPortalRole(role);
   const pageMeta = affsenseAdmin
     ? getAdminPageMeta(pathname, firstName)
-    : { title: title ?? "", subtitle: undefined as string | undefined };
-  const displayTitle = affsenseAdmin ? pageMeta.title : title;
-  const displaySubtitle = affsenseAdmin ? pageMeta.subtitle : undefined;
-  const roleLabel = getAdminRoleLabel(role);
+    : affsensePublisher
+      ? getPublisherPageMeta(pathname, firstName)
+      : { title: title ?? "", subtitle: undefined as string | undefined };
+  const displayTitle = affsenseAdmin || affsensePublisher ? pageMeta.title : title;
+  const displaySubtitle =
+    affsenseAdmin || affsensePublisher ? pageMeta.subtitle : undefined;
+  const roleLabel = affsensePublisher ? "Elite Affiliate" : getAdminRoleLabel(role);
 
   const notificationsHref =
     role === "ADMIN" || role === "PLATFORM_MANAGER"
@@ -95,15 +109,17 @@ export function Header({ role, title, breadcrumbs, premium, onOpenMobileNav }: H
         : null;
 
   const showQuickActions = premium && shouldShowAdminQuickActions(role);
-  const showTutorial = Boolean(tutorialsHref) && !affsenseAdmin;
-  const showTheme = Boolean(premium) && !affsenseAdmin;
+  const showPublisherQuickLinks = affsensePublisher;
+  const showTutorial = Boolean(tutorialsHref) && !affsenseAdmin && !affsensePublisher;
+  const showTheme = Boolean(premium) && !affsenseAdmin && !affsensePublisher;
+  const affsenseChrome = affsenseAdmin || affsensePublisher;
 
   return (
     <header
       className={cn(
         "flex items-center justify-between gap-3 px-4 sm:px-6 lg:px-8",
-        affsenseAdmin ? "h-18 border-b border-border bg-card" : "h-[4.25rem]",
-        !affsenseAdmin &&
+        affsenseChrome ? "h-18 border-b border-border bg-card" : "h-[4.25rem]",
+        !affsenseChrome &&
           (premium
             ? "border-b border-border/60 bg-card/90 backdrop-blur-md"
             : "border-b border-border bg-card"),
@@ -123,14 +139,14 @@ export function Header({ role, title, breadcrumbs, premium, onOpenMobileNav }: H
           </Button>
         ) : null}
         <div className="min-w-0">
-          {!affsenseAdmin && breadcrumbs && breadcrumbs.length > 0 && (
+          {!affsenseChrome && breadcrumbs && breadcrumbs.length > 0 && (
             <p className="truncate text-xs text-muted-foreground">{breadcrumbs.join(" / ")}</p>
           )}
           {displayTitle ? (
             <h1
               className={cn(
                 "truncate font-semibold text-foreground",
-                affsenseAdmin ? "text-2xl font-bold tracking-tight" : "text-lg",
+                affsenseChrome ? "text-2xl font-bold tracking-tight" : "text-lg",
               )}
             >
               {displayTitle}
@@ -148,14 +164,14 @@ export function Header({ role, title, breadcrumbs, premium, onOpenMobileNav }: H
             placeholder="Search anything..."
             className={cn(
               "h-10 rounded-full border-border bg-muted/80 text-sm shadow-sm transition-colors focus:bg-card",
-              affsenseAdmin ? "w-80 pr-10 pl-4" : "w-72 pl-10",
-              !premium && !affsenseAdmin && "w-64",
+              affsenseChrome ? "w-80 pr-10 pl-4" : "w-72 pl-10",
+              !premium && !affsenseChrome && "w-64",
             )}
           />
           <Search
             className={cn(
               "absolute top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground",
-              affsenseAdmin ? "right-3.5" : "left-3.5",
+              affsenseChrome ? "right-3.5" : "left-3.5",
             )}
           />
         </div>
@@ -169,6 +185,35 @@ export function Header({ role, title, breadcrumbs, premium, onOpenMobileNav }: H
             <PlayCircle className="h-4 w-4" />
             <span className="hidden sm:inline">Tutorial</span>
           </ButtonLink>
+        )}
+
+        {showPublisherQuickLinks && (
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="hidden h-10 gap-2 rounded-md border-border bg-card px-3.5 text-foreground shadow-sm hover:bg-muted sm:flex"
+                />
+              }
+            >
+              <Zap className="h-4 w-4 text-[var(--theme-primary)]" />
+              Quick Links
+              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-52 rounded-[var(--radius-card,0.875rem)]">
+              {publisherQuickLinks.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <DropdownMenuItem key={item.label} render={<Link href={item.href} />}>
+                    <Icon className="mr-2 h-4 w-4 text-muted-foreground" />
+                    {item.label}
+                  </DropdownMenuItem>
+                );
+              })}
+            </DropdownMenuContent>
+          </DropdownMenu>
         )}
 
         {showQuickActions && (
@@ -207,12 +252,12 @@ export function Header({ role, title, breadcrumbs, premium, onOpenMobileNav }: H
           size="icon"
           className={cn(
             "relative size-10 rounded-md text-muted-foreground hover:bg-muted",
-            (premium || affsenseAdmin) && "border border-border bg-card shadow-sm",
+            (premium || affsenseChrome) && "border border-border bg-card shadow-sm",
           )}
           aria-label="Notifications"
         >
           <Bell className="h-4 w-4" />
-          {affsenseAdmin && (
+          {affsenseChrome && (
             <span className="absolute -right-0.5 -top-0.5 flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-white">
               12
             </span>
@@ -226,7 +271,7 @@ export function Header({ role, title, breadcrumbs, premium, onOpenMobileNav }: H
                 variant="ghost"
                 className={cn(
                   "relative h-auto gap-2.5 rounded-md px-2 py-1.5 hover:bg-muted",
-                  (premium || affsenseAdmin) && "border border-border bg-card pr-2.5 shadow-sm",
+                  (premium || affsenseChrome) && "border border-border bg-card pr-2.5 shadow-sm",
                 )}
               />
             }
@@ -235,7 +280,7 @@ export function Header({ role, title, breadcrumbs, premium, onOpenMobileNav }: H
               <AvatarFallback
                 className={cn(
                   "text-xs font-semibold",
-                  premium || affsenseAdmin
+                  premium || affsenseChrome
                     ? "bg-[var(--theme-primary)] text-white"
                     : "bg-primary/10 text-primary",
                 )}
@@ -243,7 +288,7 @@ export function Header({ role, title, breadcrumbs, premium, onOpenMobileNav }: H
                 {initials}
               </AvatarFallback>
             </Avatar>
-            {affsenseAdmin ? (
+            {affsenseChrome ? (
               <span className="hidden min-w-0 text-left lg:block">
                 <span className="block truncate text-sm font-semibold text-foreground">
                   {session?.user?.name ?? "Admin User"}
@@ -255,7 +300,7 @@ export function Header({ role, title, breadcrumbs, premium, onOpenMobileNav }: H
                 {session?.user?.name?.split(" ")[0]}
               </span>
             ) : null}
-            {affsenseAdmin && (
+            {affsenseChrome && (
               <ChevronDown className="hidden h-4 w-4 shrink-0 text-muted-foreground lg:block" />
             )}
           </DropdownMenuTrigger>

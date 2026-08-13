@@ -5,7 +5,8 @@ import { cn } from "@/lib/utils";
 import type { UserRole } from "@prisma/client";
 import { PlatformLogo } from "@/components/brand/platform-logo";
 import { isAdminPortalRole } from "@/lib/admin-portal";
-import { SidebarNavList, SidebarStatusCard } from "./sidebar-nav-list";
+import { isPublisherPortalRole } from "@/lib/publisher-page-title";
+import { SidebarNavList, SidebarStatusCard, SidebarAffiliateTierCard } from "./sidebar-nav-list";
 import { useNavigationPending } from "./navigation-pending";
 
 interface SidebarProps {
@@ -26,7 +27,7 @@ export function Sidebar({
   className,
 }: SidebarProps) {
   const { startNavigation } = useNavigationPending();
-  const affsenseChrome = isAdminPortalRole(role);
+  const affsenseChrome = isAdminPortalRole(role) || isPublisherPortalRole(role);
 
   return (
     <aside
@@ -54,7 +55,7 @@ export function Sidebar({
         )}
       >
         <Link
-          href={affsenseChrome ? "/admin" : "/"}
+          href={affsenseChrome ? (isPublisherPortalRole(role) ? "/publisher" : "/admin") : "/"}
           prefetch={true}
           onClick={() => startNavigation()}
           className="flex items-center"
@@ -73,7 +74,13 @@ export function Sidebar({
         canAccessAutoresponder={canAccessAutoresponder}
         staffMenuAccess={staffMenuAccess}
       />
-      {!collapsed ? <SidebarStatusCard /> : null}
+      {!collapsed ? (
+        isPublisherPortalRole(role) ? (
+          <SidebarAffiliateTierCard />
+        ) : (
+          <SidebarStatusCard />
+        )
+      ) : null}
     </aside>
   );
 }

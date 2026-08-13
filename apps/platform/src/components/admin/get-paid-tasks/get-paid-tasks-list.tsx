@@ -3,15 +3,12 @@
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { ListTodo, Plus } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { ButtonLink } from "@/components/ui/button-link";
 import { GetPaidTaskCard } from "./get-paid-task-card";
 import { GetPaidTasksFilters } from "./get-paid-tasks-filters";
-import {
-  filterGetPaidTasks,
-  loadMockGetPaidTasks,
-  type GetPaidTaskListItem,
-} from "./mock-data";
+import { filterGetPaidTasks, type GetPaidTaskListItem } from "./get-paid-task-list-utils";
 
 function GetPaidTasksListInner() {
   const searchParams = useSearchParams();
@@ -20,7 +17,18 @@ function GetPaidTasksListInner() {
   const [tasks, setTasks] = useState<GetPaidTaskListItem[]>([]);
 
   useEffect(() => {
-    setTasks(loadMockGetPaidTasks());
+    let cancelled = false;
+    fetch("/api/v1/admin/get-paid-tasks?limit=200")
+      .then((r) => r.json())
+      .then((json) => {
+        if (!cancelled) setTasks(json.data?.items ?? []);
+      })
+      .catch(() => {
+        if (!cancelled) toast.error("Failed to load tasks");
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const filters = useMemo(

@@ -22,6 +22,9 @@ function isRootHref(href: string) {
 
 /** True when pathname belongs under this nav item (prefix match, excluding role roots). */
 function isItemActive(pathname: string, href: string) {
+  if (href === "/publisher/old-dashboard") {
+    return pathname === "/publisher/old-dashboard";
+  }
   if (href === "/admin/offer-network") {
     return (
       pathname === "/admin/offer-network" ||
@@ -62,6 +65,15 @@ function isChildActive(pathname: string, child: NavItem, siblings: NavItem[]) {
     return (
       pathname === "/admin/publishers" || pathname.startsWith("/admin/publishers/")
     );
+  }
+  if (child.href === "/publisher/reports/performance") {
+    return (
+      pathname === "/publisher/reports/performance" ||
+      pathname.startsWith("/publisher/reports/performance/")
+    );
+  }
+  if (child.href?.startsWith("/publisher/reports/")) {
+    return pathname === child.href || pathname.startsWith(`${child.href}/`);
   }
   if (child.href === "/admin/users") {
     return pathname === "/admin/users" || pathname.startsWith("/admin/users/");
@@ -227,6 +239,11 @@ function NavGroup({
       >
         <ParentIcon className="h-4 w-4 shrink-0" />
         <span className="flex-1 text-left">{item.label}</span>
+        {item.badge ? (
+          <span className="rounded-full bg-[var(--theme-primary)] px-1.5 py-0.5 text-[10px] font-bold uppercase text-white">
+            {item.badge}
+          </span>
+        ) : null}
         <ChevronDown
           className={cn(
             "h-4 w-4 shrink-0 text-white/40 transition-transform duration-200",
@@ -331,6 +348,7 @@ export function SidebarNavList({
               href={item.href}
               label={item.label}
               icon={item.icon}
+              badge={item.badge}
               active={active}
               collapsed={collapsed}
             />
@@ -346,6 +364,23 @@ export function SidebarStatusCard() {
     <div className="mx-3 mb-4 rounded-xl border border-white/5 bg-white/5 px-3.5 py-2.5">
       <p className="text-sm font-semibold text-white">Affsense Admin</p>
       <p className="mt-0.5 text-[11px] text-white/45">Version 1.0.0</p>
+    </div>
+  );
+}
+
+export function SidebarAffiliateTierCard() {
+  return (
+    <div className="mx-3 mb-4 rounded-xl border border-white/10 bg-gradient-to-br from-[var(--theme-primary)] to-[var(--theme-accent-purple,#713BFF)] px-3.5 py-3">
+      <p className="text-sm font-semibold text-white">Elite Affiliate</p>
+      <p className="mt-1 text-[11px] leading-relaxed text-white/80">
+        Unlock higher commissions and priority payouts.
+      </p>
+      <button
+        type="button"
+        className="mt-2.5 text-xs font-semibold text-white underline-offset-2 hover:underline"
+      >
+        View Benefits →
+      </button>
     </div>
   );
 }

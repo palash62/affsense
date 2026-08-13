@@ -10,54 +10,56 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import {
-  deleteMockProductCategory,
-  loadMockProductCategories,
-  saveMockProductCategory,
-  type ProductCategoryItem,
-} from "./mock-data";
+import type { ProductCategoryItem } from "./mock-data";
 
 export function ProductCategoriesPanel() {
   const [categories, setCategories] = useState<ProductCategoryItem[]>([]);
   const [name, setName] = useState("");
 
-  useEffect(() => {
-    setCategories(loadMockProductCategories());
-  }, []);
-
-  function refresh() {
-    setCategories(loadMockProductCategories());
+  async function refresh() {
+    const res = await fetch("/api/v1/admin/digital-products/categories");
+    const json = await res.json();
+    setCategories(json.data ?? []);
   }
 
-  function handleAdd() {
+  useEffect(() => {
+    void refresh();
+  }, []);
+
+  async function handleAdd() {
     const trimmed = name.trim();
     if (trimmed.length < 2) {
       toast.error("Enter a category name");
       return;
     }
-    const id = trimmed
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-|-$/g, "")
-      .slice(0, 40);
-    if (categories.some((c) => c.id === id || c.name.toLowerCase() === trimmed.toLowerCase())) {
+    if (categories.some((c) => c.name.toLowerCase() === trimmed.toLowerCase())) {
       toast.error("Category already exists");
       return;
     }
-    saveMockProductCategory({
-      id: id || `cat-${Date.now()}`,
-      name: trimmed,
-      status: "Active",
-      productCount: 0,
+    const res = await fetch("/api/v1/admin/digital-products/categories", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: trimmed, status: "Active" }),
     });
+    if (!res.ok) {
+      toast.error("Failed to add category");
+      return;
+    }
     setName("");
-    refresh();
+    await refresh();
     toast.success("Category added");
   }
 
-  function handleDelete(id: string) {
-    deleteMockProductCategory(id);
-    refresh();
+  async function handleDelete(id: string) {
+    const res = await fetch(`/api/v1/admin/digital-products/categories?id=${id}`, {
+      method: "DELETE",
+    });
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}));
+      toast.error(json.error?.message ?? "Failed to delete category");
+      return;
+    }
+    await refresh();
     toast.success("Category removed");
   }
 
@@ -71,11 +73,11 @@ export function ProductCategoriesPanel() {
             onChange={(e) => setName(e.target.value)}
             placeholder="Category name"
             className="h-10 max-w-sm flex-1 rounded-md"
-            onKeyDown={(e) => e.key === "Enter" && handleAdd()}
+            onKeyDown={(e) => e.key === "Enter" && void handleAdd()}
           />
           <Button
             type="button"
-            onClick={handleAdd}
+            onClick={() => void handleAdd()}
             className="h-10 gap-2 rounded-md bg-[var(--theme-primary)] px-4 hover:opacity-90"
           >
             <Plus className="h-4 w-4" />
@@ -135,7 +137,7 @@ export function ProductCategoriesPanel() {
                         variant="outline"
                         size="icon-sm"
                         className="rounded-md text-destructive hover:bg-destructive/10"
-                        onClick={() => handleDelete(cat.id)}
+                        onClick={() => void handleDelete(cat.id)}
                         aria-label={`Delete ${cat.name}`}
                       >
                         <Trash2 className="h-3.5 w-3.5" />

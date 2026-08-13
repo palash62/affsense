@@ -46,6 +46,10 @@ import {
   Lock,
   Ticket,
   Share2,
+  ShoppingBag,
+  Receipt,
+  GraduationCap,
+  HelpCircle,
 } from "lucide-react";
 import { STAFF_USERS_PATH } from "@/lib/admin-portal";
 
@@ -53,6 +57,7 @@ export interface NavItem {
   label: string;
   href: string;
   icon: LucideIcon;
+  badge?: string;
   children?: NavItem[];
 }
 
@@ -236,14 +241,64 @@ export const ADVERTISER_NAV: NavItem[] = [
   { label: "Autoresponder", href: "/advertiser/email", icon: Mail },
 ];
 
-export const PUBLISHER_NAV: NavItem[] = [
-  { label: "Dashboard", href: "/publisher", icon: LayoutDashboard },
+export const PUBLISHER_LEGACY_NAV: NavItem[] = [
+  { label: "Old Dashboard", href: "/publisher/old-dashboard", icon: History },
   { label: "Smart Link", href: "/publisher/smart-link", icon: Link2 },
   { label: "Leads", href: "/publisher/leads", icon: FileText },
   { label: "Lead Report", href: "/publisher/lead-report", icon: BarChart3 },
   { label: "Earnings & Payouts", href: "/publisher/earnings", icon: Wallet },
   { label: "Support", href: "/publisher/support", icon: LifeBuoy },
   { label: "Settings", href: "/publisher/settings", icon: Settings },
+];
+
+export const PUBLISHER_NAV: AdminNavEntry[] = [
+  { kind: "section", label: "EARN" },
+  { kind: "item", item: { label: "Dashboard", href: "/publisher", icon: LayoutDashboard } },
+  { kind: "item", item: { label: "Marketplace", href: "/publisher/marketplace", icon: ShoppingBag } },
+  { kind: "item", item: { label: "Get Paid Tasks", href: "/publisher/get-paid-tasks", icon: ListTodo } },
+  { kind: "item", item: { label: "CPA Offers", href: "/publisher/cpa-offers", icon: Store } },
+  { kind: "item", item: { label: "My Promotions", href: "/publisher/promotions", icon: Percent } },
+  { kind: "item", item: { label: "Referrals", href: "/publisher/referrals", icon: Gift } },
+
+  { kind: "section", label: "ACCOUNT" },
+  { kind: "item", item: { label: "Earnings", href: "/publisher/earnings", icon: Wallet } },
+  { kind: "item", item: { label: "Payouts", href: "/publisher/payouts", icon: Banknote } },
+  { kind: "item", item: { label: "Transactions", href: "/publisher/transactions", icon: Receipt } },
+  { kind: "item", item: { label: "Profile Settings", href: "/publisher/settings", icon: Settings } },
+
+  { kind: "section", label: "REPORTS" },
+  {
+    kind: "item",
+    item: {
+      label: "Reports",
+      href: "/publisher/reports/performance",
+      icon: BarChart3,
+      badge: "NEW",
+      children: [
+        { label: "Performance", href: "/publisher/reports/performance", icon: BarChart3 },
+        { label: "Offer Reports", href: "/publisher/reports/offers", icon: Store },
+        { label: "Task Reports", href: "/publisher/reports/tasks", icon: ListTodo },
+        { label: "Referral Reports", href: "/publisher/reports/referrals", icon: Gift },
+        { label: "Payout Reports", href: "/publisher/reports/payouts", icon: Banknote },
+      ],
+    },
+  },
+
+  { kind: "section", label: "RESOURCES" },
+  { kind: "item", item: { label: "Training Center", href: "/publisher/training", icon: GraduationCap } },
+  { kind: "item", item: { label: "Help Center", href: "/publisher/help", icon: HelpCircle } },
+  { kind: "item", item: { label: "Announcements", href: "/publisher/announcements", icon: Bell } },
+
+  { kind: "section", label: "OLD" },
+  {
+    kind: "item",
+    item: {
+      label: "Old Menu",
+      href: "/publisher/old-menu",
+      icon: Archive,
+      children: PUBLISHER_LEGACY_NAV,
+    },
+  },
 ];
 
 function asNavEntries(items: NavItem[]): AdminNavEntry[] {
@@ -295,7 +350,7 @@ export function getNavForRole(
       return asNavEntries(items);
     }
     case "PUBLISHER":
-      return asNavEntries(PUBLISHER_NAV);
+      return PUBLISHER_NAV;
     default:
       return [];
   }

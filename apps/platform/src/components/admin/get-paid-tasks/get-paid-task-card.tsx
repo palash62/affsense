@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import type { GetPaidTaskListItem } from "./mock-data";
+import type { GetPaidTaskListItem } from "./get-paid-task-list-utils";
 
 function StatusPill({ status }: { status: GetPaidTaskListItem["status"] }) {
   return (

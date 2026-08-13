@@ -3,13 +3,13 @@
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { PackageOpen, Plus } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { ButtonLink } from "@/components/ui/button-link";
 import { DigitalProductCard } from "./digital-product-card";
 import { DigitalProductsFilters } from "./digital-products-filters";
 import {
   filterDigitalProducts,
-  loadMockDigitalProducts,
   type DigitalProductListItem,
 } from "./mock-data";
 
@@ -20,7 +20,18 @@ function DigitalProductsListInner() {
   const [products, setProducts] = useState<DigitalProductListItem[]>([]);
 
   useEffect(() => {
-    setProducts(loadMockDigitalProducts());
+    let cancelled = false;
+    fetch("/api/v1/admin/digital-products?limit=200")
+      .then((r) => r.json())
+      .then((json) => {
+        if (!cancelled) setProducts(json.data?.items ?? []);
+      })
+      .catch(() => {
+        if (!cancelled) toast.error("Failed to load products");
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const filters = useMemo(

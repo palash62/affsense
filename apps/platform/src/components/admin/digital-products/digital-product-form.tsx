@@ -12,10 +12,7 @@ import {
   MOCK_WEBHOOK_URL,
   SEED_PRODUCT_CATEGORIES,
   SHORT_DESCRIPTION_MAX,
-  formValuesToListItem,
-  loadMockProductCategories,
   readImageDataUrl,
-  saveMockDigitalProduct,
   type DigitalProductFormValues,
   type DigitalProductStatus,
 } from "./mock-data";
@@ -79,11 +76,16 @@ export function DigitalProductForm() {
   );
 
   useEffect(() => {
-    setCategories(
-      loadMockProductCategories()
-        .filter((c) => c.status === "Active")
-        .map((c) => c.name),
-    );
+    fetch("/api/v1/admin/digital-products/categories")
+      .then((r) => r.json())
+      .then((json) => {
+        setCategories(
+          (json.data ?? [])
+            .filter((c: { status: string }) => c.status === "Active")
+            .map((c: { name: string }) => c.name),
+        );
+      })
+      .catch(() => {});
   }, []);
 
   const descriptionCount = values.shortDescription.length;
@@ -116,8 +118,31 @@ export function DigitalProductForm() {
       if (imageFileRef.current) {
         imageUrl = await readImageDataUrl(imageFileRef.current);
       }
-      const item = formValuesToListItem({ ...values, status }, imageUrl);
-      saveMockDigitalProduct(item);
+      const res = await fetch("/api/v1/admin/digital-products", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: values.name,
+          category: values.category,
+          shortDescription: values.shortDescription,
+          productType: values.productType,
+          niche: values.niche,
+          status,
+          featured: values.featured,
+          isNew: values.isNew,
+          salesPageUrl: values.salesPageUrl,
+          affiliateTrackingParam: values.affiliateTrackingParam,
+          previewUrl: values.previewUrl,
+          frontEndCommission: Number(values.frontEndCommission) || 0,
+          upsellCommission: Number(values.upsellCommission) || 0,
+          referralReward: Number(values.referralReward) || 0,
+          price: Number(values.price) || 0,
+          vendor: values.vendor,
+          webhookSecret: values.webhookSecret,
+          imageUrl,
+        }),
+      });
+      if (!res.ok) throw new Error("save failed");
       toast.success(successMessage);
       router.push("/admin/digital-products");
     } catch {
