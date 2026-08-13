@@ -3,7 +3,6 @@ import Link from "next/link";
 import { formatUserDateTime } from "@/lib/user-timezone";
 import { getSession } from "@/lib/session";
 import { Gift, Users, Wallet, Clock, DollarSign } from "lucide-react";
-import { PageHero } from "@/components/admin/page-hero";
 import { PageSection } from "@/components/admin/page-section";
 import { GradientStatCard, NeutralStatCard } from "@/components/admin/gradient-stat-card";
 import { formatCurrency, UserStatusBadge } from "@/components/admin/admin-ui";
@@ -32,13 +31,6 @@ export default async function AdminReferralsPage({ searchParams }: PageProps) {
 
   return (
     <div className="space-y-7">
-      <PageHero
-        eyebrow="Finance"
-        title="Referrals"
-        description="See who referred whom and how much referral commission each relationship has earned"
-        badge={`${report.stats.totalReferred} referred`}
-      />
-
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <GradientStatCard
           variant="leads"

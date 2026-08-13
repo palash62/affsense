@@ -306,7 +306,19 @@ export function Header({ role, title, breadcrumbs, premium, onOpenMobileNav }: H
               <p className="text-xs text-muted-foreground">{session?.user?.email}</p>
             </div>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem
+              render={
+                <Link
+                  href={
+                    affsensePublisher
+                      ? "/publisher/settings"
+                      : affsenseAdmin
+                        ? "/admin/settings"
+                        : "#"
+                  }
+                />
+              }
+            >
               <User className="mr-2 h-4 w-4" />
               Profile
             </DropdownMenuItem>

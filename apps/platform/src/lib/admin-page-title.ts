@@ -78,6 +78,27 @@ export function getAdminPageMeta(
     };
   }
 
+  if (path === "/admin/settings") {
+    return {
+      title: "Platform Settings",
+      subtitle: "Configure global platform options and your admin preferences",
+    };
+  }
+
+  if (path === "/admin/bulk-email") {
+    return {
+      title: "Email Campaigns",
+      subtitle: "Email one or many active advertisers or publishers from the admin panel",
+    };
+  }
+
+  if (path === "/admin/referrals") {
+    return {
+      title: "Referrals",
+      subtitle: "See who referred whom and how much referral commission each relationship has earned",
+    };
+  }
+
   const exact: Record<string, string> = {
     "/admin/user-directory": "Users",
     "/admin/memberships": "Memberships",
@@ -110,16 +131,13 @@ export function getAdminPageMeta(
     "/admin/cpa-offers/report": "CPA Report",
     "/admin/cpa-offers/payouts": "CPA Payouts",
     "/admin/global-postback": "Global Postback",
-    "/admin/bulk-email": "Bulk Email",
     "/admin/leads": "Leads",
     "/admin/fraud": "Fraud Center",
     "/admin/wallets": "Wallets",
     "/admin/deposits": "Deposits",
     "/admin/payouts": "Payouts",
-    "/admin/referrals": "Referrals",
     "/admin/reports": "Reports",
     "/admin/support": "Support",
-    "/admin/settings": "Settings",
     "/admin/audit-log": "Audit Log",
     "/admin/funnel-templates": "Funnel Templates",
     "/admin/tutorials": "Tutorials",

@@ -72,6 +72,15 @@ function isChildActive(pathname: string, child: NavItem, siblings: NavItem[]) {
       pathname.startsWith("/publisher/reports/performance/")
     );
   }
+  if (child.href === "/publisher/get-paid-tasks") {
+    return (
+      pathname === "/publisher/get-paid-tasks" ||
+      pathname.startsWith("/publisher/get-paid-tasks/")
+    );
+  }
+  if (child.href === "/publisher/offer-wall") {
+    return pathname === "/publisher/offer-wall" || pathname.startsWith("/publisher/offer-wall/");
+  }
   if (child.href?.startsWith("/publisher/reports/")) {
     return pathname === child.href || pathname.startsWith(`${child.href}/`);
   }

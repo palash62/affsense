@@ -13,7 +13,6 @@ import { GradientStatCard, NeutralStatCard } from "@/components/admin/gradient-s
 import { PageSection } from "@/components/admin/page-section";
 import { formatCurrency, PayoutStatusBadge } from "@/components/admin/admin-ui";
 import { UsersTablePagination } from "@/components/admin/users-table-pagination";
-import { RoleHero } from "@/components/layout/role-hero";
 import { AdvertiserLeadsTableFooter } from "@/components/advertiser/advertiser-leads-table-footer";
 import { PublisherInfoBanner } from "@/components/publisher/publisher-info-banner";
 import {
@@ -120,14 +119,7 @@ export default async function PublisherEarningsPage({ searchParams }: PageProps)
     tab === "earnings" && ledger ? ledger.totalEarned : wallet.balance;
 
   return (
-    <div className="space-y-7">
-      <RoleHero
-        eyebrow="Publisher Portal"
-        title="Earnings & Payouts"
-        description="View your balance, earnings history, and payout requests in one place."
-        action={{ label: "Request Payout", href: "/publisher/payouts/request", icon: Plus }}
-      />
-
+    <div className="space-y-5">
       <PublisherInfoBanner>
         Earnings are credited to your wallet when leads are paid. Approved leads show an estimated
         payout until payment completes. Request a payout once your available balance meets the

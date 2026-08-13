@@ -50,6 +50,7 @@ import {
   Receipt,
   GraduationCap,
   HelpCircle,
+  LayoutGrid,
 } from "lucide-react";
 import { STAFF_USERS_PATH } from "@/lib/admin-portal";
 
@@ -85,16 +86,13 @@ export const ADMIN_LEGACY_NAV: NavItem[] = [
       { label: "Global Postback", href: "/admin/global-postback", icon: Webhook },
     ],
   },
-  { label: "Bulk Email", href: "/admin/bulk-email", icon: Mail },
   { label: "Leads", href: "/admin/leads", icon: FileText },
   { label: "Fraud Center", href: "/admin/fraud", icon: ShieldAlert },
   { label: "Wallets", href: "/admin/wallets", icon: Wallet },
   { label: "Deposits", href: "/admin/deposits", icon: ArrowDownToLine },
   { label: "Payouts", href: "/admin/payouts", icon: Banknote },
-  { label: "Referrals", href: "/admin/referrals", icon: Gift },
   { label: "Reports", href: "/admin/reports", icon: BarChart3 },
   { label: "Support", href: "/admin/support", icon: LifeBuoy },
-  { label: "Settings", href: "/admin/settings", icon: Settings },
   { label: "Audit Log", href: "/admin/audit-log", icon: ScrollText },
   { label: "Themes", href: "/admin/themes", icon: Palette },
   { label: "Funnel Templates", href: "/admin/funnel-templates", icon: FileStack },
@@ -149,12 +147,19 @@ export const ADMIN_NAV: AdminNavEntry[] = [
     kind: "item",
     item: { label: "Orders & Sales", href: "/admin/orders-sales", icon: ShoppingCart },
   },
-  { kind: "item", item: { label: "Commissions", href: "/admin/commissions", icon: Percent } },
-  { kind: "item", item: { label: "Payouts", href: "/admin/payout-center", icon: Wallet } },
   {
     kind: "item",
-    item: { label: "Referrals", href: "/admin/referral-program", icon: Gift },
+    item: {
+      label: "Commissions",
+      href: "/admin/commissions",
+      icon: Percent,
+      children: [
+        { label: "Commissions", href: "/admin/commissions", icon: Percent },
+        { label: "Referrals", href: "/admin/referrals", icon: Gift },
+      ],
+    },
   },
+  { kind: "item", item: { label: "Payouts", href: "/admin/payout-center", icon: Wallet } },
   {
     kind: "item",
     item: { label: "Withdrawals", href: "/admin/withdrawals", icon: HandCoins },
@@ -168,7 +173,7 @@ export const ADMIN_NAV: AdminNavEntry[] = [
   { kind: "item", item: { label: "Promotions", href: "/admin/promotions", icon: Megaphone } },
   {
     kind: "item",
-    item: { label: "Email Campaigns", href: "/admin/email-campaigns", icon: Mail },
+    item: { label: "Email Campaigns", href: "/admin/bulk-email", icon: Mail },
   },
   {
     kind: "item",
@@ -187,7 +192,7 @@ export const ADMIN_NAV: AdminNavEntry[] = [
   { kind: "section", label: "SETTINGS" },
   {
     kind: "item",
-    item: { label: "General Settings", href: "/admin/general-settings", icon: Settings },
+    item: { label: "Platform Settings", href: "/admin/settings", icon: Settings },
   },
   {
     kind: "item",
@@ -246,23 +251,31 @@ export const PUBLISHER_LEGACY_NAV: NavItem[] = [
   { label: "Smart Link", href: "/publisher/smart-link", icon: Link2 },
   { label: "Leads", href: "/publisher/leads", icon: FileText },
   { label: "Lead Report", href: "/publisher/lead-report", icon: BarChart3 },
-  { label: "Earnings & Payouts", href: "/publisher/earnings", icon: Wallet },
   { label: "Support", href: "/publisher/support", icon: LifeBuoy },
-  { label: "Settings", href: "/publisher/settings", icon: Settings },
 ];
 
 export const PUBLISHER_NAV: AdminNavEntry[] = [
   { kind: "section", label: "EARN" },
   { kind: "item", item: { label: "Dashboard", href: "/publisher", icon: LayoutDashboard } },
   { kind: "item", item: { label: "Marketplace", href: "/publisher/marketplace", icon: ShoppingBag } },
-  { kind: "item", item: { label: "Get Paid Tasks", href: "/publisher/get-paid-tasks", icon: ListTodo } },
+  {
+    kind: "item",
+    item: {
+      label: "Get Paid Tasks",
+      href: "/publisher/get-paid-tasks",
+      icon: ListTodo,
+      children: [
+        { label: "Paid Task", href: "/publisher/get-paid-tasks", icon: ListTodo },
+        { label: "Offer Wall", href: "/publisher/offer-wall", icon: LayoutGrid },
+      ],
+    },
+  },
   { kind: "item", item: { label: "CPA Offers", href: "/publisher/cpa-offers", icon: Store } },
   { kind: "item", item: { label: "My Promotions", href: "/publisher/promotions", icon: Percent } },
   { kind: "item", item: { label: "Referrals", href: "/publisher/referrals", icon: Gift } },
 
   { kind: "section", label: "ACCOUNT" },
-  { kind: "item", item: { label: "Earnings", href: "/publisher/earnings", icon: Wallet } },
-  { kind: "item", item: { label: "Payouts", href: "/publisher/payouts", icon: Banknote } },
+  { kind: "item", item: { label: "Earnings & Payouts", href: "/publisher/earnings", icon: Wallet } },
   { kind: "item", item: { label: "Transactions", href: "/publisher/transactions", icon: Receipt } },
   { kind: "item", item: { label: "Profile Settings", href: "/publisher/settings", icon: Settings } },
 

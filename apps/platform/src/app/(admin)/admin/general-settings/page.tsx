@@ -1,10 +1,5 @@
-import { PlaceholderPage } from "@/components/layout/placeholder-page";
+import { redirect } from "next/navigation";
 
-export default function Page() {
-  return (
-    <PlaceholderPage
-      title="General Settings"
-      description="Content coming soon."
-    />
-  );
+export default function AdminGeneralSettingsRedirect() {
+  redirect("/admin/settings");
 }
