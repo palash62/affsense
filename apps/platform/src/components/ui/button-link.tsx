@@ -10,6 +10,8 @@ type ButtonLinkProps = VariantProps<typeof buttonVariants> & {
   href: string;
   className?: string;
   children: React.ReactNode;
+  target?: React.HTMLAttributeAnchorTarget;
+  rel?: string;
 };
 
 export function ButtonLink({
@@ -18,13 +20,17 @@ export function ButtonLink({
   children,
   variant = "default",
   size = "default",
+  target,
+  rel,
 }: ButtonLinkProps) {
   const { startNavigation } = useNavigationPending();
 
   return (
     <Link
       href={href}
-      prefetch={true}
+      prefetch={target !== "_blank"}
+      target={target}
+      rel={rel}
       onClick={() => startNavigation()}
       className={cn(buttonVariants({ variant, size }), className)}
     >

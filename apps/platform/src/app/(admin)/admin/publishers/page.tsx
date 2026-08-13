@@ -242,8 +242,8 @@ export default async function AdminPublishersPage({ searchParams }: PageProps) {
                             publisherId={publisher.id}
                             publisherName={publisher.name}
                             settings={{
-                              useSpecialTiersPayouts:
-                                publisher.publisherProfile?.useSpecialTiersPayouts ?? false,
+                              useSpecialTierPayouts:
+                                publisher.publisherProfile?.useSpecialTierPayouts ?? false,
                               tier1SpecialPayout:
                                 publisher.publisherProfile?.tier1SpecialPayout ?? null,
                               tier2SpecialPayout:
