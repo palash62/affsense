@@ -22,13 +22,33 @@ const UTM_PARAM_MAP = {
 
 const MAX_UTM_LENGTH = 120;
 
-/** Sanitize UTM values for storage and URLs. */
+/** Sanitize inbound UTM values after an ad platform has substituted macros. */
 export function sanitizeUtmValue(value: string | null | undefined): string | undefined {
   if (!value) return undefined;
   const trimmed = value.trim();
   if (!trimmed) return undefined;
   const safe = trimmed.replace(/[^\w.-]+/g, "_").slice(0, MAX_UTM_LENGTH);
   return safe || undefined;
+}
+
+/** Keep promotion templates as typed, including Meta `{{ad.name}}` and Google `{campaignid}`. */
+export function normalizeUtmTemplate(value: string | null | undefined): string | undefined {
+  if (!value) return undefined;
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  const safe = trimmed.replace(/[^\w.{}-]+/g, "_").slice(0, MAX_UTM_LENGTH);
+  return safe || undefined;
+}
+
+/** Encode a query value but leave `{` / `}` so ad-platform macros stay substitutable. */
+export function encodeUtmQueryValue(value: string): string {
+  return encodeURIComponent(value).replace(/%7B/gi, "{").replace(/%7D/gi, "}");
+}
+
+function appendUtmQuery(params: string[], key: string, value: string | null | undefined) {
+  const trimmed = value?.trim();
+  if (!trimmed) return;
+  params.push(`${encodeURIComponent(key)}=${encodeUtmQueryValue(trimmed)}`);
 }
 
 export function readPromotionAttributionFromUrl(search?: string): PromotionAttribution {
@@ -144,13 +164,15 @@ export function buildPromotionUrl(
   const path = promotion.landingPath.startsWith("/")
     ? promotion.landingPath
     : `/${promotion.landingPath}`;
-  const url = new URL(path, origin);
-  url.searchParams.set("utm_source", promotion.utmSource);
-  if (promotion.utmMedium) url.searchParams.set("utm_medium", promotion.utmMedium);
-  url.searchParams.set("utm_campaign", promotion.utmCampaign);
-  if (promotion.utmContent) url.searchParams.set("utm_content", promotion.utmContent);
-  if (promotion.utmTerm) url.searchParams.set("utm_term", promotion.utmTerm);
-  return url.toString();
+  const base = new URL(path, origin);
+  const originAndPath = `${base.origin}${base.pathname === "/" ? "/" : base.pathname}`;
+  const params: string[] = [];
+  appendUtmQuery(params, "utm_source", promotion.utmSource);
+  appendUtmQuery(params, "utm_medium", promotion.utmMedium);
+  appendUtmQuery(params, "utm_campaign", promotion.utmCampaign);
+  appendUtmQuery(params, "utm_content", promotion.utmContent);
+  appendUtmQuery(params, "utm_term", promotion.utmTerm);
+  return params.length ? `${originAndPath}?${params.join("&")}` : originAndPath;
 }
 
 export function buildPromotionClickUrl(origin: string, promotionId: string): string {
@@ -224,7 +246,9 @@ export function normalizeAttributionForStorage(
 export const FACEBOOK_PROMOTION_PRESET = {
   name: "Facebook Ads",
   utmSource: "facebook",
-  utmMedium: "paid_social",
-  utmCampaign: "fb_signup",
+  utmMedium: "paid",
+  utmCampaign: "{{campaign.name}}",
+  utmContent: "{{ad.name}}",
+  utmTerm: "{{adset.name}}",
   landingPath: "/",
 } as const;

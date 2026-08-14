@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 import {
   buildPromotionClickUrl,
   buildPromotionUrl,
+  encodeUtmQueryValue,
   mergePromotionAttribution,
   normalizeAttributionForStorage,
+  normalizeUtmTemplate,
   readPromotionAttributionFromUrl,
   sanitizeUtmValue,
   utmKeyFromFields,
@@ -22,9 +24,24 @@ describe("promotion attribution", () => {
     expect(attribution.utmTerm).toBe("lead");
   });
 
-  it("sanitizes unsafe UTM values", () => {
+  it("sanitizes unsafe inbound UTM values", () => {
     expect(sanitizeUtmValue("  facebook  ")).toBe("facebook");
     expect(sanitizeUtmValue("paid/social!")).toBe("paid_social_");
+    expect(sanitizeUtmValue("{{campaign.name}}")).toBe("_campaign.name_");
+  });
+
+  it("keeps ad-platform macros when storing promotion templates", () => {
+    expect(normalizeUtmTemplate("{{campaign.name}}")).toBe("{{campaign.name}}");
+    expect(normalizeUtmTemplate("{{ad.name}}")).toBe("{{ad.name}}");
+    expect(normalizeUtmTemplate("{campaignid}")).toBe("{campaignid}");
+    expect(normalizeUtmTemplate("  facebook  ")).toBe("facebook");
+    expect(normalizeUtmTemplate("paid/social!")).toBe("paid_social_");
+  });
+
+  it("encodes reserved characters but leaves braces for ad macros", () => {
+    expect(encodeUtmQueryValue("{{campaign.name}}")).toBe("{{campaign.name}}");
+    expect(encodeUtmQueryValue("{campaignid}")).toBe("{campaignid}");
+    expect(encodeUtmQueryValue("Summer Sale")).toBe("Summer%20Sale");
   });
 
   it("merges URL attribution over cookie values", () => {
@@ -47,6 +64,43 @@ describe("promotion attribution", () => {
     });
     expect(url).toBe(
       "https://leadvix.io/?utm_source=facebook&utm_medium=paid_social&utm_campaign=fb_signup&utm_content=ad_set_a",
+    );
+  });
+
+  it("keeps Meta and Google macros unencoded in promotion URLs", () => {
+    const url = buildPromotionUrl("https://leadvix.io", {
+      landingPath: "/",
+      utmSource: "facebook",
+      utmMedium: "paid",
+      utmCampaign: "{{campaign.name}}",
+      utmContent: "{{ad.name}}",
+      utmTerm: "{{adset.name}}",
+    });
+    expect(url).toBe(
+      "https://leadvix.io/?utm_source=facebook&utm_medium=paid&utm_campaign={{campaign.name}}&utm_content={{ad.name}}&utm_term={{adset.name}}",
+    );
+    expect(url).not.toContain("%7B");
+    expect(url).not.toContain("%7D");
+
+    const googleUrl = buildPromotionUrl("https://leadvix.io", {
+      landingPath: "/",
+      utmSource: "google",
+      utmCampaign: "{campaignid}",
+    });
+    expect(googleUrl).toBe(
+      "https://leadvix.io/?utm_source=google&utm_campaign={campaignid}",
+    );
+  });
+
+  it("encodes spaces in promotion URLs but keeps macros literal", () => {
+    const url = buildPromotionUrl("https://leadvix.io", {
+      landingPath: "/",
+      utmSource: "facebook",
+      utmCampaign: "Summer Sale",
+      utmContent: "{{ad.name}}",
+    });
+    expect(url).toBe(
+      "https://leadvix.io/?utm_source=facebook&utm_campaign=Summer%20Sale&utm_content={{ad.name}}",
     );
   });
 

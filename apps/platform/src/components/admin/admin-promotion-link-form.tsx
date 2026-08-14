@@ -15,7 +15,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  buildPromotionClickUrl,
   buildPromotionUrl,
   FACEBOOK_PROMOTION_PRESET,
 } from "@/lib/promotion-attribution";
@@ -73,8 +72,8 @@ export function AdminPromotionLinkForm({ appOrigin }: { appOrigin: string }) {
       utmSource: FACEBOOK_PROMOTION_PRESET.utmSource,
       utmMedium: FACEBOOK_PROMOTION_PRESET.utmMedium,
       utmCampaign: FACEBOOK_PROMOTION_PRESET.utmCampaign,
-      utmContent: "",
-      utmTerm: "",
+      utmContent: FACEBOOK_PROMOTION_PRESET.utmContent,
+      utmTerm: FACEBOOK_PROMOTION_PRESET.utmTerm,
     });
   }
 
@@ -144,8 +143,10 @@ export function AdminPromotionLinkForm({ appOrigin }: { appOrigin: string }) {
       <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
         <p className="text-sm font-medium text-slate-900">UTM tracking links</p>
         <p className="mt-1 text-sm text-slate-600">
-          Saved links use click tracking, then land on the home page with UTM params. Visits and
-          signups are attributed from the 30-day cookie.
+          Saved links are the home-page URL with UTM params as typed, including ad macros like
+          {" "}
+          <code>{"{{campaign.name}}"}</code>. Paste that URL into Meta/Google. Visits and signups
+          are attributed from the 30-day cookie.
         </p>
       </div>
 
@@ -186,7 +187,7 @@ export function AdminPromotionLinkForm({ appOrigin }: { appOrigin: string }) {
               id="promo-medium"
               value={form.utmMedium}
               onChange={(e) => setForm((prev) => ({ ...prev, utmMedium: e.target.value }))}
-              placeholder="paid_social"
+              placeholder="paid"
               className="rounded-xl border-slate-200 bg-white"
             />
           </div>
@@ -196,7 +197,7 @@ export function AdminPromotionLinkForm({ appOrigin }: { appOrigin: string }) {
               id="promo-campaign"
               value={form.utmCampaign}
               onChange={(e) => setForm((prev) => ({ ...prev, utmCampaign: e.target.value }))}
-              placeholder="fb_signup"
+              placeholder="{{campaign.name}}"
               className="rounded-xl border-slate-200 bg-white"
               required
             />
@@ -207,7 +208,7 @@ export function AdminPromotionLinkForm({ appOrigin }: { appOrigin: string }) {
               id="promo-content"
               value={form.utmContent}
               onChange={(e) => setForm((prev) => ({ ...prev, utmContent: e.target.value }))}
-              placeholder="ad_set_a"
+              placeholder="{{ad.name}}"
               className="rounded-xl border-slate-200 bg-white"
             />
           </div>
@@ -217,7 +218,7 @@ export function AdminPromotionLinkForm({ appOrigin }: { appOrigin: string }) {
               id="promo-term"
               value={form.utmTerm}
               onChange={(e) => setForm((prev) => ({ ...prev, utmTerm: e.target.value }))}
-              placeholder="keyword"
+              placeholder="{{adset.name}}"
               className="rounded-xl border-slate-200 bg-white"
             />
           </div>
@@ -282,7 +283,7 @@ export function AdminPromotionLinkForm({ appOrigin }: { appOrigin: string }) {
               </TableRow>
             ) : (
               promotions.map((promotion) => {
-                const url = buildPromotionClickUrl(appOrigin, promotion.id);
+                const url = buildPromotionUrl(appOrigin, promotion);
                 return (
                   <TableRow key={promotion.id} className="border-slate-100">
                     <TableCell className="px-6 py-4 font-medium text-slate-900">{promotion.name}</TableCell>

@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import {
   buildPromotionUrl,
   normalizeAttributionForStorage,
+  normalizeUtmTemplate,
   type PromotionAttribution,
   sanitizeUtmValue,
   utmKeyFromFields,
@@ -212,11 +213,11 @@ export async function createPromotion(
   return prisma.promotion.create({
     data: {
       name: input.name.trim(),
-      utmSource: sanitizeUtmValue(input.utmSource) ?? input.utmSource.trim(),
-      utmMedium: sanitizeUtmValue(input.utmMedium) ?? null,
-      utmCampaign: sanitizeUtmValue(input.utmCampaign) ?? input.utmCampaign.trim(),
-      utmContent: sanitizeUtmValue(input.utmContent) ?? null,
-      utmTerm: sanitizeUtmValue(input.utmTerm) ?? null,
+      utmSource: normalizeUtmTemplate(input.utmSource) ?? input.utmSource.trim(),
+      utmMedium: normalizeUtmTemplate(input.utmMedium) ?? null,
+      utmCampaign: normalizeUtmTemplate(input.utmCampaign) ?? input.utmCampaign.trim(),
+      utmContent: normalizeUtmTemplate(input.utmContent) ?? null,
+      utmTerm: normalizeUtmTemplate(input.utmTerm) ?? null,
       landingPath: normalizeLandingPath(input.landingPath),
       createdById,
     },
@@ -241,19 +242,19 @@ export async function updatePromotion(
     data: {
       ...(input.name !== undefined ? { name: input.name.trim() } : {}),
       ...(input.utmSource !== undefined
-        ? { utmSource: sanitizeUtmValue(input.utmSource) ?? input.utmSource.trim() }
+        ? { utmSource: normalizeUtmTemplate(input.utmSource) ?? input.utmSource.trim() }
         : {}),
       ...(input.utmMedium !== undefined
-        ? { utmMedium: input.utmMedium ? sanitizeUtmValue(input.utmMedium) ?? null : null }
+        ? { utmMedium: input.utmMedium ? normalizeUtmTemplate(input.utmMedium) ?? null : null }
         : {}),
       ...(input.utmCampaign !== undefined
-        ? { utmCampaign: sanitizeUtmValue(input.utmCampaign) ?? input.utmCampaign.trim() }
+        ? { utmCampaign: normalizeUtmTemplate(input.utmCampaign) ?? input.utmCampaign.trim() }
         : {}),
       ...(input.utmContent !== undefined
-        ? { utmContent: input.utmContent ? sanitizeUtmValue(input.utmContent) ?? null : null }
+        ? { utmContent: input.utmContent ? normalizeUtmTemplate(input.utmContent) ?? null : null }
         : {}),
       ...(input.utmTerm !== undefined
-        ? { utmTerm: input.utmTerm ? sanitizeUtmValue(input.utmTerm) ?? null : null }
+        ? { utmTerm: input.utmTerm ? normalizeUtmTemplate(input.utmTerm) ?? null : null }
         : {}),
       ...(input.landingPath !== undefined
         ? { landingPath: normalizeLandingPath(input.landingPath) }
