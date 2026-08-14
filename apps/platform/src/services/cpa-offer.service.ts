@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto";
-import type { CpaOffer, CpaOfferStatus, Prisma } from "@prisma/client";
+import { Prisma, type CpaOffer, type CpaOfferStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { Errors } from "@/lib/errors";
 import { parseUserAgent } from "@/lib/publisher-leads";
