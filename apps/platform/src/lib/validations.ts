@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { strongPasswordSchema } from "@/lib/password-policy";
 import { parseYouTubeVideoId } from "@/lib/youtube";
+import { ASSIGNABLE_STAFF_MENU_HREFS } from "@/lib/admin-portal";
 
 export const signupAttributionSchema = z.object({
   utmSource: z.string().max(120).optional(),
@@ -554,27 +555,7 @@ export const adminCreateAdvertiserSchema = z.object({
   status: z.enum(["ACTIVE", "PENDING"]).optional(),
 });
 
-const assignableStaffMenuHrefSchema = z.enum([
-  "/admin/profit",
-  "/admin/advertisers",
-  "/admin/publishers",
-  "/admin/campaigns",
-  "/admin/cpa-offers",
-  "/admin/bulk-email",
-  "/admin/leads",
-  "/admin/fraud",
-  "/admin/wallets",
-  "/admin/deposits",
-  "/admin/payouts",
-  "/admin/referrals",
-  "/admin/reports",
-  "/admin/support",
-  "/admin/settings",
-  "/admin/audit-log",
-  "/admin/themes",
-  "/admin/funnel-templates",
-  "/admin/tutorials",
-]);
+const assignableStaffMenuHrefSchema = z.enum(ASSIGNABLE_STAFF_MENU_HREFS);
 
 export const adminCreateStaffUserSchema = z.object({
   name: z.string().trim().min(2, "Name must be at least 2 characters"),

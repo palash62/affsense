@@ -87,6 +87,11 @@ export async function listUsers(filters: {
         country: true,
         staffMenuAccess: true,
         createdAt: true,
+        signupUtmSource: true,
+        signupUtmMedium: true,
+        signupUtmCampaign: true,
+        signupUtmContent: true,
+        signupUtmTerm: true,
         advertiserProfile: { select: { company: true } },
         publisherProfile: {
           select: {
@@ -150,6 +155,11 @@ export async function getAdvertiserDetail(id: string) {
       emailVerified: true,
       createdAt: true,
       referralCode: true,
+      signupUtmSource: true,
+      signupUtmMedium: true,
+      signupUtmCampaign: true,
+      signupUtmContent: true,
+      signupUtmTerm: true,
       referredBy: {
         select: {
           id: true,

@@ -130,6 +130,7 @@ export default async function AdminAdvertisersPage({ searchParams }: PageProps) 
                 <TableRow className="border-none hover:bg-transparent" style={{ background: "var(--theme-primary-soft)" }}>
                   <TableHead className="h-11 px-6 text-slate-600">Advertiser</TableHead>
                   <TableHead className="h-11 px-4 text-slate-600">Company</TableHead>
+                  <TableHead className="h-11 px-4 text-slate-600">UTM</TableHead>
                   <TableHead className="h-11 px-4 text-center text-slate-600">Campaigns</TableHead>
                   <TableHead className="h-11 px-4 text-right text-slate-600">Wallet</TableHead>
                   <TableHead className="h-11 px-4 text-slate-600">Status</TableHead>
@@ -173,6 +174,15 @@ export default async function AdminAdvertisersPage({ searchParams }: PageProps) 
                           <span className="text-sm text-slate-700">
                             {advertiser.advertiserProfile?.company ?? "—"}
                           </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="px-4 py-4 text-sm text-slate-600">
+                        <div className="space-y-0.5">
+                          <p>source: {advertiser.signupUtmSource ?? "—"}</p>
+                          <p>medium: {advertiser.signupUtmMedium ?? "—"}</p>
+                          <p>campaign: {advertiser.signupUtmCampaign ?? "—"}</p>
+                          <p>content: {advertiser.signupUtmContent ?? "—"}</p>
+                          <p>term: {advertiser.signupUtmTerm ?? "—"}</p>
                         </div>
                       </TableCell>
                       <TableCell className="px-4 py-4 text-center">

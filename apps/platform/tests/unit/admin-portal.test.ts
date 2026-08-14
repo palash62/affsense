@@ -30,6 +30,19 @@ describe("admin portal roles", () => {
     ).toEqual(["/admin/leads"]);
   });
 
+  it("keeps the Promotion menu when assigned", () => {
+    expect(parseStaffMenuAccess(["/admin/promotion", "/admin/support"])).toEqual([
+      "/admin/promotion",
+      "/admin/support",
+    ]);
+    expect(canAccessAdminPath("/admin/promotion", "PLATFORM_MANAGER", ["/admin/promotion"])).toBe(
+      true,
+    );
+    expect(canAccessAdminPath("/admin/promotion", "PLATFORM_MANAGER", ["/admin/support"])).toBe(
+      false,
+    );
+  });
+
   it("lets admins open every admin path", () => {
     expect(canAccessAdminPath("/admin/users", "ADMIN", [])).toBe(true);
     expect(canAccessAdminPath("/admin/profit", "ADMIN", [])).toBe(true);

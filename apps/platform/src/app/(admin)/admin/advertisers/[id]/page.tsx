@@ -210,6 +210,19 @@ export default async function AdminAdvertiserDetailPage({ params }: PageProps) {
               )}
             </div>
           </div>
+          <div className="flex items-start gap-3">
+            <Megaphone className="mt-0.5 h-4 w-4 text-slate-400" />
+            <div>
+              <p className="text-xs text-slate-500">UTM</p>
+              <div className="mt-0.5 space-y-0.5 text-sm text-slate-600">
+                <p>source: {advertiser.signupUtmSource ?? "—"}</p>
+                <p>medium: {advertiser.signupUtmMedium ?? "—"}</p>
+                <p>campaign: {advertiser.signupUtmCampaign ?? "—"}</p>
+                <p>content: {advertiser.signupUtmContent ?? "—"}</p>
+                <p>term: {advertiser.signupUtmTerm ?? "—"}</p>
+              </div>
+            </div>
+          </div>
         </div>
       </PageSection>
 

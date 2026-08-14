@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { validateLead } from "@/lib/lead-validation";
-import { isValidEmail, isValidPhone } from "@/lib/validations";
+import { adminUpdateStaffUserSchema, isValidEmail, isValidPhone } from "@/lib/validations";
 
 describe("Lead Validation", () => {
   const baseFields = [
@@ -63,5 +63,24 @@ describe("Validation utilities", () => {
   it("validates phone", () => {
     expect(isValidPhone("+1 555 123 4567")).toBe(true);
     expect(isValidPhone("123")).toBe(false);
+  });
+});
+
+describe("adminUpdateStaffUserSchema", () => {
+  it("accepts Promotion and Support menu hrefs", () => {
+    const result = adminUpdateStaffUserSchema.safeParse({
+      menuAccess: ["/admin/promotion", "/admin/support"],
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.menuAccess).toEqual(["/admin/promotion", "/admin/support"]);
+    }
+  });
+
+  it("rejects unknown menu hrefs", () => {
+    const result = adminUpdateStaffUserSchema.safeParse({
+      menuAccess: ["/admin/users"],
+    });
+    expect(result.success).toBe(false);
   });
 });
