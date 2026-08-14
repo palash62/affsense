@@ -741,7 +741,7 @@ model TicketMessage {
   id          String   @id @default(cuid())
   ticketId    String   @map("ticket_id")
   senderId    String   @map("sender_id")
-  body        String
+  body        String   @db.Text
   isInternal  Boolean  @default(false) @map("is_internal")
   attachments Json?
   createdAt   DateTime @default(now()) @map("created_at")
