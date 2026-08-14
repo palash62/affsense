@@ -66,6 +66,11 @@ function isChildActive(pathname: string, child: NavItem, siblings: NavItem[]) {
       pathname === "/admin/publishers" || pathname.startsWith("/admin/publishers/")
     );
   }
+  if (child.href === "/admin/advertisers") {
+    return (
+      pathname === "/admin/advertisers" || pathname.startsWith("/admin/advertisers/")
+    );
+  }
   if (child.href === "/publisher/reports/performance") {
     return (
       pathname === "/publisher/reports/performance" ||
@@ -117,6 +122,12 @@ function isChildActive(pathname: string, child: NavItem, siblings: NavItem[]) {
       pathname.startsWith("/admin/get-paid-tasks/categories/")
     );
   }
+  if (child.href === "/advertiser/cpa-offers/new") {
+    return (
+      pathname === "/advertiser/cpa-offers/new" ||
+      pathname.startsWith("/advertiser/cpa-offers/new/")
+    );
+  }
   if (child.href === "/advertiser/cpa-offers/dashboard") {
     return pathname === "/advertiser/cpa-offers/dashboard" || pathname.startsWith("/advertiser/cpa-offers/dashboard/");
   }
@@ -132,7 +143,8 @@ function isChildActive(pathname: string, child: NavItem, siblings: NavItem[]) {
       (pathname.startsWith("/advertiser/cpa-offers/") &&
         !pathname.startsWith("/advertiser/cpa-offers/dashboard") &&
         !pathname.startsWith("/advertiser/cpa-offers/report") &&
-        !pathname.startsWith("/advertiser/cpa-offers/wallet"))
+        !pathname.startsWith("/advertiser/cpa-offers/wallet") &&
+        !pathname.startsWith("/advertiser/cpa-offers/new"))
     );
   }
   if (child.href === "/advertiser/global-postback") {

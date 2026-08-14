@@ -1174,6 +1174,34 @@ const cpaPreviewUrlValueSchema = z
     { message: "Enter a valid preview URL starting with http:// or https://" },
   );
 
+export const cpaOfferDetailsSchema = z
+  .object({
+    offerType: z.string().trim().max(80).optional(),
+    approvalTime: z.string().trim().max(80).optional(),
+    cookieDuration: z.string().trim().max(80).optional(),
+    trackingMethod: z.enum(["POSTBACK", "PIXEL"]).optional(),
+    postbackUrl: z.string().trim().max(2000).optional(),
+    urlParams: z
+      .array(
+        z.object({
+          key: z.string().trim().max(80),
+          value: z.string().trim().max(200),
+        }),
+      )
+      .max(30)
+      .optional(),
+    additionalParams: z.string().trim().max(500).optional(),
+    disallowedCountries: z.array(z.string().trim().max(8)).max(250).optional(),
+    allowedTrafficSources: z.array(z.string().trim().max(80)).max(30).optional(),
+    disallowedTrafficSources: z.array(z.string().trim().max(80)).max(30).optional(),
+    devices: z.string().trim().max(80).optional(),
+    os: z.string().trim().max(80).optional(),
+    creatives: z.array(z.string().trim().max(2000)).max(20).optional(),
+    resourceLinks: z.array(z.string().trim().max(2000)).max(20).optional(),
+    publishRequested: z.boolean().optional(),
+  })
+  .optional();
+
 export const adminCpaOfferCreateSchema = z.object({
   name: z.string().trim().min(2, "Offer name must be at least 2 characters.").max(160),
   network: z.string().trim().min(1).max(120).optional(),
@@ -1183,6 +1211,8 @@ export const adminCpaOfferCreateSchema = z.object({
   trackingUrl: httpUrlSchema,
   thumbnailUrl: cpaThumbnailSchema,
   advertiserLabel: z.string().trim().min(1, "Advertiser is required.").max(120),
+  description: z.string().trim().max(10_000).optional().nullable(),
+  details: cpaOfferDetailsSchema,
   revenueModel: cpaRevenueModelSchema.optional(),
   payoutModel: cpaPayoutModelSchema.optional(),
   payoutType: cpaPayoutTypeSchema.optional(),
@@ -1200,12 +1230,19 @@ export const adminCpaOfferUpdateSchema = z.object({
   trackingUrl: httpUrlSchema.optional(),
   thumbnailUrl: cpaThumbnailSchema,
   advertiserLabel: z.string().trim().min(1).max(120).optional(),
+  description: z.string().trim().max(10_000).optional().nullable(),
+  details: cpaOfferDetailsSchema,
   revenueModel: cpaRevenueModelSchema.optional(),
   payoutModel: cpaPayoutModelSchema.optional(),
   payoutType: cpaPayoutTypeSchema.optional(),
   revenue: z.coerce.number().positive().max(1_000_000).optional(),
   payout: z.coerce.number().positive().max(1_000_000).optional(),
   status: cpaOfferStatusSchema.optional(),
+});
+
+export const advertiserCpaOfferCreateSchema = adminCpaOfferCreateSchema.omit({
+  advertiserLabel: true,
+  status: true,
 });
 
 export const cpaOfferListQuerySchema = z.object({

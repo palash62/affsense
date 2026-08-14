@@ -1,7 +1,7 @@
 import { isAdminPortalRole } from "@/lib/admin-portal";
 import { notFound, redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
-import { AdminCpaOfferForm } from "@/components/admin/admin-cpa-offer-form";
+import { CpaOfferEditor } from "@/components/cpa/cpa-offer-editor";
 import { getCpaOfferById } from "@/services/cpa-offer.service";
 
 export const dynamic = "force-dynamic";
@@ -24,5 +24,5 @@ export default async function AdminCpaOfferEditPage({ params }: PageProps) {
     notFound();
   }
 
-  return <AdminCpaOfferForm mode="edit" offer={offer} />;
+  return <CpaOfferEditor role="ADMIN" mode="edit" offer={offer} />;
 }

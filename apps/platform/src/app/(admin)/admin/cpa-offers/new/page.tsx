@@ -1,7 +1,7 @@
 import { isAdminPortalRole } from "@/lib/admin-portal";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
-import { AdminCpaOfferForm } from "@/components/admin/admin-cpa-offer-form";
+import { CpaOfferEditor } from "@/components/cpa/cpa-offer-editor";
 
 export const dynamic = "force-dynamic";
 
@@ -11,5 +11,5 @@ export default async function AdminCpaOfferNewPage() {
     redirect("/login");
   }
 
-  return <AdminCpaOfferForm mode="create" />;
+  return <CpaOfferEditor role="ADMIN" mode="create" advertiserLabelDefault="Platform" />;
 }

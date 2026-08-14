@@ -299,6 +299,7 @@ model User {
   pageTemplateFavorites    PageTemplateFavorite[]
   cpaOfferClicks           CpaOfferClick[]
   cpaOfferConversions      CpaOfferConversion[]
+  createdCpaOffers         CpaOffer[]           @relation("CpaOfferCreatedBy")
   advertiserGlobalPostback AdvertiserGlobalPostback?
   cpaWallet                CpaWallet?
   cpaEarnings              CpaEarning[]
@@ -1434,6 +1435,9 @@ model CpaOffer {
   trackingUrl     String         @map("tracking_url") @db.Text
   thumbnailUrl    String?        @map("thumbnail_url") @db.Text
   advertiserLabel String         @default("Platform") @map("advertiser_label")
+  description     String?        @db.Text
+  details         Json?
+  createdByUserId String?        @map("created_by_user_id")
   revenueModel    String         @default("RPA") @map("revenue_model")
   payoutModel     String         @default("CPA") @map("payout_model")
   payoutType      String         @default("FLAT") @map("payout_type")
@@ -1447,10 +1451,12 @@ model CpaOffer {
   clicks          CpaOfferClick[]
   cpaEarnings     CpaEarning[]
   optinPages      AdvertiserOptinPage[]
+  createdBy       User?          @relation("CpaOfferCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
 
   @@index([status, createdAt])
   @@index([network])
   @@index([category])
+  @@index([createdByUserId])
   @@map("cpa_offers")
 }
 

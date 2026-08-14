@@ -39,6 +39,7 @@ import {
   Tags,
   HandCoins,
   Bell,
+  Building2,
   Image,
   Files,
   Images,
@@ -71,7 +72,6 @@ export const ADMIN_LEGACY_NAV: NavItem[] = [
   { label: "Old Dashboard", href: "/admin/old-dashboard", icon: History },
   { label: "Users", href: STAFF_USERS_PATH, icon: UserCog },
   { label: "Profit", href: "/admin/profit", icon: TrendingUp },
-  { label: "Advertisers", href: "/admin/advertisers", icon: Users },
   { label: "Publishers", href: "/admin/publishers", icon: Users },
   { label: "Campaigns", href: "/admin/campaigns", icon: Megaphone },
   {
@@ -110,6 +110,7 @@ export const ADMIN_NAV: AdminNavEntry[] = [
       icon: Users,
       children: [
         { label: "Affiliates", href: "/admin/publishers", icon: Share2 },
+        { label: "Advertisers", href: "/admin/advertisers", icon: Building2 },
         { label: "Manager", href: "/admin/users", icon: UserCog },
       ],
     },
@@ -226,9 +227,10 @@ export const ADVERTISER_NAV: NavItem[] = [
     label: "CPA Offers",
     href: "/advertiser/cpa-offers",
     icon: Store,
-    children: [
-      { label: "Offer Marketplace", href: "/advertiser/cpa-offers", icon: Store },
-      { label: "Dashboard", href: "/advertiser/cpa-offers/dashboard", icon: LayoutDashboard },
+      children: [
+        { label: "Offer Marketplace", href: "/advertiser/cpa-offers", icon: Store },
+        { label: "Add New Offer", href: "/advertiser/cpa-offers/new", icon: Plus },
+        { label: "Dashboard", href: "/advertiser/cpa-offers/dashboard", icon: LayoutDashboard },
       { label: "Report", href: "/advertiser/cpa-offers/report", icon: BarChart3 },
       { label: "Wallet", href: "/advertiser/cpa-offers/wallet", icon: Wallet },
       { label: "Global Postback", href: "/advertiser/global-postback", icon: Webhook },

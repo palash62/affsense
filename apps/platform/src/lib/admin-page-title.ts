@@ -57,10 +57,31 @@ export function getAdminPageMeta(
     };
   }
 
+  if (path === "/admin/cpa-offers/new") {
+    return {
+      title: "Add New CPA Offer",
+      subtitle: "CPA Offers > Add New CPA Offer",
+    };
+  }
+
+  if (path.startsWith("/admin/cpa-offers/") && path.endsWith("/edit")) {
+    return {
+      title: "Edit CPA Offer",
+      subtitle: "CPA Offers > Edit CPA Offer",
+    };
+  }
+
   if (path === "/admin/publishers") {
     return {
       title: "Affiliates",
       subtitle: "Manage publisher accounts and approvals",
+    };
+  }
+
+  if (path === "/admin/advertisers") {
+    return {
+      title: "Advertisers",
+      subtitle: "Manage advertiser accounts, wallet balances, and account status",
     };
   }
 
@@ -124,7 +145,6 @@ export function getAdminPageMeta(
     "/admin/old-menu": "Old Menu",
     "/admin/old-dashboard": "Old Dashboard",
     "/admin/profit": "Profit",
-    "/admin/advertisers": "Advertisers",
     "/admin/campaigns": "Campaigns",
     "/admin/cpa-offers": "CPA Offers",
     "/admin/cpa-offers/offers": "All Offers",

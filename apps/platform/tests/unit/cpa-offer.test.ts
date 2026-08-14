@@ -88,6 +88,9 @@ describe("serializeCpaOffer", () => {
         payout: { toString: () => "12.50" } as never,
         status: "ACTIVE",
         postbackToken: "tok_xyz",
+        description: null,
+        details: null,
+        createdByUserId: null,
         createdAt: new Date("2026-01-01T00:00:00.000Z"),
         updatedAt: new Date("2026-01-02T00:00:00.000Z"),
       });

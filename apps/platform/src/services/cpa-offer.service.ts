@@ -3,6 +3,11 @@ import type { CpaOffer, CpaOfferStatus, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { Errors } from "@/lib/errors";
 import { parseUserAgent } from "@/lib/publisher-leads";
+import {
+  cpaOfferDetailsToJson,
+  parseCpaOfferDetails,
+  type CpaOfferDetails,
+} from "@/lib/cpa-offer-details";
 
 export type CpaRevenueModel = "RPA" | "RPS" | "RPC" | "RPI" | "RPL" | "RPM";
 export type CpaPayoutModel = "CPC" | "CPA" | "CPS" | "CPI" | "CPL" | "CPM";
@@ -18,6 +23,9 @@ export type SerializedCpaOffer = {
   trackingUrl: string;
   thumbnailUrl: string | null;
   advertiserLabel: string;
+  description: string | null;
+  details: CpaOfferDetails;
+  createdByUserId: string | null;
   revenueModel: CpaRevenueModel;
   payoutModel: CpaPayoutModel;
   payoutType: CpaPayoutType;
@@ -67,7 +75,13 @@ function asPayoutType(value: string): CpaPayoutType {
   return value === "PERCENT" ? "PERCENT" : "FLAT";
 }
 
-export function serializeCpaOffer(row: CpaOffer): SerializedCpaOffer {
+export function serializeCpaOffer(
+  row: CpaOffer & {
+    description?: string | null;
+    details?: Prisma.JsonValue | null;
+    createdByUserId?: string | null;
+  },
+): SerializedCpaOffer {
   return {
     id: row.id,
     name: row.name,
@@ -78,6 +92,9 @@ export function serializeCpaOffer(row: CpaOffer): SerializedCpaOffer {
     trackingUrl: row.trackingUrl,
     thumbnailUrl: row.thumbnailUrl ?? null,
     advertiserLabel: row.advertiserLabel || "Platform",
+    description: row.description ?? null,
+    details: parseCpaOfferDetails(row.details),
+    createdByUserId: row.createdByUserId ?? null,
     revenueModel: asRevenueModel(row.revenueModel),
     payoutModel: asPayoutModel(row.payoutModel),
     payoutType: asPayoutType(row.payoutType),
@@ -187,6 +204,9 @@ export type CpaOfferInput = {
   trackingUrl: string;
   thumbnailUrl?: string | null;
   advertiserLabel?: string;
+  description?: string | null;
+  details?: CpaOfferDetails | null;
+  createdByUserId?: string | null;
   revenueModel?: CpaRevenueModel;
   payoutModel?: CpaPayoutModel;
   payoutType?: CpaPayoutType;
@@ -198,6 +218,7 @@ export type CpaOfferInput = {
 export async function createCpaOffer(input: CpaOfferInput): Promise<SerializedCpaOffer> {
   const previewUrl = input.previewUrl?.trim() || "#";
   const network = input.network?.trim() || "Direct";
+  const details = cpaOfferDetailsToJson(input.details);
   const row = await prisma.cpaOffer.create({
     data: {
       name: input.name.trim(),
@@ -208,6 +229,9 @@ export async function createCpaOffer(input: CpaOfferInput): Promise<SerializedCp
       trackingUrl: input.trackingUrl.trim(),
       thumbnailUrl: input.thumbnailUrl?.trim() || null,
       advertiserLabel: (input.advertiserLabel?.trim() || "Platform").slice(0, 120),
+      description: input.description?.trim() || null,
+      details: details === undefined ? undefined : details,
+      createdByUserId: input.createdByUserId ?? null,
       revenueModel: input.revenueModel ?? "RPA",
       payoutModel: input.payoutModel ?? "CPA",
       payoutType: input.payoutType ?? "FLAT",
@@ -215,7 +239,7 @@ export async function createCpaOffer(input: CpaOfferInput): Promise<SerializedCp
       payout: input.payout,
       status: input.status ?? "PAUSED",
       postbackToken: randomBytes(16).toString("hex"),
-    },
+    } as Prisma.CpaOfferUncheckedCreateInput,
   });
   return serializeCpaOffer(row);
 }
@@ -226,6 +250,9 @@ export async function updateCpaOffer(
 ): Promise<SerializedCpaOffer> {
   const existing = await prisma.cpaOffer.findUnique({ where: { id } });
   if (!existing) throw Errors.notFound("CPA offer");
+
+  const details =
+    input.details === undefined ? undefined : cpaOfferDetailsToJson(input.details) ?? Prisma.JsonNull;
 
   const row = await prisma.cpaOffer.update({
     where: { id },
@@ -242,13 +269,16 @@ export async function updateCpaOffer(
       ...(input.advertiserLabel !== undefined
         ? { advertiserLabel: (input.advertiserLabel.trim() || "Platform").slice(0, 120) }
         : {}),
+      ...(input.description !== undefined ? { description: input.description?.trim() || null } : {}),
+      ...(details !== undefined ? { details } : {}),
+      ...(input.createdByUserId !== undefined ? { createdByUserId: input.createdByUserId } : {}),
       ...(input.revenueModel !== undefined ? { revenueModel: input.revenueModel } : {}),
       ...(input.payoutModel !== undefined ? { payoutModel: input.payoutModel } : {}),
       ...(input.payoutType !== undefined ? { payoutType: input.payoutType } : {}),
       ...(input.revenue !== undefined ? { revenue: input.revenue } : {}),
       ...(input.payout !== undefined ? { payout: input.payout } : {}),
       ...(input.status !== undefined ? { status: input.status } : {}),
-    },
+    } as Prisma.CpaOfferUncheckedUpdateInput,
   });
   return serializeCpaOffer(row);
 }

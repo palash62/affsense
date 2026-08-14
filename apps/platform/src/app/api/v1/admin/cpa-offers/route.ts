@@ -43,7 +43,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  return withAuth(async () => {
+  return withAuth(async (session) => {
     try {
       const body = await request.json();
       const parsed = adminCpaOfferCreateSchema.safeParse(body);
@@ -60,7 +60,10 @@ export async function POST(request: Request) {
         );
       }
 
-      const data = await createCpaOffer(parsed.data);
+      const data = await createCpaOffer({
+        ...parsed.data,
+        createdByUserId: session.user.id,
+      });
       return Response.json({ data }, { status: 201 });
     } catch (error) {
       return errorResponse(error);
