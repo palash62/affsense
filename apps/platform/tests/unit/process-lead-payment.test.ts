@@ -83,6 +83,11 @@ vi.mock("@/services/referral.service", () => ({
   creditReferralCommissionsForLead: vi.fn().mockResolvedValue([]),
 }));
 
+const dispatchPublisherPostback = vi.fn().mockResolvedValue(undefined);
+vi.mock("@/services/publisher-postback-dispatch", () => ({
+  dispatchPublisherPostback: (...args: unknown[]) => dispatchPublisherPostback(...args),
+}));
+
 describe("processLeadPayment", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -124,6 +129,9 @@ describe("processLeadPayment", () => {
     expect(prismaMock.lead.update).toHaveBeenCalledWith({
       where: { id: "lead-1" },
       data: { status: "PAID", cpl: 1 },
+    });
+    await vi.waitFor(() => {
+      expect(dispatchPublisherPostback).toHaveBeenCalledWith("lead-1");
     });
   });
 
@@ -199,6 +207,7 @@ describe("processLeadPayment", () => {
       message: expect.stringContaining("Test leads"),
     });
     expect(prismaMock.ledgerEntry.create).not.toHaveBeenCalled();
+    expect(dispatchPublisherPostback).not.toHaveBeenCalled();
   });
 
   it("keeps campaign active past budget and notifies advertiser once when budget is crossed", async () => {

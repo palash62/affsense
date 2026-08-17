@@ -19,6 +19,7 @@
     "@base-ui/react": "^1.6.0",
     "@cpl/database": "*",
     "@cpl/shared": "*",
+    "@cpl/tracking-core": "*",
     "@craftjs/core": "^0.2.12",
     "@monaco-editor/react": "^4.7.0",
     "@radix-ui/react-avatar": "^1.2.0",

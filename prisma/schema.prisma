@@ -300,6 +300,8 @@ model User {
   cpaOfferClicks           CpaOfferClick[]
   cpaOfferConversions      CpaOfferConversion[]
   advertiserGlobalPostback AdvertiserGlobalPostback?
+  publisherPostback        PublisherPostback?
+  publisherPostbackDeliveries PublisherPostbackDelivery[]
   cpaWallet                CpaWallet?
   cpaEarnings              CpaEarning[]
   emailWallet              EmailWallet?
@@ -552,6 +554,7 @@ model Lead {
   emailSends              EmailSend[]
   emailContacts           EmailContact[]
   cpaOfferClicks          CpaOfferClick[]
+  postbackDeliveries      PublisherPostbackDelivery[]
 
   @@index([campaignId])
   @@index([publisherId])
@@ -1616,6 +1619,49 @@ model CpaPostbackDelivery {
   @@index([conversionId])
   @@index([status, createdAt])
   @@map("cpa_postback_deliveries")
+}
+
+enum PublisherPostbackEvent {
+  PAID
+  TEST
+}
+
+model PublisherPostback {
+  id          String               @id @default(cuid())
+  publisherId String               @unique @map("publisher_id")
+  type        GlobalPostbackType   @default(S2S)
+  status      GlobalPostbackStatus @default(INACTIVE)
+  endpoint    String               @db.Text
+  createdAt   DateTime             @default(now()) @map("created_at")
+  updatedAt   DateTime             @updatedAt @map("updated_at")
+  publisher   User                 @relation(fields: [publisherId], references: [id], onDelete: Cascade)
+  deliveries  PublisherPostbackDelivery[]
+
+  @@map("publisher_postbacks")
+}
+
+model PublisherPostbackDelivery {
+  id          String                     @id @default(cuid())
+  publisherId String                     @map("publisher_id")
+  leadId      String?                    @unique @map("lead_id")
+  postbackId  String?                    @map("postback_id")
+  url         String                     @db.Text
+  event       PublisherPostbackEvent     @default(PAID)
+  status      CpaPostbackDeliveryStatus  @default(PENDING)
+  httpStatus  Int?                       @map("http_status")
+  error       String?                    @db.Text
+  payout      Decimal?                   @db.Decimal(10, 4)
+  attempts    Int                        @default(0)
+  createdAt   DateTime                   @default(now()) @map("created_at")
+  updatedAt   DateTime                   @updatedAt @map("updated_at")
+
+  publisher User               @relation(fields: [publisherId], references: [id], onDelete: Cascade)
+  lead      Lead?              @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  postback  PublisherPostback? @relation(fields: [postbackId], references: [id], onDelete: SetNull)
+
+  @@index([publisherId, createdAt])
+  @@index([status, createdAt])
+  @@map("publisher_postback_deliveries")
 }
 
 enum PromotionEventType {

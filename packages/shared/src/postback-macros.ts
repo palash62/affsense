@@ -13,8 +13,21 @@ export const GLOBAL_POSTBACK_MACROS = [
   { macro: "{sub4}", description: "Sub 4" },
 ] as const;
 
+export const PUBLISHER_POSTBACK_MACROS = [
+  { macro: "{click_id}", description: "Lead / conversion id" },
+  { macro: "{lead_id}", description: "Lead id" },
+  { macro: "{payout}", description: "Publisher payout" },
+  { macro: "{currency}", description: "Currency" },
+  { macro: "{aff_id}", description: "Publisher id" },
+  { macro: "{offer_id}", description: "Campaign id" },
+  { macro: "{source}", description: "Source" },
+  { macro: "{date}", description: "Date" },
+  { macro: "{sub1}", description: "Sub ID" },
+] as const;
+
 export type PostbackMacroContext = {
   clickId?: string | null;
+  leadId?: string | null;
   payout?: string | number | null;
   currency?: string | null;
   affId?: string | null;
@@ -41,6 +54,7 @@ export function substitutePostbackMacros(
   const map: Record<string, string> = {
     "{click_id}": asEncodedValue(context.clickId),
     "{aff_click_id}": asEncodedValue(context.clickId),
+    "{lead_id}": asEncodedValue(context.leadId ?? context.clickId),
     "{payout}": asEncodedValue(context.payout),
     "{currency}": asEncodedValue(context.currency ?? "USD"),
     "{aff_id}": asEncodedValue(context.affId),

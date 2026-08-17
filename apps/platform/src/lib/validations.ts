@@ -1275,6 +1275,11 @@ export const advertiserGlobalPostbackSchema = z.object({
   endpoint: z.string().trim().max(20_000).optional().default(""),
 });
 
+export const publisherPostbackSchema = z.object({
+  status: z.enum(["ACTIVE", "INACTIVE"]),
+  endpoint: z.string().trim().max(20_000).optional().default(""),
+});
+
 const promotionUtmField = z.string().trim().min(1).max(120);
 
 export const adminPromotionCreateSchema = z.object({

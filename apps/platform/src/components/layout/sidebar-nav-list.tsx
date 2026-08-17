@@ -24,6 +24,9 @@ function isRootHref(href: string) {
 function isItemActive(pathname: string, href: string) {
   if (pathname === href) return true;
   if (isRootHref(href)) return false;
+  if (href === "/publisher/postback") {
+    return pathname === "/publisher/postback" || pathname.startsWith("/publisher/postback/");
+  }
   return pathname.startsWith(href);
 }
 
