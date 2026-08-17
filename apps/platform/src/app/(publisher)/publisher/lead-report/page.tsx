@@ -106,7 +106,6 @@ export default async function PublisherLeadReportPage({ searchParams }: PageProp
                 <TableHead className="h-11 px-4 text-right text-slate-600">Total</TableHead>
                 <TableHead className="h-11 px-4 text-right text-slate-600">Approved</TableHead>
                 <TableHead className="h-11 px-4 text-right text-slate-600">Pending</TableHead>
-                <TableHead className="h-11 px-4 text-right text-slate-600">Rejected</TableHead>
                 <TableHead className="h-11 px-4 text-right text-slate-600">Paid</TableHead>
                 <TableHead className="h-11 px-4 text-right text-slate-600">Earnings</TableHead>
                 <TableHead className="h-11 px-6 text-slate-600">Last Lead</TableHead>
@@ -115,7 +114,7 @@ export default async function PublisherLeadReportPage({ searchParams }: PageProp
             <TableBody>
               {subIdReport.length === 0 ? (
                 <TableRow className="hover:bg-transparent">
-                  <TableCell colSpan={8} className="h-48 px-6 py-16 text-center">
+                  <TableCell colSpan={7} className="h-48 px-6 py-16 text-center">
                     <p className="text-base font-medium text-slate-500">No Data Found</p>
                   </TableCell>
                 </TableRow>
@@ -136,9 +135,6 @@ export default async function PublisherLeadReportPage({ searchParams }: PageProp
                     </TableCell>
                     <TableCell className="px-4 py-4 text-right text-sm text-amber-700">
                       {row.pendingLeads}
-                    </TableCell>
-                    <TableCell className="px-4 py-4 text-right text-sm text-red-700">
-                      {row.rejectedLeads}
                     </TableCell>
                     <TableCell className="px-4 py-4 text-right text-sm text-slate-700">
                       {row.paidLeads}

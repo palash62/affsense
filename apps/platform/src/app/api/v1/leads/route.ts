@@ -1,7 +1,7 @@
 import { AppError, errorResponse } from "@/lib/errors";
 import { withAuth, parsePagination } from "@/lib/api-handler";
 import { isAdminPortalRole } from "@/lib/admin-portal";
-import { listLeads, updateLeadStatus } from "@/services/lead.service";
+import { listLeads, PUBLISHER_EXCLUDED_LEAD_STATUSES, updateLeadStatus } from "@/services/lead.service";
 
 export async function GET(request: Request) {
   return withAuth(async (session) => {
@@ -18,6 +18,9 @@ export async function GET(request: Request) {
       advertiserId: session.user.role === "ADVERTISER" ? session.user.id : undefined,
       page,
       limit,
+      ...(session.user.role === "PUBLISHER"
+        ? { excludeStatuses: [...PUBLISHER_EXCLUDED_LEAD_STATUSES] }
+        : {}),
     });
 
     return Response.json(result);

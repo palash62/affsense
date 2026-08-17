@@ -8,13 +8,12 @@ import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import {
   extractLeadCountry,
-  formatLeadRejectReason,
   formatPublisherLeadPayout,
   parseUserAgent,
   shortLeadId,
 } from "@/lib/publisher-leads";
 import { getPlatformSettingsConfig } from "@/lib/platform-settings-server";
-import { listLeads, type AdvertiserLeadSort } from "@/services/lead.service";
+import { listLeads, PUBLISHER_EXCLUDED_LEAD_STATUSES, type AdvertiserLeadSort } from "@/services/lead.service";
 import { PageSection } from "@/components/admin/page-section";
 import { LeadStatusBadge } from "@/components/admin/admin-ui";
 import { RoleHero } from "@/components/layout/role-hero";
@@ -70,6 +69,7 @@ export default async function PublisherLeadsPage({ searchParams }: PageProps) {
       sort: parseSort(params.sort),
       page,
       limit,
+      excludeStatuses: [...PUBLISHER_EXCLUDED_LEAD_STATUSES],
     }),
   ]);
   const leadIds = leads.map((lead) => lead.id);
@@ -98,8 +98,7 @@ export default async function PublisherLeadsPage({ searchParams }: PageProps) {
       />
 
       <PublisherInfoBanner>
-        Review date, payout, country, device, and status for each lead. Rejected leads show the
-        rejection reason so you can improve traffic quality.
+        Review date, payout, country, device, and status for each lead from your Smart Link.
       </PublisherInfoBanner>
 
       <PageSection
@@ -139,15 +138,12 @@ export default async function PublisherLeadsPage({ searchParams }: PageProps) {
                 <TableHead className="h-11 whitespace-nowrap px-4 text-slate-600">Source</TableHead>
                 <TableHead className="h-11 whitespace-nowrap px-4 text-slate-600">Sub ID</TableHead>
                 <TableHead className="h-11 whitespace-nowrap px-4 text-slate-600">CTA</TableHead>
-                <TableHead className="h-11 min-w-[180px] whitespace-nowrap px-4 text-slate-600">
-                  Reject Reason
-                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {leads.length === 0 ? (
                 <TableRow className="hover:bg-transparent">
-                  <TableCell colSpan={11} className="h-48 px-6 py-16 text-center">
+                  <TableCell colSpan={10} className="h-48 px-6 py-16 text-center">
                     <p className="text-base font-medium text-slate-500">No leads found</p>
                     <p className="mt-1 text-sm text-slate-400">
                       Share your Smart Link to start generating leads.
@@ -159,7 +155,6 @@ export default async function PublisherLeadsPage({ searchParams }: PageProps) {
                   const { device, os } = parseUserAgent(lead.userAgent);
                   const creditedAmount = creditedByLeadId.get(lead.id);
                   const payout = formatPublisherLeadPayout(lead, settings, creditedAmount);
-                  const rejectReason = formatLeadRejectReason(lead);
 
                   return (
                     <TableRow
@@ -211,17 +206,6 @@ export default async function PublisherLeadsPage({ searchParams }: PageProps) {
                             No
                           </span>
                         )}
-                      </TableCell>
-                      <TableCell className="max-w-[220px] px-4 py-4 text-sm text-slate-600">
-                        <p
-                          className={cn(
-                            "truncate",
-                            lead.status === "REJECTED" && "text-red-700",
-                          )}
-                          title={rejectReason}
-                        >
-                          {rejectReason}
-                        </p>
                       </TableCell>
                     </TableRow>
                   );
