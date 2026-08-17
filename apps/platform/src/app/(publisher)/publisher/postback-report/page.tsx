@@ -57,11 +57,6 @@ function statusClass(status: CpaPostbackDeliveryStatus) {
   return "font-medium text-amber-700";
 }
 
-function truncateUrl(url: string, max = 64) {
-  if (url.length <= max) return url;
-  return `${url.slice(0, max)}…`;
-}
-
 export default async function PublisherPostbackReportPage({ searchParams }: PageProps) {
   const session = await getSession();
   if (!session?.user) redirect("/login");
@@ -115,19 +110,19 @@ export default async function PublisherPostbackReportPage({ searchParams }: Page
         </Suspense>
 
         <div className="overflow-x-auto">
-          <Table>
+          <Table className="table-fixed">
             <TableHeader>
               <TableRow
                 className="border-none hover:bg-transparent"
                 style={{ background: "var(--theme-primary-soft)" }}
               >
-                <TableHead className="h-11 px-6 text-slate-600">Time</TableHead>
-                <TableHead className="h-11 px-4 text-slate-600">Lead ID</TableHead>
-                <TableHead className="h-11 px-4 text-right text-slate-600">Payout</TableHead>
-                <TableHead className="h-11 px-4 text-slate-600">URL</TableHead>
-                <TableHead className="h-11 px-4 text-slate-600">HTTP</TableHead>
-                <TableHead className="h-11 px-4 text-slate-600">Result</TableHead>
-                <TableHead className="h-11 px-6 text-slate-600">Attempts</TableHead>
+                <TableHead className="h-11 w-[150px] px-6 text-slate-600">Time</TableHead>
+                <TableHead className="h-11 w-[120px] px-4 text-slate-600">Lead ID</TableHead>
+                <TableHead className="h-11 w-[88px] px-4 text-right text-slate-600">Payout</TableHead>
+                <TableHead className="h-11 min-w-0 px-4 text-slate-600">URL</TableHead>
+                <TableHead className="h-11 w-[72px] px-4 text-slate-600">HTTP</TableHead>
+                <TableHead className="h-11 w-[96px] px-4 text-slate-600">Result</TableHead>
+                <TableHead className="h-11 w-[88px] px-6 text-slate-600">Attempts</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -146,19 +141,21 @@ export default async function PublisherPostbackReportPage({ searchParams }: Page
                     <TableCell className="whitespace-nowrap px-6 py-4 text-sm text-slate-600">
                       {formatUserDateTime(row.createdAt, tz, "MMM d, yyyy HH:mm")}
                     </TableCell>
-                    <TableCell className="px-4 py-4 font-mono text-sm text-slate-800">
+                    <TableCell className="truncate px-4 py-4 font-mono text-sm text-slate-800">
                       {row.event === "TEST" ? "TEST" : row.leadId ?? "—"}
                     </TableCell>
                     <TableCell className="px-4 py-4 text-right text-sm font-medium text-emerald-700">
                       {formatCurrency(row.payout)}
                     </TableCell>
-                    <TableCell className="max-w-[280px] px-4 py-4 font-mono text-xs text-slate-600" title={row.url}>
-                      {truncateUrl(row.url)}
+                    <TableCell className="max-w-0 min-w-0 overflow-hidden px-4 py-4">
+                      <span className="block truncate font-mono text-xs text-slate-600" title={row.url}>
+                        {row.url}
+                      </span>
                     </TableCell>
-                    <TableCell className="px-4 py-4 text-sm text-slate-700">
+                    <TableCell className="whitespace-nowrap px-4 py-4 text-sm text-slate-700">
                       {row.httpStatus || "—"}
                     </TableCell>
-                    <TableCell className={`px-4 py-4 text-sm ${statusClass(row.status)}`}>
+                    <TableCell className={`whitespace-nowrap px-4 py-4 text-sm ${statusClass(row.status)}`}>
                       {row.status}
                     </TableCell>
                     <TableCell className="px-6 py-4 text-sm text-slate-700">{row.attempts}</TableCell>
