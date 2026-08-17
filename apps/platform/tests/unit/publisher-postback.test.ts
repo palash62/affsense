@@ -69,7 +69,7 @@ describe("publisher postback validation", () => {
 });
 
 describe("publisher postback macros", () => {
-  it("substitutes click_id, lead_id, payout, and sub1", () => {
+  it("substitutes click_id, lead_id, payout, and sub_id", () => {
     const context = buildPublisherPostbackMacroContext({
       leadId: "lead-99",
       publisherId: "pub-1",
@@ -80,11 +80,11 @@ describe("publisher postback macros", () => {
       date: "2026-08-17",
     });
     const url = substitutePostbackMacros(
-      "https://tracker.example/pb?click_id={click_id}&lead_id={lead_id}&payout={payout}&sub1={sub1}&aff_id={aff_id}&offer_id={offer_id}&source={source}",
+      "https://tracker.example/pb?click_id={click_id}&lead_id={lead_id}&payout={payout}&sub_id={sub_id}&sub1={sub1}&aff_id={aff_id}&offer_id={offer_id}&source={source}",
       context,
     );
     expect(url).toBe(
-      "https://tracker.example/pb?click_id=lead-99&lead_id=lead-99&payout=0.7&sub1=sub-a&aff_id=pub-1&offer_id=camp-1&source=facebook",
+      "https://tracker.example/pb?click_id=lead-99&lead_id=lead-99&payout=0.7&sub_id=sub-a&sub1=sub-a&aff_id=pub-1&offer_id=camp-1&source=facebook",
     );
   });
 });

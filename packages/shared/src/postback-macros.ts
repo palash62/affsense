@@ -20,9 +20,10 @@ export const PUBLISHER_POSTBACK_MACROS = [
   { macro: "{currency}", description: "Currency" },
   { macro: "{aff_id}", description: "Publisher id" },
   { macro: "{offer_id}", description: "Campaign id" },
-  { macro: "{source}", description: "Source" },
+  { macro: "{source}", description: "Source (?src=)" },
   { macro: "{date}", description: "Date" },
-  { macro: "{sub1}", description: "Sub ID" },
+  { macro: "{sub_id}", description: "Sub ID from ?sub_id=" },
+  { macro: "{sub1}", description: "Same as {sub_id}" },
 ] as const;
 
 export type PostbackMacroContext = {
@@ -62,6 +63,7 @@ export function substitutePostbackMacros(
     "{offer_id}": asEncodedValue(context.offerId),
     "{source}": asEncodedValue(context.source),
     "{date}": asEncodedValue(context.date ?? new Date().toISOString().slice(0, 10)),
+    "{sub_id}": asEncodedValue(context.sub1),
     "{sub1}": asEncodedValue(context.sub1),
     "{sub2}": asEncodedValue(context.sub2),
     "{sub3}": asEncodedValue(context.sub3),

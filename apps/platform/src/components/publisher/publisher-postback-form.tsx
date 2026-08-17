@@ -145,7 +145,7 @@ export function PublisherPostbackForm() {
           <div className="rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900">
             Add your tracker postback URL and set status to Active. We fire it once per paid lead.
             <div className="mt-2 font-mono text-xs text-sky-800">
-              Example: https://your-tracker.com/pb?click_id=&#123;click_id&#125;&amp;payout=&#123;payout&#125;&amp;sub1=&#123;sub1&#125;
+              Example: https://your-tracker.com/pb?click_id=&#123;click_id&#125;&amp;payout=&#123;payout&#125;&amp;sub_id=&#123;sub_id&#125;
             </div>
           </div>
 
@@ -175,7 +175,7 @@ export function PublisherPostbackForm() {
               value={draft.endpoint}
               onChange={(e) => setDraft((prev) => ({ ...prev, endpoint: e.target.value }))}
               rows={6}
-              placeholder="https://your-tracker.com/pb?click_id={click_id}&payout={payout}&sub1={sub1}"
+              placeholder="https://your-tracker.com/pb?click_id={click_id}&payout={payout}&sub_id={sub_id}"
               className="font-mono text-xs"
             />
           </div>
