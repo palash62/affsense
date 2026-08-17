@@ -137,6 +137,7 @@ export default async function PublisherLeadsPage({ searchParams }: PageProps) {
                 <TableHead className="h-11 whitespace-nowrap px-4 text-slate-600">Device</TableHead>
                 <TableHead className="h-11 whitespace-nowrap px-4 text-slate-600">OS</TableHead>
                 <TableHead className="h-11 whitespace-nowrap px-4 text-slate-600">Source</TableHead>
+                <TableHead className="h-11 whitespace-nowrap px-4 text-slate-600">Sub ID</TableHead>
                 <TableHead className="h-11 whitespace-nowrap px-4 text-slate-600">CTA</TableHead>
                 <TableHead className="h-11 min-w-[180px] whitespace-nowrap px-4 text-slate-600">
                   Reject Reason
@@ -146,7 +147,7 @@ export default async function PublisherLeadsPage({ searchParams }: PageProps) {
             <TableBody>
               {leads.length === 0 ? (
                 <TableRow className="hover:bg-transparent">
-                  <TableCell colSpan={10} className="h-48 px-6 py-16 text-center">
+                  <TableCell colSpan={11} className="h-48 px-6 py-16 text-center">
                     <p className="text-base font-medium text-slate-500">No leads found</p>
                     <p className="mt-1 text-sm text-slate-400">
                       Share your Smart Link to start generating leads.
@@ -193,6 +194,12 @@ export default async function PublisherLeadsPage({ searchParams }: PageProps) {
                       </TableCell>
                       <TableCell className="whitespace-nowrap px-4 py-4 text-sm capitalize text-slate-600">
                         {lead.source ?? "—"}
+                      </TableCell>
+                      <TableCell
+                        className="max-w-[140px] truncate px-4 py-4 font-mono text-sm font-medium text-slate-800"
+                        title={lead.subId?.trim() || undefined}
+                      >
+                        {lead.subId?.trim() || "—"}
                       </TableCell>
                       <TableCell className="whitespace-nowrap px-4 py-4">
                         {lead.ctaClicked ? (
