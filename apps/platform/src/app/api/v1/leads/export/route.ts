@@ -3,7 +3,11 @@ import { withAuth } from "@/lib/api-handler";
 import { isAdminPortalRole } from "@/lib/admin-portal";
 import { defaultCampaignDateFrom, defaultCampaignDateTo } from "@/lib/advertiser-campaigns";
 import { leadsToCsv } from "@/lib/lead-csv";
-import { listLeadsForExport, type AdvertiserLeadSort } from "@/services/lead.service";
+import {
+  ADVERTISER_EXCLUDED_LEAD_STATUSES,
+  listLeadsForExport,
+  type AdvertiserLeadSort,
+} from "@/services/lead.service";
 import type { LeadStatus } from "@prisma/client";
 
 function parseSort(sort: string | null): AdvertiserLeadSort | undefined {
@@ -33,15 +37,20 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const isAdmin = isAdminPortalRole(session.user.role);
 
+    const requestedStatus = parseStatus(searchParams.get("status"));
+    const status =
+      !isAdmin && requestedStatus === "REJECTED" ? undefined : requestedStatus;
+
     const leads = await listLeadsForExport({
       advertiserId: isAdmin ? (searchParams.get("advertiserId") ?? undefined) : session.user.id,
       campaignId: searchParams.get("campaignId") ?? undefined,
       publisherId: searchParams.get("publisherId") ?? undefined,
       source: searchParams.get("source") ?? undefined,
-      status: parseStatus(searchParams.get("status")),
+      status,
       dateFrom: new Date(searchParams.get("from") ?? defaultCampaignDateFrom()),
       dateTo: new Date(searchParams.get("to") ?? defaultCampaignDateTo()),
       sort: parseSort(searchParams.get("sort")),
+      ...(!isAdmin ? { excludeStatuses: [...ADVERTISER_EXCLUDED_LEAD_STATUSES] } : {}),
     });
 
     const csv = leadsToCsv(leads, {

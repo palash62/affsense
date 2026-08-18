@@ -22,16 +22,18 @@ function formatPayoutRange(min: number | null, max: number | null) {
 export function PublisherPerformanceTable({
   rows,
   exportFilename = "publisher-performance.csv",
+  hideRejected = false,
 }: {
   rows: AdvertiserPublisherLeadReportRow[];
   exportFilename?: string;
+  hideRejected?: boolean;
 }) {
   const csvRows = rows.map((row) => [
     row.publisherId,
     row.totalLeads,
     row.approvedLeads,
     row.pendingLeads,
-    row.rejectedLeads,
+    ...(hideRejected ? [] : [row.rejectedLeads]),
     row.paidLeads,
     row.salesCount,
     row.revenue,
@@ -58,7 +60,7 @@ export function PublisherPerformanceTable({
             "Total Leads",
             "Approved",
             "Pending",
-            "Rejected",
+            ...(hideRejected ? [] : ["Rejected"]),
             "Paid",
             "Sales",
             "Revenue",
@@ -85,9 +87,11 @@ export function PublisherPerformanceTable({
               <TableHead className="px-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
                 Pending
               </TableHead>
-              <TableHead className="px-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Rejected
-              </TableHead>
+              {!hideRejected && (
+                <TableHead className="px-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Rejected
+                </TableHead>
+              )}
               <TableHead className="px-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
                 Sales
               </TableHead>
@@ -113,9 +117,11 @@ export function PublisherPerformanceTable({
                   {row.approvedLeads.toLocaleString()}
                 </TableCell>
                 <TableCell className="px-3 text-right tabular-nums">{row.pendingLeads.toLocaleString()}</TableCell>
-                <TableCell className="px-3 text-right tabular-nums">
-                  {row.rejectedLeads.toLocaleString()}
-                </TableCell>
+                {!hideRejected && (
+                  <TableCell className="px-3 text-right tabular-nums">
+                    {row.rejectedLeads.toLocaleString()}
+                  </TableCell>
+                )}
                 <TableCell className="px-3 text-right tabular-nums">
                   {row.salesCount.toLocaleString()}
                 </TableCell>

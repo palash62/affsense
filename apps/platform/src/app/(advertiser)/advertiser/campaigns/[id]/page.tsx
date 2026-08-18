@@ -1,7 +1,9 @@
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { getSession } from "@/lib/session";
+import { prisma } from "@/lib/prisma";
 import { getCampaignById } from "@/services/campaign.service";
+import { ADVERTISER_EXCLUDED_LEAD_STATUSES } from "@/services/lead.service";
 import { PageHero } from "@/components/admin/page-hero";
 import { AdminCampaignDetails } from "@/components/admin/admin-campaign-details";
 import { ButtonLink } from "@/components/ui/button-link";
@@ -17,13 +19,19 @@ interface PageProps {
 
 export default async function AdvertiserCampaignDetailPage({ params }: PageProps) {
   const [{ id }, session] = await Promise.all([params, getSession()]);
-  const campaign = await getCampaignById(id);
+  const [campaign, leadCount] = await Promise.all([
+    getCampaignById(id),
+    prisma.lead.count({
+      where: {
+        campaignId: id,
+        status: { notIn: [...ADVERTISER_EXCLUDED_LEAD_STATUSES] },
+      },
+    }),
+  ]);
 
   if (!campaign || campaign.advertiserId !== session?.user.id) {
     notFound();
   }
-
-  const leadCount = campaign._count?.leads ?? 0;
 
   return (
     <div className="space-y-7">

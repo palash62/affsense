@@ -22,6 +22,7 @@ vi.mock("@/modules/autoresponder", () => ({ dispatchAutoresponderEvent: vi.fn() 
 vi.mock("@/modules/email-marketing", () => ({ dispatchLeadEmailAutomations: vi.fn() }));
 
 import {
+  ADVERTISER_EXCLUDED_LEAD_STATUSES,
   buildLeadListWhere,
   PUBLISHER_EXCLUDED_LEAD_STATUSES,
 } from "@/services/lead.service";
@@ -53,7 +54,35 @@ describe("publisher hidden rejected leads", () => {
     });
   });
 
-  it("does not hide rejected leads for admin or advertiser lists", () => {
+  it("does not hide rejected leads for admin lists", () => {
     expect(buildLeadListWhere({ advertiserId: "adv-1" }).status).toBeUndefined();
+  });
+});
+
+describe("advertiser hidden rejected leads", () => {
+  it("excludes REJECTED from advertiser lead lists", () => {
+    expect(ADVERTISER_EXCLUDED_LEAD_STATUSES).toEqual(["REJECTED"]);
+    expect(
+      buildLeadListWhere({
+        advertiserId: "adv-1",
+        excludeStatuses: [...ADVERTISER_EXCLUDED_LEAD_STATUSES],
+      }),
+    ).toMatchObject({
+      campaign: { advertiserId: "adv-1" },
+      status: { notIn: ["REJECTED"] },
+    });
+  });
+
+  it("keeps an explicit advertiser status filter instead of excludeStatuses", () => {
+    expect(
+      buildLeadListWhere({
+        advertiserId: "adv-1",
+        status: "PENDING",
+        excludeStatuses: ["REJECTED"],
+      }),
+    ).toMatchObject({
+      campaign: { advertiserId: "adv-1" },
+      status: "PENDING",
+    });
   });
 });

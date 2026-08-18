@@ -14,6 +14,7 @@ import {
   resolveOptinPageDestination,
 } from "@/services/optin-page.service";
 import { parseCampaignTargeting } from "@/lib/campaign-targeting";
+import { ADVERTISER_EXCLUDED_LEAD_STATUSES } from "@/services/lead.service";
 
 export interface CreateCampaignInput {
   advertiserId: string;
@@ -194,7 +195,11 @@ export async function listAdvertiserCampaigns(filters: {
     prisma.campaign.findMany({
       where,
       include: {
-        _count: { select: { leads: true } },
+        _count: {
+          select: {
+            leads: { where: { status: { notIn: [...ADVERTISER_EXCLUDED_LEAD_STATUSES] } } },
+          },
+        },
         optinPages: {
           select: { slug: true },
           orderBy: { updatedAt: "desc" },

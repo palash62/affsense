@@ -1,26 +1,38 @@
 import { AppError, errorResponse } from "@/lib/errors";
 import { withAuth, parsePagination } from "@/lib/api-handler";
 import { isAdminPortalRole } from "@/lib/admin-portal";
-import { listLeads, PUBLISHER_EXCLUDED_LEAD_STATUSES, updateLeadStatus } from "@/services/lead.service";
+import {
+  ADVERTISER_EXCLUDED_LEAD_STATUSES,
+  listLeads,
+  PUBLISHER_EXCLUDED_LEAD_STATUSES,
+  updateLeadStatus,
+} from "@/services/lead.service";
 
 export async function GET(request: Request) {
   return withAuth(async (session) => {
     const { searchParams } = new URL(request.url);
     const { page, limit } = parsePagination(searchParams);
 
+    const requestedStatus = searchParams.get("status") as never;
+    const isAdvertiser = session.user.role === "ADVERTISER";
+    const status =
+      isAdvertiser && requestedStatus === "REJECTED" ? undefined : requestedStatus;
+
     const result = await listLeads({
       campaignId: searchParams.get("campaignId") ?? undefined,
-      status: (searchParams.get("status") as never) ?? undefined,
+      status,
       publisherId:
         session.user.role === "PUBLISHER"
           ? session.user.id
           : (searchParams.get("publisherId") ?? undefined),
-      advertiserId: session.user.role === "ADVERTISER" ? session.user.id : undefined,
+      advertiserId: isAdvertiser ? session.user.id : undefined,
       page,
       limit,
       ...(session.user.role === "PUBLISHER"
         ? { excludeStatuses: [...PUBLISHER_EXCLUDED_LEAD_STATUSES] }
-        : {}),
+        : isAdvertiser
+          ? { excludeStatuses: [...ADVERTISER_EXCLUDED_LEAD_STATUSES] }
+          : {}),
     });
 
     return Response.json(result);

@@ -18,6 +18,7 @@ import { getPublisherEarningsForRange } from "@/lib/publisher-earnings";
 import { formatPublisherLeadPayout } from "@/lib/publisher-leads";
 import { reconcilePublisherLeadCreditsForUser } from "@/services/wallet.service";
 import { getAdminProfitForRange } from "@/services/admin-profit.service";
+import { ADVERTISER_EXCLUDED_LEAD_STATUSES } from "@/services/lead.service";
 import { startOfDay, subDays, format, endOfMonth, startOfMonth, subMonths, endOfDay, differenceInCalendarDays } from "date-fns";
 
 export async function getAdminDashboardStats() {
@@ -916,6 +917,9 @@ export async function getActivityTrendInRange(filters: {
       where: {
         createdAt: { gte: start, lte: end },
         ...(campaignIds && campaignIds.length > 0 && { campaignId: { in: campaignIds } }),
+        ...(filters.advertiserId && {
+          status: { notIn: [...ADVERTISER_EXCLUDED_LEAD_STATUSES] },
+        }),
       },
       select: { createdAt: true, status: true },
     }),
@@ -998,6 +1002,9 @@ export async function getLeadsStatusMix(filters: {
       createdAt: { gte: filters.from, lte: filters.to },
       isTest: false,
       ...(campaignIds && campaignIds.length > 0 && { campaignId: { in: campaignIds } }),
+      ...(filters.advertiserId && {
+        status: { notIn: [...ADVERTISER_EXCLUDED_LEAD_STATUSES] },
+      }),
     },
     select: { status: true },
   });
@@ -1038,7 +1045,12 @@ export async function getAdvertiserReportsMetrics(
   const [activeCampaigns, leads, clicks] = await Promise.all([
     prisma.campaign.count({ where: { advertiserId, status: "ACTIVE" } }),
     prisma.lead.findMany({
-      where: { campaignId: { in: campaignIds }, isTest: false, ...dateRange },
+      where: {
+        campaignId: { in: campaignIds },
+        isTest: false,
+        status: { notIn: [...ADVERTISER_EXCLUDED_LEAD_STATUSES] },
+        ...dateRange,
+      },
       select: { status: true, cpl: true, campaign: { select: { cpl: true } } },
     }),
     prisma.click.count({
@@ -1103,7 +1115,14 @@ export async function getCampaignPerformanceReport(filters: {
 
   const [leads, clicks, cpaMetricsByCampaign] = await Promise.all([
     prisma.lead.findMany({
-      where: { campaignId: { in: campaignIds }, isTest: false, ...dateRange },
+      where: {
+        campaignId: { in: campaignIds },
+        isTest: false,
+        ...dateRange,
+        ...(filters.advertiserId && {
+          status: { notIn: [...ADVERTISER_EXCLUDED_LEAD_STATUSES] },
+        }),
+      },
       select: { campaignId: true, status: true, cpl: true, campaign: { select: { cpl: true } } },
     }),
     prisma.click.findMany({
@@ -1177,6 +1196,9 @@ export async function getGeoLeadBreakdown(filters: {
       createdAt: { gte: filters.from, lte: filters.to },
       isTest: false,
       ...(campaignIds && campaignIds.length > 0 && { campaignId: { in: campaignIds } }),
+      ...(filters.advertiserId && {
+        status: { notIn: [...ADVERTISER_EXCLUDED_LEAD_STATUSES] },
+      }),
     },
     select: { country: true, status: true, cpl: true, campaign: { select: { cpl: true } } },
   });

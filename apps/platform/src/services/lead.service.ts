@@ -865,6 +865,7 @@ const LEAD_LIST_INCLUDE = {
 };
 
 export const PUBLISHER_EXCLUDED_LEAD_STATUSES = ["REJECTED"] as const;
+export const ADVERTISER_EXCLUDED_LEAD_STATUSES = ["REJECTED"] as const;
 
 type LeadListFilters = {
   campaignId?: string;
@@ -1234,6 +1235,7 @@ export async function listAdvertiserPublisherLeadReport(filters: {
     where: {
       campaign: campaignWhere,
       isTest: false,
+      status: { notIn: [...ADVERTISER_EXCLUDED_LEAD_STATUSES] },
       ...(filters.publisherSearch?.trim() && {
         publisherId: { contains: filters.publisherSearch.trim() },
       }),

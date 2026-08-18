@@ -249,25 +249,32 @@ export function ReportsGeoChart({ rows }: { rows: GeoBreakdownRow[] }) {
 export function ReportsStatusAndFunnel({
   statusMix,
   funnel,
+  hideRejected = false,
 }: {
   statusMix: LeadsStatusMixItem[];
   funnel: { clicks: number; leads: number; approved: number; rejected: number };
+  hideRejected?: boolean;
 }) {
+  const visibleMix = hideRejected
+    ? statusMix.filter((item) => item.name !== "Rejected")
+    : statusMix;
   const pieData =
-    statusMix.length > 0
-      ? statusMix.map((item) => ({
+    visibleMix.length > 0
+      ? visibleMix.map((item) => ({
           ...item,
           color: STATUS_COLORS[item.name] ?? BAR_PALETTE[0],
         }))
       : [{ name: "No data", value: 1, color: STATUS_COLORS["No data"] }];
 
-  const maxFunnel = Math.max(funnel.clicks, funnel.leads, funnel.approved, funnel.rejected, 1);
   const funnelSteps = [
     { label: "Clicks", value: funnel.clicks, color: "#0EA5E9" },
     { label: "Leads", value: funnel.leads, color: "#8B5CF6" },
     { label: "Approved", value: funnel.approved, color: "#22C55E" },
-    { label: "Rejected", value: funnel.rejected, color: "#EF4444" },
+    ...(!hideRejected
+      ? [{ label: "Rejected", value: funnel.rejected, color: "#EF4444" }]
+      : []),
   ];
+  const maxFunnel = Math.max(...funnelSteps.map((step) => step.value), 1);
 
   return (
     <div className="grid gap-4 lg:grid-cols-2">
@@ -384,6 +391,7 @@ export function ReportsAnalyticsBoard({
   statusMix,
   funnel,
   entityRank,
+  hideRejected = false,
 }: {
   activity: ActivityTrendPoint[];
   campaigns: CampaignPerformanceRow[];
@@ -396,12 +404,13 @@ export function ReportsAnalyticsBoard({
     data: Array<{ name: string; value: number }>;
     valueLabel: string;
   };
+  hideRejected?: boolean;
 }) {
   return (
     <div className="space-y-4">
       <ReportsActivityTrendChart data={activity} />
       <ReportsCampaignCompareChart rows={campaigns} />
-      <ReportsStatusAndFunnel statusMix={statusMix} funnel={funnel} />
+      <ReportsStatusAndFunnel statusMix={statusMix} funnel={funnel} hideRejected={hideRejected} />
       <ReportsGeoChart rows={geo} />
       {entityRank ? (
         <ReportsEntityRankChart

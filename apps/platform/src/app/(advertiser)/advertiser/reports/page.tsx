@@ -86,7 +86,6 @@ export default async function AdvertiserReportsPage({ searchParams }: PageProps)
           { label: "Clicks", value: metrics.clicks.toLocaleString(), variant: "leads", icon: "clicks" },
           { label: "Leads", value: metrics.leads.toLocaleString(), variant: "leads", icon: "leads" },
           { label: "Approved", value: metrics.approvedLeads.toLocaleString(), variant: "approved", icon: "approved" },
-          { label: "Rejected", value: metrics.rejectedLeads.toLocaleString(), icon: "rejected" },
           { label: "Spend", value: formatCurrency(metrics.spend), variant: "revenue", icon: "spend" },
           { label: "Avg CPL", value: formatCurrency(metrics.cpl), variant: "revenue", icon: "spend" },
           { label: "Conversion", value: `${metrics.conversionRate.toFixed(2)}%`, icon: "conversion" },
@@ -98,6 +97,7 @@ export default async function AdvertiserReportsPage({ searchParams }: PageProps)
         campaigns={campaigns}
         geo={geo}
         statusMix={statusMix}
+        hideRejected
         funnel={{
           clicks: metrics.clicks,
           leads: metrics.leads,
@@ -118,7 +118,11 @@ export default async function AdvertiserReportsPage({ searchParams }: PageProps)
         icon={BarChart3}
         gradient="revenue"
       >
-        <CampaignPerformanceTable rows={campaigns} exportFilename="advertiser-campaigns.csv" />
+        <CampaignPerformanceTable
+          rows={campaigns}
+          exportFilename="advertiser-campaigns.csv"
+          hideRejected
+        />
       </PageSection>
 
       <PageSection
@@ -127,7 +131,11 @@ export default async function AdvertiserReportsPage({ searchParams }: PageProps)
         icon={Users}
         gradient="approved"
       >
-        <PublisherPerformanceTable rows={publishers} exportFilename="advertiser-publishers.csv" />
+        <PublisherPerformanceTable
+          rows={publishers}
+          exportFilename="advertiser-publishers.csv"
+          hideRejected
+        />
       </PageSection>
 
       <PageSection
