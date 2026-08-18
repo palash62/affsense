@@ -64,7 +64,9 @@ export default async function AdminPublishersPage({ searchParams }: PageProps) {
       limit: 20,
     }),
     listUsers({ role: "PUBLISHER", limit: 500 }),
-    listActiveCampaignsForSmartLinkAllowlist(),
+    listActiveCampaignsForSmartLinkAllowlist().then((rows) =>
+      rows.map((c) => ({ id: c.id, name: c.name, advertiserName: c.advertiser.name })),
+    ),
   ]);
 
   const publisherIds = publishers.map((p) => p.id);
