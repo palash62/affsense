@@ -3,8 +3,67 @@ export function getPlatformUrl(): string {
     process.env.PLATFORM_URL?.trim() ||
     process.env.APP_URL?.trim() ||
     process.env.NEXT_PUBLIC_PLATFORM_URL?.trim() ||
+    process.env.AUTH_URL?.trim() ||
     "http://localhost:3010"
   );
+}
+
+const UNUSABLE_REDIRECT_HOSTS = new Set(["0.0.0.0", "127.0.0.1", "::", "[::]"]);
+
+function originFromConfiguredUrl(raw: string | undefined): string | null {
+  if (!raw?.trim()) return null;
+  try {
+    const url = new URL(raw.trim());
+    if (url.protocol !== "http:" && url.protocol !== "https:") return null;
+    if (UNUSABLE_REDIRECT_HOSTS.has(url.hostname.toLowerCase())) return null;
+    return url.origin;
+  } catch {
+    return null;
+  }
+}
+
+function hostnameOf(host: string): string {
+  const value = host.trim().toLowerCase();
+  if (value.startsWith("[") && value.includes("]")) {
+    return value.slice(0, value.indexOf("]") + 1);
+  }
+  return value.split(":")[0] ?? value;
+}
+
+/** Public site origin for browser 302s. Never 0.0.0.0 / 127.0.0.1 (Docker listen addresses). */
+export function getPublicRedirectOrigin(request: Request): string {
+  for (const value of [
+    process.env.AUTH_URL,
+    process.env.APP_URL,
+    process.env.PLATFORM_URL,
+    process.env.NEXT_PUBLIC_PLATFORM_URL,
+    process.env.NEXT_PUBLIC_APP_URL,
+  ]) {
+    const origin = originFromConfiguredUrl(value);
+    if (origin) return origin;
+  }
+
+  const forwardedHost = request.headers.get("x-forwarded-host")?.split(",")[0]?.trim();
+  const forwardedProto =
+    request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim() || "https";
+  if (forwardedHost && !UNUSABLE_REDIRECT_HOSTS.has(hostnameOf(forwardedHost))) {
+    return `${forwardedProto}://${forwardedHost}`;
+  }
+
+  try {
+    const fromRequest = new URL(request.url);
+    if (!UNUSABLE_REDIRECT_HOSTS.has(fromRequest.hostname.toLowerCase())) {
+      return fromRequest.origin;
+    }
+  } catch {
+    // ignore invalid request.url
+  }
+
+  return originFromConfiguredUrl(getPlatformUrl()) ?? "http://localhost:3010";
+}
+
+export function buildPublicRedirectUrl(request: Request, path: string): URL {
+  return new URL(path, `${getPublicRedirectOrigin(request).replace(/\/$/, "")}/`);
 }
 
 export function getPlatformHost(): string {

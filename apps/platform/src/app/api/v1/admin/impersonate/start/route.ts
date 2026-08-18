@@ -6,9 +6,10 @@ import {
   viewAsCookieOptions,
 } from "@/lib/view-as";
 import { assertSafeRelativeRedirect } from "@/lib/safe-url";
+import { buildPublicRedirectUrl } from "@/lib/platform-host";
 
 function redirectTo(request: Request, path: string) {
-  return NextResponse.redirect(new URL(path, request.url));
+  return NextResponse.redirect(buildPublicRedirectUrl(request, path));
 }
 
 export async function GET(request: Request) {
