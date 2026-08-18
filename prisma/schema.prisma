@@ -266,6 +266,7 @@ model User {
   publisherCampaigns PublisherCampaign[]
   trackingLinks     TrackingLink[]
   publisherSmartLink PublisherSmartLink?
+  smartLinkCampaigns PublisherSmartLinkCampaign[]
   advertiserPublisherBlocks AdvertiserPublisherBlock[] @relation("AdvertiserBlocks")
   blockedByAdvertisers    AdvertiserPublisherBlock[] @relation("PublisherBlocks")
   payouts           Payout[]
@@ -357,6 +358,7 @@ model PublisherProfile {
   tier2SpecialPayout Decimal? @map("tier2_special_payout") @db.Decimal(10, 2)
   tier3SpecialPayout Decimal? @map("tier3_special_payout") @db.Decimal(10, 2)
   globalLinkUrl     String?   @map("global_link_url")
+  restrictSmartLinkCampaigns Boolean @default(false) @map("restrict_smart_link_campaigns")
   user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("publisher_profiles")
@@ -387,6 +389,7 @@ model Campaign {
   advertiser         User                @relation("AdvertiserCampaigns", fields: [advertiserId], references: [id])
   fields             CampaignField[]
   publisherCampaigns PublisherCampaign[]
+  smartLinkPublishers PublisherSmartLinkCampaign[]
   trackingLinks      TrackingLink[]
   leads              Lead[]
   pixelEvents        PixelEvent[]
@@ -419,6 +422,17 @@ model CampaignField {
   campaign        Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
 
   @@map("campaign_fields")
+}
+
+model PublisherSmartLinkCampaign {
+  publisherId String @map("publisher_id")
+  campaignId  String @map("campaign_id")
+  publisher   User     @relation(fields: [publisherId], references: [id], onDelete: Cascade)
+  campaign    Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@id([publisherId, campaignId])
+  @@index([campaignId])
+  @@map("publisher_smart_link_campaigns")
 }
 
 model PublisherCampaign {

@@ -3,6 +3,7 @@ import {
   filterCampaignsByCountry,
   filterCampaignsByDeviceOs,
   pickCampaignForIpRotation,
+  applySmartLinkCampaignAllowlist,
 } from "@/lib/smart-link-rotation";
 import { parseUserAgent } from "@/lib/publisher-leads";
 import { calculatePublisherPayout } from "@/lib/platform-settings";
@@ -48,6 +49,7 @@ export async function getEligibleCampaigns(
         tier1SpecialPayout: true,
         tier2SpecialPayout: true,
         tier3SpecialPayout: true,
+        restrictSmartLinkCampaigns: true,
       },
     }),
   ]);
@@ -74,7 +76,7 @@ export async function getEligibleCampaigns(
   const { getPlatformSettings } = await import("@/services/wallet.service");
   const platformSettings = await getPlatformSettings();
 
-  return campaigns.filter((campaign) => {
+  const eligible = campaigns.filter((campaign) => {
     const walletBalance = Number(campaign.advertiser.wallet?.balance ?? 0);
     if (walletBalance < Number(campaign.cpl)) return false;
 
@@ -98,6 +100,19 @@ export async function getEligibleCampaigns(
 
     return true;
   });
+
+  if (!publisherProfile?.restrictSmartLinkCampaigns) {
+    return eligible;
+  }
+
+  const allowlist = await prisma.publisherSmartLinkCampaign.findMany({
+    where: { publisherId },
+    select: { campaignId: true },
+  });
+  return applySmartLinkCampaignAllowlist(
+    eligible,
+    allowlist.map((row) => row.campaignId),
+  );
 }
 
 export async function ensureTrackingLink(publisherId: string, campaignId: string) {

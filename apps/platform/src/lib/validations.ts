@@ -571,7 +571,22 @@ export const adminUpdateStaffUserSchema = z.object({
   country: z.string().trim().max(120).optional().nullable(),
   menuAccess: z.array(assignableStaffMenuHrefSchema).optional(),
   status: z.enum(["ACTIVE", "SUSPENDED"]).optional(),
-});
+  });
+
+export const adminPublisherSmartLinkCampaignsSchema = z
+  .object({
+    restrictSmartLinkCampaigns: z.boolean(),
+    campaignIds: z.array(z.string().trim().min(1)).default([]),
+  })
+  .superRefine((data, ctx) => {
+    if (data.restrictSmartLinkCampaigns && data.campaignIds.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Select at least one campaign",
+        path: ["campaignIds"],
+      });
+    }
+  });
 
 const WEBHOOK_URL_ERROR =
   "Enter a valid webhook URL starting with https:// (not an email address)";

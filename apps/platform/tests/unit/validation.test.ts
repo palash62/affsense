@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { validateLead } from "@/lib/lead-validation";
-import { adminUpdateStaffUserSchema, isValidEmail, isValidPhone } from "@/lib/validations";
+import { adminPublisherSmartLinkCampaignsSchema, adminUpdateStaffUserSchema, isValidEmail, isValidPhone } from "@/lib/validations";
 
 describe("Lead Validation", () => {
   const baseFields = [
@@ -82,5 +82,31 @@ describe("adminUpdateStaffUserSchema", () => {
       menuAccess: ["/admin/users"],
     });
     expect(result.success).toBe(false);
+  });
+});
+
+describe("adminPublisherSmartLinkCampaignsSchema", () => {
+  it("accepts restrict off with no campaigns", () => {
+    const result = adminPublisherSmartLinkCampaignsSchema.safeParse({
+      restrictSmartLinkCampaigns: false,
+      campaignIds: [],
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects enabling with an empty campaign list", () => {
+    const result = adminPublisherSmartLinkCampaignsSchema.safeParse({
+      restrictSmartLinkCampaigns: true,
+      campaignIds: [],
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("accepts restrict on with at least one campaign", () => {
+    const result = adminPublisherSmartLinkCampaignsSchema.safeParse({
+      restrictSmartLinkCampaigns: true,
+      campaignIds: ["camp_a"],
+    });
+    expect(result.success).toBe(true);
   });
 });

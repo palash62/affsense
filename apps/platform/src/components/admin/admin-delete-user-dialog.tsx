@@ -20,14 +20,23 @@ export function AdminDeleteUserDialog({
   userName,
   role,
   disabledReason,
+  open: openProp,
+  onOpenChange: onOpenChangeProp,
 }: {
   userId: string;
   userName: string;
   role: UserRole;
   disabledReason?: string;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
+  const [openInternal, setOpenInternal] = useState(false);
+  const open = openProp ?? openInternal;
+  function setOpen(next: boolean) {
+    setOpenInternal(next);
+    onOpenChangeProp?.(next);
+  }
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -57,20 +66,22 @@ export function AdminDeleteUserDialog({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger
-        render={
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={blocked}
-            title={disabledReason}
-            className="h-8 gap-1 border-red-200 text-red-700 hover:bg-red-50 disabled:opacity-50"
-          />
-        }
-      >
-        <Trash2 className="h-3.5 w-3.5" />
-        Delete
-      </DialogTrigger>
+      {openProp === undefined && (
+        <DialogTrigger
+          render={
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={blocked}
+              title={disabledReason}
+              className="h-8 gap-1 border-red-200 text-red-700 hover:bg-red-50 disabled:opacity-50"
+            />
+          }
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+          Delete
+        </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Delete {roleLabel} account</DialogTitle>

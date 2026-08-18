@@ -2,16 +2,15 @@ import { Suspense } from "react";
 import { formatUserDateTime } from "@/lib/user-timezone";
 import { Mail, Megaphone, ShieldAlert, UserCheck, Users, Share2 } from "lucide-react";
 import type { UserStatus } from "@prisma/client";
-import { listUsers, getUserDeleteEligibility } from "@/services/admin.service";
+import { listUsers, getUserDeleteEligibility, listActiveCampaignsForSmartLinkAllowlist } from "@/services/admin.service";
 import { getSession } from "@/lib/session";
 import { getPublisherSpamScoresByIds } from "@/modules/fraud/repositories/quality.repo";
 import { PageHero } from "@/components/admin/page-hero";
 import { PageSection } from "@/components/admin/page-section";
 import { GradientStatCard, NeutralStatCard } from "@/components/admin/gradient-stat-card";
 import { AdminCreatePublisherDialog } from "@/components/admin/admin-create-publisher-dialog";
-import { AdminPublisherReviewDialog } from "@/components/admin/admin-publisher-review-dialog";
 import { AdminLoginAsButton } from "@/components/admin/admin-login-as-button";
-import { AdminPublisherSpecialPayoutDialog } from "@/components/admin/admin-publisher-special-payout-dialog";
+import { PublisherActionsMenu } from "@/components/admin/publisher-actions-menu";
 import {
   avatarColors,
   formatCurrency,
@@ -22,9 +21,7 @@ import {
   UserStatusBadge,
   EmailVerifiedBadge,
 } from "@/components/admin/admin-ui";
-import { AdminDeleteUserDialog } from "@/components/admin/admin-delete-user-dialog";
 import { UsersTableFilters } from "@/components/admin/users-table-filters";
-import { UserStatusActions } from "@/components/admin/user-status-actions";
 import { UsersTablePagination } from "@/components/admin/users-table-pagination";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -56,7 +53,7 @@ export default async function AdminPublishersPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const page = Math.max(1, parseInt(params.page ?? "1", 10));
 
-  const [{ data: publishers, meta }, { data: allPublishers }] = await Promise.all([
+  const [{ data: publishers, meta }, { data: allPublishers }, campaigns] = await Promise.all([
     listUsers({
       role: "PUBLISHER",
       search: params.q,
@@ -67,6 +64,7 @@ export default async function AdminPublishersPage({ searchParams }: PageProps) {
       limit: 20,
     }),
     listUsers({ role: "PUBLISHER", limit: 500 }),
+    listActiveCampaignsForSmartLinkAllowlist(),
   ]);
 
   const publisherIds = publishers.map((p) => p.id);
@@ -227,27 +225,14 @@ export default async function AdminPublishersPage({ searchParams }: PageProps) {
                       </TableCell>
                       <TableCell className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <AdminPublisherSpecialPayoutDialog
-                            publisherId={publisher.id}
-                            publisherName={publisher.name}
-                            settings={{
-                              useSpecialTierPayouts:
-                                publisher.publisherProfile?.useSpecialTierPayouts ?? false,
-                              tier1SpecialPayout:
-                                publisher.publisherProfile?.tier1SpecialPayout ?? null,
-                              tier2SpecialPayout:
-                                publisher.publisherProfile?.tier2SpecialPayout ?? null,
-                              tier3SpecialPayout:
-                                publisher.publisherProfile?.tier3SpecialPayout ?? null,
-                            }}
+                          <AdminLoginAsButton
+                            userId={publisher.id}
+                            userName={publisher.name}
+                            disabled={publisher.status !== "ACTIVE"}
                           />
-                          <AdminPublisherReviewDialog
+                          <PublisherActionsMenu
                             publisher={{
-                              id: publisher.id,
-                              name: publisher.name,
-                              email: publisher.email,
-                              status: publisher.status,
-                              createdAt: publisher.createdAt,
+                              ...publisher,
                               publisherProfile: publisher.publisherProfile
                                 ? {
                                     ...publisher.publisherProfile,
@@ -258,18 +243,8 @@ export default async function AdminPublishersPage({ searchParams }: PageProps) {
                                   }
                                 : publisher.publisherProfile,
                             }}
-                          />
-                          <AdminLoginAsButton
-                            userId={publisher.id}
-                            userName={publisher.name}
-                            disabled={publisher.status !== "ACTIVE"}
-                          />
-                          <UserStatusActions userId={publisher.id} currentStatus={publisher.status} />
-                          <AdminDeleteUserDialog
-                            userId={publisher.id}
-                            userName={publisher.name}
-                            role="PUBLISHER"
-                            disabledReason={deleteEligibility.reason}
+                            campaigns={campaigns}
+                            deleteDisabledReason={deleteEligibility.reason}
                           />
                         </div>
                       </TableCell>

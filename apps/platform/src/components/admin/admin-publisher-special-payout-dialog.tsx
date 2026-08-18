@@ -28,6 +28,8 @@ type AdminPublisherSpecialPayoutDialogProps = {
   publisherId: string;
   publisherName: string;
   settings: PublisherSpecialPayoutSettings;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 };
 
 const TIER_FIELDS = [
@@ -40,9 +42,16 @@ export function AdminPublisherSpecialPayoutDialog({
   publisherId,
   publisherName,
   settings,
+  open: openProp,
+  onOpenChange: onOpenChangeProp,
 }: AdminPublisherSpecialPayoutDialogProps) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
+  const [openInternal, setOpenInternal] = useState(false);
+  const open = openProp ?? openInternal;
+  function setOpen(next: boolean) {
+    setOpenInternal(next);
+    onOpenChangeProp?.(next);
+  }
   const [enabled, setEnabled] = useState(settings.useSpecialTierPayouts);
   const [tier1, setTier1] = useState(
     settings.tier1SpecialPayout != null ? String(settings.tier1SpecialPayout) : "",
@@ -120,14 +129,16 @@ export function AdminPublisherSpecialPayoutDialog({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger
-        render={
-          <Button variant="outline" size="sm" className="h-8 gap-1">
-            <DollarSign className="h-3.5 w-3.5" />
-            Special payout
-          </Button>
-        }
-      />
+      {openProp === undefined && (
+        <DialogTrigger
+          render={
+            <Button variant="outline" size="sm" className="h-8 gap-1">
+              <DollarSign className="h-3.5 w-3.5" />
+              Special payout
+            </Button>
+          }
+        />
+      )}
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Special payout — {publisherName}</DialogTitle>

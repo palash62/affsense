@@ -113,8 +113,10 @@ export async function listUsers(filters: {
             tier1SpecialPayout: true,
             tier2SpecialPayout: true,
             tier3SpecialPayout: true,
+            restrictSmartLinkCampaigns: true,
           },
         },
+        smartLinkCampaigns: { select: { campaignId: true } },
         wallet: { select: { balance: true, holdBalance: true } },
         _count: { select: { campaigns: true, leads: true, deposits: true, payouts: true } },
       },
@@ -139,6 +141,7 @@ export async function listUsers(filters: {
           ...serializePublisherSpecialTierPayouts(user.publisherProfile),
         }
       : user.publisherProfile,
+    allowedSmartLinkCampaignIds: user.smartLinkCampaigns?.map((r) => r.campaignId) ?? [],
   }));
 
   return { data: serialized, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
@@ -254,6 +257,7 @@ export async function getPublisherDetail(id: string) {
         },
       },
       _count: { select: { leads: true } },
+      smartLinkCampaigns: { select: { campaignId: true } },
     },
   });
 
@@ -276,6 +280,7 @@ export async function getPublisherDetail(id: string) {
           ...serializePublisherSpecialTierPayouts(profile),
         }
       : null,
+    allowedSmartLinkCampaignIds: user.smartLinkCampaigns.map((row) => row.campaignId),
   };
 }
 
@@ -330,6 +335,83 @@ export async function updatePublisherSpecialPayout(
   });
 
   return profile;
+}
+
+export async function listActiveCampaignsForSmartLinkAllowlist() {
+  return prisma.campaign.findMany({
+    where: { status: "ACTIVE" },
+    select: {
+      id: true,
+      name: true,
+      advertiser: { select: { name: true } },
+    },
+    orderBy: { name: "asc" },
+  });
+}
+
+export async function updatePublisherSmartLinkCampaigns(
+  userId: string,
+  input: {
+    restrictSmartLinkCampaigns: boolean;
+    campaignIds: string[];
+  },
+  adminId: string,
+) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId, role: "PUBLISHER" },
+    select: { id: true, publisherProfile: { select: { id: true } } },
+  });
+
+  if (!user?.publisherProfile) {
+    throw new AppError("NOT_FOUND", "Publisher profile not found", 404);
+  }
+
+  const uniqueIds = [...new Set(input.campaignIds.map((id) => id.trim()).filter(Boolean))];
+
+  if (input.restrictSmartLinkCampaigns) {
+    if (uniqueIds.length === 0) {
+      throw new AppError("VALIDATION_ERROR", "Select at least one campaign", 422);
+    }
+
+    const active = await prisma.campaign.findMany({
+      where: { id: { in: uniqueIds }, status: "ACTIVE" },
+      select: { id: true },
+    });
+    if (active.length !== uniqueIds.length) {
+      throw new AppError("VALIDATION_ERROR", "Select only active campaigns", 422);
+    }
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.publisherProfile.update({
+      where: { id: user.publisherProfile!.id },
+      data: { restrictSmartLinkCampaigns: input.restrictSmartLinkCampaigns },
+    });
+    await tx.publisherSmartLinkCampaign.deleteMany({ where: { publisherId: userId } });
+    if (input.restrictSmartLinkCampaigns && uniqueIds.length > 0) {
+      await tx.publisherSmartLinkCampaign.createMany({
+        data: uniqueIds.map((campaignId) => ({ publisherId: userId, campaignId })),
+      });
+    }
+  });
+
+  await prisma.auditLog.create({
+    data: {
+      actorId: adminId,
+      action: "publisher.smart_link_campaigns_updated",
+      entityType: "publisher",
+      entityId: userId,
+      metadata: {
+        restrictSmartLinkCampaigns: input.restrictSmartLinkCampaigns,
+        campaignCount: input.restrictSmartLinkCampaigns ? uniqueIds.length : 0,
+      },
+    },
+  });
+
+  return {
+    restrictSmartLinkCampaigns: input.restrictSmartLinkCampaigns,
+    campaignIds: input.restrictSmartLinkCampaigns ? uniqueIds : [],
+  };
 }
 
 export async function updateUserStatus(userId: string, status: UserStatus, adminId: string) {
