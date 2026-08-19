@@ -1,10 +1,5 @@
-import { PlaceholderPage } from "@/components/layout/placeholder-page";
+import { AdminAnnouncementsPage } from "@/components/admin/announcements/admin-announcements-page";
 
 export default function Page() {
-  return (
-    <PlaceholderPage
-      title="Announcements"
-      description="Content coming soon."
-    />
-  );
+  return <AdminAnnouncementsPage />;
 }

@@ -2,7 +2,7 @@ import {
   DashboardCard,
   DashboardCardTitle,
 } from "@/components/admin/affsense-dashboard/dashboard-card";
-import { HOW_IT_WORKS_STEPS } from "./mock-data";
+import { HOW_IT_WORKS_STEPS } from "./get-paid-task-types";
 
 export function TaskHowItWorksPanel() {
   return (
@@ -21,3 +21,4 @@ export function TaskHowItWorksPanel() {
     </DashboardCard>
   );
 }
+

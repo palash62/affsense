@@ -5,11 +5,9 @@ import {
   listDepositAdvertiserOptions,
   listPendingDeposits,
 } from "@/services/wallet.service";
-import { ArrowDownToLine, Clock, DollarSign, History, Wallet } from "lucide-react";
+import { Clock, DollarSign, History, Wallet } from "lucide-react";
 import { formatUserDateTime } from "@/lib/user-timezone";
 import { getSession } from "@/lib/session";
-import { PageHero } from "@/components/admin/page-hero";
-import { PageSection } from "@/components/admin/page-section";
 import { GradientStatCard, NeutralStatCard } from "@/components/admin/gradient-stat-card";
 import { DepositStatusBadge, formatCurrency } from "@/components/admin/admin-ui";
 import { AdminDepositReviewDialog } from "@/components/admin/admin-deposit-review-dialog";
@@ -60,14 +58,7 @@ export default async function AdminDepositsPage({ searchParams }: PageProps) {
   ]);
 
   return (
-    <div className="space-y-7">
-      <PageHero
-        eyebrow="Finance"
-        title="Deposits"
-        description="Approve Wise transfers and review full advertiser deposit history"
-        badge={pendingDeposits.length > 0 ? `${pendingDeposits.length} pending` : undefined}
-      />
-
+    <div className="space-y-5">
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <GradientStatCard
           variant="revenue"
@@ -84,153 +75,145 @@ export default async function AdminDepositsPage({ searchParams }: PageProps) {
         />
       </div>
 
-      {pendingDeposits.length > 0 && (
-        <PageSection
-          title="Pending Wise Deposits"
-          description="Credit card deposits are approved automatically"
-          icon={Wallet}
-          gradient="revenue"
-        >
-          <Table>
-            <TableHeader>
-              <TableRow
-                className="border-none hover:bg-transparent"
-                style={{ background: "var(--theme-primary-soft)" }}
-              >
-                <TableHead className="h-11 px-6 text-muted-foreground">Submitted</TableHead>
-                <TableHead className="h-11 px-4 text-muted-foreground">Advertiser</TableHead>
-                <TableHead className="h-11 px-4 text-right text-muted-foreground">Amount</TableHead>
-                <TableHead className="h-11 px-4 text-muted-foreground">Reference</TableHead>
-                <TableHead className="h-11 px-4 text-muted-foreground">Status</TableHead>
-                <TableHead className="h-11 px-6 text-right text-muted-foreground">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {pendingDeposits.map((deposit) => (
-                <TableRow key={deposit.id} className="border-border transition-colors hover:bg-blue-50/40">
-                  <TableCell className="px-6 py-4 text-sm text-muted-foreground">
-                    {formatUserDateTime(deposit.createdAt, tz, "MMM d, yyyy HH:mm")}
-                  </TableCell>
-                  <TableCell className="px-4 py-4">
-                    <p className="font-medium text-foreground">{deposit.user.name}</p>
-                    <p className="text-xs text-muted-foreground">{deposit.user.email}</p>
-                    {deposit.user.advertiserProfile?.company && (
-                      <p className="text-xs text-muted-foreground">{deposit.user.advertiserProfile.company}</p>
-                    )}
-                  </TableCell>
-                  <TableCell className="px-4 py-4 text-right">
-                    <span className="text-lg font-bold text-emerald-600">
-                      {formatCurrency(Number(deposit.amount))}
-                    </span>
-                  </TableCell>
-                  <TableCell className="px-4 py-4 font-mono text-xs text-muted-foreground">
-                    {deposit.wiseReference ?? "—"}
-                  </TableCell>
-                  <TableCell className="px-4 py-4">
-                    <DepositStatusBadge status={deposit.status} />
-                  </TableCell>
-                  <TableCell className="px-6 py-4 text-right">
-                    <AdminDepositReviewDialog deposit={depositDialogProps(deposit)} />
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </PageSection>
-      )}
-
-      <PageSection
-        title="Deposit History"
-        description="All advertiser deposits — filter by advertiser or date range"
-        icon={ArrowDownToLine}
-        gradient="revenue"
-        contentClassName="p-0"
-      >
-        <Suspense fallback={null}>
-          <AdminDepositsFilters advertisers={advertisers} />
-        </Suspense>
-
-        {history.data.length === 0 ? (
-          <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
-            <div
-              className="mb-4 flex h-14 w-14 items-center justify-center rounded-full"
-              style={{ background: "var(--theme-primary-soft)" }}
-            >
-              <History className="h-7 w-7 text-[var(--theme-primary)]" />
-            </div>
-            <h3 className="text-lg font-semibold text-foreground">No deposits found</h3>
-            <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-              Try adjusting the advertiser or date filters.
-            </p>
-          </div>
-        ) : (
-          <>
+      {pendingDeposits.length > 0 ? (
+        <div className="space-y-3">
+          <p className="text-sm font-medium text-foreground">
+            Pending Wise deposits
+            <span className="ml-2 font-normal text-muted-foreground">
+              Credit card deposits are approved automatically
+            </span>
+          </p>
+          <div className="overflow-hidden rounded-[var(--radius-card,0.875rem)] border border-border bg-card shadow-[var(--shadow-card)]">
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow
-                    className="border-none hover:bg-transparent"
-                    style={{ background: "var(--theme-primary-soft)" }}
-                  >
-                    <TableHead className="h-11 px-6 text-muted-foreground">Date</TableHead>
+                  <TableRow className="border-border hover:bg-transparent bg-muted/60">
+                    <TableHead className="h-11 px-6 text-muted-foreground">Submitted</TableHead>
                     <TableHead className="h-11 px-4 text-muted-foreground">Advertiser</TableHead>
                     <TableHead className="h-11 px-4 text-right text-muted-foreground">Amount</TableHead>
-                    <TableHead className="h-11 px-4 text-muted-foreground">Method</TableHead>
                     <TableHead className="h-11 px-4 text-muted-foreground">Reference</TableHead>
                     <TableHead className="h-11 px-4 text-muted-foreground">Status</TableHead>
                     <TableHead className="h-11 px-6 text-right text-muted-foreground">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {history.data.map((deposit) => (
-                    <TableRow key={deposit.id} className="border-border transition-colors hover:bg-blue-50/40">
+                  {pendingDeposits.map((deposit) => (
+                    <TableRow key={deposit.id} className="border-border transition-colors hover:bg-muted/40">
                       <TableCell className="px-6 py-4 text-sm text-muted-foreground">
                         {formatUserDateTime(deposit.createdAt, tz, "MMM d, yyyy HH:mm")}
                       </TableCell>
                       <TableCell className="px-4 py-4">
                         <p className="font-medium text-foreground">{deposit.user.name}</p>
                         <p className="text-xs text-muted-foreground">{deposit.user.email}</p>
-                        {deposit.user.advertiserProfile?.company && (
+                        {deposit.user.advertiserProfile?.company ? (
                           <p className="text-xs text-muted-foreground">{deposit.user.advertiserProfile.company}</p>
-                        )}
+                        ) : null}
                       </TableCell>
                       <TableCell className="px-4 py-4 text-right">
-                        <span className="font-semibold tabular-nums text-emerald-600">
+                        <span className="text-lg font-bold text-emerald-600">
                           {formatCurrency(Number(deposit.amount))}
                         </span>
                       </TableCell>
-                      <TableCell className="px-4 py-4 text-sm text-muted-foreground">
-                        {formatDepositMethod(deposit.method)}
-                      </TableCell>
                       <TableCell className="px-4 py-4 font-mono text-xs text-muted-foreground">
-                        {deposit.method === "WISE" ? (deposit.wiseReference ?? "—") : "—"}
+                        {deposit.wiseReference ?? "—"}
                       </TableCell>
                       <TableCell className="px-4 py-4">
                         <DepositStatusBadge status={deposit.status} />
                       </TableCell>
                       <TableCell className="px-6 py-4 text-right">
-                        {deposit.method === "WISE" ? (
-                          <AdminDepositReviewDialog deposit={depositDialogProps(deposit)} />
-                        ) : (
-                          <span className="text-xs text-muted-foreground">Auto-approved</span>
-                        )}
+                        <AdminDepositReviewDialog deposit={depositDialogProps(deposit)} />
                       </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
             </div>
+          </div>
+        </div>
+      ) : null}
 
-            <Suspense fallback={null}>
-              <UsersTablePagination
-                page={history.meta.page}
-                totalPages={history.meta.totalPages}
-                total={history.meta.total}
-              />
-            </Suspense>
-          </>
-        )}
-      </PageSection>
+      <div className="space-y-3">
+        <p className="text-sm text-muted-foreground">All advertiser deposits — filter by advertiser or date range</p>
+        <div className="overflow-hidden rounded-[var(--radius-card,0.875rem)] border border-border bg-card shadow-[var(--shadow-card)]">
+          <Suspense fallback={null}>
+            <AdminDepositsFilters advertisers={advertisers} />
+          </Suspense>
+
+          {history.data.length === 0 ? (
+            <div className="flex flex-col items-center justify-center border-t border-dashed border-border px-6 py-16 text-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--theme-primary-soft)]">
+                <History className="h-6 w-6 text-[var(--theme-primary)]" />
+              </div>
+              <h3 className="mt-4 text-base font-semibold text-foreground">No deposits found</h3>
+              <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+                Try adjusting the advertiser or date filters.
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-border hover:bg-transparent bg-muted/60">
+                      <TableHead className="h-11 px-6 text-muted-foreground">Date</TableHead>
+                      <TableHead className="h-11 px-4 text-muted-foreground">Advertiser</TableHead>
+                      <TableHead className="h-11 px-4 text-right text-muted-foreground">Amount</TableHead>
+                      <TableHead className="h-11 px-4 text-muted-foreground">Method</TableHead>
+                      <TableHead className="h-11 px-4 text-muted-foreground">Reference</TableHead>
+                      <TableHead className="h-11 px-4 text-muted-foreground">Status</TableHead>
+                      <TableHead className="h-11 px-6 text-right text-muted-foreground">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {history.data.map((deposit) => (
+                      <TableRow key={deposit.id} className="border-border transition-colors hover:bg-muted/40">
+                        <TableCell className="px-6 py-4 text-sm text-muted-foreground">
+                          {formatUserDateTime(deposit.createdAt, tz, "MMM d, yyyy HH:mm")}
+                        </TableCell>
+                        <TableCell className="px-4 py-4">
+                          <p className="font-medium text-foreground">{deposit.user.name}</p>
+                          <p className="text-xs text-muted-foreground">{deposit.user.email}</p>
+                          {deposit.user.advertiserProfile?.company ? (
+                            <p className="text-xs text-muted-foreground">{deposit.user.advertiserProfile.company}</p>
+                          ) : null}
+                        </TableCell>
+                        <TableCell className="px-4 py-4 text-right">
+                          <span className="font-semibold tabular-nums text-emerald-600">
+                            {formatCurrency(Number(deposit.amount))}
+                          </span>
+                        </TableCell>
+                        <TableCell className="px-4 py-4 text-sm text-muted-foreground">
+                          {formatDepositMethod(deposit.method)}
+                        </TableCell>
+                        <TableCell className="px-4 py-4 font-mono text-xs text-muted-foreground">
+                          {deposit.method === "WISE" ? (deposit.wiseReference ?? "—") : "—"}
+                        </TableCell>
+                        <TableCell className="px-4 py-4">
+                          <DepositStatusBadge status={deposit.status} />
+                        </TableCell>
+                        <TableCell className="px-6 py-4 text-right">
+                          {deposit.method === "WISE" ? (
+                            <AdminDepositReviewDialog deposit={depositDialogProps(deposit)} />
+                          ) : (
+                            <span className="text-xs text-muted-foreground">Auto-approved</span>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+              <Suspense fallback={null}>
+                <UsersTablePagination
+                  page={history.meta.page}
+                  totalPages={history.meta.totalPages}
+                  total={history.meta.total}
+                />
+              </Suspense>
+            </>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

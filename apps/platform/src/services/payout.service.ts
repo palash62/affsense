@@ -116,7 +116,7 @@ export async function requestPayout(
   void notifyAdminAlert({
     title: "New publisher payout request",
     message: `${payout.publisher.name} requested ${method} payout of $${amount.toFixed(2)}.`,
-    actionPath: "/admin/payouts",
+    actionPath: "/admin/payout-center",
     metadata: { payoutId: payout.id },
   });
 
@@ -180,7 +180,7 @@ export async function requestReferralPayout(
   void notifyAdminAlert({
     title: "New referral payout request",
     message: `${payout.publisher.name} requested referral ${method} payout of $${amount.toFixed(2)}.`,
-    actionPath: "/admin/payouts",
+    actionPath: "/admin/payout-center",
     metadata: { payoutId: payout.id },
   });
 

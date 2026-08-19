@@ -159,7 +159,7 @@ export function AdminWelcomeSummary({
             Review Leads
           </ButtonLink>
           <ButtonLink
-            href="/admin/payouts"
+            href="/admin/payout-center"
             variant="outline"
             className="rounded-xl border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-white"
           >

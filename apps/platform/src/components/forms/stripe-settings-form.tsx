@@ -28,11 +28,21 @@ export function StripeSettingsForm() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [loadError, setLoadError] = useState("");
+
+  function loadSettings() {
+    setLoadError("");
+    fetch("/api/v1/admin/payments/stripe")
+      .then(async (res) => {
+        if (!res.ok) throw new Error(`Failed to load Stripe settings (HTTP ${res.status})`);
+        const d = await res.json();
+        setSettings(d.data);
+      })
+      .catch((err) => setLoadError(err?.message ?? "Failed to load Stripe settings"));
+  }
 
   useEffect(() => {
-    fetch("/api/v1/admin/payments/stripe")
-      .then((r) => r.json())
-      .then((d) => setSettings(d.data));
+    loadSettings();
   }, []);
 
   async function save(e: React.FormEvent) {
@@ -65,6 +75,16 @@ export function StripeSettingsForm() {
   }
 
   if (!settings) {
+    if (loadError) {
+      return (
+        <div className="space-y-3">
+          <p className="text-sm text-red-600">{loadError}</p>
+          <Button variant="outline" size="sm" onClick={loadSettings}>
+            Retry
+          </Button>
+        </div>
+      );
+    }
     return <p className="text-sm text-muted-foreground">Loading Stripe settings...</p>;
   }
 

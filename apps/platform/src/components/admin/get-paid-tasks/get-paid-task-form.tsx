@@ -28,7 +28,7 @@ import {
   REQUIRED_ACTIONS,
   TASK_TYPES,
   type GetPaidTaskFormValues,
-} from "./mock-data";
+} from "./get-paid-task-types";
 import { SettingToggle } from "./setting-toggle";
 import { TaskDescriptionEditor } from "./task-description-editor";
 import { TaskGuidelinesPanel } from "./task-guidelines-panel";
@@ -426,3 +426,4 @@ function ReviewRow({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
+

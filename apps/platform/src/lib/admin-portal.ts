@@ -71,5 +71,19 @@ export function canAccessAdminPath(
     return true;
   }
 
+  // Legacy finance/support routes map to the new admin menu paths.
+  if (
+    access.includes("/admin/payouts") &&
+    (path === "/admin/payout-center" || path.startsWith("/admin/payout-center/"))
+  ) {
+    return true;
+  }
+  if (
+    access.includes("/admin/support") &&
+    (path === "/admin/support-tickets" || path.startsWith("/admin/support-tickets/"))
+  ) {
+    return true;
+  }
+
   return false;
 }

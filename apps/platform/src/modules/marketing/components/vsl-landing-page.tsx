@@ -14,12 +14,14 @@ import { ComparisonSection } from "./comparison-section";
 import { CtaSection } from "./cta-section";
 import { MarketingFooter } from "./marketing-footer";
 import { ReferralCapture } from "./referral-capture";
+import { PromotionAttributionCapture } from "./promotion-attribution-capture";
 
 export function VslLandingPage() {
   return (
     <div className="vslLanding">
       <Suspense fallback={null}>
         <ReferralCapture />
+        <PromotionAttributionCapture />
       </Suspense>
       <MarketingHeader />
       <MarketingHero />

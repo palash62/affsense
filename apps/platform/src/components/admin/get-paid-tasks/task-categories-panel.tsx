@@ -10,7 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import type { TaskCategoryItem } from "./mock-data";
+import type { TaskCategoryItem } from "./get-paid-task-types";
 
 export function TaskCategoriesPanel() {
   const [categories, setCategories] = useState<TaskCategoryItem[]>([]);
@@ -153,3 +153,4 @@ export function TaskCategoriesPanel() {
     </div>
   );
 }
+

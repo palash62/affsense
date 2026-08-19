@@ -3,7 +3,7 @@ import {
   DashboardCard,
   DashboardCardTitle,
 } from "@/components/admin/affsense-dashboard/dashboard-card";
-import { TASK_GUIDELINES } from "./mock-data";
+import { TASK_GUIDELINES } from "./get-paid-task-types";
 
 export function TaskGuidelinesPanel() {
   return (
@@ -20,3 +20,4 @@ export function TaskGuidelinesPanel() {
     </DashboardCard>
   );
 }
+

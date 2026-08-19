@@ -2,6 +2,18 @@ import { z } from "zod";
 import { strongPasswordSchema } from "@/lib/password-policy";
 import { parseYouTubeVideoId } from "@/lib/youtube";
 
+const signupAttributionSchema = z
+  .object({
+    utmSource: z.string().trim().max(120).optional(),
+    utmMedium: z.string().trim().max(120).optional().nullable(),
+    utmCampaign: z.string().trim().max(120).optional(),
+    utmContent: z.string().trim().max(120).optional().nullable(),
+    utmTerm: z.string().trim().max(120).optional().nullable(),
+    landingPath: z.string().trim().max(500).optional().nullable(),
+    landingUrl: z.string().trim().max(2000).optional().nullable(),
+  })
+  .optional();
+
 export const registerSchema = z
   .object({
     email: z.string().email(),
@@ -12,6 +24,7 @@ export const registerSchema = z
     country: z.string().min(2, "Select your country"),
     role: z.literal("ADVERTISER").default("ADVERTISER"),
     referralRef: z.string().optional(),
+    signupAttribution: signupAttributionSchema,
   })
   .refine((data) => !data.referralRef?.trim() || data.role === "ADVERTISER", {
     message: "Referral sign-up is for advertisers only.",
@@ -1277,3 +1290,41 @@ export const advertiserGlobalPostbackSchema = z.object({
   status: z.enum(["ACTIVE", "INACTIVE"]),
   endpoint: z.string().trim().max(20_000).optional().default(""),
 });
+
+export const promotionSchema = z.object({
+  name: z.string().trim().min(2, "Name must be at least 2 characters"),
+  utmSource: z.string().trim().min(1, "UTM source is required").max(120),
+  utmMedium: z.string().trim().max(120).optional().nullable(),
+  utmCampaign: z.string().trim().min(1, "UTM campaign is required").max(120),
+  utmContent: z.string().trim().max(120).optional().nullable(),
+  utmTerm: z.string().trim().max(120).optional().nullable(),
+  landingPath: z.string().trim().max(500).optional(),
+  isActive: z.boolean().optional(),
+});
+
+export const promotionUpdateSchema = promotionSchema.partial();
+
+export const promotionVisitSchema = z.object({
+  utmSource: z.string().trim().min(1).max(120),
+  utmMedium: z.string().trim().max(120).optional().nullable(),
+  utmCampaign: z.string().trim().min(1).max(120),
+  utmContent: z.string().trim().max(120).optional().nullable(),
+  utmTerm: z.string().trim().max(120).optional().nullable(),
+  landingPath: z.string().trim().max(500).optional().nullable(),
+  landingUrl: z.string().trim().max(2000).optional().nullable(),
+});
+
+export const announcementAudienceSchema = z.enum(["ADVERTISER", "PUBLISHER", "BOTH"]);
+export const announcementToneSchema = z.enum(["VIOLET", "EMERALD", "BLUE", "AMBER"]);
+export const announcementStatusSchema = z.enum(["DRAFT", "PUBLISHED"]);
+
+export const announcementSchema = z.object({
+  title: z.string().trim().min(2, "Title must be at least 2 characters").max(160),
+  body: z.string().trim().min(1, "Body is required").max(4000),
+  iconKey: z.string().trim().max(40).optional().nullable(),
+  audience: announcementAudienceSchema,
+  tone: announcementToneSchema,
+  status: announcementStatusSchema.optional(),
+});
+
+export const announcementUpdateSchema = announcementSchema.partial();

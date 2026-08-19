@@ -95,7 +95,7 @@ export async function createTicket(
     void notifyAdminAlert({
       title: "New support ticket",
       message: `${ticket.user.name} opened "${ticket.subject}" (${ticketCategory}).`,
-      actionPath: "/admin/support",
+      actionPath: "/admin/support-tickets",
       metadata: { ticketId: ticket.id },
     });
     return ticket;
@@ -181,7 +181,7 @@ export async function addTicketMessage(
       void notifyAdminAlert({
         title: "Support ticket reply",
         message: `${ticket.user.name} replied to "${ticket.subject}".`,
-        actionPath: "/admin/support",
+        actionPath: "/admin/support-tickets",
         metadata: { ticketId },
       });
     }

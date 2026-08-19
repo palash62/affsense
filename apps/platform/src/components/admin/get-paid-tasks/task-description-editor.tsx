@@ -7,7 +7,7 @@ import Underline from "@tiptap/extension-underline";
 import Link from "@tiptap/extension-link";
 import { Bold, Italic, Underline as UnderlineIcon, List, Link2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { DESCRIPTION_MAX } from "./mock-data";
+import { DESCRIPTION_MAX } from "./get-paid-task-types";
 
 type TaskDescriptionEditorProps = {
   value: string;
@@ -132,3 +132,4 @@ function ToolbarBtn({
     </button>
   );
 }
+

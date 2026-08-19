@@ -46,7 +46,10 @@ export function getPublisherPageMeta(
     "/publisher/reports/payouts": { title: "Payout Reports" },
     "/publisher/training": { title: "Training Center" },
     "/publisher/help": { title: "Help Center" },
-    "/publisher/announcements": { title: "Announcements" },
+    "/publisher/announcements": {
+      title: "Announcements",
+      subtitle: "Platform updates and news for affiliates",
+    },
     "/publisher/old-menu": { title: "Old Menu" },
     "/publisher/old-dashboard": { title: "Old Dashboard" },
     "/publisher/smart-link": { title: "Smart Link" },

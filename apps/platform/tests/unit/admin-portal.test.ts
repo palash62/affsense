@@ -53,21 +53,40 @@ describe("admin portal roles", () => {
     );
   });
 
+  it("grants managers payout-center and support-tickets when legacy menus are assigned", () => {
+    const payoutMenus = ["/admin/payouts"];
+    expect(canAccessAdminPath("/admin/payout-center", "PLATFORM_MANAGER", payoutMenus)).toBe(true);
+    expect(canAccessAdminPath("/admin/payouts", "PLATFORM_MANAGER", payoutMenus)).toBe(true);
+
+    const supportMenus = ["/admin/support"];
+    expect(canAccessAdminPath("/admin/support-tickets", "PLATFORM_MANAGER", supportMenus)).toBe(true);
+    expect(canAccessAdminPath("/admin/support", "PLATFORM_MANAGER", supportMenus)).toBe(true);
+  });
+
   it("filters PLATFORM_MANAGER nav to granted menus and excludes Users", () => {
     const nav = getNavForRole("PLATFORM_MANAGER", {
-      staffMenuAccess: ["/admin/leads", "/admin/support"],
+      staffMenuAccess: ["/admin/leads", "/admin/reports"],
     });
-    const hrefs = nav.map((item) => item.href);
+    const hrefs = nav.flatMap((entry) => {
+      if (entry.kind === "item") {
+        return [entry.item.href, ...(entry.item.children?.map((child) => child.href) ?? [])];
+      }
+      return [];
+    });
     expect(hrefs).toContain("/admin");
     expect(hrefs).toContain("/admin/leads");
-    expect(hrefs).toContain("/admin/support");
+    expect(hrefs).toContain("/admin/reports");
     expect(hrefs).not.toContain("/admin/users");
     expect(hrefs).not.toContain("/admin/profit");
   });
 
-  it("keeps full admin nav including Users", () => {
-    const hrefs = getNavForRole("ADMIN").map((item) => item.href);
-    expect(hrefs).toContain("/admin/users");
-    expect(hrefs).toContain("/admin/advertisers");
+  it("keeps full admin nav including finance items", () => {
+    const hrefs = getNavForRole("ADMIN").flatMap((entry) =>
+      entry.kind === "item" ? [entry.item.href] : [],
+    );
+    expect(hrefs).toContain("/admin/wallets");
+    expect(hrefs).toContain("/admin/deposits");
+    expect(hrefs).toContain("/admin/payout-center");
+    expect(hrefs).toContain("/admin/support-tickets");
   });
 });

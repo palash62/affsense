@@ -120,27 +120,57 @@ export function getAdminPageMeta(
     };
   }
 
+  if (path === "/admin/wallets") {
+    return {
+      title: "Wallets",
+      subtitle: "View wallet balances across all users",
+    };
+  }
+
+  if (path === "/admin/deposits") {
+    return {
+      title: "Deposits",
+      subtitle: "Approve Wise transfers and review full advertiser deposit history",
+    };
+  }
+
+  if (path === "/admin/payout-center") {
+    return {
+      title: "Payouts",
+      subtitle: "Approve publisher and referral withdrawals and review payout history",
+    };
+  }
+
+  if (path === "/admin/support-tickets") {
+    return {
+      title: "Support Tickets",
+      subtitle: "Review and respond to user support requests",
+    };
+  }
+
+  if (path === "/admin/promotions") {
+    return {
+      title: "Promotion",
+      subtitle:
+        "Create tracked UTM links and measure clicks, visits, advertiser signups, and deposit revenue",
+    };
+  }
+
+  if (path === "/admin/announcements") {
+    return {
+      title: "Announcements",
+      subtitle: "Post updates that appear on advertiser and affiliate dashboards.",
+    };
+  }
+
   const exact: Record<string, string> = {
     "/admin/user-directory": "Users",
-    "/admin/memberships": "Memberships",
-    "/admin/kyc": "KYC Verification",
-    "/admin/orders-sales": "Orders & Sales",
     "/admin/commissions": "Commissions",
-    "/admin/payout-center": "Payouts",
     "/admin/tasks": "Tasks (Quick Earn)",
     "/admin/referral-program": "Referrals",
-    "/admin/withdrawals": "Withdrawals",
-    "/admin/support-tickets": "Support Tickets",
-    "/admin/promotions": "Promotions",
     "/admin/email-campaigns": "Email Campaigns",
-    "/admin/announcements": "Announcements",
     "/admin/banners": "Banners",
-    "/admin/blog-posts": "Blog Posts",
-    "/admin/content-pages": "Pages",
-    "/admin/media-library": "Media Library",
     "/admin/general-settings": "General Settings",
-    "/admin/payment-settings": "Payment Settings",
-    "/admin/security": "Security",
     "/admin/system-logs": "System Logs",
     "/admin/old-menu": "Old Menu",
     "/admin/old-dashboard": "Old Dashboard",

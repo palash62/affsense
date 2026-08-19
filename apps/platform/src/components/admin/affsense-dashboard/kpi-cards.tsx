@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import {
-  ArrowUpRight,
   ChartNoAxesCombined,
   DollarSign,
+  FileText,
   ShoppingCart,
   UserPlus,
   Users,
@@ -12,7 +12,9 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DashboardCard } from "./dashboard-card";
-import { affsenseKpis, type KpiAccent } from "./mock-data";
+import type { AdminDashboardStats } from "@/services/admin.service";
+
+type KpiAccent = "blue" | "emerald" | "sky" | "amber" | "rose" | "violet";
 
 const accentStyles: Record<KpiAccent, { chip: string; icon: string }> = {
   blue: { chip: "bg-[var(--theme-primary-soft)]", icon: "text-[var(--theme-primary)]" },
@@ -23,20 +25,79 @@ const accentStyles: Record<KpiAccent, { chip: string; icon: string }> = {
   violet: { chip: "bg-[color-mix(in_srgb,var(--theme-accent-purple,#713BFF)_12%,white)]", icon: "text-[var(--theme-accent-purple,#713BFF)]" },
 };
 
-const icons = {
-  "total-users": Users,
-  "active-users": UserPlus,
-  "total-revenue": DollarSign,
-  "total-payouts": Wallet,
-  "total-sales": ShoppingCart,
-  "conversion-rate": ChartNoAxesCombined,
-} as const;
+function fmt(n: number, currency = false) {
+  if (currency) {
+    return n === 0 ? "$0.00" : `$${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  }
+  return n.toLocaleString("en-US");
+}
 
-export function KpiCards() {
+function convRate(approved: number, total: number) {
+  if (total === 0) return "0%";
+  return `${((approved / total) * 100).toFixed(1)}%`;
+}
+
+export function KpiCards({ stats }: { stats: AdminDashboardStats }) {
+  const kpis = [
+    {
+      id: "total-users",
+      label: "Total Users",
+      value: fmt(stats.totalUsers),
+      viewLabel: "View users",
+      viewHref: "/admin/publishers",
+      accent: "blue" as KpiAccent,
+      Icon: Users,
+    },
+    {
+      id: "active-users",
+      label: "Active Users",
+      value: fmt(stats.activeUsers),
+      viewLabel: "View active",
+      viewHref: "/admin/publishers",
+      accent: "emerald" as KpiAccent,
+      Icon: UserPlus,
+    },
+    {
+      id: "total-revenue",
+      label: "Total Revenue",
+      value: fmt(stats.totalRevenue, true),
+      viewLabel: "View deposits",
+      viewHref: "/admin/deposits",
+      accent: "sky" as KpiAccent,
+      Icon: DollarSign,
+    },
+    {
+      id: "total-payouts",
+      label: "Total Payouts",
+      value: fmt(stats.totalPayouts, true),
+      viewLabel: "View payouts",
+      viewHref: "/admin/payout-center",
+      accent: "amber" as KpiAccent,
+      Icon: Wallet,
+    },
+    {
+      id: "total-leads",
+      label: "Total Leads",
+      value: fmt(stats.totalLeads),
+      viewLabel: "View leads",
+      viewHref: "/admin/commissions",
+      accent: "rose" as KpiAccent,
+      Icon: FileText,
+    },
+    {
+      id: "conversion-rate",
+      label: "Conversion Rate",
+      value: convRate(stats.approvedLeads, stats.totalLeads),
+      viewLabel: "View reports",
+      viewHref: "/admin/reports",
+      accent: "violet" as KpiAccent,
+      Icon: ChartNoAxesCombined,
+    },
+  ];
+
   return (
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
-      {affsenseKpis.map((kpi) => {
-        const Icon = icons[kpi.id as keyof typeof icons] ?? Users;
+      {kpis.map((kpi) => {
         const styles = accentStyles[kpi.accent];
         return (
           <DashboardCard
@@ -50,18 +111,14 @@ export function KpiCards() {
                   styles.chip,
                 )}
               >
-                <Icon className={cn("h-5 w-5", styles.icon)} />
+                <kpi.Icon className={cn("h-5 w-5", styles.icon)} />
               </div>
-              <span className="inline-flex items-center gap-0.5 rounded-full bg-[color-mix(in_srgb,var(--theme-success)_12%,white)] px-2 py-0.5 text-xs font-semibold text-[var(--theme-success)]">
-                <ArrowUpRight className="h-3 w-3" />
-                {kpi.delta}
-              </span>
             </div>
             <p className="mt-3 text-sm font-medium text-muted-foreground">{kpi.label}</p>
             <p className="mt-1 text-2xl font-bold tracking-tight text-foreground">
               {kpi.value}
             </p>
-            <p className="mt-0.5 text-xs text-muted-foreground">vs last 7 days</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">all time</p>
             <Link
               href={kpi.viewHref}
               className="mt-3 text-sm font-medium text-[var(--theme-primary)] hover:underline"

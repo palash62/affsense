@@ -11,7 +11,7 @@ import { DigitalProductsFilters } from "./digital-products-filters";
 import {
   filterDigitalProducts,
   type DigitalProductListItem,
-} from "./mock-data";
+} from "./digital-product-types";
 
 function DigitalProductsListInner() {
   const searchParams = useSearchParams();

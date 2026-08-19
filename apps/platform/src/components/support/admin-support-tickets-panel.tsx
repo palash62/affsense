@@ -7,14 +7,12 @@ import {
   ChevronDown,
   ChevronRight,
   Clock,
-  LifeBuoy,
   MessageSquare,
   Ticket,
   Users,
   XCircle,
 } from "lucide-react";
 import { GradientStatCard, NeutralStatCard } from "@/components/admin/gradient-stat-card";
-import { PageSection } from "@/components/admin/page-section";
 import { avatarColors, getInitials } from "@/components/admin/admin-ui";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -150,7 +148,7 @@ export function AdminSupportTicketsPanel() {
   }
 
   return (
-    <div className="space-y-7">
+    <div className="space-y-5">
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <GradientStatCard variant="leads" label="All Tickets" value={stats.total} icon={Ticket} />
         <NeutralStatCard label="Open" value={stats.open} icon={MessageSquare} accent="orange" />
@@ -158,19 +156,11 @@ export function AdminSupportTicketsPanel() {
         <NeutralStatCard label="Closed" value={stats.closed} icon={XCircle} accent="green" />
       </div>
 
-      <PageSection
-        title="All Tickets"
-        description="Review conversations and send admin replies to users"
-        icon={LifeBuoy}
-        gradient="approved"
-      >
+      <div className="overflow-hidden rounded-[var(--radius-card,0.875rem)] border border-border bg-card shadow-[var(--shadow-card)]">
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
-              <TableRow
-                className="border-none hover:bg-transparent"
-                style={{ background: "var(--theme-primary-soft)" }}
-              >
+              <TableRow className="border-border hover:bg-transparent bg-muted/60">
                 <TableHead className="h-11 w-10 px-4" />
                 <TableHead className="h-11 px-4 text-muted-foreground">User</TableHead>
                 <TableHead className="h-11 px-4 text-muted-foreground">Subject</TableHead>
@@ -195,7 +185,7 @@ export function AdminSupportTicketsPanel() {
                   return (
                     <Fragment key={ticket.id}>
                       <TableRow
-                        className="cursor-pointer border-border transition-colors hover:bg-blue-50/40"
+                        className="cursor-pointer border-border transition-colors hover:bg-muted/40"
                         onClick={() => toggleExpand(ticket.id)}
                       >
                         <TableCell className="px-4 py-4">
@@ -326,7 +316,7 @@ export function AdminSupportTicketsPanel() {
             </TableBody>
           </Table>
         </div>
-      </PageSection>
+      </div>
     </div>
   );
 }

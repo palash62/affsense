@@ -26,6 +26,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { ButtonLink } from "@/components/ui/button-link";
 import { cn } from "@/lib/utils";
+import { AnnouncementsFeed } from "@/components/announcements/announcements-feed";
 
 export type AffsensePublisherDashboardData = {
   period: string;
@@ -63,6 +64,7 @@ export type AffsensePublisherDashboardData = {
     title: string;
     body: string;
     iconKey: string | null;
+    tone: "VIOLET" | "EMERALD" | "BLUE" | "AMBER";
     publishedAt: string;
   }>;
   recentReports: Array<{
@@ -286,14 +288,22 @@ export function AffsensePublisherDashboard({ data }: { data: AffsensePublisherDa
         </div>
         <div className="xl:col-span-4">
           <DashboardCard className="h-full p-5">
-            <DashboardCardTitle>Announcements</DashboardCardTitle>
-            <div className="mt-4 space-y-3">
-              {data.announcements.map((a) => (
-                <div key={a.id} className="rounded-lg border border-border bg-muted/20 p-3">
-                  <p className="text-sm font-semibold text-foreground">{a.title}</p>
-                  <p className="mt-1 text-xs text-muted-foreground line-clamp-2">{a.body}</p>
-                </div>
-              ))}
+            <div className="flex items-start justify-between gap-2">
+              <DashboardCardTitle>Announcements</DashboardCardTitle>
+              <ButtonLink
+                href="/publisher/announcements"
+                variant="ghost"
+                size="sm"
+                className="h-8 text-xs text-muted-foreground"
+              >
+                View all
+              </ButtonLink>
+            </div>
+            <div className="mt-4">
+              <AnnouncementsFeed
+                items={data.announcements}
+                emptyLabel="No announcements right now."
+              />
             </div>
           </DashboardCard>
         </div>

@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/components/providers/theme-provider";
 import { PublicPageTrackingScripts } from "@/components/tracking/public-page-tracking-scripts";
 import { PlatformPixelRouteTracker } from "@/components/tracking/platform-pixel-route-tracker";
 import { getSession } from "@/lib/session";
+import { DEFAULT_THEME } from "@/lib/themes";
 import { getPublicPlatformPixelConfig } from "@/services/platform-pixel-settings.service";
 import "./globals.css";
 
@@ -36,7 +37,7 @@ export default async function RootLayout({
   const hasTracking = Boolean(pixelConfig.meta || pixelConfig.googleAds);
 
   return (
-    <html lang="en" className={inter.variable} data-theme="slate-pro" suppressHydrationWarning>
+    <html lang="en" className={inter.variable} data-theme={DEFAULT_THEME} suppressHydrationWarning>
       <body className="bg-background font-sans antialiased">
         {hasTracking ? <PublicPageTrackingScripts config={pixelConfig} /> : null}
         {pixelConfig.meta ? <PlatformPixelRouteTracker /> : null}

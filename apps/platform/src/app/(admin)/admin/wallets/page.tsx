@@ -1,8 +1,6 @@
 import { Suspense } from "react";
 import { prisma } from "@/lib/prisma";
 import { DollarSign, TrendingUp, Users, Wallet } from "lucide-react";
-import { PageHero } from "@/components/admin/page-hero";
-import { PageSection } from "@/components/admin/page-section";
 import { GradientStatCard, NeutralStatCard } from "@/components/admin/gradient-stat-card";
 import { UsersTablePagination } from "@/components/admin/users-table-pagination";
 import { avatarColors, formatCurrency, getInitials } from "@/components/admin/admin-ui";
@@ -59,14 +57,7 @@ export default async function AdminWalletsPage({ searchParams }: PageProps) {
   });
 
   return (
-    <div className="space-y-7">
-      <PageHero
-        eyebrow="Finance"
-        title="Wallets"
-        description="View wallet balances across all users"
-        badge={`${total} wallet${total === 1 ? "" : "s"}`}
-      />
-
+    <div className="space-y-5">
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <GradientStatCard
           variant="revenue"
@@ -88,17 +79,28 @@ export default async function AdminWalletsPage({ searchParams }: PageProps) {
         />
       </div>
 
-      <PageSection title="All Wallets" description="Balances by user account" icon={Wallet} gradient="revenue">
-        {total === 0 ? (
-          <div className="px-6 py-16 text-center text-muted-foreground">No wallets found</div>
-        ) : (
-          <>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-muted-foreground">
+          {total} wallet{total === 1 ? "" : "s"} · balances by user account
+        </p>
+      </div>
+
+      {total === 0 ? (
+        <div className="flex flex-col items-center justify-center rounded-[var(--radius-card,0.875rem)] border border-dashed border-border bg-card px-6 py-16 text-center shadow-[var(--shadow-card)]">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--theme-primary-soft)]">
+            <Wallet className="h-6 w-6 text-[var(--theme-primary)]" />
+          </div>
+          <h3 className="mt-4 text-base font-semibold text-foreground">No wallets found</h3>
+          <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+            Wallet balances will appear here once users have active accounts.
+          </p>
+        </div>
+      ) : (
+        <div className="overflow-hidden rounded-[var(--radius-card,0.875rem)] border border-border bg-card shadow-[var(--shadow-card)]">
+          <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow
-                  className="border-none hover:bg-transparent"
-                  style={{ background: "var(--theme-primary-soft)" }}
-                >
+                <TableRow className="border-border hover:bg-transparent bg-muted/60">
                   <TableHead className="h-11 px-6 text-muted-foreground">User</TableHead>
                   <TableHead className="h-11 px-4 text-muted-foreground">Role</TableHead>
                   <TableHead className="h-11 px-4 text-right text-muted-foreground">Balance</TableHead>
@@ -108,7 +110,7 @@ export default async function AdminWalletsPage({ searchParams }: PageProps) {
                 {wallets.map((w, index) => (
                   <TableRow
                     key={w.id}
-                    className="border-border transition-colors hover:bg-blue-50/40"
+                    className="border-border transition-colors hover:bg-muted/40"
                   >
                     <TableCell className="px-6 py-4">
                       <div className="flex items-center gap-3">
@@ -150,13 +152,12 @@ export default async function AdminWalletsPage({ searchParams }: PageProps) {
                 ))}
               </TableBody>
             </Table>
-
-            <Suspense fallback={null}>
-              <UsersTablePagination page={page} totalPages={totalPages} total={total} />
-            </Suspense>
-          </>
-        )}
-      </PageSection>
+          </div>
+          <Suspense fallback={null}>
+            <UsersTablePagination page={page} totalPages={totalPages} total={total} />
+          </Suspense>
+        </div>
+      )}
     </div>
   );
 }

@@ -2,6 +2,8 @@ import { isAdminPortalRole } from "@/lib/admin-portal";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { AffsenseAdminDashboard } from "@/components/admin/affsense-dashboard/affsense-admin-dashboard";
+import { listPublishedAnnouncements } from "@/services/announcement.service";
+import { getAdminDashboardStats } from "@/services/admin.service";
 
 export default async function AdminDashboardPage() {
   const session = await getSession();
@@ -9,5 +11,10 @@ export default async function AdminDashboardPage() {
     redirect("/login");
   }
 
-  return <AffsenseAdminDashboard />;
+  const [announcements, stats] = await Promise.all([
+    listPublishedAnnouncements("ALL", 6),
+    getAdminDashboardStats(),
+  ]);
+
+  return <AffsenseAdminDashboard announcements={announcements} stats={stats} />;
 }

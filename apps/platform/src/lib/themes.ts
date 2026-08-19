@@ -8,7 +8,7 @@ export const THEME_IDS = [
 
 export type ThemeId = (typeof THEME_IDS)[number];
 
-export const DEFAULT_THEME: ThemeId = "slate-pro";
+export const DEFAULT_THEME: ThemeId = "marketing-saas";
 
 export const THEME_STORAGE_KEY = "cpl-theme";
 

@@ -1,10 +1,5 @@
-import { PlaceholderPage } from "@/components/layout/placeholder-page";
+import { AdminSupportTicketsPanel } from "@/components/support/admin-support-tickets-panel";
 
-export default function Page() {
-  return (
-    <PlaceholderPage
-      title="Support Tickets"
-      description="Content coming soon."
-    />
-  );
+export default function AdminSupportTicketsPage() {
+  return <AdminSupportTicketsPanel />;
 }

@@ -120,6 +120,11 @@ enum PayoutKind {
   CPA
 }
 
+enum PromotionEventType {
+  CLICK
+  VISIT
+}
+
 enum CpaEarningStatus {
   PENDING
   AVAILABLE
@@ -253,6 +258,13 @@ model User {
   phone         String?
   country       String?
   staffMenuAccess Json?    @map("staff_menu_access")
+  signupUtmSource String?  @map("signup_utm_source")
+  signupUtmMedium String?  @map("signup_utm_medium")
+  signupUtmCampaign String? @map("signup_utm_campaign")
+  signupUtmContent String? @map("signup_utm_content")
+  signupUtmTerm   String?  @map("signup_utm_term")
+  signupLandingUrl String? @map("signup_landing_url") @db.Text
+  promotionId     String?  @map("promotion_id")
   createdAt     DateTime   @default(now()) @map("created_at")
   updatedAt     DateTime   @updatedAt @map("updated_at")
 
@@ -305,10 +317,13 @@ model User {
   cpaEarnings              CpaEarning[]
   emailWallet              EmailWallet?
   publisherTaskSubmissions PublisherTaskSubmission[]
+  promotion              Promotion? @relation(fields: [promotionId], references: [id], onDelete: SetNull)
+  createdPromotions      Promotion[] @relation("PromotionCreatedBy")
 
   @@index([role])
   @@index([status])
   @@index([referredById])
+  @@index([promotionId])
   @@map("users")
 }
 
@@ -1620,6 +1635,19 @@ enum PublisherAnnouncementStatus {
   PUBLISHED
 }
 
+enum AnnouncementAudience {
+  ADVERTISER
+  PUBLISHER
+  BOTH
+}
+
+enum AnnouncementTone {
+  VIOLET
+  EMERALD
+  BLUE
+  AMBER
+}
+
 enum PublisherTaskSubmissionStatus {
   PENDING
   APPROVED
@@ -1717,12 +1745,15 @@ model PublisherAnnouncement {
   title       String
   body        String                      @db.Text
   iconKey     String?                     @map("icon_key")
+  audience    AnnouncementAudience        @default(PUBLISHER)
+  tone        AnnouncementTone            @default(BLUE)
   status      PublisherAnnouncementStatus @default(DRAFT)
   publishedAt DateTime?                   @map("published_at")
   createdAt   DateTime                    @default(now()) @map("created_at")
   updatedAt   DateTime                    @updatedAt @map("updated_at")
 
   @@index([status, publishedAt])
+  @@index([status, audience, publishedAt])
   @@map("publisher_announcements")
 }
 
@@ -1741,4 +1772,51 @@ model PublisherTaskSubmission {
   @@index([publisherId, status])
   @@index([taskId])
   @@map("publisher_task_submissions")
+}
+
+model Promotion {
+  id           String   @id @default(cuid())
+  name         String
+  utmSource    String   @map("utm_source")
+  utmMedium    String?  @map("utm_medium")
+  utmCampaign  String   @map("utm_campaign")
+  utmContent   String?  @map("utm_content")
+  utmTerm      String?  @map("utm_term")
+  landingPath  String   @default("/") @map("landing_path")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdById  String?  @map("created_by_id")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  createdBy User?            @relation("PromotionCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  signups   User[]
+  events    PromotionEvent[]
+
+  @@index([utmSource, utmMedium, utmCampaign])
+  @@index([isActive, createdAt])
+  @@map("promotions")
+}
+
+model PromotionEvent {
+  id           String             @id @default(cuid())
+  promotionId  String?            @map("promotion_id")
+  eventType    PromotionEventType @map("event_type")
+  utmSource    String?            @map("utm_source")
+  utmMedium    String?            @map("utm_medium")
+  utmCampaign  String?            @map("utm_campaign")
+  utmContent   String?            @map("utm_content")
+  utmTerm      String?            @map("utm_term")
+  landingPath  String?            @map("landing_path")
+  landingUrl   String?            @map("landing_url") @db.Text
+  ip           String?
+  userAgent    String?            @map("user_agent") @db.Text
+  referrer     String?            @db.Text
+  visitorKey   String?            @map("visitor_key")
+  createdAt    DateTime           @default(now()) @map("created_at")
+
+  promotion Promotion? @relation(fields: [promotionId], references: [id], onDelete: SetNull)
+
+  @@index([promotionId, eventType, createdAt])
+  @@index([visitorKey, promotionId, eventType, createdAt])
+  @@map("promotion_events")
 }

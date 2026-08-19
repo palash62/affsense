@@ -43,7 +43,7 @@ const actions = [
   {
     label: "Review Withdrawals",
     description: "Process publisher payout requests",
-    href: "/admin/payouts",
+    href: "/admin/payout-center",
     icon: Wallet,
     iconBg: "bg-cyan-50 text-cyan-600",
   },
@@ -57,7 +57,7 @@ const actions = [
   {
     label: "Support Tickets",
     description: "Respond to customer issues",
-    href: "/admin/support",
+    href: "/admin/support-tickets",
     icon: LifeBuoy,
     iconBg: "bg-rose-50 text-rose-600",
   },

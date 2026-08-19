@@ -28,23 +28,15 @@ import {
   Store,
   Webhook,
   UserCog,
-  CreditCard,
-  ShieldCheck,
   Package,
-  ShoppingCart,
   Percent,
   ListTodo,
   ClipboardList,
   Plus,
   Tags,
-  HandCoins,
   Bell,
   Building2,
   Image,
-  Files,
-  Images,
-  Landmark,
-  Lock,
   Ticket,
   Share2,
   ShoppingBag,
@@ -88,11 +80,7 @@ export const ADMIN_LEGACY_NAV: NavItem[] = [
   },
   { label: "Leads", href: "/admin/leads", icon: FileText },
   { label: "Fraud Center", href: "/admin/fraud", icon: ShieldAlert },
-  { label: "Wallets", href: "/admin/wallets", icon: Wallet },
-  { label: "Deposits", href: "/admin/deposits", icon: ArrowDownToLine },
-  { label: "Payouts", href: "/admin/payouts", icon: Banknote },
   { label: "Reports", href: "/admin/reports", icon: BarChart3 },
-  { label: "Support", href: "/admin/support", icon: LifeBuoy },
   { label: "Audit Log", href: "/admin/audit-log", icon: ScrollText },
   { label: "Themes", href: "/admin/themes", icon: Palette },
   { label: "Funnel Templates", href: "/admin/funnel-templates", icon: FileStack },
@@ -115,8 +103,6 @@ export const ADMIN_NAV: AdminNavEntry[] = [
       ],
     },
   },
-  { kind: "item", item: { label: "Memberships", href: "/admin/memberships", icon: CreditCard } },
-  { kind: "item", item: { label: "KYC Verification", href: "/admin/kyc", icon: ShieldCheck } },
   {
     kind: "item",
     item: {
@@ -146,10 +132,6 @@ export const ADMIN_NAV: AdminNavEntry[] = [
   { kind: "item", item: { label: "CPA Offers", href: "/admin/offer-network", icon: Store } },
   {
     kind: "item",
-    item: { label: "Orders & Sales", href: "/admin/orders-sales", icon: ShoppingCart },
-  },
-  {
-    kind: "item",
     item: {
       label: "Commissions",
       href: "/admin/commissions",
@@ -160,11 +142,9 @@ export const ADMIN_NAV: AdminNavEntry[] = [
       ],
     },
   },
+  { kind: "item", item: { label: "Wallets", href: "/admin/wallets", icon: Wallet } },
+  { kind: "item", item: { label: "Deposits", href: "/admin/deposits", icon: ArrowDownToLine } },
   { kind: "item", item: { label: "Payouts", href: "/admin/payout-center", icon: Wallet } },
-  {
-    kind: "item",
-    item: { label: "Withdrawals", href: "/admin/withdrawals", icon: HandCoins },
-  },
   {
     kind: "item",
     item: { label: "Support Tickets", href: "/admin/support-tickets", icon: Ticket },
@@ -182,24 +162,11 @@ export const ADMIN_NAV: AdminNavEntry[] = [
   },
   { kind: "item", item: { label: "Banners", href: "/admin/banners", icon: Image } },
 
-  { kind: "section", label: "CONTENT" },
-  { kind: "item", item: { label: "Blog Posts", href: "/admin/blog-posts", icon: FileText } },
-  { kind: "item", item: { label: "Pages", href: "/admin/content-pages", icon: Files } },
-  {
-    kind: "item",
-    item: { label: "Media Library", href: "/admin/media-library", icon: Images },
-  },
-
   { kind: "section", label: "SETTINGS" },
   {
     kind: "item",
     item: { label: "Platform Settings", href: "/admin/settings", icon: Settings },
   },
-  {
-    kind: "item",
-    item: { label: "Payment Settings", href: "/admin/payment-settings", icon: Landmark },
-  },
-  { kind: "item", item: { label: "Security", href: "/admin/security", icon: Lock } },
   {
     kind: "item",
     item: { label: "System Logs", href: "/admin/system-logs", icon: ScrollText },

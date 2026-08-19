@@ -1502,3 +1502,158 @@ export async function sendAdminBulkEmailTest(input: {
 
   return { sent: true, to: input.to };
 }
+
+// ---------------------------------------------------------------------------
+// Admin Dashboard Stats
+// ---------------------------------------------------------------------------
+
+export type AdminRevenuePoint = {
+  date: string;
+  label: string;
+  revenue: number;
+};
+
+export type AdminDepositRow = {
+  id: string;
+  userName: string;
+  userEmail: string;
+  amount: number;
+  method: string;
+  status: string;
+  createdAt: string;
+};
+
+export type AdminSignupRow = {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  createdAt: string;
+};
+
+export type AdminPayoutRow = {
+  id: string;
+  publisherName: string;
+  publisherEmail: string;
+  amount: number;
+  method: string;
+  status: string;
+  createdAt: string;
+};
+
+export type AdminDashboardStats = {
+  totalUsers: number;
+  activeUsers: number;
+  totalRevenue: number;
+  totalPayouts: number;
+  totalLeads: number;
+  approvedLeads: number;
+  recentSignups: AdminSignupRow[];
+  recentDeposits: AdminDepositRow[];
+  pendingPayouts: AdminPayoutRow[];
+  revenueSeries: AdminRevenuePoint[];
+};
+
+export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
+  const [
+    totalUsers,
+    activeUsers,
+    totalLeads,
+    approvedLeads,
+    revenueAgg,
+    payoutsAgg,
+    recentSignupsRaw,
+    recentDepositsRaw,
+    pendingPayoutsRaw,
+    revenueSeriesRaw,
+  ] = await Promise.all([
+    prisma.user.count(),
+    prisma.user.count({ where: { status: "ACTIVE" } }),
+    prisma.lead.count(),
+    prisma.lead.count({ where: { status: "APPROVED" } }),
+    prisma.deposit.aggregate({
+      _sum: { amount: true },
+      where: { status: "COMPLETED" },
+    }),
+    prisma.payout.aggregate({
+      _sum: { amount: true },
+      where: { status: { in: ["PROCESSING", "COMPLETED"] } },
+    }),
+    prisma.user.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 5,
+      select: { id: true, name: true, email: true, role: true, createdAt: true },
+    }),
+    prisma.deposit.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 6,
+      include: { user: { select: { name: true, email: true } } },
+    }),
+    prisma.payout.findMany({
+      where: { status: { in: ["PENDING", "REQUESTED", "PROCESSING"] } },
+      orderBy: { createdAt: "desc" },
+      take: 5,
+      include: { publisher: { select: { name: true, email: true } } },
+    }),
+    // Revenue per day for the last 30 days
+    prisma.deposit.groupBy({
+      by: ["createdAt"],
+      _sum: { amount: true },
+      where: {
+        status: "COMPLETED",
+        createdAt: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) },
+      },
+    }),
+  ]);
+
+  // Aggregate revenue series by calendar day
+  const dayMap = new Map<string, number>();
+  for (const row of revenueSeriesRaw) {
+    const day = row.createdAt.toISOString().slice(0, 10);
+    dayMap.set(day, (dayMap.get(day) ?? 0) + Number(row._sum.amount ?? 0));
+  }
+  const revenueSeries: AdminRevenuePoint[] = Array.from(dayMap.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, revenue]) => ({
+      date,
+      label: new Intl.DateTimeFormat("en-GB", { month: "short", day: "numeric" }).format(
+        new Date(date),
+      ),
+      revenue: Math.round(revenue * 100) / 100,
+    }));
+
+  return {
+    totalUsers,
+    activeUsers,
+    totalLeads,
+    approvedLeads,
+    totalRevenue: Number(revenueAgg._sum.amount ?? 0),
+    totalPayouts: Number(payoutsAgg._sum.amount ?? 0),
+    recentSignups: recentSignupsRaw.map((u) => ({
+      id: u.id,
+      name: u.name ?? u.email,
+      email: u.email,
+      role: u.role,
+      createdAt: u.createdAt.toISOString(),
+    })),
+    recentDeposits: recentDepositsRaw.map((d) => ({
+      id: d.id,
+      userName: d.user.name ?? d.user.email,
+      userEmail: d.user.email,
+      amount: Number(d.amount),
+      method: d.method,
+      status: d.status,
+      createdAt: d.createdAt.toISOString(),
+    })),
+    pendingPayouts: pendingPayoutsRaw.map((p) => ({
+      id: p.id,
+      publisherName: p.publisher.name ?? p.publisher.email,
+      publisherEmail: p.publisher.email,
+      amount: Number(p.amount),
+      method: p.method,
+      status: p.status,
+      createdAt: p.createdAt.toISOString(),
+    })),
+    revenueSeries,
+  };
+}

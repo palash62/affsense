@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/select";
 import {
   DIGITAL_PRODUCT_TYPES,
-} from "./mock-data";
+} from "./digital-product-types";
 
 export function DigitalProductsFilters() {
   const router = useRouter();

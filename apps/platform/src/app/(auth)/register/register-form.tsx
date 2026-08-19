@@ -20,6 +20,14 @@ import { isStrongPassword } from "@/lib/password-policy";
 import { COUNTRY_BY_CODE, getCountryName } from "@/lib/campaign-form";
 import { readReferralCookie, writeReferralCookie } from "@/lib/referral";
 import {
+  clearPromoUtmCookie,
+  mergePromotionAttribution,
+  readPromoUtmCookie,
+  readPromotionAttributionFromUrl,
+  type PromotionAttributionPayload,
+} from "@/lib/promotion-attribution";
+import { PromotionAttributionCapture } from "@/modules/marketing/components/promotion-attribution-capture";
+import {
   metaUserDataFromSignup,
   trackSignupLead,
 } from "@/lib/tracking/public-page-tracking";
@@ -40,6 +48,9 @@ export function RegisterForm() {
   const [country, setCountry] = useState("");
   const [password, setPassword] = useState("");
   const [referralRef, setReferralRef] = useState("");
+  const [signupAttribution, setSignupAttribution] = useState<
+    Partial<PromotionAttributionPayload> | null
+  >(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -50,6 +61,18 @@ export function RegisterForm() {
       writeReferralCookie(fromUrl.trim());
     }
     setReferralRef(ref);
+
+    const merged = mergePromotionAttribution(
+      readPromotionAttributionFromUrl(searchParams.toString() ? `?${searchParams.toString()}` : ""),
+      readPromoUtmCookie(),
+    );
+    if (merged.utmSource && merged.utmCampaign) {
+      setSignupAttribution({
+        ...merged,
+        landingPath: typeof window !== "undefined" ? window.location.pathname : undefined,
+        landingUrl: typeof window !== "undefined" ? window.location.href : undefined,
+      });
+    }
   }, [searchParams]);
 
   const isReferralSignup = Boolean(referralRef.trim());
@@ -79,6 +102,7 @@ export function RegisterForm() {
         password,
         role: "ADVERTISER",
         referralRef,
+        ...(signupAttribution ? { signupAttribution } : {}),
       }),
     });
 
@@ -89,6 +113,8 @@ export function RegisterForm() {
       setError(data.error?.message ?? "Registration failed");
       return;
     }
+
+    clearPromoUtmCookie();
 
     const userId = typeof data.user?.id === "string" ? data.user.id : undefined;
     trackSignupLead({
@@ -107,7 +133,9 @@ export function RegisterForm() {
   }
 
   return (
-    <AuthLayout
+    <>
+      <PromotionAttributionCapture />
+      <AuthLayout
       badge="Advertiser"
       title="Create your account"
       description={
@@ -227,5 +255,6 @@ export function RegisterForm() {
         </Link>
       </p>
     </AuthLayout>
+    </>
   );
 }

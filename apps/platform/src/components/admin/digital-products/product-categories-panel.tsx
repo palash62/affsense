@@ -10,7 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import type { ProductCategoryItem } from "./mock-data";
+import type { ProductCategoryItem } from "./digital-product-types";
 
 export function ProductCategoriesPanel() {
   const [categories, setCategories] = useState<ProductCategoryItem[]>([]);

@@ -9,13 +9,11 @@ import {
   DEFAULT_FORM_VALUES,
   DIGITAL_PRODUCT_NICHES,
   DIGITAL_PRODUCT_TYPES,
-  MOCK_WEBHOOK_URL,
-  SEED_PRODUCT_CATEGORIES,
   SHORT_DESCRIPTION_MAX,
   readImageDataUrl,
   type DigitalProductFormValues,
   type DigitalProductStatus,
-} from "./mock-data";
+} from "./digital-product-types";
 import { OfferSummaryPanel } from "./offer-summary-panel";
 import { WebhookStatusPanel } from "./webhook-status-panel";
 import { PromoMaterialsPanel } from "./promo-materials-panel";
@@ -71,9 +69,7 @@ export function DigitalProductForm() {
   const [values, setValues] = useState<DigitalProductFormValues>(DEFAULT_FORM_VALUES);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [categories, setCategories] = useState(
-    () => SEED_PRODUCT_CATEGORIES.map((c) => c.name),
-  );
+  const [categories, setCategories] = useState<string[]>([]);
 
   useEffect(() => {
     fetch("/api/v1/admin/digital-products/categories")
@@ -493,19 +489,9 @@ export function DigitalProductForm() {
                 <div className="flex items-center gap-2">
                   <Input
                     readOnly
-                    value={MOCK_WEBHOOK_URL}
-                    className="h-10 rounded-md bg-muted font-mono text-sm"
+                    value="Webhook URL will appear after saving the product"
+                    className="h-10 rounded-md bg-muted font-mono text-sm text-muted-foreground"
                   />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    className="h-10 w-10 shrink-0 rounded-md"
-                    onClick={() => copyText(MOCK_WEBHOOK_URL, "Webhook URL")}
-                    aria-label="Copy webhook URL"
-                  >
-                    <Copy className="h-4 w-4" />
-                  </Button>
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Add this URL to your funnel platform to receive conversion events.

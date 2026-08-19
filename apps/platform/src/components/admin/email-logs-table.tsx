@@ -33,7 +33,7 @@ export function EmailLogsTable() {
     setError("");
     fetch(`/api/v1/admin/email/logs?page=${nextPage}&limit=${PAGE_SIZE}`)
       .then(async (res) => {
-        if (!res.ok) throw new Error("Failed to load email logs");
+        if (!res.ok) throw new Error(`Could not load email logs (HTTP ${res.status})`);
         const body = await res.json();
         setLogs(body.data ?? []);
         const meta = body.meta ?? {};
@@ -41,7 +41,7 @@ export function EmailLogsTable() {
         setTotal(meta.total ?? 0);
         setTotalPages(Math.max(1, meta.totalPages ?? 1));
       })
-      .catch(() => setError("Could not load email logs."))
+      .catch((err) => setError(err?.message ?? "Could not load email logs."))
       .finally(() => setLoading(false));
   }, []);
 

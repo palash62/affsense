@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Star, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { DigitalProductListItem } from "./mock-data";
+import type { DigitalProductListItem } from "./digital-product-types";
 
 function StatusPill({ status }: { status: DigitalProductListItem["status"] }) {
   return (

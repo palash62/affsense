@@ -264,7 +264,7 @@ export async function getAdminControlCenterData(_adminUserId: string) {
       id: "withdrawals",
       label: "Withdrawal requests",
       count: pendingPayoutsCount,
-      href: "/admin/payouts",
+      href: "/admin/payout-center",
       action: "Process Withdrawals",
       critical: pendingPayoutsCount > 0,
     },
@@ -296,7 +296,7 @@ export async function getAdminControlCenterData(_adminUserId: string) {
       id: "support",
       label: "Open support tickets",
       count: openTickets,
-      href: "/admin/support",
+      href: "/admin/support-tickets",
       action: "Open Support",
       critical: urgentTickets > 0,
     },
@@ -336,7 +336,7 @@ export async function getAdminControlCenterData(_adminUserId: string) {
       title: "Withdrawal Approval",
       count: pendingPayoutsCount,
       status: pendingPayoutsCount > 0 ? "Pending" : "Clear",
-      href: "/admin/payouts",
+      href: "/admin/payout-center",
     },
   ];
 

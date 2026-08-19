@@ -5,7 +5,7 @@ import {
   DashboardCard,
   DashboardCardTitle,
 } from "@/components/admin/affsense-dashboard/dashboard-card";
-import type { GetPaidTaskFormValues } from "./mock-data";
+import type { GetPaidTaskFormValues } from "./get-paid-task-types";
 
 function PreviewIcon({ action }: { action: string }) {
   const a = action.toLowerCase();
@@ -59,3 +59,4 @@ export function TaskPreviewPanel({ values }: { values: GetPaidTaskFormValues }) 
     </DashboardCard>
   );
 }
+

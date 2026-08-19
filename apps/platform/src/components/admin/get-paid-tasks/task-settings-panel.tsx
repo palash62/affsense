@@ -7,7 +7,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SettingToggle } from "./setting-toggle";
-import type { GetPaidTaskFormValues } from "./mock-data";
+import type { GetPaidTaskFormValues } from "./get-paid-task-types";
 
 export function TaskSettingsPanel({
   values,
@@ -65,3 +65,4 @@ export function TaskSettingsPanel({
     </DashboardCard>
   );
 }
+

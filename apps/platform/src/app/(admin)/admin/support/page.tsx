@@ -1,15 +1,5 @@
-import { AdminSupportTicketsPanel } from "@/components/support/admin-support-tickets-panel";
-import { PageHero } from "@/components/admin/page-hero";
+import { redirect } from "next/navigation";
 
-export default function AdminSupportPage() {
-  return (
-    <div className="space-y-7">
-      <PageHero
-        eyebrow="Help Center"
-        title="Support Tickets"
-        description="Review and respond to user support requests"
-      />
-      <AdminSupportTicketsPanel />
-    </div>
-  );
+export default function AdminSupportRedirect() {
+  redirect("/admin/support-tickets");
 }

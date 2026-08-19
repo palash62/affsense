@@ -1,4 +1,5 @@
 import { prisma } from "@cpl/database";
+import { listPublishedAnnouncements } from "@/services/announcement.service";
 import { listActiveCpaOffers } from "@/services/cpa-offer.service";
 import { listDigitalProducts } from "@/services/digital-product.service";
 import { listGetPaidTasks } from "@/services/get-paid-task.service";
@@ -143,11 +144,7 @@ export async function getAffsensePublisherDashboard(publisherId: string, period:
     listGetPaidTasks({ activeOnly: true, showOnDashboard: true, limit: 5 }),
     listDigitalProducts({ activeOnly: true, limit: 6 }),
     listActiveCpaOffers({ page: 1, limit: 6 }),
-    prisma.publisherAnnouncement.findMany({
-      where: { status: "PUBLISHED" },
-      orderBy: { publishedAt: "desc" },
-      take: 4,
-    }),
+    listPublishedAnnouncements("PUBLISHER", 6),
     prisma.payout.findMany({
       where: { publisherId },
       orderBy: { createdAt: "desc" },
@@ -215,7 +212,8 @@ export async function getAffsensePublisherDashboard(publisherId: string, period:
       title: a.title,
       body: a.body,
       iconKey: a.iconKey,
-      publishedAt: a.publishedAt?.toISOString() ?? a.createdAt.toISOString(),
+      tone: a.tone,
+      publishedAt: a.publishedAt ?? a.createdAt,
     })),
     recentReports: recentPayouts.map((p) => ({
       id: p.id,

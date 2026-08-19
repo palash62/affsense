@@ -4,6 +4,7 @@ import { registerSchema } from "@/lib/validations";
 import { errorResponse } from "@/lib/errors";
 import { validateEmailDeliverability } from "@/lib/email-deliverability";
 import { resolveReferrerId } from "@/services/referral.service";
+import { applySignupAttribution } from "@/services/promotion.service";
 import { createEmailVerificationToken } from "@/services/auth-token.service";
 import { getResolvedEmailConfig } from "@/services/smtp-settings.service";
 import {
@@ -58,6 +59,7 @@ export async function POST(request: Request) {
     }
 
     const referredById = await resolveReferrerId(parsed.data.referralRef);
+    const attribution = await applySignupAttribution(parsed.data.signupAttribution);
     const role = "ADVERTISER" as const;
     const passwordHash = await bcrypt.hash(parsed.data.password, 12);
 
@@ -70,6 +72,13 @@ export async function POST(request: Request) {
           role,
           status: "PENDING",
           referredById: referredById ?? undefined,
+          promotionId: attribution.promotionId ?? undefined,
+          signupUtmSource: attribution.signupUtmSource,
+          signupUtmMedium: attribution.signupUtmMedium,
+          signupUtmCampaign: attribution.signupUtmCampaign,
+          signupUtmContent: attribution.signupUtmContent,
+          signupUtmTerm: attribution.signupUtmTerm,
+          signupLandingUrl: attribution.signupLandingUrl,
           wallet: { create: {} },
           advertiserProfile: {
             create: {

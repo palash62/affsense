@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { DashboardCard, DashboardCardTitle } from "@/components/admin/affsense-dashboard/dashboard-card";
-import { computeCommissionAmount, type DigitalProductFormValues } from "./mock-data";
+import { computeCommissionAmount, type DigitalProductFormValues } from "./digital-product-types";
 
 export function OfferSummaryPanel({
   values,

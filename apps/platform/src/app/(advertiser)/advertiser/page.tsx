@@ -7,12 +7,18 @@ import { ADVERTISER_PERIODS, parseAdvertiserPeriod } from "@/lib/advertiser-peri
 import { ensureReferralCode } from "@/services/referral.service";
 import { getAdvertiserDashboardData } from "@/services/report.service";
 import { listAdvertiserDashboardAlerts } from "@/services/notification.service";
+import { listPublishedAnnouncements } from "@/services/announcement.service";
 import { GradientStatCard, NeutralStatCard } from "@/components/admin/gradient-stat-card";
 import { PageSection } from "@/components/admin/page-section";
 import { formatCurrency } from "@/components/admin/admin-ui";
 import { RoleHero } from "@/components/layout/role-hero";
 import { AdvertiserPeriodFilter } from "@/components/advertiser/advertiser-period-filter";
 import { AdvertiserReferralCard } from "@/components/advertiser/advertiser-referral-card";
+import {
+  DashboardCard,
+  DashboardCardTitle,
+} from "@/components/admin/affsense-dashboard/dashboard-card";
+import { AnnouncementsFeed } from "@/components/announcements/announcements-feed";
 import { AdvertiserDashboardAlerts } from "@/components/advertiser/advertiser-dashboard-alerts";
 import {
   AdvertiserPendingQueue,
@@ -31,10 +37,11 @@ export default async function AdvertiserDashboardPage({ searchParams }: PageProp
   const periodLabel = ADVERTISER_PERIODS.find((p) => p.value === period)?.label ?? "Last 30 Days";
   const userId = session!.user.id;
 
-  const [data, referralCode, alerts] = await Promise.all([
+  const [data, referralCode, alerts, announcements] = await Promise.all([
     getAdvertiserDashboardData(userId, period),
     ensureReferralCode(userId),
     listAdvertiserDashboardAlerts(userId),
+    listPublishedAnnouncements("ADVERTISER", 6),
   ]);
   const firstName = session?.user?.name?.split(" ")[0] ?? "Advertiser";
 
@@ -121,6 +128,15 @@ export default async function AdvertiserDashboardPage({ searchParams }: PageProp
 
         <aside className="space-y-4">
           <AdvertiserReferralCard referralCode={referralCode} />
+          <DashboardCard>
+            <DashboardCardTitle>Announcements</DashboardCardTitle>
+            <div className="mt-4">
+              <AnnouncementsFeed
+                items={announcements}
+                emptyLabel="No announcements right now."
+              />
+            </div>
+          </DashboardCard>
         </aside>
       </div>
     </div>
