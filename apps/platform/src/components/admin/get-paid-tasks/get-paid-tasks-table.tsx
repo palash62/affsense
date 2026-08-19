@@ -1,4 +1,6 @@
+import { useState } from "react";
 import Link from "next/link";
+import { Trash2 } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -7,11 +9,31 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 import { TaskFlags, TaskStatusPill } from "./get-paid-task-table-cells";
 import type { GetPaidTaskListItem } from "./get-paid-task-list-utils";
 
-export function GetPaidTasksTable({ tasks }: { tasks: GetPaidTaskListItem[] }) {
+export function GetPaidTasksTable({
+  tasks,
+  onDelete,
+}: {
+  tasks: GetPaidTaskListItem[];
+  onDelete: (id: string) => void;
+}) {
+  const [confirmId, setConfirmId] = useState<string | null>(null);
+  const confirmTask = tasks.find((t) => t.id === confirmId);
   return (
+    <>
     <div className="overflow-hidden rounded-[var(--radius-card,0.875rem)] border border-border bg-card shadow-[var(--shadow-card)]">
       <div className="overflow-x-auto">
         <Table>
@@ -73,12 +95,22 @@ export function GetPaidTasksTable({ tasks }: { tasks: GetPaidTaskListItem[] }) {
                   />
                 </TableCell>
                 <TableCell className="px-4 py-3 text-right">
-                  <Link
-                    href="/admin/get-paid-tasks/new"
-                    className="text-sm font-medium text-[var(--theme-primary)] hover:underline"
-                  >
-                    Manage
-                  </Link>
+                  <div className="flex items-center justify-end gap-3">
+                    <Link
+                      href="/admin/get-paid-tasks/new"
+                      className="text-sm font-medium text-[var(--theme-primary)] hover:underline"
+                    >
+                      Manage
+                    </Link>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                      onClick={() => setConfirmId(task.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
@@ -86,5 +118,29 @@ export function GetPaidTasksTable({ tasks }: { tasks: GetPaidTaskListItem[] }) {
         </Table>
       </div>
     </div>
+
+      <AlertDialog open={!!confirmId} onOpenChange={(open) => { if (!open) setConfirmId(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete task?</AlertDialogTitle>
+            <AlertDialogDescription>
+              &ldquo;{confirmTask?.title}&rdquo; will be permanently deleted. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (confirmId) onDelete(confirmId);
+                setConfirmId(null);
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

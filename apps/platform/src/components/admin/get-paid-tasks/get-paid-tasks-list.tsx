@@ -31,6 +31,17 @@ function GetPaidTasksListInner() {
     };
   }, []);
 
+  async function handleDelete(id: string) {
+    try {
+      const res = await fetch(`/api/v1/admin/get-paid-tasks/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error();
+      setTasks((prev) => prev.filter((t) => t.id !== id));
+      toast.success("Task deleted");
+    } catch {
+      toast.error("Failed to delete task");
+    }
+  }
+
   const filters = useMemo(
     () => ({
       q: searchParams.get("q") ?? undefined,
@@ -97,7 +108,7 @@ function GetPaidTasksListInner() {
           )}
         </div>
       ) : (
-        <GetPaidTasksTable tasks={filtered} />
+        <GetPaidTasksTable tasks={filtered} onDelete={handleDelete} />
       )}
     </div>
   );

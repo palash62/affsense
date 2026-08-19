@@ -95,66 +95,75 @@ export function DigitalProductsFilters() {
           />
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <Select
-            value={status}
-            onValueChange={(v) => {
-              if (!v) return;
-              setStatus(v);
-              applyFilters({ status: v });
-            }}
-          >
-            <SelectTrigger className="h-8 w-[118px] shrink-0 rounded-md border-border bg-background text-xs">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All status</SelectItem>
-              <SelectItem value="Active">Active</SelectItem>
-              <SelectItem value="Draft">Draft</SelectItem>
-            </SelectContent>
-          </Select>
+        <div className="flex flex-wrap items-end gap-2">
+          <div className="flex flex-col gap-1">
+            <span className="text-[11px] font-medium text-muted-foreground">Status</span>
+            <Select
+              value={status}
+              onValueChange={(v) => {
+                if (!v) return;
+                setStatus(v);
+                applyFilters({ status: v });
+              }}
+            >
+              <SelectTrigger className="h-8 w-[118px] shrink-0 rounded-md border-border bg-background text-xs">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All status</SelectItem>
+                <SelectItem value="Active">Active</SelectItem>
+                <SelectItem value="Draft">Draft</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-          <Select
-            value={category}
-            onValueChange={(v) => {
-              if (!v) return;
-              setCategory(v);
-              applyFilters({ category: v });
-            }}
-          >
-            <SelectTrigger className="h-8 w-[140px] shrink-0 rounded-md border-border bg-background text-xs">
-              <SelectValue placeholder="Category" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All categories</SelectItem>
-              {categories.map((cat) => (
-                <SelectItem key={cat} value={cat}>
-                  {cat}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex flex-col gap-1">
+            <span className="text-[11px] font-medium text-muted-foreground">Category</span>
+            <Select
+              value={category}
+              onValueChange={(v) => {
+                if (!v) return;
+                setCategory(v);
+                applyFilters({ category: v });
+              }}
+            >
+              <SelectTrigger className="h-8 w-[140px] shrink-0 rounded-md border-border bg-background text-xs">
+                <SelectValue placeholder="Category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All categories</SelectItem>
+                {categories.map((cat) => (
+                  <SelectItem key={cat} value={cat}>
+                    {cat}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-          <Select
-            value={type}
-            onValueChange={(v) => {
-              if (!v) return;
-              setType(v);
-              applyFilters({ type: v });
-            }}
-          >
-            <SelectTrigger className="h-8 w-[150px] shrink-0 rounded-md border-border bg-background text-xs">
-              <SelectValue placeholder="Type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All types</SelectItem>
-              {DIGITAL_PRODUCT_TYPES.map((t) => (
-                <SelectItem key={t} value={t}>
-                  {t}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex flex-col gap-1">
+            <span className="text-[11px] font-medium text-muted-foreground">Type</span>
+            <Select
+              value={type}
+              onValueChange={(v) => {
+                if (!v) return;
+                setType(v);
+                applyFilters({ type: v });
+              }}
+            >
+              <SelectTrigger className="h-8 w-[150px] shrink-0 rounded-md border-border bg-background text-xs">
+                <SelectValue placeholder="Type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All types</SelectItem>
+                {DIGITAL_PRODUCT_TYPES.map((t) => (
+                  <SelectItem key={t} value={t}>
+                    {t}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
           <Button
             size="sm"

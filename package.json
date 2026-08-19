@@ -36,6 +36,7 @@
     "tsx": "^4.23.11"
   },
   "dependencies": {
+    "@radix-ui/react-alert-dialog": "^1.1.23",
     "immer": "^11.1.11",
     "preact-render-to-string": "^6.7.0",
     "react-redux": "^9.3.0"

@@ -59,6 +59,17 @@ function DigitalProductsListInner() {
     router.push(pathname);
   }
 
+  async function handleDelete(id: string) {
+    try {
+      const res = await fetch(`/api/v1/admin/digital-products/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error();
+      setProducts((prev) => prev.filter((p) => p.id !== id));
+      toast.success("Product deleted");
+    } catch {
+      toast.error("Failed to delete product");
+    }
+  }
+
   return (
     <div className="space-y-5">
       <DigitalProductsFilters />
@@ -113,7 +124,7 @@ function DigitalProductsListInner() {
       ) : (
         <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
           {filtered.map((product) => (
-            <DigitalProductCard key={product.id} product={product} />
+            <DigitalProductCard key={product.id} product={product} onDelete={handleDelete} />
           ))}
         </div>
       )}
