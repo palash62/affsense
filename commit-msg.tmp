@@ -1,3 +1,0 @@
-﻿DB clean: remove all static mock data, wire admin dashboard to real DB queries
-
-Add reset-data.ts script, rewrite seed.ts with only settings + admin user, remove all demo seed data. Wire admin dashboard to real Prisma queries via getAdminDashboardStats(). Remove mock-data.ts from dashboard, digital-products, and get-paid-tasks; replace with typed real-data props and empty-state fallbacks.
