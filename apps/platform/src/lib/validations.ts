@@ -757,6 +757,7 @@ export const emailListSchema = z.object({
 export const emailListUpdateSchema = z.object({
   name: z.string().trim().min(2).max(80).optional(),
   campaignId: z.string().trim().min(1, "Campaign is required").optional(),
+  campaignIds: z.array(z.string().trim().min(1)).optional(),
 });
 
 export const emailTagSchema = z.object({
