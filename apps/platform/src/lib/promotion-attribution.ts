@@ -1,3 +1,4 @@
+export const PROMO_UTM_COOKIE_NAME = "promo_utm";
 export const PROMO_VISIT_COOKIE_NAME = "promo_visit";
 export const PROMO_UTM_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 30;
 export const PROMO_VISIT_DEDUPE_SECONDS = 60 * 30;
