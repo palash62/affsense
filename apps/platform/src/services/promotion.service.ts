@@ -48,6 +48,7 @@ export type PromotionReportAdvertiser = {
   email: string;
   status: string;
   signupAt: string;
+  createdAt: Date;
   depositTotal: number;
 };
 
@@ -465,6 +466,7 @@ export async function getAdminPromotionReport(options: {
       email: advertiser.email,
       status: advertiser.status,
       signupAt: advertiser.createdAt.toISOString(),
+      createdAt: advertiser.createdAt,
       depositTotal,
     });
     attributedSignups += 1;
