@@ -1328,3 +1328,7 @@ export const announcementSchema = z.object({
 });
 
 export const announcementUpdateSchema = announcementSchema.partial();
+
+export const adminPublisherSmartLinkCampaignsSchema = z.object({
+  campaignIds: z.array(z.string().cuid()).max(100),
+});
