@@ -30,10 +30,12 @@ export default async function AdminPromotionPage({ searchParams }: PageProps) {
   const session = await getSession();
   const tz = session?.user?.timezone;
   const params = await searchParams;
+  const fromDate = params.from ? new Date(params.from) : undefined;
+  const toDate = params.to ? new Date(params.to) : undefined;
   const report = await getAdminPromotionReport({
     q: params.q,
-    from: params.from,
-    to: params.to,
+    from: fromDate && !Number.isNaN(fromDate.getTime()) ? fromDate : undefined,
+    to: toDate && !Number.isNaN(toDate.getTime()) ? toDate : undefined,
   });
   const appOrigin = getMarketingAppUrl().replace(/\/$/, "");
 
