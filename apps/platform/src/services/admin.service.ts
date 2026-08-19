@@ -141,7 +141,7 @@ export async function listUsers(filters: {
           ...serializePublisherSpecialTierPayouts(user.publisherProfile),
         }
       : user.publisherProfile,
-    allowedSmartLinkCampaignIds: user.smartLinkCampaigns?.map((r) => r.campaignId) ?? [],
+    allowedSmartLinkCampaignIds: (user.smartLinkCampaigns?.map((r) => r.campaignId) ?? []) as string[],
     _count: user._count,
     advertiserProfile: user.advertiserProfile,
   }));
@@ -283,7 +283,7 @@ export async function getPublisherDetail(id: string) {
           ...serializePublisherSpecialTierPayouts(profile),
         }
       : null,
-    allowedSmartLinkCampaignIds: user.smartLinkCampaigns.map((row) => row.campaignId),
+    allowedSmartLinkCampaignIds: user.smartLinkCampaigns.map((row) => row.campaignId) as string[],
     _count: user._count,
   };
 }
