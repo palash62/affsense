@@ -42,6 +42,9 @@ export type SerializedPromotion = {
   signupCount: number;
 };
 
+/** @deprecated use SerializedPromotion */
+export type PromotionRecordWithStats = SerializedPromotion;
+
 export type PromotionReportAdvertiser = {
   id: string;
   name: string;
