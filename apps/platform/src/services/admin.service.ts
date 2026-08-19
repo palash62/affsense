@@ -237,6 +237,7 @@ export async function getAdvertiserDetail(id: string) {
       ...deposit,
       amount: Number(deposit.amount),
     })),
+    _count: user._count,
   };
 }
 
@@ -283,6 +284,7 @@ export async function getPublisherDetail(id: string) {
         }
       : null,
     allowedSmartLinkCampaignIds: user.smartLinkCampaigns.map((row) => row.campaignId),
+    _count: user._count,
   };
 }
 
