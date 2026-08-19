@@ -82,7 +82,7 @@ export default async function AdvertiserLeadReportPage({ searchParams }: PagePro
       />
 
       <div
-        className="flex gap-3 rounded-xl border px-4 py-3 text-sm text-foreground"
+        className="flex gap-3 rounded-xl border px-4 py-3 text-sm text-slate-700"
         style={{
           borderColor: "color-mix(in srgb, var(--theme-primary) 20%, transparent)",
           background: "var(--theme-primary-soft)",
@@ -116,7 +116,7 @@ export default async function AdvertiserLeadReportPage({ searchParams }: PagePro
         icon={FileText}
         gradient="leads"
       >
-        <Suspense fallback={<div className="px-6 py-4 text-sm text-muted-foreground">Loading filters...</div>}>
+        <Suspense fallback={<div className="px-6 py-4 text-sm text-slate-500">Loading filters...</div>}>
           <AdvertiserLeadsFilters />
         </Suspense>
 
@@ -127,37 +127,36 @@ export default async function AdvertiserLeadReportPage({ searchParams }: PagePro
                 className="border-none hover:bg-transparent"
                 style={{ background: "var(--theme-primary-soft)" }}
               >
-                <TableHead className="h-11 px-6 text-muted-foreground">Publisher ID</TableHead>
-                <TableHead className="h-11 px-4 text-right text-muted-foreground">Total</TableHead>
-                <TableHead className="h-11 px-4 text-right text-muted-foreground">Approved</TableHead>
-                <TableHead className="h-11 px-4 text-right text-muted-foreground">Pending</TableHead>
-                <TableHead className="h-11 px-4 text-right text-muted-foreground">Rejected</TableHead>
-                <TableHead className="h-11 px-4 text-right text-muted-foreground">Paid</TableHead>
-                <TableHead className="h-11 px-4 text-right text-muted-foreground">Sales</TableHead>
-                <TableHead className="h-11 px-4 text-right text-muted-foreground">Revenue</TableHead>
-                <TableHead className="h-11 px-4 text-right text-muted-foreground">Payout Range</TableHead>
-                <TableHead className="h-11 px-4 text-right text-muted-foreground">Est. Spend</TableHead>
-                <TableHead className="h-11 px-4 text-muted-foreground">Last Lead</TableHead>
-                <TableHead className="h-11 px-6 text-right text-muted-foreground">Action</TableHead>
+                <TableHead className="h-11 px-6 text-slate-600">Publisher ID</TableHead>
+                <TableHead className="h-11 px-4 text-right text-slate-600">Total</TableHead>
+                <TableHead className="h-11 px-4 text-right text-slate-600">Approved</TableHead>
+                <TableHead className="h-11 px-4 text-right text-slate-600">Pending</TableHead>
+                <TableHead className="h-11 px-4 text-right text-slate-600">Paid</TableHead>
+                <TableHead className="h-11 px-4 text-right text-slate-600">Sales</TableHead>
+                <TableHead className="h-11 px-4 text-right text-slate-600">Revenue</TableHead>
+                <TableHead className="h-11 px-4 text-right text-slate-600">Payout Range</TableHead>
+                <TableHead className="h-11 px-4 text-right text-slate-600">Est. Spend</TableHead>
+                <TableHead className="h-11 px-4 text-slate-600">Last Lead</TableHead>
+                <TableHead className="h-11 px-6 text-right text-slate-600">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {publisherReport.length === 0 ? (
                 <TableRow className="hover:bg-transparent">
-                  <TableCell colSpan={12} className="h-48 px-6 py-16 text-center">
-                    <p className="text-base font-medium text-muted-foreground">No Data Found</p>
+                  <TableCell colSpan={11} className="h-48 px-6 py-16 text-center">
+                    <p className="text-base font-medium text-slate-500">No Data Found</p>
                   </TableCell>
                 </TableRow>
               ) : (
                 publisherReport.map((row) => (
                   <TableRow
                     key={row.publisherId}
-                    className="border-border transition-colors hover:bg-blue-50/40"
+                    className="border-slate-100 transition-colors hover:bg-blue-50/40"
                   >
-                    <TableCell className="px-6 py-4 font-mono text-sm font-medium text-foreground">
+                    <TableCell className="px-6 py-4 font-mono text-sm font-medium text-slate-800">
                       {shortPublisherId(row.publisherId)}
                     </TableCell>
-                    <TableCell className="px-4 py-4 text-right text-sm text-foreground">
+                    <TableCell className="px-4 py-4 text-right text-sm text-slate-700">
                       {row.totalLeads}
                     </TableCell>
                     <TableCell className="px-4 py-4 text-right text-sm text-emerald-700">
@@ -166,25 +165,22 @@ export default async function AdvertiserLeadReportPage({ searchParams }: PagePro
                     <TableCell className="px-4 py-4 text-right text-sm text-amber-700">
                       {row.pendingLeads}
                     </TableCell>
-                    <TableCell className="px-4 py-4 text-right text-sm text-red-700">
-                      {row.rejectedLeads}
-                    </TableCell>
-                    <TableCell className="px-4 py-4 text-right text-sm text-foreground">
+                    <TableCell className="px-4 py-4 text-right text-sm text-slate-700">
                       {row.paidLeads}
                     </TableCell>
-                    <TableCell className="px-4 py-4 text-right text-sm text-foreground">
+                    <TableCell className="px-4 py-4 text-right text-sm text-slate-700">
                       {row.salesCount.toLocaleString()}
                     </TableCell>
-                    <TableCell className="px-4 py-4 text-right text-sm font-medium text-foreground">
+                    <TableCell className="px-4 py-4 text-right text-sm font-medium text-slate-800">
                       {formatCurrency(row.revenue)}
                     </TableCell>
-                    <TableCell className="whitespace-nowrap px-4 py-4 text-right text-sm text-muted-foreground">
+                    <TableCell className="whitespace-nowrap px-4 py-4 text-right text-sm text-slate-600">
                       {formatPayoutRange(row.payoutMin, row.payoutMax)}
                     </TableCell>
-                    <TableCell className="px-4 py-4 text-right text-sm font-medium text-foreground">
+                    <TableCell className="px-4 py-4 text-right text-sm font-medium text-slate-800">
                       {formatCurrency(row.estimatedSpend)}
                     </TableCell>
-                    <TableCell className="whitespace-nowrap px-4 py-4 text-sm text-muted-foreground">
+                    <TableCell className="whitespace-nowrap px-4 py-4 text-sm text-slate-600">
                       {row.lastLeadAt
                         ? formatUserDateTime(row.lastLeadAt, tz, "MMM d, yyyy HH:mm")
                         : "—"}

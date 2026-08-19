@@ -10,7 +10,7 @@ const nextConfig: NextConfig = {
   outputFileTracingRoot: root,
   devIndicators: false,
   serverExternalPackages: ["@prisma/client", "prisma"],
-  transpilePackages: ["@cpl/database", "@cpl/shared"],
+  transpilePackages: ["@cpl/database", "@cpl/shared", "@cpl/tracking-core"],
   productionBrowserSourceMaps: false,
   turbopack: {},
   experimental: {

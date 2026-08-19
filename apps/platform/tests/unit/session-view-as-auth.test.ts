@@ -62,6 +62,40 @@ describe("view-as session tokenVersion auth", () => {
     expect(prismaMock.user.findUnique).toHaveBeenCalledTimes(2);
   });
 
+  it("allows view-as when impersonator is an active PLATFORM_MANAGER", async () => {
+    prismaMock.user.findUnique.mockImplementation(async ({ where }: { where: { id: string } }) => {
+      if (where.id === "mgr_1") {
+        return {
+          id: "mgr_1",
+          role: "PLATFORM_MANAGER",
+          status: "ACTIVE",
+          tokenVersion: 0,
+        };
+      }
+      if (where.id === "pub_1") {
+        return { id: "pub_1", role: "PUBLISHER", status: "ACTIVE", tokenVersion: 3 };
+      }
+      return null;
+    });
+
+    const ok = await isAuthorizedAppSession({
+      user: {
+        id: "pub_1",
+        email: "publisher@cpl.local",
+        name: "Publisher",
+        role: "PUBLISHER",
+        timezone: "UTC",
+      },
+      tokenVersion: 0,
+      viewAsMode: true,
+      impersonatorId: "mgr_1",
+      expires: new Date(Date.now() + 60_000).toISOString(),
+    });
+
+    expect(ok).toBe(true);
+    expect(prismaMock.user.findUnique).toHaveBeenCalledTimes(2);
+  });
+
   it("rejects normal advertiser session when JWT tokenVersion mismatches DB", async () => {
     prismaMock.user.findUnique.mockResolvedValue({
       id: "adv_1",

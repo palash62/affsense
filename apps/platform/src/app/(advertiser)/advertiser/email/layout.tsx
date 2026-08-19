@@ -5,8 +5,8 @@ import { getSession } from "@/lib/session";
 import { Mail } from "lucide-react";
 
 /**
- * Autoresponder UI is gated to an allowlist (demo advertiser by default).
- * Other advertisers see Coming soon. Set AUTORESPONDER_ADVERTISER_ALLOWLIST=* to open fully.
+ * Autoresponder is open to all advertisers by default.
+ * Coming soon is shown only when AUTORESPONDER_ADVERTISER_ALLOWLIST excludes the user.
  */
 export default async function EmailModuleLayout({
   children,

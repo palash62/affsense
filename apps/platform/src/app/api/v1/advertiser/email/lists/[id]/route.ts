@@ -24,7 +24,7 @@ export async function PATCH(
           { status: 422 },
         );
       }
-      if (parsed.data.name === undefined && parsed.data.campaignId === undefined) {
+      if (parsed.data.name === undefined && parsed.data.campaignIds === undefined) {
         return Response.json(
           {
             error: {

@@ -184,3 +184,12 @@ export function pickCampaignForIpRotation<T extends RotatableCampaign>(
   // 5: no valid rotation target
   return null;
 }
+
+/** Opt-in only. Call when restrictSmartLinkCampaigns is true. Empty allowedIds yields []. */
+export function applySmartLinkCampaignAllowlist<T extends { id: string }>(
+  campaigns: T[],
+  allowedIds: string[],
+): T[] {
+  const allowed = new Set(allowedIds);
+  return campaigns.filter((campaign) => allowed.has(campaign.id));
+}

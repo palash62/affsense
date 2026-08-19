@@ -61,6 +61,7 @@ function FlowInner({ state, flowApiRef }: Props) {
     openPicker,
     invalidStepIds,
     maxSteps,
+    readOnly,
   } = state;
 
   const { fitView, zoomIn, zoomOut } = useReactFlow();
@@ -74,6 +75,7 @@ function FlowInner({ state, flowApiRef }: Props) {
       selection,
       maxSteps,
       invalidStepIds,
+      readOnly,
     );
     return {
       nodes: base.nodes.map((n) => {
@@ -95,11 +97,11 @@ function FlowInner({ state, flowApiRef }: Props) {
         ...e,
         data: {
           ...(e.data as object),
-          onInsert: (index: number) => openPicker(index),
+          onInsert: readOnly ? undefined : (index: number) => openPicker(index),
         },
       })),
     };
-  }, [form, steps, templates, tags, selection, maxSteps, invalidStepIds, openPicker]);
+  }, [form, steps, templates, tags, selection, maxSteps, invalidStepIds, openPicker, readOnly]);
 
   const autoLayout = useCallback(() => {
     requestAnimationFrame(() => fitView({ padding: 0.28, duration: 300 }));
@@ -133,7 +135,7 @@ function FlowInner({ state, flowApiRef }: Props) {
   const onNodeClick = useCallback(
     (_: React.MouseEvent, node: Node) => {
       if (node.id === ADD_ACTION_ID) {
-        openPicker(steps.length);
+        if (!readOnly) openPicker(steps.length);
         return;
       }
       if (node.id === TRIGGER_ID) {
@@ -148,7 +150,7 @@ function FlowInner({ state, flowApiRef }: Props) {
         selectEmail(node.id.replace(/^email-/, ""));
       }
     },
-    [openPicker, selectEmail, selectTrigger, selectWait, steps.length],
+    [openPicker, selectEmail, selectTrigger, selectWait, steps.length, readOnly],
   );
 
   const onPaneClick = useCallback(() => {

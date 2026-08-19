@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { AppError } from "@/lib/errors";
 import { EMAIL_MARKETING_CONFIG_KEY } from "@/lib/email/email-marketing-settings";
 import { parseEmailMarketingConfig } from "../config/platform-config";
+import { backfillAutomationForExistingContacts } from "./dispatch.service";
 
 export type AutomationStepInput = {
   id?: string;
@@ -93,6 +94,22 @@ function normalizeTagId(value?: string | null) {
   return id ? id : null;
 }
 
+async function assertListOwned(advertiserId: string, listId: string) {
+  const list = await prisma.emailList.findFirst({
+    where: { id: listId, advertiserId },
+    select: { id: true },
+  });
+  if (!list) throw new AppError("NOT_FOUND", "List not found", 404);
+  return list;
+}
+
+function hasAudienceTarget(
+  listId?: string | null,
+  campaignId?: string | null,
+) {
+  return Boolean(listId?.trim() || campaignId?.trim());
+}
+
 export async function listAutomations(advertiserId: string) {
   return prisma.emailAutomation.findMany({
     where: { advertiserId },
@@ -134,6 +151,7 @@ export async function createAutomation(
   data: {
     name: string;
     trigger: AutoresponderTrigger;
+    listId?: string | null;
     campaignId?: string | null;
     fromName: string;
     replyTo?: string | null;
@@ -152,7 +170,10 @@ export async function createAutomation(
     );
   }
 
-  if (data.campaignId) {
+  const listId = data.listId?.trim() || null;
+  if (listId) {
+    await assertListOwned(advertiserId, listId);
+  } else if (data.campaignId) {
     const campaign = await prisma.campaign.findFirst({
       where: { id: data.campaignId, advertiserId },
     });
@@ -167,6 +188,7 @@ export async function createAutomation(
       advertiserId,
       name: data.name,
       trigger: data.trigger,
+      listId,
       campaignId: data.campaignId ?? null,
       fromName: data.fromName,
       replyTo: data.replyTo ?? null,
@@ -189,6 +211,7 @@ export async function updateAutomation(
   data: Partial<{
     name: string;
     trigger: AutoresponderTrigger;
+    listId: string | null;
     campaignId: string | null;
     fromName: string;
     replyTo: string | null;
@@ -200,8 +223,22 @@ export async function updateAutomation(
 ) {
   const existing = await getAutomation(advertiserId, id);
 
-  if (data.status === "ACTIVE" && !(data.campaignId !== undefined ? data.campaignId : existing.campaignId)) {
+  const nextListId =
+    data.listId !== undefined ? data.listId : existing.listId;
+  const nextCampaignId =
+    data.campaignId !== undefined ? data.campaignId : existing.campaignId;
+
+  if (data.status === "ACTIVE" && !hasAudienceTarget(nextListId, nextCampaignId)) {
     throw new AppError("VALIDATION_ERROR", "Select a list before activating", 422);
+  }
+
+  if (data.listId) {
+    await assertListOwned(advertiserId, data.listId);
+  } else if (data.campaignId) {
+    const campaign = await prisma.campaign.findFirst({
+      where: { id: data.campaignId, advertiserId },
+    });
+    if (!campaign) throw new AppError("NOT_FOUND", "Campaign not found", 404);
   }
 
   if (data.steps) {
@@ -268,6 +305,7 @@ export async function updateAutomation(
     data: {
       name: data.name ?? existing.name,
       trigger: data.trigger ?? existing.trigger,
+      listId: data.listId !== undefined ? data.listId : existing.listId,
       campaignId: data.campaignId !== undefined ? data.campaignId : existing.campaignId,
       fromName: data.fromName ?? existing.fromName,
       replyTo: data.replyTo !== undefined ? data.replyTo : existing.replyTo,
@@ -307,7 +345,7 @@ export async function activateAutomation(advertiserId: string, id: string) {
   if (!automation.steps.length) {
     throw new AppError("VALIDATION_ERROR", "Add at least one step before activating", 422);
   }
-  if (!automation.campaignId) {
+  if (!hasAudienceTarget(automation.listId, automation.campaignId)) {
     throw new AppError("VALIDATION_ERROR", "Select a list before publishing", 422);
   }
 
@@ -364,13 +402,24 @@ export async function activateAutomation(advertiserId: string, id: string) {
       );
     }
   }
-  return prisma.emailAutomation.update({
+  const updated = await prisma.emailAutomation.update({
     where: { id },
     data: { status: "ACTIVE" },
     include: {
       steps: stepInclude,
     },
   });
+
+  try {
+    await backfillAutomationForExistingContacts(id);
+  } catch (error) {
+    console.error("Failed to backfill automation for existing contacts", {
+      automationId: id,
+      error,
+    });
+  }
+
+  return updated;
 }
 
 export async function deleteAutomation(advertiserId: string, id: string) {

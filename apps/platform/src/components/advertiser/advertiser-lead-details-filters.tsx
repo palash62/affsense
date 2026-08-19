@@ -28,7 +28,6 @@ const STATUSES = [
   { value: "VALIDATING", label: "Validating" },
   { value: "PENDING", label: "Pending" },
   { value: "APPROVED", label: "Approved" },
-  { value: "REJECTED", label: "Rejected" },
   { value: "PAID", label: "Paid" },
 ] as const;
 

@@ -44,6 +44,9 @@ export type SignupLeadPayload = {
   userData?: MetaUserData;
   contentName?: string;
   contentCategory?: string;
+  utmSource?: string;
+  utmMedium?: string;
+  utmCampaign?: string;
 };
 
 export type PurchasePayload = {
@@ -158,6 +161,9 @@ export function trackSignupLead(payload: SignupLeadPayload = {}) {
   const customData: Record<string, string> = {};
   if (payload.contentName) customData.content_name = payload.contentName;
   if (payload.contentCategory) customData.content_category = payload.contentCategory;
+  if (payload.utmSource) customData.utm_source = payload.utmSource;
+  if (payload.utmMedium) customData.utm_medium = payload.utmMedium;
+  if (payload.utmCampaign) customData.utm_campaign = payload.utmCampaign;
 
   safeCall(() => {
     if (Object.keys(matching).length > 0) {

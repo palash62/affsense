@@ -125,7 +125,7 @@ export function errorResponse(error: unknown, requestId?: string) {
         {
           error: {
             code: "VALIDATION_ERROR",
-            message: "Template name is too long. Use 80 characters or fewer.",
+            message: "This value is too long to save. Shorten the text and try again.",
             status: 422,
             requestId,
           },

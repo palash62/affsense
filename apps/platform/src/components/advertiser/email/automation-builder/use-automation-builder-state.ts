@@ -35,6 +35,7 @@ type Props = {
   automationId?: string;
   lists: EmailListOption[];
   initialCreate?: { name: string; trigger: Trigger };
+  readOnly?: boolean;
 };
 
 const HISTORY_LIMIT = 50;
@@ -88,6 +89,7 @@ export function useAutomationBuilderState({
   automationId: initialId,
   lists,
   initialCreate,
+  readOnly = false,
 }: Props) {
   const router = useRouter();
   const [automationId, setAutomationId] = useState<string | undefined>(initialId);
@@ -290,7 +292,9 @@ export function useAutomationBuilderState({
           name: a.name,
           trigger: "LEAD_CAPTURED",
           listId:
-            lists.find((l) => l.campaignId === (a.campaignId ?? ""))?.id ?? "",
+            (a.listId as string | null) ??
+            lists.find((l) => l.campaignId === (a.campaignId ?? ""))?.id ??
+            "",
           fromName: a.fromName,
           replyTo: a.replyTo ?? "",
           openTagId: a.openTagId ?? "",
@@ -357,12 +361,10 @@ export function useAutomationBuilderState({
   }, [automationId]);
 
   const buildPayload = useCallback(() => {
-    const campaignId =
-      lists.find((l) => l.id === form.listId)?.campaignId?.trim() ?? "";
     return {
       name: form.name.trim(),
       trigger: "LEAD_CAPTURED" as const,
-      campaignId,
+      listId: form.listId.trim(),
       fromName: form.fromName.trim(),
       replyTo: form.replyTo.trim() || null,
       openTagId: form.openTagId.trim() || null,
@@ -378,7 +380,7 @@ export function useAutomationBuilderState({
         fromEmail: s.fromEmail.trim() || null,
       })),
     };
-  }, [form, lists, steps]);
+  }, [form, steps]);
 
   const syncStepsFromServer = useCallback(
     (
@@ -479,6 +481,7 @@ export function useAutomationBuilderState({
   );
 
   useEffect(() => {
+    if (readOnly) return;
     if (!hydratedRef.current) return;
     if (saveStatus !== "dirty") return;
     if (!canPersist(form, steps, templates, tags)) {
@@ -489,7 +492,7 @@ export function useAutomationBuilderState({
       void persist(false);
     }, AUTOSAVE_MS);
     return () => window.clearTimeout(t);
-  }, [form, steps, templates, tags, saveStatus, persist]);
+  }, [form, steps, templates, tags, saveStatus, persist, readOnly]);
 
   const addEmailAt = useCallback(
     async (index: number) => {
@@ -856,6 +859,7 @@ export function useAutomationBuilderState({
     persist,
     canSave: canPersist(form, steps, templates, tags, validationOptions),
     maxSteps: MAX_STEPS,
+    readOnly,
   };
 }
 

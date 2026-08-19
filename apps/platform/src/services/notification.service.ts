@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import type { TicketCategory } from "@prisma/client";
+import { isAdminPortalRole } from "@/lib/admin-portal";
 import { notifyAdminAlert, notifyGeneric } from "@/services/notify.service";
 import { getSupportEmail } from "@/services/email.service";
 
@@ -145,10 +146,8 @@ export async function addTicketMessage(
     data: { ticketId, senderId, body: body.trim(), isInternal },
   });
 
-  const statusUpdate =
-    sender?.role === "ADMIN" && !isInternal
-      ? { status: "IN_PROGRESS" as const }
-      : {};
+  const staffReply = isAdminPortalRole(sender?.role) && !isInternal;
+  const statusUpdate = staffReply ? { status: "IN_PROGRESS" as const } : {};
 
   return prisma.supportTicket.update({
     where: { id: ticketId },
@@ -163,7 +162,7 @@ export async function addTicketMessage(
   }).then(async (ticket) => {
     if (isInternal) return ticket;
 
-    if (sender?.role === "ADMIN") {
+    if (isAdminPortalRole(sender?.role)) {
       const supportPath =
         ticket.user.role === "ADVERTISER" ? "/advertiser/support" : "/publisher/support";
       const supportEmail = await getSupportEmail();

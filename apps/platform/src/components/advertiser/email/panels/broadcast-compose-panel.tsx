@@ -28,6 +28,7 @@ import { cn } from "@/lib/utils";
 import { resolveUserTimezone } from "@/lib/user-timezone";
 import { EmailComposeEditor } from "../automation-builder/email-compose-editor";
 import { EmailModuleShell } from "../email-module-shell";
+import { EmailWalletWarningBanner } from "../email-wallet-warning";
 
 type AudienceType = "LIST" | "TAGS";
 type DeliveryMode = "now" | "schedule";
@@ -511,6 +512,7 @@ export function BroadcastComposePanel({ broadcastId: initialBroadcastId }: Props
         </div>
       ) : (
         <div className="mx-auto max-w-3xl space-y-5 pb-28">
+          <EmailWalletWarningBanner />
           {resumeFailedNotice ? (
             <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
               The previous send failed. Edit the broadcast and send or schedule again.

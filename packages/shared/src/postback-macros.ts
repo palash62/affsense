@@ -13,8 +13,22 @@ export const GLOBAL_POSTBACK_MACROS = [
   { macro: "{sub4}", description: "Sub 4" },
 ] as const;
 
+export const PUBLISHER_POSTBACK_MACROS = [
+  { macro: "{click_id}", description: "Lead / conversion id" },
+  { macro: "{lead_id}", description: "Lead id" },
+  { macro: "{payout}", description: "Publisher payout" },
+  { macro: "{currency}", description: "Currency" },
+  { macro: "{aff_id}", description: "Publisher id" },
+  { macro: "{offer_id}", description: "Campaign id" },
+  { macro: "{source}", description: "Source (?src=)" },
+  { macro: "{date}", description: "Date" },
+  { macro: "{sub_id}", description: "Sub ID from ?sub_id=" },
+  { macro: "{sub1}", description: "Same as {sub_id}" },
+] as const;
+
 export type PostbackMacroContext = {
   clickId?: string | null;
+  leadId?: string | null;
   payout?: string | number | null;
   currency?: string | null;
   affId?: string | null;
@@ -41,6 +55,7 @@ export function substitutePostbackMacros(
   const map: Record<string, string> = {
     "{click_id}": asEncodedValue(context.clickId),
     "{aff_click_id}": asEncodedValue(context.clickId),
+    "{lead_id}": asEncodedValue(context.leadId ?? context.clickId),
     "{payout}": asEncodedValue(context.payout),
     "{currency}": asEncodedValue(context.currency ?? "USD"),
     "{aff_id}": asEncodedValue(context.affId),
@@ -48,6 +63,7 @@ export function substitutePostbackMacros(
     "{offer_id}": asEncodedValue(context.offerId),
     "{source}": asEncodedValue(context.source),
     "{date}": asEncodedValue(context.date ?? new Date().toISOString().slice(0, 10)),
+    "{sub_id}": asEncodedValue(context.sub1),
     "{sub1}": asEncodedValue(context.sub1),
     "{sub2}": asEncodedValue(context.sub2),
     "{sub3}": asEncodedValue(context.sub3),

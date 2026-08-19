@@ -3,6 +3,7 @@ import {
   campaignAcceptsDeviceOs,
   filterCampaignsByDeviceOs,
   pickCampaignForIpRotation,
+  applySmartLinkCampaignAllowlist,
 } from "@/lib/smart-link-rotation";
 
 const campaigns = [
@@ -144,5 +145,34 @@ describe("filterCampaignsByDeviceOs", () => {
     expect(
       filterCampaignsByDeviceOs(pool, { device: "Mobile", os: "Android" }),
     ).toEqual([]);
+  });
+});
+
+describe("applySmartLinkCampaignAllowlist", () => {
+  const eligible = [
+    { id: "camp_a" },
+    { id: "camp_b" },
+    { id: "camp_c" },
+  ];
+
+  function resolveForPublisher(restrict: boolean, allowedIds: string[]) {
+    if (!restrict) return eligible;
+    return applySmartLinkCampaignAllowlist(eligible, allowedIds);
+  }
+
+  it("does not filter when restrict is false", () => {
+    expect(resolveForPublisher(false, ["camp_a"]).map((c) => c.id)).toEqual([
+      "camp_a",
+      "camp_b",
+      "camp_c",
+    ]);
+  });
+
+  it("keeps only selected campaign IDs when restrict is on", () => {
+    expect(resolveForPublisher(true, ["camp_a"]).map((c) => c.id)).toEqual(["camp_a"]);
+  });
+
+  it("returns none when restrict is on and allowlist is empty", () => {
+    expect(resolveForPublisher(true, []).map((c) => c.id)).toEqual([]);
   });
 });

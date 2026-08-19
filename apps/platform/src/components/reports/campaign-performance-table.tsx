@@ -19,9 +19,11 @@ function formatPercent(value: number) {
 export function CampaignPerformanceTable({
   rows,
   exportFilename = "campaign-performance.csv",
+  hideRejected = false,
 }: {
   rows: CampaignPerformanceRow[];
   exportFilename?: string;
+  hideRejected?: boolean;
 }) {
   const csvRows = rows.map((row) => [
     row.campaignName,
@@ -31,7 +33,7 @@ export function CampaignPerformanceTable({
     row.leads,
     row.approvedLeads,
     row.pendingLeads,
-    row.rejectedLeads,
+    ...(hideRejected ? [] : [row.rejectedLeads]),
     row.salesCount,
     row.revenue,
     row.conversionRate,
@@ -42,7 +44,7 @@ export function CampaignPerformanceTable({
 
   if (rows.length === 0) {
     return (
-      <div className="px-6 py-12 text-center text-sm text-muted-foreground">
+      <div className="px-6 py-12 text-center text-sm text-slate-500">
         No campaign activity in this date range.
       </div>
     );
@@ -50,7 +52,7 @@ export function CampaignPerformanceTable({
 
   return (
     <div>
-      <div className="flex justify-end border-b border-border px-4 py-3 sm:px-6">
+      <div className="flex justify-end border-b border-slate-100 px-4 py-3 sm:px-6">
         <ExportCsvButton
           filename={exportFilename}
           headers={[
@@ -61,7 +63,7 @@ export function CampaignPerformanceTable({
             "Leads",
             "Approved",
             "Pending",
-            "Rejected",
+            ...(hideRejected ? [] : ["Rejected"]),
             "Sales",
             "Revenue",
             "Conversion %",
@@ -75,41 +77,43 @@ export function CampaignPerformanceTable({
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
-            <TableRow className="border-border hover:bg-transparent">
-              <TableHead className="min-w-[160px] px-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            <TableRow className="border-slate-100 hover:bg-transparent">
+              <TableHead className="min-w-[160px] px-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
                 Campaign
               </TableHead>
-              <TableHead className="px-3 text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <TableHead className="px-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
                 Clicks
               </TableHead>
-              <TableHead className="px-3 text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <TableHead className="px-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
                 Leads
               </TableHead>
-              <TableHead className="px-3 text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <TableHead className="px-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
                 Approved
               </TableHead>
-              <TableHead className="px-3 text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <TableHead className="px-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
                 Pending
               </TableHead>
-              <TableHead className="px-3 text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Rejected
-              </TableHead>
-              <TableHead className="px-3 text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              {!hideRejected && (
+                <TableHead className="px-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Rejected
+                </TableHead>
+              )}
+              <TableHead className="px-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
                 Sales
               </TableHead>
-              <TableHead className="px-3 text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <TableHead className="px-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
                 Revenue
               </TableHead>
-              <TableHead className="px-3 text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <TableHead className="px-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
                 Conv.
               </TableHead>
-              <TableHead className="px-3 text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <TableHead className="px-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
                 Approval
               </TableHead>
-              <TableHead className="px-3 text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <TableHead className="px-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
                 Spend
               </TableHead>
-              <TableHead className="px-3 text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <TableHead className="px-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
                 CPL
               </TableHead>
             </TableRow>
@@ -117,15 +121,17 @@ export function CampaignPerformanceTable({
           <TableBody>
             {rows.map((row) => (
               <TableRow key={row.campaignId} className="border-slate-50">
-                <TableCell className="px-4 font-medium text-foreground">
+                <TableCell className="px-4 font-medium text-slate-900">
                   <div>{row.campaignName}</div>
-                  <div className="text-xs text-muted-foreground">{row.status}</div>
+                  <div className="text-xs text-slate-500">{row.status}</div>
                 </TableCell>
                 <TableCell className="px-3 text-right tabular-nums">{row.clicks.toLocaleString()}</TableCell>
                 <TableCell className="px-3 text-right tabular-nums">{row.leads.toLocaleString()}</TableCell>
                 <TableCell className="px-3 text-right tabular-nums">{row.approvedLeads.toLocaleString()}</TableCell>
                 <TableCell className="px-3 text-right tabular-nums">{row.pendingLeads.toLocaleString()}</TableCell>
-                <TableCell className="px-3 text-right tabular-nums">{row.rejectedLeads.toLocaleString()}</TableCell>
+                {!hideRejected && (
+                  <TableCell className="px-3 text-right tabular-nums">{row.rejectedLeads.toLocaleString()}</TableCell>
+                )}
                 <TableCell className="px-3 text-right tabular-nums">{row.salesCount.toLocaleString()}</TableCell>
                 <TableCell className="px-3 text-right tabular-nums">{formatCurrency(row.revenue)}</TableCell>
                 <TableCell className="px-3 text-right tabular-nums">{formatPercent(row.conversionRate)}</TableCell>

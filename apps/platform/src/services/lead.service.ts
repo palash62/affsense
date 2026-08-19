@@ -864,6 +864,9 @@ const LEAD_LIST_INCLUDE = {
   statusHistory: { orderBy: { createdAt: "desc" as const }, take: 3 },
 };
 
+export const PUBLISHER_EXCLUDED_LEAD_STATUSES = ["REJECTED"] as const;
+export const ADVERTISER_EXCLUDED_LEAD_STATUSES = ["REJECTED"] as const;
+
 type LeadListFilters = {
   campaignId?: string;
   campaignSearch?: string;
@@ -871,6 +874,7 @@ type LeadListFilters = {
   publisherSearch?: string;
   advertiserId?: string;
   status?: LeadStatus;
+  excludeStatuses?: LeadStatus[];
   source?: string;
   email?: string;
   minRiskScore?: number;
@@ -879,7 +883,7 @@ type LeadListFilters = {
   dateTo?: Date;
 };
 
-function buildLeadListWhere(filters: LeadListFilters) {
+export function buildLeadListWhere(filters: LeadListFilters) {
   const createdAt: { gte?: Date; lte?: Date } = {};
   if (filters.dateFrom) {
     const from = new Date(filters.dateFrom);
@@ -911,7 +915,11 @@ function buildLeadListWhere(filters: LeadListFilters) {
     ...(filters.publisherSearch?.trim() && {
       publisherId: { contains: filters.publisherSearch.trim() },
     }),
-    ...(filters.status && { status: filters.status }),
+    ...(filters.status
+      ? { status: filters.status }
+      : filters.excludeStatuses?.length
+        ? { status: { notIn: filters.excludeStatuses } }
+        : {}),
     ...(filters.source?.trim() && { source: filters.source.trim() }),
     ...(filters.email?.trim() && {
       data: { path: "$.email", equals: filters.email.trim() },
@@ -1144,6 +1152,30 @@ export async function listLeadsForExport(filters: LeadListFilters) {
   return attachCpaMetricsToLeadRows(await enrichLeadListRows(data));
 }
 
+export async function listDistinctLeadSources(
+  filters: LeadListFilters & { search?: string },
+) {
+  const { search, source: _source, email: _email, sort: _sort, ...scope } = filters;
+  const where = buildLeadListWhere(scope);
+  const trimmedSearch = search?.trim();
+
+  const rows = await prisma.lead.findMany({
+    where: {
+      ...where,
+      source: {
+        not: null,
+        ...(trimmedSearch ? { contains: trimmedSearch } : {}),
+      },
+    },
+    select: { source: true },
+    distinct: ["source"],
+    orderBy: { source: "asc" },
+    take: 50,
+  });
+
+  return rows.map((row) => row.source).filter((value): value is string => Boolean(value));
+}
+
 export type AdvertiserPublisherLeadReportRow = {
   publisherId: string;
   totalLeads: number;
@@ -1203,6 +1235,7 @@ export async function listAdvertiserPublisherLeadReport(filters: {
     where: {
       campaign: campaignWhere,
       isTest: false,
+      status: { notIn: [...ADVERTISER_EXCLUDED_LEAD_STATUSES] },
       ...(filters.publisherSearch?.trim() && {
         publisherId: { contains: filters.publisherSearch.trim() },
       }),
@@ -1279,7 +1312,6 @@ export type PublisherSubIdLeadReportRow = {
   totalLeads: number;
   approvedLeads: number;
   pendingLeads: number;
-  rejectedLeads: number;
   paidLeads: number;
   earnings: number;
   lastLeadAt: Date | null;
@@ -1298,6 +1330,7 @@ export async function listPublisherSubIdLeadReport(filters: {
       where: {
         publisherId: filters.publisherId,
         isTest: false,
+        status: { notIn: [...PUBLISHER_EXCLUDED_LEAD_STATUSES] },
         ...(filters.subIdSearch?.trim() && {
           subId: { contains: filters.subIdSearch.trim() },
         }),
@@ -1349,7 +1382,6 @@ export async function listPublisherSubIdLeadReport(filters: {
       totalLeads: 0,
       approvedLeads: 0,
       pendingLeads: 0,
-      rejectedLeads: 0,
       paidLeads: 0,
       earnings: 0,
       lastLeadAt: null,
@@ -1370,8 +1402,6 @@ export async function listPublisherSubIdLeadReport(filters: {
           platformSettings,
         ).publisherAmount;
       }
-    } else if (lead.status === "REJECTED") {
-      existing.rejectedLeads += 1;
     } else {
       existing.pendingLeads += 1;
     }

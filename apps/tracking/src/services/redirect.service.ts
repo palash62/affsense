@@ -9,6 +9,7 @@ import {
   campaignQualifiesForSpecialPayouts,
   readPublisherSpecialTierPayouts,
 } from "@/lib/redirect-helpers";
+import { applySmartLinkCampaignAllowlist } from "@/lib/smart-link-rotation";
 import { parseUserAgent } from "@/lib/parse-user-agent";
 import type { Campaign, PublisherSmartLink } from "@prisma/client";
 
@@ -111,6 +112,7 @@ async function getEligibleCampaigns(publisherId: string, options?: { countryCode
         tier1SpecialPayout: true,
         tier2SpecialPayout: true,
         tier3SpecialPayout: true,
+        restrictSmartLinkCampaigns: true,
       },
     }),
     getPlatformSettings(),
@@ -134,7 +136,7 @@ async function getEligibleCampaigns(publisherId: string, options?: { countryCode
     orderBy: { createdAt: "asc" },
   });
 
-  return campaigns.filter((campaign) => {
+  const eligible = campaigns.filter((campaign) => {
     const walletBalance = Number(campaign.advertiser.wallet?.balance ?? 0);
     if (walletBalance < Number(campaign.cpl)) return false;
     if (
@@ -155,6 +157,19 @@ async function getEligibleCampaigns(publisherId: string, options?: { countryCode
     }
     return true;
   });
+
+  if (!publisherProfile?.restrictSmartLinkCampaigns) {
+    return eligible;
+  }
+
+  const allowlist = await prisma.publisherSmartLinkCampaign.findMany({
+    where: { publisherId },
+    select: { campaignId: true },
+  });
+  return applySmartLinkCampaignAllowlist(
+    eligible,
+    allowlist.map((row) => row.campaignId),
+  );
 }
 
 export async function pickNextCampaign(

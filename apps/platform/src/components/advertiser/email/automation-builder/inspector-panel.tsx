@@ -86,11 +86,11 @@ function PanelSection({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-xl border border-border/90 bg-white p-4 shadow-sm">
+    <section className="rounded-xl border border-slate-200/90 bg-white p-4 shadow-sm">
       <div className="mb-3">
-        <h3 className="text-sm font-semibold tracking-tight text-foreground">{title}</h3>
+        <h3 className="text-sm font-semibold tracking-tight text-slate-900">{title}</h3>
         {description ? (
-          <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{description}</p>
+          <p className="mt-0.5 text-xs leading-relaxed text-slate-500">{description}</p>
         ) : null}
       </div>
       <div className="space-y-3.5">{children}</div>
@@ -109,7 +109,7 @@ function FieldHint({
     <p
       className={cn(
         "mt-1.5 text-xs leading-relaxed",
-        tone === "muted" && "text-muted-foreground",
+        tone === "muted" && "text-slate-500",
         tone === "amber" &&
           "rounded-lg border border-amber-200/80 bg-amber-50 px-2.5 py-2 text-amber-800",
         tone === "success" &&
@@ -129,7 +129,7 @@ function FieldLabel({
   required?: boolean;
 }) {
   return (
-    <Label className="text-xs font-medium text-muted-foreground">
+    <Label className="text-xs font-medium text-slate-500">
       {children}
       {required ? <span className="text-red-500"> *</span> : null}
     </Label>
@@ -147,18 +147,18 @@ function StatsEmpty({
 }) {
   return (
     <div className="flex min-h-[200px] flex-col items-center justify-center px-4 py-10 text-center">
-      <span className="mb-3 flex size-12 items-center justify-center rounded-2xl border border-border bg-muted text-muted-foreground">
+      <span className="mb-3 flex size-12 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-400">
         <Icon className="size-5" />
       </span>
-      <p className="text-sm font-medium text-foreground">{title}</p>
-      <p className="mt-1 max-w-[240px] text-xs leading-relaxed text-muted-foreground">{description}</p>
+      <p className="text-sm font-medium text-slate-800">{title}</p>
+      <p className="mt-1 max-w-[240px] text-xs leading-relaxed text-slate-500">{description}</p>
     </div>
   );
 }
 
 function StickyFooter({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex shrink-0 items-center justify-between gap-2 border-t border-border/90 bg-white/95 px-4 py-3 backdrop-blur-sm">
+    <div className="flex shrink-0 items-center justify-between gap-2 border-t border-slate-200/90 bg-white/95 px-4 py-3 backdrop-blur-sm">
       {children}
     </div>
   );
@@ -178,20 +178,20 @@ function StatRow({
   onClick?: () => void;
 }) {
   const className =
-    "flex w-full items-center gap-3 rounded-xl border border-border bg-muted/80 px-3 py-3 text-left transition";
+    "flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-3 text-left transition";
   const interactive = onClick
-    ? "cursor-pointer hover:border-border hover:bg-muted/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-primary)]/30"
+    ? "cursor-pointer hover:border-slate-300 hover:bg-slate-100/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-primary)]/30"
     : "";
 
   const body = (
     <>
-      <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-card text-muted-foreground shadow-sm">
+      <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-white text-slate-600 shadow-sm">
         <Icon className="size-4" />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="text-xs font-medium text-muted-foreground">{label}</p>
-        <p className="text-lg font-semibold tracking-tight text-foreground">{value}</p>
-        {detail ? <p className="text-xs text-muted-foreground">{detail}</p> : null}
+        <p className="text-xs font-medium text-slate-500">{label}</p>
+        <p className="text-lg font-semibold tracking-tight text-slate-900">{value}</p>
+        {detail ? <p className="text-xs text-slate-500">{detail}</p> : null}
       </div>
     </>
   );
@@ -345,7 +345,7 @@ function StepStatistics({
             <DialogTitle>
               {metric ? METRIC_LABELS[metric] : "Recipients"}
               {total > 0 ? (
-                <span className="ml-2 text-sm font-normal text-muted-foreground">
+                <span className="ml-2 text-sm font-normal text-slate-500">
                   ({total.toLocaleString()})
                 </span>
               ) : null}
@@ -358,14 +358,14 @@ function StepStatistics({
           </DialogHeader>
 
           {loading ? (
-            <div className="flex items-center justify-center gap-2 py-10 text-sm text-muted-foreground">
+            <div className="flex items-center justify-center gap-2 py-10 text-sm text-slate-500">
               <Loader2 className="size-4 animate-spin" />
               Loading…
             </div>
           ) : error ? (
             <p className="py-8 text-center text-sm text-red-600">{error}</p>
           ) : items.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">No recipients</p>
+            <p className="py-8 text-center text-sm text-slate-500">No recipients</p>
           ) : (
             <div className="max-h-[360px] space-y-2 overflow-y-auto pr-1">
               {items.map((row) => {
@@ -377,12 +377,12 @@ function StepStatistics({
                 return (
                   <div
                     key={row.sendId}
-                    className="rounded-xl border border-border bg-muted/70 px-3 py-2.5"
+                    className="rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2.5"
                   >
-                    <p className="truncate text-sm font-medium text-foreground">
+                    <p className="truncate text-sm font-medium text-slate-900">
                       {row.email}
                     </p>
-                    <p className="mt-0.5 text-xs text-muted-foreground">
+                    <p className="mt-0.5 text-xs text-slate-500">
                       {name ? `${name} · ` : ""}
                       {formatShortDate(time)}
                     </p>
@@ -393,7 +393,7 @@ function StepStatistics({
           )}
 
           {totalPages > 1 && !loading && !error ? (
-            <div className="flex items-center justify-between gap-2 border-t border-border pt-3">
+            <div className="flex items-center justify-between gap-2 border-t border-slate-100 pt-3">
               <Button
                 type="button"
                 variant="outline"
@@ -408,7 +408,7 @@ function StepStatistics({
               >
                 Previous
               </Button>
-              <span className="text-xs text-muted-foreground">
+              <span className="text-xs text-slate-500">
                 Page {page} of {totalPages}
               </span>
               <Button
@@ -446,6 +446,7 @@ function EmailContentForm({ state }: { state: AutomationBuilderState }) {
     revertStepContent,
     saveStepAction,
     applyLibraryTemplate,
+    readOnly,
   } = state;
 
   const selectedStep =
@@ -522,6 +523,8 @@ function EmailContentForm({ state }: { state: AutomationBuilderState }) {
             <Input
               className="mt-1.5 h-10"
               value={template.name}
+              readOnly={readOnly}
+              disabled={readOnly}
               onChange={(e) =>
                 void updateStepTemplate(selectedStep.clientId, { name: e.target.value })
               }
@@ -539,6 +542,8 @@ function EmailContentForm({ state }: { state: AutomationBuilderState }) {
             <Input
               className="mt-1.5 h-10"
               value={selectedStep.fromName}
+              readOnly={readOnly}
+              disabled={readOnly}
               onChange={(e) =>
                 updateStep(selectedStep.clientId, { fromName: e.target.value })
               }
@@ -554,6 +559,7 @@ function EmailContentForm({ state }: { state: AutomationBuilderState }) {
             ) : (
               <Select
                 value={selectedStep.fromEmail || "__default__"}
+                disabled={readOnly}
                 onValueChange={(v) => {
                   const next = !v || v === "__default__" ? "" : v;
                   const match = verifiedMailboxes.find((m) => m.email === next);
@@ -596,6 +602,8 @@ function EmailContentForm({ state }: { state: AutomationBuilderState }) {
             <Input
               className="mt-1.5 h-10"
               value={template.subject}
+              readOnly={readOnly}
+              disabled={readOnly}
               onChange={(e) =>
                 void updateStepTemplate(selectedStep.clientId, {
                   subject: e.target.value,
@@ -609,6 +617,8 @@ function EmailContentForm({ state }: { state: AutomationBuilderState }) {
             <Input
               className="mt-1.5 h-10"
               value={template.previewText}
+              readOnly={readOnly}
+              disabled={readOnly}
               onChange={(e) =>
                 void updateStepTemplate(selectedStep.clientId, {
                   previewText: e.target.value,
@@ -619,65 +629,67 @@ function EmailContentForm({ state }: { state: AutomationBuilderState }) {
             <FieldHint>Shown as preview text in some email clients.</FieldHint>
           </div>
 
-          <div>
-            <p className="mb-2 text-xs font-medium text-muted-foreground">Create email</p>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => setCreateMode("quick")}
-                className={cn(
-                  "rounded-lg border px-3 py-2.5 text-left text-sm transition",
-                  createMode === "quick"
-                    ? "border-[var(--theme-primary)] bg-[var(--theme-primary-soft)] ring-1 ring-[var(--theme-primary)]"
-                    : "border-border hover:border-border",
-                )}
-              >
-                <span className="flex items-center gap-2 font-medium text-foreground">
-                  <span
-                    className={cn(
-                      "flex size-3.5 items-center justify-center rounded-full border",
-                      createMode === "quick"
-                        ? "border-[var(--theme-primary)]"
-                        : "border-border",
-                    )}
-                  >
-                    {createMode === "quick" ? (
-                      <span className="size-2 rounded-full bg-[var(--theme-primary)]" />
-                    ) : null}
+          {!readOnly ? (
+            <div>
+              <p className="mb-2 text-xs font-medium text-slate-500">Create email</p>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setCreateMode("quick")}
+                  className={cn(
+                    "rounded-lg border px-3 py-2.5 text-left text-sm transition",
+                    createMode === "quick"
+                      ? "border-[var(--theme-primary)] bg-[var(--theme-primary-soft)] ring-1 ring-[var(--theme-primary)]"
+                      : "border-slate-200 hover:border-slate-300",
+                  )}
+                >
+                  <span className="flex items-center gap-2 font-medium text-slate-900">
+                    <span
+                      className={cn(
+                        "flex size-3.5 items-center justify-center rounded-full border",
+                        createMode === "quick"
+                          ? "border-[var(--theme-primary)]"
+                          : "border-slate-300",
+                      )}
+                    >
+                      {createMode === "quick" ? (
+                        <span className="size-2 rounded-full bg-[var(--theme-primary)]" />
+                      ) : null}
+                    </span>
+                    Quick compose
                   </span>
-                  Quick compose
-                </span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setCreateMode("library")}
-                className={cn(
-                  "rounded-lg border px-3 py-2.5 text-left text-sm transition",
-                  createMode === "library"
-                    ? "border-[var(--theme-primary)] bg-[var(--theme-primary-soft)] ring-1 ring-[var(--theme-primary)]"
-                    : "border-border hover:border-border",
-                )}
-              >
-                <span className="flex items-center gap-2 font-medium text-foreground">
-                  <span
-                    className={cn(
-                      "flex size-3.5 items-center justify-center rounded-full border",
-                      createMode === "library"
-                        ? "border-[var(--theme-primary)]"
-                        : "border-border",
-                    )}
-                  >
-                    {createMode === "library" ? (
-                      <span className="size-2 rounded-full bg-[var(--theme-primary)]" />
-                    ) : null}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCreateMode("library")}
+                  className={cn(
+                    "rounded-lg border px-3 py-2.5 text-left text-sm transition",
+                    createMode === "library"
+                      ? "border-[var(--theme-primary)] bg-[var(--theme-primary-soft)] ring-1 ring-[var(--theme-primary)]"
+                      : "border-slate-200 hover:border-slate-300",
+                  )}
+                >
+                  <span className="flex items-center gap-2 font-medium text-slate-900">
+                    <span
+                      className={cn(
+                        "flex size-3.5 items-center justify-center rounded-full border",
+                        createMode === "library"
+                          ? "border-[var(--theme-primary)]"
+                          : "border-slate-300",
+                      )}
+                    >
+                      {createMode === "library" ? (
+                        <span className="size-2 rounded-full bg-[var(--theme-primary)]" />
+                      ) : null}
+                    </span>
+                    Select template
                   </span>
-                  Select template
-                </span>
-              </button>
+                </button>
+              </div>
             </div>
-          </div>
+          ) : null}
 
-          {createMode === "library" ? (
+          {!readOnly && createMode === "library" ? (
             <div>
               <FieldLabel>Template</FieldLabel>
               <Select
@@ -700,23 +712,25 @@ function EmailContentForm({ state }: { state: AutomationBuilderState }) {
                 </SelectContent>
               </Select>
             </div>
-          ) : (
+          ) : readOnly || createMode === "quick" ? (
             <div>
               <FieldLabel required>Type your message</FieldLabel>
               <div className="mt-1.5">
                 <EmailComposeEditor
                   key={selectedStep.clientId + selectedStep.templateId}
                   value={template.htmlBody}
+                  readOnly={readOnly}
                   onChange={(html) =>
                     void updateStepTemplate(selectedStep.clientId, { htmlBody: html })
                   }
                 />
               </div>
             </div>
-          )}
+          ) : null}
         </PanelSection>
 
-        <PanelSection title="Test send" description="Send a preview to your inbox before publishing.">
+        {!readOnly ? (
+          <PanelSection title="Test send" description="Send a preview to your inbox before publishing.">
           <div>
             <FieldLabel>Test email</FieldLabel>
             <div className="mt-1.5 flex gap-2">
@@ -750,38 +764,41 @@ function EmailContentForm({ state }: { state: AutomationBuilderState }) {
             ) : null}
           </div>
         </PanelSection>
+        ) : null}
       </div>
 
-      <StickyFooter>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="text-red-600 hover:bg-red-50 hover:text-red-700"
-          onClick={() => removeStep(selectedStep.clientId)}
-        >
-          <Trash2 className="size-3.5" />
-          Delete
-        </Button>
-        <div className="flex gap-2">
+      {!readOnly ? (
+        <StickyFooter>
           <Button
             type="button"
-            variant="outline"
+            variant="ghost"
             size="sm"
-            onClick={() => void revertStepContent(selectedStep.clientId)}
+            className="text-red-600 hover:bg-red-50 hover:text-red-700"
+            onClick={() => removeStep(selectedStep.clientId)}
           >
-            Cancel
+            <Trash2 className="size-3.5" />
+            Delete
           </Button>
-          <Button
-            type="button"
-            size="sm"
-            disabled={savingAction}
-            onClick={() => void onSaveAction()}
-          >
-            {savingAction ? "Saving…" : "Save action"}
-          </Button>
-        </div>
-      </StickyFooter>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => void revertStepContent(selectedStep.clientId)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              disabled={savingAction}
+              onClick={() => void onSaveAction()}
+            >
+              {savingAction ? "Saving…" : "Save action"}
+            </Button>
+          </div>
+        </StickyFooter>
+      ) : null}
     </div>
   );
 }
@@ -794,6 +811,7 @@ function WaitContentForm({ state }: { state: AutomationBuilderState }) {
     clearWait,
     saveStepAction,
     selectCanvas,
+    readOnly,
   } = state;
 
   const selectedStep =
@@ -835,7 +853,7 @@ function WaitContentForm({ state }: { state: AutomationBuilderState }) {
                 variant="outline"
                 size="icon"
                 className="size-10 shrink-0"
-                disabled={days <= 0}
+                disabled={readOnly || days <= 0}
                 onClick={() => setDays(days - 1)}
                 aria-label="Decrease days"
               >
@@ -848,6 +866,8 @@ function WaitContentForm({ state }: { state: AutomationBuilderState }) {
                 step={1}
                 className="h-10 text-center"
                 value={days}
+                readOnly={readOnly}
+                disabled={readOnly}
                 onChange={(e) => setDays(Number(e.target.value) || 0)}
               />
               <Button
@@ -855,7 +875,7 @@ function WaitContentForm({ state }: { state: AutomationBuilderState }) {
                 variant="outline"
                 size="icon"
                 className="size-10 shrink-0"
-                disabled={days >= 365}
+                disabled={readOnly || days >= 365}
                 onClick={() => setDays(days + 1)}
                 aria-label="Increase days"
               >
@@ -878,31 +898,33 @@ function WaitContentForm({ state }: { state: AutomationBuilderState }) {
         </PanelSection>
       </div>
 
-      <StickyFooter>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="text-red-600 hover:bg-red-50 hover:text-red-700"
-          onClick={() => clearWait(selectedStep.clientId)}
-        >
-          <Trash2 className="size-3.5" />
-          Delete
-        </Button>
-        <div className="flex gap-2">
-          <Button type="button" variant="outline" size="sm" onClick={() => selectCanvas()}>
-            Cancel
-          </Button>
+      {!readOnly ? (
+        <StickyFooter>
           <Button
             type="button"
+            variant="ghost"
             size="sm"
-            disabled={savingAction}
-            onClick={() => void onSaveAction()}
+            className="text-red-600 hover:bg-red-50 hover:text-red-700"
+            onClick={() => clearWait(selectedStep.clientId)}
           >
-            {savingAction ? "Saving…" : "Save action"}
+            <Trash2 className="size-3.5" />
+            Delete
           </Button>
-        </div>
-      </StickyFooter>
+          <div className="flex gap-2">
+            <Button type="button" variant="outline" size="sm" onClick={() => selectCanvas()}>
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              disabled={savingAction}
+              onClick={() => void onSaveAction()}
+            >
+              {savingAction ? "Saving…" : "Save action"}
+            </Button>
+          </div>
+        </StickyFooter>
+      ) : null}
     </div>
   );
 }
@@ -919,6 +941,7 @@ export function InspectorPanel({ state }: Props) {
     automationId,
     validateFlash,
     issues,
+    readOnly,
   } = state;
 
   const [open, setOpen] = useState(true);
@@ -959,12 +982,12 @@ export function InspectorPanel({ state }: Props) {
 
   if (!open) {
     return (
-      <aside className="flex h-full w-10 shrink-0 flex-col items-center border-l border-border bg-muted/80 pt-3">
+      <aside className="flex h-full w-10 shrink-0 flex-col items-center border-l border-slate-200/80 bg-slate-50/80 pt-3">
         <Button
           type="button"
           variant="ghost"
           size="icon"
-          className="size-8 text-muted-foreground hover:text-foreground"
+          className="size-8 text-slate-600 hover:text-slate-900"
           aria-label="Open inspector"
           onClick={() => setOpen(true)}
         >
@@ -975,16 +998,16 @@ export function InspectorPanel({ state }: Props) {
   }
 
   return (
-    <aside className="flex h-full w-[460px] min-w-[440px] max-w-[520px] shrink-0 flex-col border-l border-border bg-muted/40">
-      <div className="flex items-start justify-between gap-2 border-b border-border bg-muted/80 px-4 py-3.5">
+    <aside className="flex h-full w-[460px] min-w-[440px] max-w-[520px] shrink-0 flex-col border-l border-slate-200/80 bg-slate-50/40">
+      <div className="flex items-start justify-between gap-2 border-b border-slate-200/80 bg-slate-50/80 px-4 py-3.5">
         {isWait ? (
           <div className="flex min-w-0 flex-1 items-start gap-2.5">
             <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-700 shadow-sm">
               <Clock className="size-4" />
             </span>
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-foreground">Wait</p>
-              <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+              <p className="truncate text-sm font-semibold text-slate-900">Wait</p>
+              <p className="mt-0.5 text-xs leading-relaxed text-slate-500">
                 Hold for a set number of days before the next email
               </p>
             </div>
@@ -995,8 +1018,8 @@ export function InspectorPanel({ state }: Props) {
               <Mail className="size-4" />
             </span>
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-foreground">Email</p>
-              <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+              <p className="truncate text-sm font-semibold text-slate-900">Email</p>
+              <p className="mt-0.5 text-xs leading-relaxed text-slate-500">
                 Compose the message contacts receive in this step
               </p>
             </div>
@@ -1007,10 +1030,10 @@ export function InspectorPanel({ state }: Props) {
               <Zap className="size-4" />
             </span>
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-foreground">
+              <p className="truncate text-sm font-semibold text-slate-900">
                 Automation settings
               </p>
-              <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+              <p className="mt-0.5 text-xs leading-relaxed text-slate-500">
                 Who enters and how this flow starts
               </p>
             </div>
@@ -1020,7 +1043,7 @@ export function InspectorPanel({ state }: Props) {
           type="button"
           variant="ghost"
           size="icon"
-          className="mt-0.5 size-8 shrink-0 text-muted-foreground hover:text-foreground"
+          className="mt-0.5 size-8 shrink-0 text-slate-500 hover:text-slate-900"
           aria-label="Collapse inspector"
           onClick={() => setOpen(false)}
         >
@@ -1053,7 +1076,7 @@ export function InspectorPanel({ state }: Props) {
       >
         <TabsList
           variant="line"
-          className="w-full shrink-0 justify-start gap-1 rounded-none border-b border-border bg-card px-3"
+          className="w-full shrink-0 justify-start gap-1 rounded-none border-b border-slate-200/80 bg-white px-3"
         >
           <TabsTrigger
             value="content"
@@ -1073,7 +1096,7 @@ export function InspectorPanel({ state }: Props) {
           <>
             <TabsContent
               value="content"
-              className="mt-0 flex min-h-0 flex-1 flex-col bg-muted/30 data-[hidden]:hidden"
+              className="mt-0 flex min-h-0 flex-1 flex-col bg-slate-50/30 data-[hidden]:hidden"
             >
               <WaitContentForm state={state} />
             </TabsContent>
@@ -1092,17 +1115,17 @@ export function InspectorPanel({ state }: Props) {
           <>
             <TabsContent
               value="content"
-              className="mt-0 flex min-h-0 flex-1 flex-col bg-muted/30 data-[hidden]:hidden"
+              className="mt-0 flex min-h-0 flex-1 flex-col bg-slate-50/30 data-[hidden]:hidden"
             >
               <EmailContentForm state={state} />
             </TabsContent>
             <TabsContent
               value="statistics"
-              className="mt-0 min-h-0 flex-1 overflow-y-auto bg-card px-4 py-4"
+              className="mt-0 min-h-0 flex-1 overflow-y-auto bg-white px-4 py-4"
             >
               {stepStat ? (
                 <div className="space-y-3">
-                  <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                  <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
                     This email
                   </p>
                   <StepStatistics
@@ -1124,7 +1147,7 @@ export function InspectorPanel({ state }: Props) {
           <>
             <TabsContent
               value="content"
-              className="mt-0 min-h-0 flex-1 space-y-3 overflow-y-auto bg-muted/30 px-4 py-4"
+              className="mt-0 min-h-0 flex-1 space-y-3 overflow-y-auto bg-slate-50/30 px-4 py-4"
             >
               <PanelSection
                 title="Flow"
@@ -1135,6 +1158,8 @@ export function InspectorPanel({ state }: Props) {
                   <Input
                     className="mt-1.5 h-10"
                     value={form.name}
+                    readOnly={readOnly}
+                    disabled={readOnly}
                     onChange={(e) => setForm({ name: e.target.value })}
                     placeholder="Welcome sequence"
                   />
@@ -1143,12 +1168,13 @@ export function InspectorPanel({ state }: Props) {
 
               <PanelSection
                 title="Audience"
-                description="Connect a list — submitted leads for that list’s campaign enter this flow."
+                description="Connect a list — submitted leads for any of that list’s campaigns enter this flow."
               >
                 <div>
                   <FieldLabel required>Audience list</FieldLabel>
                   <Select
                     value={form.listId || ""}
+                    disabled={readOnly}
                     onValueChange={(listId) => {
                       if (listId) setForm({ listId });
                     }}
@@ -1157,7 +1183,7 @@ export function InspectorPanel({ state }: Props) {
                       <SelectValue placeholder="Select a list">
                         {selectedList ? (
                           <span className="flex items-center gap-2">
-                            <List className="size-3.5 text-muted-foreground" />
+                            <List className="size-3.5 text-slate-400" />
                             {selectedList.name}
                           </span>
                         ) : (
@@ -1191,9 +1217,11 @@ export function InspectorPanel({ state }: Props) {
                     </FieldHint>
                   ) : (
                     <FieldHint tone="success">
-                      {selectedList?.campaignName?.trim()
-                        ? `Feeds from lead campaign: ${selectedList.campaignName.trim()}`
-                        : "Subscribers on this list enter when a matching lead is submitted."}
+                      {selectedList?.campaignNames?.length
+                        ? `Feeds from lead campaigns: ${selectedList.campaignNames.join(", ")}`
+                        : selectedList?.campaignName?.trim()
+                          ? `Feeds from lead campaign: ${selectedList.campaignName.trim()}`
+                          : "Subscribers on this list enter when a matching lead is submitted."}
                     </FieldHint>
                   )}
                 </div>
@@ -1204,7 +1232,7 @@ export function InspectorPanel({ state }: Props) {
                 description="Optional. Applied when someone opens or clicks an email in this automation."
               >
                 {tags.length === 0 ? (
-                  <div className="rounded-lg border border-border bg-muted px-3 py-2.5 text-xs text-muted-foreground">
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs text-slate-600">
                     No tags yet.{" "}
                     <a
                       href="/advertiser/email/tags"
@@ -1220,6 +1248,7 @@ export function InspectorPanel({ state }: Props) {
                       <FieldLabel>Tag on open</FieldLabel>
                       <Select
                         value={form.openTagId || "__none__"}
+                        disabled={readOnly}
                         onValueChange={(v) => {
                           if (!v || v === "__none__") {
                             setForm({ openTagId: "" });
@@ -1252,6 +1281,7 @@ export function InspectorPanel({ state }: Props) {
                       <FieldLabel>Tag on click</FieldLabel>
                       <Select
                         value={form.clickTagId || "__none__"}
+                        disabled={readOnly}
                         onValueChange={(v) => {
                           if (!v || v === "__none__") {
                             setForm({ clickTagId: "" });
@@ -1297,6 +1327,8 @@ export function InspectorPanel({ state }: Props) {
                   <Input
                     className="mt-1.5 h-10"
                     value={form.fromName}
+                    readOnly={readOnly}
+                    disabled={readOnly}
                     onChange={(e) => setForm({ fromName: e.target.value })}
                     placeholder="Your brand"
                   />
@@ -1304,11 +1336,13 @@ export function InspectorPanel({ state }: Props) {
                 <div>
                   <FieldLabel>Reply-to email</FieldLabel>
                   <div className="relative mt-1.5">
-                    <User className="pointer-events-none absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-muted-foreground" />
+                    <User className="pointer-events-none absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-slate-400" />
                     <Input
                       type="email"
                       className="h-10 pl-9"
                       value={form.replyTo}
+                      readOnly={readOnly}
+                      disabled={readOnly}
                       onChange={(e) => setForm({ replyTo: e.target.value })}
                       placeholder="you@example.com"
                     />
@@ -1319,7 +1353,7 @@ export function InspectorPanel({ state }: Props) {
 
             <TabsContent
               value="statistics"
-              className="mt-0 min-h-0 flex-1 overflow-y-auto bg-card px-4 py-4"
+              className="mt-0 min-h-0 flex-1 overflow-y-auto bg-white px-4 py-4"
             >
               {stats.length > 0 ? (
                 (() => {
@@ -1331,10 +1365,10 @@ export function InspectorPanel({ state }: Props) {
                   return (
                     <div className="space-y-3">
                       <div>
-                        <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                        <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
                           Totals
                         </p>
-                        <p className="mt-0.5 text-xs text-muted-foreground">
+                        <p className="mt-0.5 text-xs text-slate-500">
                           All emails in this automation
                         </p>
                       </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Loader2, Pause, Play, Trash2, Zap } from "lucide-react";
+import { Loader2, Pause, Play, Trash2, Zap, Eye } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ButtonLink } from "@/components/ui/button-link";
@@ -100,6 +100,14 @@ export function EmailAutomationsPanel() {
                   </div>
                 </div>
                 <div className="flex gap-2">
+                  <ButtonLink
+                    href={`/advertiser/email/automations/${a.id}?view=1`}
+                    size="sm"
+                    variant="ghost"
+                  >
+                    <Eye className="h-4 w-4" />
+                    View
+                  </ButtonLink>
                   <ButtonLink href={`/advertiser/email/automations/${a.id}`} size="sm" variant="outline">
                     Edit
                   </ButtonLink>

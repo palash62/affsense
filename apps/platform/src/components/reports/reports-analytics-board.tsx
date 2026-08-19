@@ -26,22 +26,15 @@ import type {
 const cardClass = "premium-card p-5 sm:p-6";
 
 const STATUS_COLORS: Record<string, string> = {
-  Approved: "var(--theme-success)",
-  Pending: "var(--warning)",
-  Rejected: "var(--destructive)",
-  CAPTURED: "var(--muted-foreground)",
-  VALIDATING: "var(--theme-chart-4)",
+  Approved: "#22C55E",
+  Pending: "#F97316",
+  Rejected: "#EF4444",
+  CAPTURED: "#94A3B8",
+  VALIDATING: "#A78BFA",
   "No data": "#CBD5E1",
 };
 
-const BAR_PALETTE = [
-  "var(--theme-chart-1)",
-  "var(--theme-chart-2)",
-  "var(--warning)",
-  "var(--theme-chart-4)",
-  "var(--destructive)",
-  "#14B8A6",
-];
+const BAR_PALETTE = ["#0EA5E9", "#22C55E", "#F97316", "#8B5CF6", "#EF4444", "#14B8A6"];
 
 function ChartCard({
   title,
@@ -58,8 +51,8 @@ function ChartCard({
     <div className={cardClass}>
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h3 className="text-base font-semibold text-foreground">{title}</h3>
-          {description ? <p className="mt-0.5 text-sm text-muted-foreground">{description}</p> : null}
+          <h3 className="text-base font-semibold text-slate-900">{title}</h3>
+          {description ? <p className="mt-0.5 text-sm text-slate-500">{description}</p> : null}
         </div>
         {legend}
       </div>
@@ -71,7 +64,7 @@ function ChartCard({
 function tooltipStyle() {
   return {
     borderRadius: "12px",
-    border: "1px solid var(--border)",
+    border: "1px solid #E2E8F0",
     boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
   };
 }
@@ -95,31 +88,31 @@ export function ReportsActivityTrendChart({
         <ComposedChart data={series} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
           <defs>
             <linearGradient id="reportsClicksFill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="var(--theme-chart-1)" stopOpacity={0.28} />
-              <stop offset="100%" stopColor="var(--theme-chart-1)" stopOpacity={0.02} />
+              <stop offset="0%" stopColor="#0EA5E9" stopOpacity={0.28} />
+              <stop offset="100%" stopColor="#0EA5E9" stopOpacity={0.02} />
             </linearGradient>
             <linearGradient id="reportsLeadsFill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="var(--theme-chart-4)" stopOpacity={0.22} />
-              <stop offset="100%" stopColor="var(--theme-chart-4)" stopOpacity={0.02} />
+              <stop offset="0%" stopColor="#8B5CF6" stopOpacity={0.22} />
+              <stop offset="100%" stopColor="#8B5CF6" stopOpacity={0.02} />
             </linearGradient>
           </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+          <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" vertical={false} />
           <XAxis
             dataKey="date"
-            tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+            tick={{ fontSize: 11, fill: "#94A3B8" }}
             tickFormatter={(v) => String(v).slice(5)}
             axisLine={false}
             tickLine={false}
             minTickGap={28}
           />
-          <YAxis tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} />
+          <YAxis tick={{ fontSize: 11, fill: "#94A3B8" }} axisLine={false} tickLine={false} />
           <Tooltip contentStyle={tooltipStyle()} />
           <Legend />
           <Area
             type="monotone"
             dataKey="clicks"
             name="Clicks"
-            stroke="var(--theme-chart-1)"
+            stroke="#0EA5E9"
             strokeWidth={2}
             fill="url(#reportsClicksFill)"
             dot={false}
@@ -128,7 +121,7 @@ export function ReportsActivityTrendChart({
             type="monotone"
             dataKey="leads"
             name="Leads"
-            stroke="var(--theme-chart-4)"
+            stroke="#8B5CF6"
             strokeWidth={2.5}
             fill="url(#reportsLeadsFill)"
             dot={false}
@@ -137,7 +130,7 @@ export function ReportsActivityTrendChart({
             type="monotone"
             dataKey="approved"
             name="Approved"
-            stroke="var(--theme-success)"
+            stroke="#22C55E"
             strokeWidth={2.5}
             dot={false}
           />
@@ -174,10 +167,10 @@ export function ReportsCampaignCompareChart({
           data={data.length > 0 ? data : [{ name: "No data", clicks: 0, leads: 0, approved: 0, spend: 0 }]}
           margin={{ top: 8, right: 12, left: 0, bottom: 48 }}
         >
-          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+          <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" vertical={false} />
           <XAxis
             dataKey="name"
-            tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+            tick={{ fontSize: 11, fill: "#94A3B8" }}
             axisLine={false}
             tickLine={false}
             interval={0}
@@ -185,11 +178,11 @@ export function ReportsCampaignCompareChart({
             textAnchor="end"
             height={60}
           />
-          <YAxis yAxisId="left" tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} />
+          <YAxis yAxisId="left" tick={{ fontSize: 11, fill: "#94A3B8" }} axisLine={false} tickLine={false} />
           <YAxis
             yAxisId="right"
             orientation="right"
-            tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+            tick={{ fontSize: 11, fill: "#94A3B8" }}
             axisLine={false}
             tickLine={false}
             tickFormatter={(v) => `$${v}`}
@@ -205,10 +198,10 @@ export function ReportsCampaignCompareChart({
             }}
           />
           <Legend />
-          <Bar yAxisId="left" dataKey="clicks" name="Clicks" fill="var(--theme-chart-1)" radius={[4, 4, 0, 0]} />
-          <Bar yAxisId="left" dataKey="leads" name="Leads" fill="var(--theme-chart-4)" radius={[4, 4, 0, 0]} />
-          <Bar yAxisId="left" dataKey="approved" name="Approved" fill="var(--theme-success)" radius={[4, 4, 0, 0]} />
-          <Bar yAxisId="right" dataKey="spend" name={moneyLabel} fill="var(--warning)" radius={[4, 4, 0, 0]} />
+          <Bar yAxisId="left" dataKey="clicks" name="Clicks" fill="#0EA5E9" radius={[4, 4, 0, 0]} />
+          <Bar yAxisId="left" dataKey="leads" name="Leads" fill="#8B5CF6" radius={[4, 4, 0, 0]} />
+          <Bar yAxisId="left" dataKey="approved" name="Approved" fill="#22C55E" radius={[4, 4, 0, 0]} />
+          <Bar yAxisId="right" dataKey="spend" name={moneyLabel} fill="#F97316" radius={[4, 4, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
     </ChartCard>
@@ -232,20 +225,20 @@ export function ReportsGeoChart({ rows }: { rows: GeoBreakdownRow[] }) {
           data={data.length > 0 ? data : [{ country: "No data", leads: 0, approved: 0, spend: 0 }]}
           margin={{ top: 8, right: 24, left: 8, bottom: 8 }}
         >
-          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
-          <XAxis type="number" tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} />
+          <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" horizontal={false} />
+          <XAxis type="number" tick={{ fontSize: 11, fill: "#94A3B8" }} axisLine={false} tickLine={false} />
           <YAxis
             type="category"
             dataKey="country"
             width={88}
-            tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
+            tick={{ fontSize: 12, fill: "#64748B" }}
             axisLine={false}
             tickLine={false}
           />
           <Tooltip contentStyle={tooltipStyle()} />
           <Legend />
-          <Bar dataKey="leads" name="Leads" fill="var(--theme-chart-4)" radius={[0, 6, 6, 0]} barSize={14} />
-          <Bar dataKey="approved" name="Approved" fill="var(--theme-success)" radius={[0, 6, 6, 0]} barSize={14} />
+          <Bar dataKey="leads" name="Leads" fill="#8B5CF6" radius={[0, 6, 6, 0]} barSize={14} />
+          <Bar dataKey="approved" name="Approved" fill="#22C55E" radius={[0, 6, 6, 0]} barSize={14} />
         </BarChart>
       </ResponsiveContainer>
     </ChartCard>
@@ -256,25 +249,32 @@ export function ReportsGeoChart({ rows }: { rows: GeoBreakdownRow[] }) {
 export function ReportsStatusAndFunnel({
   statusMix,
   funnel,
+  hideRejected = false,
 }: {
   statusMix: LeadsStatusMixItem[];
   funnel: { clicks: number; leads: number; approved: number; rejected: number };
+  hideRejected?: boolean;
 }) {
+  const visibleMix = hideRejected
+    ? statusMix.filter((item) => item.name !== "Rejected")
+    : statusMix;
   const pieData =
-    statusMix.length > 0
-      ? statusMix.map((item) => ({
+    visibleMix.length > 0
+      ? visibleMix.map((item) => ({
           ...item,
           color: STATUS_COLORS[item.name] ?? BAR_PALETTE[0],
         }))
       : [{ name: "No data", value: 1, color: STATUS_COLORS["No data"] }];
 
-  const maxFunnel = Math.max(funnel.clicks, funnel.leads, funnel.approved, funnel.rejected, 1);
   const funnelSteps = [
-    { label: "Clicks", value: funnel.clicks, color: "var(--theme-chart-1)" },
-    { label: "Leads", value: funnel.leads, color: "var(--theme-chart-4)" },
-    { label: "Approved", value: funnel.approved, color: "var(--theme-success)" },
-    { label: "Rejected", value: funnel.rejected, color: "var(--destructive)" },
+    { label: "Clicks", value: funnel.clicks, color: "#0EA5E9" },
+    { label: "Leads", value: funnel.leads, color: "#8B5CF6" },
+    { label: "Approved", value: funnel.approved, color: "#22C55E" },
+    ...(!hideRejected
+      ? [{ label: "Rejected", value: funnel.rejected, color: "#EF4444" }]
+      : []),
   ];
+  const maxFunnel = Math.max(...funnelSteps.map((step) => step.value), 1);
 
   return (
     <div className="grid gap-4 lg:grid-cols-2">
@@ -301,8 +301,8 @@ export function ReportsStatusAndFunnel({
           {pieData.map((item) => (
             <div key={item.name} className="flex items-center gap-2 text-sm">
               <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.color }} />
-              <span className="text-muted-foreground">{item.name}</span>
-              <span className="font-semibold text-foreground">{item.value.toLocaleString()}</span>
+              <span className="text-slate-600">{item.name}</span>
+              <span className="font-semibold text-slate-900">{item.value.toLocaleString()}</span>
             </div>
           ))}
         </div>
@@ -318,12 +318,12 @@ export function ReportsStatusAndFunnel({
             return (
               <div key={step.label} className="space-y-2">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="font-medium text-muted-foreground">{step.label}</span>
-                  <span className="font-semibold tabular-nums text-foreground">
+                  <span className="font-medium text-slate-600">{step.label}</span>
+                  <span className="font-semibold tabular-nums text-slate-900">
                     {step.value.toLocaleString()}
                   </span>
                 </div>
-                <div className="h-3 overflow-hidden rounded-full bg-muted">
+                <div className="h-3 overflow-hidden rounded-full bg-slate-100">
                   <div
                     className="h-full rounded-full transition-all duration-700"
                     style={{ width: `${pct}%`, backgroundColor: step.color }}
@@ -359,13 +359,13 @@ export function ReportsEntityRankChart({
           data={rows.length > 0 ? rows : [{ name: "No data", value: 0 }]}
           margin={{ top: 8, right: 24, left: 8, bottom: 8 }}
         >
-          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
-          <XAxis type="number" tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} />
+          <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" horizontal={false} />
+          <XAxis type="number" tick={{ fontSize: 11, fill: "#94A3B8" }} axisLine={false} tickLine={false} />
           <YAxis
             type="category"
             dataKey="name"
             width={120}
-            tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
+            tick={{ fontSize: 12, fill: "#64748B" }}
             axisLine={false}
             tickLine={false}
           />
@@ -391,6 +391,7 @@ export function ReportsAnalyticsBoard({
   statusMix,
   funnel,
   entityRank,
+  hideRejected = false,
 }: {
   activity: ActivityTrendPoint[];
   campaigns: CampaignPerformanceRow[];
@@ -403,12 +404,13 @@ export function ReportsAnalyticsBoard({
     data: Array<{ name: string; value: number }>;
     valueLabel: string;
   };
+  hideRejected?: boolean;
 }) {
   return (
     <div className="space-y-4">
       <ReportsActivityTrendChart data={activity} />
       <ReportsCampaignCompareChart rows={campaigns} />
-      <ReportsStatusAndFunnel statusMix={statusMix} funnel={funnel} />
+      <ReportsStatusAndFunnel statusMix={statusMix} funnel={funnel} hideRejected={hideRejected} />
       <ReportsGeoChart rows={geo} />
       {entityRank ? (
         <ReportsEntityRankChart

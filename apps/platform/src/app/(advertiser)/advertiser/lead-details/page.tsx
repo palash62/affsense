@@ -21,7 +21,11 @@ import {
   parseUserAgent,
   shortLeadId,
 } from "@/lib/publisher-leads";
-import { listLeads, type AdvertiserLeadSort } from "@/services/lead.service";
+import {
+  ADVERTISER_EXCLUDED_LEAD_STATUSES,
+  listLeads,
+  type AdvertiserLeadSort,
+} from "@/services/lead.service";
 import { formatLeadRevenue, formatLeadSaleLabel } from "@/lib/cpa-lead-metrics";
 import { PageSection } from "@/components/admin/page-section";
 import { LeadStatusBadge } from "@/components/admin/admin-ui";
@@ -96,7 +100,7 @@ export default async function AdvertiserLeadDetailsPage({ searchParams }: PagePr
 
   const status =
     params.status &&
-    ["CAPTURED", "VALIDATING", "PENDING", "APPROVED", "REJECTED", "PAID"].includes(params.status)
+    ["CAPTURED", "VALIDATING", "PENDING", "APPROVED", "PAID"].includes(params.status)
       ? (params.status as LeadStatus)
       : undefined;
 
@@ -116,6 +120,7 @@ export default async function AdvertiserLeadDetailsPage({ searchParams }: PagePr
       sort: parseSort(params.sort),
       page,
       limit,
+      excludeStatuses: [...ADVERTISER_EXCLUDED_LEAD_STATUSES],
     }),
   ]);
 

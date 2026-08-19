@@ -57,6 +57,21 @@ describe("Error handling", () => {
     expect(body.error.code).toBe("DATABASE_SCHEMA_OUTDATED");
     expect(body.error.message).toContain("db:push");
   });
+
+  it("maps Prisma P2000 to a generic too-long message", async () => {
+    const err = new Prisma.PrismaClientKnownRequestError("The provided value for the column is too long", {
+      code: "P2000",
+      clientVersion: "6.19.3",
+    });
+
+    const res = errorResponse(err);
+    const body = await res.json();
+
+    expect(res.status).toBe(422);
+    expect(body.error.code).toBe("VALIDATION_ERROR");
+    expect(body.error.message).toBe("This value is too long to save. Shorten the text and try again.");
+    expect(body.error.message).not.toContain("Template name");
+  });
 });
 
 describe("Ledger math", () => {

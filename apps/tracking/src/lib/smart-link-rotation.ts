@@ -175,6 +175,15 @@ export function pickCampaignForIpRotation<T extends RotatableCampaign>(
   return null;
 }
 
+/** Opt-in only. Call when restrictSmartLinkCampaigns is true. Empty allowedIds yields []. */
+export function applySmartLinkCampaignAllowlist<T extends { id: string }>(
+  campaigns: T[],
+  allowedIds: string[],
+): T[] {
+  const allowed = new Set(allowedIds);
+  return campaigns.filter((campaign) => allowed.has(campaign.id));
+}
+
 export function campaignExcludesBlockedPublishers(targeting: unknown): boolean {
   if (!targeting || typeof targeting !== "object") return false;
   return Boolean((targeting as Record<string, unknown>).excludeBlockedPublishers);

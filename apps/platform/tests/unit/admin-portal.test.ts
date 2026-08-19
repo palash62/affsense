@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   ADMIN_PORTAL_ROLES,
   canAccessAdminPath,
+  canImpersonateUser,
+  canManagePortalUsers,
   isAdminPortalRole,
   parseStaffMenuAccess,
   STAFF_USERS_PATH,
@@ -26,6 +28,19 @@ describe("admin portal roles", () => {
         123,
       ]),
     ).toEqual(["/admin/leads"]);
+  });
+
+  it("keeps the Promotion menu when assigned", () => {
+    expect(parseStaffMenuAccess(["/admin/promotion", "/admin/support"])).toEqual([
+      "/admin/promotion",
+      "/admin/support",
+    ]);
+    expect(canAccessAdminPath("/admin/promotion", "PLATFORM_MANAGER", ["/admin/promotion"])).toBe(
+      true,
+    );
+    expect(canAccessAdminPath("/admin/promotion", "PLATFORM_MANAGER", ["/admin/support"])).toBe(
+      false,
+    );
   });
 
   it("lets admins open every admin path", () => {
@@ -88,5 +103,63 @@ describe("admin portal roles", () => {
     expect(hrefs).toContain("/admin/deposits");
     expect(hrefs).toContain("/admin/payout-center");
     expect(hrefs).toContain("/admin/support-tickets");
+  });
+
+  it("lets admins impersonate publishers and advertisers", () => {
+    expect(canImpersonateUser("ADMIN", [], "PUBLISHER")).toBe(true);
+    expect(canImpersonateUser("ADMIN", [], "ADVERTISER")).toBe(true);
+    expect(canImpersonateUser("ADMIN", [], "ADMIN")).toBe(false);
+  });
+
+  it("lets managers impersonate only when matching menu is granted", () => {
+    expect(
+      canImpersonateUser("PLATFORM_MANAGER", ["/admin/publishers"], "PUBLISHER"),
+    ).toBe(true);
+    expect(
+      canImpersonateUser("PLATFORM_MANAGER", ["/admin/publishers"], "ADVERTISER"),
+    ).toBe(false);
+    expect(
+      canImpersonateUser("PLATFORM_MANAGER", ["/admin/advertisers"], "ADVERTISER"),
+    ).toBe(true);
+    expect(
+      canImpersonateUser("PLATFORM_MANAGER", ["/admin/advertisers"], "PUBLISHER"),
+    ).toBe(false);
+    expect(canImpersonateUser("PLATFORM_MANAGER", ["/admin/leads"], "PUBLISHER")).toBe(
+      false,
+    );
+    expect(canImpersonateUser("PLATFORM_MANAGER", [], "PUBLISHER")).toBe(false);
+  });
+
+  it("denies impersonation for non-portal actors", () => {
+    expect(canImpersonateUser("ADVERTISER", ["/admin/publishers"], "PUBLISHER")).toBe(
+      false,
+    );
+    expect(canImpersonateUser("PUBLISHER", [], "ADVERTISER")).toBe(false);
+  });
+
+  it("lets admins manage publishers and advertisers", () => {
+    expect(canManagePortalUsers("ADMIN", [], "PUBLISHER")).toBe(true);
+    expect(canManagePortalUsers("ADMIN", [], "ADVERTISER")).toBe(true);
+    expect(canManagePortalUsers("ADMIN", [], "ADMIN")).toBe(false);
+    expect(canManagePortalUsers("ADMIN", [], "PLATFORM_MANAGER")).toBe(false);
+  });
+
+  it("lets managers manage users only when matching menu is granted", () => {
+    expect(
+      canManagePortalUsers("PLATFORM_MANAGER", ["/admin/publishers"], "PUBLISHER"),
+    ).toBe(true);
+    expect(
+      canManagePortalUsers("PLATFORM_MANAGER", ["/admin/publishers"], "ADVERTISER"),
+    ).toBe(false);
+    expect(
+      canManagePortalUsers("PLATFORM_MANAGER", ["/admin/advertisers"], "ADVERTISER"),
+    ).toBe(true);
+    expect(
+      canManagePortalUsers("PLATFORM_MANAGER", ["/admin/advertisers"], "PUBLISHER"),
+    ).toBe(false);
+    expect(canManagePortalUsers("PLATFORM_MANAGER", ["/admin/leads"], "PUBLISHER")).toBe(
+      false,
+    );
+    expect(canManagePortalUsers("PLATFORM_MANAGER", [], "ADVERTISER")).toBe(false);
   });
 });

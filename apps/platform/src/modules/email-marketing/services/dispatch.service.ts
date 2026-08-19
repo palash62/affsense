@@ -4,6 +4,110 @@ import { parseEmailMarketingConfig } from "../config/platform-config";
 import { upsertContactFromLead } from "./contact.service";
 import { enqueueEmailSend } from "../queue/email-queue";
 
+type AutomationWithSteps = {
+  id: string;
+  advertiserId: string;
+  steps: Array<{
+    id: string;
+    type: string;
+    templateId: string | null;
+    delayMinutes: number;
+  }>;
+};
+
+async function queueAutomationStepsForContact(input: {
+  automation: AutomationWithSteps;
+  advertiserId: string;
+  contactId: string;
+  leadId: string | null;
+  baseTime: Date;
+}): Promise<number> {
+  let queued = 0;
+
+  for (const step of input.automation.steps) {
+    if (step.type !== "SEND_EMAIL" || !step.templateId) continue;
+
+    const scheduledAt = new Date(input.baseTime.getTime() + step.delayMinutes * 60_000);
+
+    const existing = await prisma.emailSend.findFirst({
+      where: input.leadId
+        ? {
+            automationId: input.automation.id,
+            stepId: step.id,
+            leadId: input.leadId,
+          }
+        : {
+            automationId: input.automation.id,
+            stepId: step.id,
+            contactId: input.contactId,
+          },
+    });
+
+    if (existing) continue;
+
+    const send = await prisma.emailSend.create({
+      data: {
+        advertiserId: input.advertiserId,
+        contactId: input.contactId,
+        automationId: input.automation.id,
+        stepId: step.id,
+        leadId: input.leadId,
+        templateId: step.templateId,
+        status: "QUEUED",
+        scheduledAt,
+      },
+    });
+
+    await enqueueEmailSend(send.id, scheduledAt);
+    queued += 1;
+  }
+
+  return queued;
+}
+
+export async function backfillAutomationForExistingContacts(automationId: string) {
+  const platformRow = await prisma.platformSetting.findUnique({
+    where: { key: EMAIL_MARKETING_CONFIG_KEY },
+  });
+  const platformConfig = parseEmailMarketingConfig(platformRow?.value);
+  if (!platformConfig.enabled) return { queuedSends: 0, contacts: 0 };
+
+  const automation = await prisma.emailAutomation.findUnique({
+    where: { id: automationId },
+    include: {
+      steps: { orderBy: { order: "asc" }, include: { template: true } },
+    },
+  });
+
+  if (!automation || automation.status !== "ACTIVE" || !automation.campaignId) {
+    return { queuedSends: 0, contacts: 0 };
+  }
+
+  const contacts = await prisma.emailContact.findMany({
+    where: {
+      advertiserId: automation.advertiserId,
+      sourceCampaignId: automation.campaignId,
+      status: "SUBSCRIBED",
+    },
+    select: { id: true, sourceLeadId: true },
+  });
+
+  const baseTime = new Date();
+  let queuedSends = 0;
+
+  for (const contact of contacts) {
+    queuedSends += await queueAutomationStepsForContact({
+      automation,
+      advertiserId: automation.advertiserId,
+      contactId: contact.id,
+      leadId: contact.sourceLeadId,
+      baseTime,
+    });
+  }
+
+  return { queuedSends, contacts: contacts.length };
+}
+
 export async function dispatchLeadEmailAutomations(input: {
   leadId: string;
   event: "LEAD_CAPTURED" | "LEAD_APPROVED";
@@ -59,7 +163,16 @@ export async function dispatchLeadEmailAutomations(input: {
       advertiserId: lead.campaign.advertiserId,
       status: "ACTIVE",
       trigger: input.event,
-      campaignId: lead.campaign.id,
+      OR: [
+        { campaignId: lead.campaign.id },
+        {
+          list: {
+            campaigns: {
+              some: { campaignId: lead.campaign.id },
+            },
+          },
+        },
+      ],
     },
     include: {
       steps: { orderBy: { order: "asc" }, include: { template: true } },
@@ -70,35 +183,12 @@ export async function dispatchLeadEmailAutomations(input: {
   const advertiserId = lead.campaign.advertiserId;
 
   for (const automation of automations) {
-    for (const step of automation.steps) {
-      if (step.type !== "SEND_EMAIL" || !step.templateId) continue;
-
-      const scheduledAt = new Date(baseTime.getTime() + step.delayMinutes * 60_000);
-
-      const existing = await prisma.emailSend.findFirst({
-        where: {
-          automationId: automation.id,
-          stepId: step.id,
-          leadId: lead.id,
-        },
-      });
-
-      if (existing) continue;
-
-      const send = await prisma.emailSend.create({
-        data: {
-          advertiserId,
-          contactId: contact.id,
-          automationId: automation.id,
-          stepId: step.id,
-          leadId: lead.id,
-          templateId: step.templateId,
-          status: "QUEUED",
-          scheduledAt,
-        },
-      });
-
-      await enqueueEmailSend(send.id, scheduledAt);
-    }
+    await queueAutomationStepsForContact({
+      automation,
+      advertiserId,
+      contactId: contact.id,
+      leadId: lead.id,
+      baseTime,
+    });
   }
 }

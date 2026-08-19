@@ -1,8 +1,8 @@
 "use client";
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { useCallback, useState, useTransition } from "react";
-import { FilterX } from "lucide-react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import { FilterX, Link2, X } from "lucide-react";
 import { defaultCampaignDateFrom, defaultCampaignDateTo } from "@/lib/advertiser-campaigns";
 import { formatPublisherOptionLabel } from "@/lib/payout";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { LeadExportButton } from "@/components/leads/lead-export-button";
+import { normalizeLeadSourceFilter } from "@/lib/lead-source-filters";
 
 const SELECT_TRIGGER_CLASS =
   "h-8 !w-full min-w-0 bg-card text-xs *:data-[slot=select-value]:line-clamp-none";
@@ -47,6 +48,152 @@ function normalizeSelectValue(value: string | null, allowed: string[]) {
   return allowed.includes(value) ? value : "all";
 }
 
+type SourceScope = {
+  advertiserId: string;
+  campaignId: string;
+  publisherId: string;
+  from: string;
+  to: string;
+};
+
+function buildSourceScopeParams(scope: SourceScope) {
+  const params = new URLSearchParams();
+  if (scope.advertiserId && scope.advertiserId !== "all") {
+    params.set("advertiserId", scope.advertiserId);
+  }
+  if (scope.campaignId && scope.campaignId !== "all") {
+    params.set("campaignId", scope.campaignId);
+  }
+  if (scope.publisherId && scope.publisherId !== "all") {
+    params.set("publisherId", scope.publisherId);
+  }
+  if (scope.from) params.set("from", scope.from);
+  if (scope.to) params.set("to", scope.to);
+  return params;
+}
+
+function SourceSearchDropdown({
+  value,
+  scope,
+  onChange,
+}: {
+  value: string;
+  scope: SourceScope;
+  onChange: (source: string) => void;
+}) {
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<string[]>([]);
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const fetchSources = useCallback(
+    (search: string) => {
+      setLoading(true);
+      const params = buildSourceScopeParams(scope);
+      if (search.trim()) params.set("search", search.trim());
+      const qs = params.toString();
+      fetch(`/api/v1/admin/lead-sources${qs ? `?${qs}` : ""}`)
+        .then((r) => r.json())
+        .then((j) => setResults(j.data ?? []))
+        .catch(() => setResults([]))
+        .finally(() => setLoading(false));
+    },
+    [scope],
+  );
+
+  useEffect(() => {
+    if (!open) return;
+    fetchSources(query);
+  }, [open, scope.advertiserId, scope.campaignId, scope.publisherId, scope.from, scope.to]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  function handleInputChange(val: string) {
+    setQuery(val);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => fetchSources(val), 300);
+  }
+
+  function selectSource(source: string) {
+    onChange(source);
+    setQuery("");
+    setOpen(false);
+  }
+
+  function clearSource() {
+    onChange("");
+    setQuery("");
+  }
+
+  if (value) {
+    return (
+      <div className="flex h-8 min-w-[160px] items-center gap-1 rounded-md border border-slate-200 bg-white px-2 text-xs">
+        <Link2 className="h-3 w-3 shrink-0 text-slate-400" />
+        <span className="truncate text-slate-700">{value}</span>
+        <button
+          type="button"
+          onClick={clearSource}
+          className="ml-auto shrink-0 rounded p-0.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+        >
+          <X className="h-3 w-3" />
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div ref={wrapperRef} className="relative min-w-[160px]">
+      <Input
+        type="text"
+        placeholder="Search source…"
+        value={query}
+        onChange={(e) => handleInputChange(e.target.value)}
+        onFocus={() => setOpen(true)}
+        className="h-8 rounded-md border-slate-200 bg-white text-xs"
+      />
+      {open ? (
+        <div className="absolute left-0 top-full z-50 mt-1 w-[22rem] max-w-[calc(100vw-2rem)] rounded-md border border-slate-200 bg-white shadow-lg">
+          <div className="max-h-[240px] overflow-y-auto py-1">
+            <button
+              type="button"
+              onClick={() => selectSource("")}
+              className="w-full px-3 py-1.5 text-left text-xs text-slate-500 hover:bg-slate-50"
+            >
+              All sources
+            </button>
+            {loading ? (
+              <div className="px-3 py-2 text-xs text-slate-400">Searching...</div>
+            ) : results.length === 0 ? (
+              <div className="px-3 py-2 text-xs text-slate-400">No sources found</div>
+            ) : (
+              results.map((source) => (
+                <button
+                  key={source}
+                  type="button"
+                  onClick={() => selectSource(source)}
+                  className="w-full truncate px-3 py-1.5 text-left text-xs text-slate-700 hover:bg-slate-50"
+                >
+                  {source}
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export function AdminLeadDetailsFilters({
   campaigns,
   advertisers,
@@ -70,6 +217,7 @@ export function AdminLeadDetailsFilters({
   const [publisherId, setPublisherId] = useState(() =>
     normalizeSelectValue(searchParams.get("publisherId"), ["all", ...publishers.map((p) => p.id)]),
   );
+  const [source, setSource] = useState(() => normalizeLeadSourceFilter(searchParams.get("source")));
   const [status, setStatus] = useState(() =>
     normalizeSelectValue(searchParams.get("status"), STATUSES.map((s) => s.value)),
   );
@@ -82,6 +230,7 @@ export function AdminLeadDetailsFilters({
         advertiserId: string;
         campaignId: string;
         publisherId: string;
+        source: string;
         status: string;
         from: string;
         to: string;
@@ -93,6 +242,7 @@ export function AdminLeadDetailsFilters({
         advertiserId: overrides?.advertiserId ?? advertiserId,
         campaignId: overrides?.campaignId ?? campaignId,
         publisherId: overrides?.publisherId ?? publisherId,
+        source: overrides?.source ?? source,
         status: overrides?.status ?? status,
         from: overrides?.from ?? dateFrom,
         to: overrides?.to ?? dateTo,
@@ -113,6 +263,9 @@ export function AdminLeadDetailsFilters({
         params.delete("publisherId");
       }
 
+      if (values.source?.trim()) params.set("source", values.source.trim());
+      else params.delete("source");
+
       if (values.status && values.status !== "all") params.set("status", values.status);
       else params.delete("status");
 
@@ -132,6 +285,7 @@ export function AdminLeadDetailsFilters({
       advertiserId,
       campaignId,
       publisherId,
+      source,
       status,
       dateFrom,
       dateTo,
@@ -147,6 +301,7 @@ export function AdminLeadDetailsFilters({
     setAdvertiserId("all");
     setCampaignId("all");
     setPublisherId("all");
+    setSource("");
     setStatus("all");
     setDateFrom(from);
     setDateTo(to);
@@ -159,6 +314,7 @@ export function AdminLeadDetailsFilters({
     searchParams.has("advertiserId") ||
     searchParams.has("campaignId") ||
     searchParams.has("publisherId") ||
+    searchParams.has("source") ||
     searchParams.has("status") ||
     searchParams.has("sort") ||
     (searchParams.has("page") && searchParams.get("page") !== "1");
@@ -236,6 +392,18 @@ export function AdminLeadDetailsFilters({
               ))}
             </SelectContent>
           </Select>
+        </div>
+
+        <div className="min-w-[160px] space-y-1">
+          <label className={LABEL_CLASS}>Source</label>
+          <SourceSearchDropdown
+            value={source}
+            scope={{ advertiserId, campaignId, publisherId, from: dateFrom, to: dateTo }}
+            onChange={(val) => {
+              setSource(val);
+              applyFilters({ source: val });
+            }}
+          />
         </div>
 
         <div className="min-w-[160px] space-y-1">

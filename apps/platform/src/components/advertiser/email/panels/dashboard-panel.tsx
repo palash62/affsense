@@ -8,6 +8,7 @@ import { PageSection } from "@/components/admin/page-section";
 import { formatUserDateTime } from "@/lib/user-timezone";
 import { EmailModuleShell } from "../email-module-shell";
 import { ButtonLink } from "@/components/ui/button-link";
+import { EmailWalletWarningBanner } from "../email-wallet-warning";
 
 type Stats = {
   totalContacts: number;
@@ -73,6 +74,7 @@ export function DashboardPanel() {
         icon: Zap,
       }}
     >
+      <EmailWalletWarningBanner />
       <div className="flex flex-wrap gap-3">
         <ButtonLink href="/advertiser/email/lists">
           <List className="mr-2 h-4 w-4" />

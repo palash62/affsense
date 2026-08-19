@@ -8,13 +8,12 @@ import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import {
   extractLeadCountry,
-  formatLeadRejectReason,
   formatPublisherLeadPayout,
   parseUserAgent,
   shortLeadId,
 } from "@/lib/publisher-leads";
 import { getPlatformSettingsConfig } from "@/lib/platform-settings-server";
-import { listLeads, type AdvertiserLeadSort } from "@/services/lead.service";
+import { listLeads, PUBLISHER_EXCLUDED_LEAD_STATUSES, type AdvertiserLeadSort } from "@/services/lead.service";
 import { PageSection } from "@/components/admin/page-section";
 import { LeadStatusBadge } from "@/components/admin/admin-ui";
 import { RoleHero } from "@/components/layout/role-hero";
@@ -70,6 +69,7 @@ export default async function PublisherLeadsPage({ searchParams }: PageProps) {
       sort: parseSort(params.sort),
       page,
       limit,
+      excludeStatuses: [...PUBLISHER_EXCLUDED_LEAD_STATUSES],
     }),
   ]);
   const leadIds = leads.map((lead) => lead.id);
@@ -98,8 +98,7 @@ export default async function PublisherLeadsPage({ searchParams }: PageProps) {
       />
 
       <PublisherInfoBanner>
-        Review date, payout, country, device, and status for each lead. Rejected leads show the
-        rejection reason so you can improve traffic quality.
+        Review date, payout, country, device, and status for each lead from your Smart Link.
       </PublisherInfoBanner>
 
       <PageSection
@@ -108,7 +107,7 @@ export default async function PublisherLeadsPage({ searchParams }: PageProps) {
         icon={FileText}
         gradient="leads"
       >
-        <Suspense fallback={<div className="px-6 py-4 text-sm text-muted-foreground">Loading filters...</div>}>
+        <Suspense fallback={<div className="px-6 py-4 text-sm text-slate-500">Loading filters...</div>}>
           <PublisherLeadsFilters />
         </Suspense>
 
@@ -119,36 +118,34 @@ export default async function PublisherLeadsPage({ searchParams }: PageProps) {
                 className="border-none hover:bg-transparent"
                 style={{ background: "var(--theme-primary-soft)" }}
               >
-                <TableHead className="h-11 whitespace-nowrap px-4 text-muted-foreground">
+                <TableHead className="h-11 whitespace-nowrap px-4 text-slate-600">
                   <Suspense fallback={<span>Date / Time</span>}>
                     <PublisherLeadsSortHeader field="at" label="Date / Time" />
                   </Suspense>
                 </TableHead>
-                <TableHead className="h-11 whitespace-nowrap px-4 text-muted-foreground">Lead ID</TableHead>
-                <TableHead className="h-11 whitespace-nowrap px-4 text-right text-muted-foreground">
+                <TableHead className="h-11 whitespace-nowrap px-4 text-slate-600">Lead ID</TableHead>
+                <TableHead className="h-11 whitespace-nowrap px-4 text-right text-slate-600">
                   Payout
                 </TableHead>
-                <TableHead className="h-11 whitespace-nowrap px-4 text-muted-foreground">Country</TableHead>
-                <TableHead className="h-11 whitespace-nowrap px-4 text-muted-foreground">
+                <TableHead className="h-11 whitespace-nowrap px-4 text-slate-600">Country</TableHead>
+                <TableHead className="h-11 whitespace-nowrap px-4 text-slate-600">
                   <Suspense fallback={<span>Status</span>}>
                     <PublisherLeadsSortHeader field="status" label="Status" />
                   </Suspense>
                 </TableHead>
-                <TableHead className="h-11 whitespace-nowrap px-4 text-muted-foreground">Device</TableHead>
-                <TableHead className="h-11 whitespace-nowrap px-4 text-muted-foreground">OS</TableHead>
-                <TableHead className="h-11 whitespace-nowrap px-4 text-muted-foreground">Source</TableHead>
-                <TableHead className="h-11 whitespace-nowrap px-4 text-muted-foreground">CTA</TableHead>
-                <TableHead className="h-11 min-w-[180px] whitespace-nowrap px-4 text-muted-foreground">
-                  Reject Reason
-                </TableHead>
+                <TableHead className="h-11 whitespace-nowrap px-4 text-slate-600">Device</TableHead>
+                <TableHead className="h-11 whitespace-nowrap px-4 text-slate-600">OS</TableHead>
+                <TableHead className="h-11 whitespace-nowrap px-4 text-slate-600">Source</TableHead>
+                <TableHead className="h-11 whitespace-nowrap px-4 text-slate-600">Sub ID</TableHead>
+                <TableHead className="h-11 whitespace-nowrap px-4 text-slate-600">CTA</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {leads.length === 0 ? (
                 <TableRow className="hover:bg-transparent">
                   <TableCell colSpan={10} className="h-48 px-6 py-16 text-center">
-                    <p className="text-base font-medium text-muted-foreground">No leads found</p>
-                    <p className="mt-1 text-sm text-muted-foreground">
+                    <p className="text-base font-medium text-slate-500">No leads found</p>
+                    <p className="mt-1 text-sm text-slate-400">
                       Share your Smart Link to start generating leads.
                     </p>
                   </TableCell>
@@ -158,23 +155,22 @@ export default async function PublisherLeadsPage({ searchParams }: PageProps) {
                   const { device, os } = parseUserAgent(lead.userAgent);
                   const creditedAmount = creditedByLeadId.get(lead.id);
                   const payout = formatPublisherLeadPayout(lead, settings, creditedAmount);
-                  const rejectReason = formatLeadRejectReason(lead);
 
                   return (
                     <TableRow
                       key={lead.id}
-                      className="border-border transition-colors hover:bg-blue-50/40"
+                      className="border-slate-100 transition-colors hover:bg-blue-50/40"
                     >
-                      <TableCell className="whitespace-nowrap px-4 py-4 text-sm text-muted-foreground">
+                      <TableCell className="whitespace-nowrap px-4 py-4 text-sm text-slate-600">
                         {formatUserDateTime(lead.createdAt, tz, "MMM d, yyyy HH:mm:ss")}
                       </TableCell>
-                      <TableCell className="whitespace-nowrap px-4 py-4 font-mono text-xs text-muted-foreground">
+                      <TableCell className="whitespace-nowrap px-4 py-4 font-mono text-xs text-slate-500">
                         {shortLeadId(lead.id)}
                       </TableCell>
                       <TableCell className={cn("whitespace-nowrap px-4 py-4 text-right text-sm", payout.className)}>
                         {payout.label}
                       </TableCell>
-                      <TableCell className="whitespace-nowrap px-4 py-4 text-sm text-foreground">
+                      <TableCell className="whitespace-nowrap px-4 py-4 text-sm text-slate-700">
                         {extractLeadCountry(
                           lead.data,
                           lead.country,
@@ -185,14 +181,20 @@ export default async function PublisherLeadsPage({ searchParams }: PageProps) {
                       <TableCell className="whitespace-nowrap px-4 py-4">
                         <LeadStatusBadge status={lead.status} />
                       </TableCell>
-                      <TableCell className="whitespace-nowrap px-4 py-4 text-sm text-muted-foreground">
+                      <TableCell className="whitespace-nowrap px-4 py-4 text-sm text-slate-600">
                         {device}
                       </TableCell>
-                      <TableCell className="whitespace-nowrap px-4 py-4 text-sm text-muted-foreground">
+                      <TableCell className="whitespace-nowrap px-4 py-4 text-sm text-slate-600">
                         {os}
                       </TableCell>
-                      <TableCell className="whitespace-nowrap px-4 py-4 text-sm capitalize text-muted-foreground">
+                      <TableCell className="whitespace-nowrap px-4 py-4 text-sm capitalize text-slate-600">
                         {lead.source ?? "—"}
+                      </TableCell>
+                      <TableCell
+                        className="max-w-[140px] truncate px-4 py-4 font-mono text-sm font-medium text-slate-800"
+                        title={lead.subId?.trim() || undefined}
+                      >
+                        {lead.subId?.trim() || "—"}
                       </TableCell>
                       <TableCell className="whitespace-nowrap px-4 py-4">
                         {lead.ctaClicked ? (
@@ -200,21 +202,10 @@ export default async function PublisherLeadsPage({ searchParams }: PageProps) {
                             Yes
                           </span>
                         ) : (
-                          <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground ring-1 ring-slate-200">
+                          <span className="rounded-full bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-500 ring-1 ring-slate-200">
                             No
                           </span>
                         )}
-                      </TableCell>
-                      <TableCell className="max-w-[220px] px-4 py-4 text-sm text-muted-foreground">
-                        <p
-                          className={cn(
-                            "truncate",
-                            lead.status === "REJECTED" && "text-red-700",
-                          )}
-                          title={rejectReason}
-                        >
-                          {rejectReason}
-                        </p>
                       </TableCell>
                     </TableRow>
                   );

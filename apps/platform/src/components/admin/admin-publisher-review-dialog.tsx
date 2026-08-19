@@ -45,14 +45,23 @@ type PublisherRow = {
   publisherProfile?: PublisherProfile | null;
 };
 
-export function AdminPublisherReviewDialog({ publisher }: { publisher: PublisherRow }) {
+export function AdminPublisherReviewDialog({
+  publisher,
+  open: openProp,
+  onOpenChange: onOpenChangeProp,
+}: {
+  publisher: PublisherRow;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}) {
   const { data: session } = useSession();
   const router = useRouter();
   const profile = publisher.publisherProfile;
   const spamScore = profile?.spamScore ?? null;
   const highSpam = spamScore !== null && spamScoreLevel(spamScore) === "high";
 
-  const [open, setOpen] = useState(false);
+  const [openInternal, setOpenInternal] = useState(false);
+  const open = openProp ?? openInternal;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -66,7 +75,8 @@ export function AdminPublisherReviewDialog({ publisher }: { publisher: Publisher
   }, [publisher.status, publisher.id]);
 
   function handleOpenChange(nextOpen: boolean) {
-    setOpen(nextOpen);
+    setOpenInternal(nextOpen);
+    onOpenChangeProp?.(nextOpen);
     if (nextOpen) {
       setStatus(publisher.status);
       setError(null);
@@ -113,10 +123,12 @@ export function AdminPublisherReviewDialog({ publisher }: { publisher: Publisher
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger render={<Button variant="outline" size="sm" className="h-8 gap-1">Review</Button>}>
-        <ClipboardList className="h-3.5 w-3.5" />
-        Review
-      </DialogTrigger>
+      {openProp === undefined && (
+        <DialogTrigger render={<Button variant="outline" size="sm" className="h-8 gap-1">Review</Button>}>
+          <ClipboardList className="h-3.5 w-3.5" />
+          Review
+        </DialogTrigger>
+      )}
       <DialogContent className="flex max-h-[min(90vh,880px)] w-full max-w-[calc(100%-2rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl">
         <DialogHeader className="shrink-0 border-b border-border px-5 py-4 pr-12">
           <DialogTitle>Publisher Review</DialogTitle>

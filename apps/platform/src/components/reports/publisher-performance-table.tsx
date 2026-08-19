@@ -22,16 +22,18 @@ function formatPayoutRange(min: number | null, max: number | null) {
 export function PublisherPerformanceTable({
   rows,
   exportFilename = "publisher-performance.csv",
+  hideRejected = false,
 }: {
   rows: AdvertiserPublisherLeadReportRow[];
   exportFilename?: string;
+  hideRejected?: boolean;
 }) {
   const csvRows = rows.map((row) => [
     row.publisherId,
     row.totalLeads,
     row.approvedLeads,
     row.pendingLeads,
-    row.rejectedLeads,
+    ...(hideRejected ? [] : [row.rejectedLeads]),
     row.paidLeads,
     row.salesCount,
     row.revenue,
@@ -42,7 +44,7 @@ export function PublisherPerformanceTable({
 
   if (rows.length === 0) {
     return (
-      <div className="px-6 py-12 text-center text-sm text-muted-foreground">
+      <div className="px-6 py-12 text-center text-sm text-slate-500">
         No publisher activity in this date range.
       </div>
     );
@@ -50,7 +52,7 @@ export function PublisherPerformanceTable({
 
   return (
     <div>
-      <div className="flex justify-end border-b border-border px-4 py-3 sm:px-6">
+      <div className="flex justify-end border-b border-slate-100 px-4 py-3 sm:px-6">
         <ExportCsvButton
           filename={exportFilename}
           headers={[
@@ -58,7 +60,7 @@ export function PublisherPerformanceTable({
             "Total Leads",
             "Approved",
             "Pending",
-            "Rejected",
+            ...(hideRejected ? [] : ["Rejected"]),
             "Paid",
             "Sales",
             "Revenue",
@@ -72,32 +74,34 @@ export function PublisherPerformanceTable({
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
-            <TableRow className="border-border hover:bg-transparent">
-              <TableHead className="px-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            <TableRow className="border-slate-100 hover:bg-transparent">
+              <TableHead className="px-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
                 Publisher
               </TableHead>
-              <TableHead className="px-3 text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <TableHead className="px-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
                 Leads
               </TableHead>
-              <TableHead className="px-3 text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <TableHead className="px-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
                 Approved
               </TableHead>
-              <TableHead className="px-3 text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <TableHead className="px-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
                 Pending
               </TableHead>
-              <TableHead className="px-3 text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Rejected
-              </TableHead>
-              <TableHead className="px-3 text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              {!hideRejected && (
+                <TableHead className="px-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Rejected
+                </TableHead>
+              )}
+              <TableHead className="px-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
                 Sales
               </TableHead>
-              <TableHead className="px-3 text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <TableHead className="px-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
                 Revenue
               </TableHead>
-              <TableHead className="px-3 text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <TableHead className="px-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
                 Spend
               </TableHead>
-              <TableHead className="px-3 text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <TableHead className="px-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
                 CPL range
               </TableHead>
             </TableRow>
@@ -105,7 +109,7 @@ export function PublisherPerformanceTable({
           <TableBody>
             {rows.map((row) => (
               <TableRow key={row.publisherId} className="border-slate-50">
-                <TableCell className="px-4 font-mono text-sm text-foreground">
+                <TableCell className="px-4 font-mono text-sm text-slate-900">
                   {shortPublisherId(row.publisherId)}
                 </TableCell>
                 <TableCell className="px-3 text-right tabular-nums">{row.totalLeads.toLocaleString()}</TableCell>
@@ -113,9 +117,11 @@ export function PublisherPerformanceTable({
                   {row.approvedLeads.toLocaleString()}
                 </TableCell>
                 <TableCell className="px-3 text-right tabular-nums">{row.pendingLeads.toLocaleString()}</TableCell>
-                <TableCell className="px-3 text-right tabular-nums">
-                  {row.rejectedLeads.toLocaleString()}
-                </TableCell>
+                {!hideRejected && (
+                  <TableCell className="px-3 text-right tabular-nums">
+                    {row.rejectedLeads.toLocaleString()}
+                  </TableCell>
+                )}
                 <TableCell className="px-3 text-right tabular-nums">
                   {row.salesCount.toLocaleString()}
                 </TableCell>

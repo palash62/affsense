@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
 import { formatUserDateTime } from "@/lib/user-timezone";
 import { getSession } from "@/lib/session";
-import { ArrowLeft, Globe, Mail, MapPin, Share2, ShieldAlert, Wallet } from "lucide-react";
-import { getPublisherDetail } from "@/services/admin.service";
+import { ArrowLeft, Globe, Link2, Mail, MapPin, Share2, ShieldAlert, Wallet } from "lucide-react";
+import { getPublisherDetail, listActiveCampaignsForSmartLinkAllowlist } from "@/services/admin.service";
 import { getPublisherSpamScoresByIds } from "@/modules/fraud/repositories/quality.repo";
 import { TIER_PAYOUT_ROWS } from "@/lib/platform-settings";
 import { PageHero } from "@/components/admin/page-hero";
@@ -15,6 +15,7 @@ import {
 } from "@/components/admin/admin-ui";
 import { AdminLoginAsButton } from "@/components/admin/admin-login-as-button";
 import { AdminPublisherSpecialPayoutDialog } from "@/components/admin/admin-publisher-special-payout-dialog";
+import { AdminPublisherSmartLinkCampaignsDialog } from "@/components/admin/admin-publisher-smart-link-campaigns-dialog";
 import { UserStatusActions } from "@/components/admin/user-status-actions";
 import { ButtonLink } from "@/components/ui/button-link";
 
@@ -28,7 +29,10 @@ export default async function AdminPublisherDetailPage({ params }: PageProps) {
   const { id } = await params;
   const session = await getSession();
   const tz = session?.user?.timezone;
-  const publisher = await getPublisherDetail(id);
+  const [publisher, activeCampaigns] = await Promise.all([
+    getPublisherDetail(id),
+    listActiveCampaignsForSmartLinkAllowlist(),
+  ]);
 
   if (!publisher) {
     notFound();
@@ -72,6 +76,17 @@ export default async function AdminPublisherDetailPage({ params }: PageProps) {
           publisherId={publisher.id}
           publisherName={publisher.name}
           settings={payoutSettings}
+        />
+        <AdminPublisherSmartLinkCampaignsDialog
+          publisherId={publisher.id}
+          publisherName={publisher.name}
+          restrictSmartLinkCampaigns={profile?.restrictSmartLinkCampaigns ?? false}
+          selectedCampaignIds={publisher.allowedSmartLinkCampaignIds}
+          campaigns={activeCampaigns.map((campaign) => ({
+            id: campaign.id,
+            name: campaign.name,
+            advertiserName: campaign.advertiser.name,
+          }))}
         />
         <AdminLoginAsButton
           userId={publisher.id}
@@ -193,6 +208,38 @@ export default async function AdminPublisherDetailPage({ params }: PageProps) {
           ) : (
             <p className="text-sm text-muted-foreground">
               No special tier payouts. All eligible active campaigns can rotate in Smart Link.
+            </p>
+          )}
+        </div>
+      </PageSection>
+
+      <PageSection
+        title="Smart Link campaigns"
+        description="Optional restriction. Off keeps the current rotation for this publisher."
+        icon={Link2}
+        gradient="leads"
+      >
+        <div className="px-6 py-5">
+          {profile?.restrictSmartLinkCampaigns ? (
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-slate-900">
+                Restricted to {publisher.allowedSmartLinkCampaignIds.length} campaign
+                {publisher.allowedSmartLinkCampaignIds.length === 1 ? "" : "s"}
+              </p>
+              <ul className="space-y-1 text-sm text-slate-700">
+                {publisher.allowedSmartLinkCampaignIds.map((campaignId) => {
+                  const campaign = activeCampaigns.find((row) => row.id === campaignId);
+                  return (
+                    <li key={campaignId}>
+                      {campaign ? `${campaign.name} (${campaign.advertiser.name})` : campaignId}
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ) : (
+            <p className="text-sm text-slate-600">
+              All eligible active campaigns can rotate in Smart Link.
             </p>
           )}
         </div>

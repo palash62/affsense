@@ -348,6 +348,12 @@ export async function processLeadPayment(leadId: string) {
       }
     }
   });
+
+  void import("@/services/publisher-postback-dispatch")
+    .then(({ dispatchPublisherPostback }) => dispatchPublisherPostback(leadId))
+    .catch((error) => {
+      console.error("[publisher-postback] dispatch failed", leadId, error);
+    });
 }
 
 async function reverseLeadPaymentInTx(

@@ -1,5 +1,7 @@
-import { withAuth, withRealAdmin, parsePagination, ADMIN_PORTAL_ROLES } from "@/lib/api-handler";
-import { errorResponse } from "@/lib/errors";
+import { withAuth, parsePagination, ADMIN_PORTAL_ROLES } from "@/lib/api-handler";
+import { canManagePortalUsers } from "@/lib/admin-portal";
+import { errorResponse, Errors } from "@/lib/errors";
+import { prisma } from "@/lib/prisma";
 import { adminCreateAdvertiserSchema, adminCreatePublisherSchema } from "@/lib/validations";
 import {
   createAdvertiserAccount,
@@ -30,18 +32,51 @@ export async function GET(request: Request) {
 }
 
 export async function PATCH(request: Request) {
-  return withRealAdmin(async (session) => {
+  return withAuth(async (session) => {
     const body = await request.json();
-    const user = await updateUserStatus(body.userId, body.status, session.user.id);
+    const userId = body?.userId as string | undefined;
+    if (!userId) {
+      return errorResponse(Errors.validation("userId is required", "userId"));
+    }
+
+    const target = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true },
+    });
+    if (!target) {
+      return errorResponse(Errors.notFound("User"));
+    }
+
+    if (
+      !canManagePortalUsers(
+        session.user.role,
+        session.user.staffMenuAccess,
+        target.role,
+      )
+    ) {
+      return errorResponse(Errors.forbidden());
+    }
+
+    const user = await updateUserStatus(userId, body.status, session.user.id);
     return Response.json({ data: user });
-  });
+  }, ADMIN_PORTAL_ROLES);
 }
 
 export async function POST(request: Request) {
-  return withRealAdmin(async () => {
+  return withAuth(async (session) => {
     try {
       const body = await request.json();
       const role = body?.role === "ADVERTISER" ? "ADVERTISER" : "PUBLISHER";
+
+      if (
+        !canManagePortalUsers(
+          session.user.role,
+          session.user.staffMenuAccess,
+          role,
+        )
+      ) {
+        return errorResponse(Errors.forbidden());
+      }
 
       if (role === "ADVERTISER") {
         const parsed = adminCreateAdvertiserSchema.safeParse(body);
@@ -70,11 +105,11 @@ export async function POST(request: Request) {
     } catch (error) {
       return errorResponse(error);
     }
-  });
+  }, ADMIN_PORTAL_ROLES);
 }
 
 export async function DELETE(request: Request) {
-  return withRealAdmin(async (session) => {
+  return withAuth(async (session) => {
     try {
       const { searchParams } = new URL(request.url);
       let userId = searchParams.get("userId") ?? undefined;
@@ -91,10 +126,28 @@ export async function DELETE(request: Request) {
         );
       }
 
+      const target = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { role: true },
+      });
+      if (!target) {
+        return errorResponse(Errors.notFound("User"));
+      }
+
+      if (
+        !canManagePortalUsers(
+          session.user.role,
+          session.user.staffMenuAccess,
+          target.role,
+        )
+      ) {
+        return errorResponse(Errors.forbidden());
+      }
+
       const result = await deleteManagedUser(userId, session.user.id);
       return Response.json({ data: result });
     } catch (error) {
       return errorResponse(error);
     }
-  });
+  }, ADMIN_PORTAL_ROLES);
 }

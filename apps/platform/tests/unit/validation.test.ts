@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { validateLead } from "@/lib/lead-validation";
-import { isValidEmail, isValidPhone } from "@/lib/validations";
+import { adminPublisherSmartLinkCampaignsSchema, adminUpdateStaffUserSchema, isValidEmail, isValidPhone } from "@/lib/validations";
 
 describe("Lead Validation", () => {
   const baseFields = [
@@ -63,5 +63,50 @@ describe("Validation utilities", () => {
   it("validates phone", () => {
     expect(isValidPhone("+1 555 123 4567")).toBe(true);
     expect(isValidPhone("123")).toBe(false);
+  });
+});
+
+describe("adminUpdateStaffUserSchema", () => {
+  it("accepts Promotion and Support menu hrefs", () => {
+    const result = adminUpdateStaffUserSchema.safeParse({
+      menuAccess: ["/admin/promotion", "/admin/support"],
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.menuAccess).toEqual(["/admin/promotion", "/admin/support"]);
+    }
+  });
+
+  it("rejects unknown menu hrefs", () => {
+    const result = adminUpdateStaffUserSchema.safeParse({
+      menuAccess: ["/admin/users"],
+    });
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("adminPublisherSmartLinkCampaignsSchema", () => {
+  it("accepts restrict off with no campaigns", () => {
+    const result = adminPublisherSmartLinkCampaignsSchema.safeParse({
+      restrictSmartLinkCampaigns: false,
+      campaignIds: [],
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects enabling with an empty campaign list", () => {
+    const result = adminPublisherSmartLinkCampaignsSchema.safeParse({
+      restrictSmartLinkCampaigns: true,
+      campaignIds: [],
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("accepts restrict on with at least one campaign", () => {
+    const result = adminPublisherSmartLinkCampaignsSchema.safeParse({
+      restrictSmartLinkCampaigns: true,
+      campaignIds: ["camp_a"],
+    });
+    expect(result.success).toBe(true);
   });
 });
