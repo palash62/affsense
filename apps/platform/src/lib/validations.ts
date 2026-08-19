@@ -1330,5 +1330,11 @@ export const announcementSchema = z.object({
 export const announcementUpdateSchema = announcementSchema.partial();
 
 export const adminPublisherSmartLinkCampaignsSchema = z.object({
+  restrictSmartLinkCampaigns: z.boolean(),
   campaignIds: z.array(z.string().cuid()).max(100),
+});
+
+export const publisherPostbackSchema = z.object({
+  status: z.enum(["ACTIVE", "INACTIVE"]),
+  endpoint: z.string().url("Must be a valid URL").max(500),
 });
