@@ -751,7 +751,7 @@ export const emailTemplateUpdateSchema = emailTemplateSchema.partial();
 
 export const emailListSchema = z.object({
   name: z.string().trim().min(2).max(80),
-  campaignId: z.string().trim().min(1, "Campaign is required"),
+  campaignIds: z.array(z.string().trim().min(1, "Campaign is required")).min(1, "At least one campaign is required"),
 });
 
 export const emailListUpdateSchema = z.object({
