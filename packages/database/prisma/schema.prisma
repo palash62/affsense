@@ -361,9 +361,23 @@ model PublisherProfile {
   tier2SpecialPayout Decimal? @map("tier2_special_payout") @db.Decimal(10, 2)
   tier3SpecialPayout Decimal? @map("tier3_special_payout") @db.Decimal(10, 2)
   globalLinkUrl     String?   @map("global_link_url")
+  restrictSmartLinkCampaigns Boolean @default(false) @map("restrict_smart_link_campaigns")
   user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  smartLinkCampaigns PublisherSmartLinkCampaign[]
 
   @@map("publisher_profiles")
+}
+
+model PublisherSmartLinkCampaign {
+  publisherId String @map("publisher_id")
+  campaignId  String @map("campaign_id")
+
+  publisherProfile PublisherProfile @relation(fields: [publisherId], references: [userId], onDelete: Cascade)
+  campaign         Campaign         @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@id([publisherId, campaignId])
+  @@index([campaignId])
+  @@map("publisher_smart_link_campaigns")
 }
 
 model Campaign {
@@ -398,6 +412,7 @@ model Campaign {
   landingPages       LandingPage[]
   funnelEvents       FunnelEvent[]
   emailLists         EmailList[]
+  smartLinkCampaigns PublisherSmartLinkCampaign[]
 
   @@index([advertiserId])
   @@index([status])
