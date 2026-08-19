@@ -142,6 +142,7 @@ export async function listUsers(filters: {
         }
       : user.publisherProfile,
     allowedSmartLinkCampaignIds: user.smartLinkCampaigns?.map((r) => r.campaignId) ?? [],
+    _count: user._count,
   }));
 
   return { data: serialized, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
