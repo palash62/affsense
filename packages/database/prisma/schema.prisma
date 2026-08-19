@@ -313,6 +313,7 @@ model User {
   cpaOfferConversions      CpaOfferConversion[]
   createdCpaOffers         CpaOffer[]           @relation("CpaOfferCreatedBy")
   advertiserGlobalPostback AdvertiserGlobalPostback?
+  publisherPostback        PublisherPostback?
   cpaWallet                CpaWallet?
   cpaEarnings              CpaEarning[]
   emailWallet              EmailWallet?
@@ -411,7 +412,7 @@ model Campaign {
   optinPages         AdvertiserOptinPage[]
   landingPages       LandingPage[]
   funnelEvents       FunnelEvent[]
-  emailLists         EmailList[]
+  emailListCampaigns EmailListCampaign[]
   smartLinkCampaigns PublisherSmartLinkCampaign[]
 
   @@index([advertiserId])
@@ -1121,18 +1122,32 @@ model EmailContactTag {
 model EmailList {
   id           String   @id @default(cuid())
   advertiserId String   @map("advertiser_id")
-  campaignId   String   @map("campaign_id")
   name         String
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
-  advertiser User     @relation(fields: [advertiserId], references: [id], onDelete: Cascade)
-  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  broadcasts EmailBroadcast[]
+  advertiser  User                @relation(fields: [advertiserId], references: [id], onDelete: Cascade)
+  campaigns   EmailListCampaign[]
+  broadcasts  EmailBroadcast[]
+  automations EmailAutomation[]
 
-  @@unique([advertiserId, campaignId])
   @@index([advertiserId])
   @@map("email_lists")
+}
+
+model EmailListCampaign {
+  id         String   @id @default(cuid())
+  listId     String   @map("list_id")
+  campaignId String   @map("campaign_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  list     EmailList @relation(fields: [listId], references: [id], onDelete: Cascade)
+  campaign Campaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@unique([listId, campaignId])
+  @@unique([campaignId])
+  @@index([listId])
+  @@map("email_list_campaigns")
 }
 
 model EmailTemplate {
@@ -1161,6 +1176,7 @@ model EmailAutomation {
   name         String
   trigger      AutoresponderTrigger
   campaignId   String?               @map("campaign_id")
+  listId       String?               @map("list_id")
   status       EmailAutomationStatus @default(DRAFT)
   fromName     String                @map("from_name")
   replyTo      String?               @map("reply_to")
@@ -1170,6 +1186,7 @@ model EmailAutomation {
   updatedAt    DateTime              @updatedAt @map("updated_at")
 
   advertiser User                  @relation(fields: [advertiserId], references: [id], onDelete: Cascade)
+  list       EmailList?            @relation(fields: [listId], references: [id], onDelete: SetNull)
   openTag    EmailTag?             @relation("AutomationOpenTag", fields: [openTagId], references: [id], onDelete: SetNull)
   clickTag   EmailTag?             @relation("AutomationClickTag", fields: [clickTagId], references: [id], onDelete: SetNull)
   steps      EmailAutomationStep[]
@@ -1179,6 +1196,7 @@ model EmailAutomation {
   @@index([advertiserId, status])
   @@index([openTagId])
   @@index([clickTagId])
+  @@index([listId])
   @@map("email_automations")
 }
 
@@ -1834,4 +1852,47 @@ model PromotionEvent {
   @@index([promotionId, eventType, createdAt])
   @@index([visitorKey, promotionId, eventType, createdAt])
   @@map("promotion_events")
+}
+
+model PublisherPostback {
+  id          String               @id @default(cuid())
+  publisherId String               @unique @map("publisher_id")
+  type        GlobalPostbackType   @default(S2S)
+  status      GlobalPostbackStatus @default(INACTIVE)
+  endpoint    String               @db.Text
+  createdAt   DateTime             @default(now()) @map("created_at")
+  updatedAt   DateTime             @updatedAt @map("updated_at")
+
+  publisher   User                        @relation(fields: [publisherId], references: [id], onDelete: Cascade)
+  deliveries  PublisherPostbackDelivery[]
+
+  @@map("publisher_postbacks")
+}
+
+model PublisherPostbackDelivery {
+  id          String                    @id @default(cuid())
+  publisherId String                    @map("publisher_id")
+  leadId      String?                   @map("lead_id")
+  postbackId  String?                   @map("postback_id")
+  url         String                    @db.Text
+  event       PublisherPostbackEvent
+  status      CpaPostbackDeliveryStatus @default(PENDING)
+  httpStatus  Int?                      @map("http_status")
+  error       String?                   @db.Text
+  payout      Decimal?                  @db.Decimal(10, 2)
+  attempts    Int                       @default(0)
+  createdAt   DateTime                  @default(now()) @map("created_at")
+  updatedAt   DateTime                  @updatedAt @map("updated_at")
+
+  publisher PublisherPostback @relation(fields: [publisherId], references: [publisherId], onDelete: Cascade)
+
+  @@unique([leadId])
+  @@index([publisherId, createdAt])
+  @@index([status, createdAt])
+  @@map("publisher_postback_deliveries")
+}
+
+enum PublisherPostbackEvent {
+  PAID
+  TEST
 }

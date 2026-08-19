@@ -114,9 +114,9 @@ export async function listUsers(filters: {
             tier2SpecialPayout: true,
             tier3SpecialPayout: true,
             restrictSmartLinkCampaigns: true,
+            smartLinkCampaigns: { select: { campaignId: true } },
           },
         },
-        smartLinkCampaigns: { select: { campaignId: true } },
         wallet: { select: { balance: true, holdBalance: true } },
         _count: { select: { campaigns: true, leads: true, deposits: true, payouts: true } },
       },
@@ -141,7 +141,7 @@ export async function listUsers(filters: {
           ...serializePublisherSpecialTierPayouts(user.publisherProfile),
         }
       : user.publisherProfile,
-    allowedSmartLinkCampaignIds: (user.smartLinkCampaigns?.map((r) => r.campaignId) ?? []) as string[],
+    allowedSmartLinkCampaignIds: (user.publisherProfile?.smartLinkCampaigns?.map((r) => r.campaignId) ?? []) as string[],
     _count: user._count,
     advertiserProfile: user.advertiserProfile,
   }));
@@ -250,7 +250,9 @@ export async function getPublisherDetail(id: string) {
       name: true,
       status: true,
       createdAt: true,
-      publisherProfile: true,
+      publisherProfile: {
+        include: { smartLinkCampaigns: { select: { campaignId: true } } },
+      },
       wallet: {
         select: {
           id: true,
@@ -260,7 +262,6 @@ export async function getPublisherDetail(id: string) {
         },
       },
       _count: { select: { leads: true } },
-      smartLinkCampaigns: { select: { campaignId: true } },
     },
   });
 
@@ -283,7 +284,7 @@ export async function getPublisherDetail(id: string) {
           ...serializePublisherSpecialTierPayouts(profile),
         }
       : null,
-    allowedSmartLinkCampaignIds: user.smartLinkCampaigns.map((row) => row.campaignId) as string[],
+    allowedSmartLinkCampaignIds: (profile?.smartLinkCampaigns?.map((row) => row.campaignId) ?? []) as string[],
     _count: user._count,
   };
 }
