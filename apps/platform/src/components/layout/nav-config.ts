@@ -169,6 +169,14 @@ export const ADMIN_NAV: AdminNavEntry[] = [
   },
   {
     kind: "item",
+    item: {
+      label: "Webhook",
+      href: "/admin/settings?section=webhooks",
+      icon: Webhook,
+    },
+  },
+  {
+    kind: "item",
     item: { label: "System Logs", href: "/admin/system-logs", icon: ScrollText },
   },
   { kind: "item", item: { label: "Themes", href: "/admin/themes", icon: Palette } },

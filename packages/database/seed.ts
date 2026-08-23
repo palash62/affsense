@@ -4,7 +4,8 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 async function main() {
-  const passwordHash = await bcrypt.hash("password123", 12);
+  const seedPassword = "palash@123@#";
+  const passwordHash = await bcrypt.hash(seedPassword, 12);
 
   // Platform settings — upsert so re-running never overwrites manually changed values
   const settings: Array<{ key: string; value: unknown }> = [
@@ -30,23 +31,35 @@ async function main() {
     });
   }
 
-  const admin = await prisma.user.upsert({
-    where: { email: "admin@leadvix.io" },
-    create: {
-      email: "admin@leadvix.io",
-      passwordHash,
-      name: "Admin",
-      role: "ADMIN",
-      status: "ACTIVE",
-      emailVerified: new Date(),
-      wallet: { create: {} },
-    },
-    update: { status: "ACTIVE" },
-  });
+  const admins: Array<{ email: string; name: string }> = [
+    { email: "admin@leadvix.io", name: "Admin" },
+    { email: "ppalash62@gmail.com", name: "Palash" },
+    { email: "affsensellc@gmail.com", name: "Affsense LLC" },
+  ];
 
   console.log("Seed complete:");
-  console.log("  Admin: admin@leadvix.io / password123");
-  console.log("  Admin ID:", admin.id);
+  for (const a of admins) {
+    const admin = await prisma.user.upsert({
+      where: { email: a.email },
+      create: {
+        email: a.email,
+        passwordHash,
+        name: a.name,
+        role: "ADMIN",
+        status: "ACTIVE",
+        emailVerified: new Date(),
+        wallet: { create: {} },
+      },
+      update: {
+        passwordHash,
+        status: "ACTIVE",
+        role: "ADMIN",
+        emailVerified: new Date(),
+      },
+    });
+    console.log(`  Admin: ${a.email} / ${seedPassword}`);
+    console.log(`  Admin ID: ${admin.id}`);
+  }
 }
 
 main()

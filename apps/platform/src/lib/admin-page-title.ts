@@ -25,6 +25,10 @@ export function getAdminPageMeta(
     return { title: "Add New Digital Product Offer" };
   }
 
+  if (/^\/admin\/digital-products\/[^/]+\/edit$/.test(path)) {
+    return { title: "Edit Digital Product Offer" };
+  }
+
   if (path === "/admin/digital-products/categories") {
     return {
       title: "Product Categories",

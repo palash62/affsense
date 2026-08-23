@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
-import { Cloud, CreditCard, Crosshair, Mail, ScrollText, Settings, UserCog } from "lucide-react";
+import { Cloud, CreditCard, Crosshair, Mail, ScrollText, Settings, UserCog, Webhook } from "lucide-react";
 import { AdminPreferencesForm } from "@/components/admin/admin-preferences-form";
 import { PlatformSettingsForm } from "@/components/forms/platform-settings-form";
 import { SmtpSettingsForm } from "@/components/forms/smtp-settings-form";
@@ -11,6 +11,7 @@ import { MailgunMarketingInfo } from "@/components/admin/mailgun-marketing-info"
 import { EmailMarketingConfigForm } from "@/components/admin/email-marketing-config-form";
 import { StripeSettingsForm } from "@/components/forms/stripe-settings-form";
 import { PixelSettingsForm } from "@/components/forms/pixel-settings-form";
+import { ClickFunnelsWebhookSettingsForm } from "@/components/admin/clickfunnels-webhook-settings";
 import { EmailLogsTable } from "@/components/admin/email-logs-table";
 import { PageSection } from "@/components/admin/page-section";
 import { cn } from "@/lib/utils";
@@ -20,6 +21,7 @@ type SectionId =
   | "payout"
   | "payments"
   | "pixels"
+  | "webhooks"
   | "email"
   | "email-marketing"
   | "email-log";
@@ -64,6 +66,15 @@ const SECTIONS: SectionItem[] = [
     icon: Crosshair,
     title: "Pixel Setting",
     description: "Facebook Pixel and Google Ads conversion tracking for landing pages",
+    gradient: "leads",
+  },
+  {
+    id: "webhooks",
+    label: "Webhook",
+    icon: Webhook,
+    title: "Webhook",
+    description:
+      "One global ClickFunnels webhook — no per-product or per-offer configuration required",
     gradient: "leads",
   },
   {
@@ -150,6 +161,7 @@ export function AdminSettingsShell({ initialTimezone }: { initialTimezone: strin
             {activeId === "payout" && <PlatformSettingsForm />}
             {activeId === "payments" && <StripeSettingsForm />}
             {activeId === "pixels" && <PixelSettingsForm />}
+            {activeId === "webhooks" && <ClickFunnelsWebhookSettingsForm />}
             {activeId === "email" && <SmtpSettingsForm />}
             {activeId === "email-marketing" && (
               <div className="space-y-10">

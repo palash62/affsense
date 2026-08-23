@@ -67,6 +67,7 @@ const publicPaths = [
   "/api/internal/",
   "/api/v1/email/track/",
   "/api/v1/webhooks/mailgun",
+  "/api/v1/webhooks/clickfunnels",
   "/unsubscribe/",
   "/api/v1/admin/impersonate/start",
   "/api/v1/admin/impersonate/stop",

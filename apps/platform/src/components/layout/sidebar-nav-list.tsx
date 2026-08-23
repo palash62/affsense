@@ -96,7 +96,10 @@ function isChildActive(pathname: string, child: NavItem, siblings: NavItem[]) {
     return pathname === "/admin/users" || pathname.startsWith("/admin/users/");
   }
   if (child.href === "/admin/digital-products") {
-    return pathname === "/admin/digital-products";
+    return (
+      pathname === "/admin/digital-products" ||
+      /^\/admin\/digital-products\/[^/]+\/edit$/.test(pathname)
+    );
   }
   if (child.href === "/admin/digital-products/new") {
     return (

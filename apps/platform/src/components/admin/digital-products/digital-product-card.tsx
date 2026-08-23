@@ -111,10 +111,11 @@ export function DigitalProductCard({
 
           <div className="mt-auto flex items-center justify-between">
             <Link
-              href="/admin/digital-products/new"
+              href={`/admin/digital-products/${product.id}/edit`}
+              prefetch
               className="text-sm font-medium text-[var(--theme-primary)] hover:underline"
             >
-              Manage offer
+              Edit
             </Link>
             <Button
               variant="ghost"

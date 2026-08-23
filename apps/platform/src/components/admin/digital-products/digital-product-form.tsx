@@ -10,6 +10,8 @@ import {
   DIGITAL_PRODUCT_NICHES,
   DIGITAL_PRODUCT_TYPES,
   SHORT_DESCRIPTION_MAX,
+  AFFILIATE_TRACKING_SAMPLE_VALUE,
+  buildAffiliateTrackingPreviewUrl,
   readImageDataUrl,
   type DigitalProductFormValues,
   type DigitalProductStatus,
@@ -62,13 +64,17 @@ async function copyText(text: string, label: string) {
   }
 }
 
-export function DigitalProductForm() {
+export function DigitalProductForm({ productId }: { productId?: string }) {
   const router = useRouter();
+  const isEdit = Boolean(productId);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageFileRef = useRef<File | null>(null);
   const [values, setValues] = useState<DigitalProductFormValues>(DEFAULT_FORM_VALUES);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(isEdit);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [loadKey, setLoadKey] = useState(0);
   const [categories, setCategories] = useState<string[]>([]);
 
   useEffect(() => {
@@ -84,7 +90,68 @@ export function DigitalProductForm() {
       .catch(() => {});
   }, []);
 
+  useEffect(() => {
+    if (!productId) return;
+    const ac = new AbortController();
+    setLoading(true);
+    setLoadError(null);
+    fetch(`/api/v1/admin/digital-products/${productId}`, { signal: ac.signal })
+      .then(async (res) => {
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(json.error?.message ?? "Not found");
+        return json.data;
+      })
+      .then((data) => {
+        if (ac.signal.aborted || !data) return;
+        setValues({
+          name: data.name ?? "",
+          category: data.category ?? "",
+          shortDescription: data.shortDescription ?? "",
+          productType: data.productType ?? "Digital Download",
+          niche: data.niche ?? "Productivity",
+          status: data.status === "Active" ? "Active" : "Draft",
+          featured: Boolean(data.featured),
+          isNew: Boolean(data.isNew),
+          salesPageUrl: data.salesPageUrl ?? "",
+          affiliateTrackingParam: data.affiliateTrackingParam ?? "affsense_id",
+          previewUrl: data.previewUrl ?? "",
+          frontEndCommission: String(data.frontEndCommission ?? ""),
+          upsellCommission:
+            data.upsellCommission == null ? "" : String(data.upsellCommission),
+          referralReward:
+            data.referralReward == null ? "" : String(data.referralReward),
+          price: String(data.price ?? ""),
+          vendor: data.vendor ?? "",
+          webhookSecret: "",
+        });
+        if (data.imageUrl) setImagePreview(data.imageUrl);
+      })
+      .catch((err: unknown) => {
+        if (ac.signal.aborted) return;
+        const message =
+          err instanceof Error ? err.message : "Could not load product";
+        setLoadError(message);
+        toast.error(message);
+      })
+      .finally(() => {
+        if (!ac.signal.aborted) setLoading(false);
+      });
+    return () => ac.abort();
+  }, [productId, loadKey]);
+
   const descriptionCount = values.shortDescription.length;
+
+  const trackingPreviewUrl = useMemo(
+    () =>
+      buildAffiliateTrackingPreviewUrl(
+        values.salesPageUrl,
+        values.affiliateTrackingParam,
+      ),
+    [values.salesPageUrl, values.affiliateTrackingParam],
+  );
+
+  const trackingParamLabel =
+    values.affiliateTrackingParam.trim() || "affsense_id";
 
   const canPublish = useMemo(
     () => values.name.trim().length >= 2 && values.salesPageUrl.trim().length >= 1,
@@ -110,35 +177,41 @@ export function DigitalProductForm() {
     if (saving) return;
     setSaving(true);
     try {
-      let imageUrl: string | undefined;
+      const payload: Record<string, unknown> = {
+        name: values.name,
+        category: values.category,
+        shortDescription: values.shortDescription,
+        productType: values.productType,
+        niche: values.niche,
+        status,
+        featured: values.featured,
+        isNew: values.isNew,
+        salesPageUrl: values.salesPageUrl,
+        affiliateTrackingParam: values.affiliateTrackingParam,
+        previewUrl: values.previewUrl,
+        frontEndCommission: Number(values.frontEndCommission) || 0,
+        upsellCommission: Number(values.upsellCommission) || 0,
+        referralReward: Number(values.referralReward) || 0,
+        price: Number(values.price) || 0,
+        vendor: values.vendor,
+      };
       if (imageFileRef.current) {
-        imageUrl = await readImageDataUrl(imageFileRef.current);
+        payload.imageUrl = await readImageDataUrl(imageFileRef.current);
       }
-      const res = await fetch("/api/v1/admin/digital-products", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: values.name,
-          category: values.category,
-          shortDescription: values.shortDescription,
-          productType: values.productType,
-          niche: values.niche,
-          status,
-          featured: values.featured,
-          isNew: values.isNew,
-          salesPageUrl: values.salesPageUrl,
-          affiliateTrackingParam: values.affiliateTrackingParam,
-          previewUrl: values.previewUrl,
-          frontEndCommission: Number(values.frontEndCommission) || 0,
-          upsellCommission: Number(values.upsellCommission) || 0,
-          referralReward: Number(values.referralReward) || 0,
-          price: Number(values.price) || 0,
-          vendor: values.vendor,
-          webhookSecret: values.webhookSecret,
-          imageUrl,
-        }),
-      });
-      if (!res.ok) throw new Error("save failed");
+      const res = await fetch(
+        productId
+          ? `/api/v1/admin/digital-products/${productId}`
+          : "/api/v1/admin/digital-products",
+        {
+          method: productId ? "PATCH" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        },
+      );
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        throw new Error(json.error?.message ?? "save failed");
+      }
       toast.success(successMessage);
       router.push("/admin/digital-products");
     } catch {
@@ -161,7 +234,39 @@ export function DigitalProductForm() {
       toast.error("Fill in product name and sales page URL");
       return;
     }
-    void persistProduct("Active", "Offer published");
+    void persistProduct("Active", isEdit ? "Offer updated" : "Offer published");
+  }
+
+  if (loading) {
+    return (
+      <div className="rounded-[var(--radius-card,0.875rem)] border border-border bg-card p-8 text-sm text-muted-foreground">
+        Loading product...
+      </div>
+    );
+  }
+
+  if (isEdit && loadError) {
+    return (
+      <div className="space-y-4 rounded-[var(--radius-card,0.875rem)] border border-border bg-card p-8">
+        <p className="text-sm text-destructive">{loadError}</p>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            type="button"
+            className="h-10 rounded-md bg-[var(--theme-primary)] px-4 hover:opacity-90"
+            onClick={() => setLoadKey((k) => k + 1)}
+          >
+            Retry
+          </Button>
+          <ButtonLink
+            href="/admin/digital-products"
+            variant="outline"
+            className="h-10 rounded-md border-border px-4"
+          >
+            Back to products
+          </ButtonLink>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -170,7 +275,7 @@ export function DigitalProductForm() {
         items={[
           { label: "Dashboard", href: "/admin" },
           { label: "Digital Products", href: "/admin/digital-products" },
-          { label: "Add New" },
+          { label: isEdit ? "Edit" : "Add New" },
         ]}
       />
 
@@ -391,6 +496,41 @@ export function DigitalProductForm() {
                   />
                 </div>
                 <div className="space-y-2">
+                  <FieldLabel>Tracked sales URL preview</FieldLabel>
+                  {trackingPreviewUrl ? (
+                    <div className="flex items-center gap-2">
+                      <Input
+                        readOnly
+                        value={trackingPreviewUrl}
+                        className="h-10 rounded-md bg-muted font-mono text-sm"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        className="h-10 w-10 shrink-0"
+                        onClick={() => void copyText(trackingPreviewUrl, "Tracked URL")}
+                        aria-label="Copy tracked URL preview"
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <p className="rounded-md border border-dashed border-border bg-muted/40 px-3 py-2.5 text-xs text-muted-foreground">
+                      Enter a sales page URL to preview how{" "}
+                      <code className="rounded bg-muted px-1">?{trackingParamLabel}=</code>
+                      {" "}
+                      appears in the link.
+                    </p>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    Sample affiliate value:{" "}
+                    <code className="rounded bg-muted px-1">{AFFILIATE_TRACKING_SAMPLE_VALUE}</code>
+                    {" "}
+                    (replaced with each publisher&apos;s real id when links are generated).
+                  </p>
+                </div>
+                <div className="space-y-2">
                   <FieldLabel>Preview / Demo URL (Optional)</FieldLabel>
                   <Input
                     value={values.previewUrl}
@@ -407,8 +547,11 @@ export function DigitalProductForm() {
                     <p className="text-sm font-semibold text-[var(--theme-primary)]">How it works?</p>
                     <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
                       Affiliates receive a unique tracking link. When a visitor clicks through,
-                      they are redirected to your sales page with the tracking parameter appended.
-                      Conversions are attributed automatically via webhook.
+                      they are redirected to your sales page with{" "}
+                      <code className="rounded bg-white/60 px-1">
+                        ?{trackingParamLabel}={AFFILIATE_TRACKING_SAMPLE_VALUE}
+                      </code>{" "}
+                      appended. Conversions are attributed automatically via webhook.
                     </p>
                   </div>
                 </div>
@@ -479,38 +622,6 @@ export function DigitalProductForm() {
               </div>
             </div>
           </DashboardCard>
-
-          {/* 4. Webhook Setup */}
-          <DashboardCard>
-            <SectionHeader number={4} title="Webhook Setup" />
-            <div className="space-y-5">
-              <div className="space-y-2">
-                <FieldLabel>Webhook URL</FieldLabel>
-                <div className="flex items-center gap-2">
-                  <Input
-                    readOnly
-                    value="Webhook URL will appear after saving the product"
-                    className="h-10 rounded-md bg-muted font-mono text-sm text-muted-foreground"
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Add this URL to your funnel platform to receive conversion events.
-                </p>
-              </div>
-              <div className="space-y-2">
-                <FieldLabel>Webhook Secret</FieldLabel>
-                <Input
-                  type="password"
-                  value={values.webhookSecret}
-                  onChange={(e) => patch({ webhookSecret: e.target.value })}
-                  className="h-10 rounded-md font-mono"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Used to verify incoming webhook payloads. Keep this private.
-                </p>
-              </div>
-            </div>
-          </DashboardCard>
         </div>
 
         <aside className="space-y-5 xl:col-span-4">
@@ -551,7 +662,7 @@ export function DigitalProductForm() {
             disabled={saving}
           >
             <Send className="h-4 w-4" />
-            {saving ? "Publishing..." : "Publish Offer"}
+            {saving ? (isEdit ? "Updating..." : "Publishing...") : isEdit ? "Update Offer" : "Publish Offer"}
           </Button>
         </div>
       </div>

@@ -18,7 +18,12 @@ export function ProductCategoriesPanel() {
 
   async function refresh() {
     const res = await fetch("/api/v1/admin/digital-products/categories");
-    const json = await res.json();
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      toast.error(json.error?.message ?? "Failed to load categories");
+      setCategories([]);
+      return;
+    }
     setCategories(json.data ?? []);
   }
 
@@ -42,7 +47,8 @@ export function ProductCategoriesPanel() {
       body: JSON.stringify({ name: trimmed, status: "Active" }),
     });
     if (!res.ok) {
-      toast.error("Failed to add category");
+      const json = await res.json().catch(() => ({}));
+      toast.error(json.error?.message ?? "Failed to add category");
       return;
     }
     setName("");

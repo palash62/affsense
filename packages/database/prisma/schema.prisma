@@ -1896,3 +1896,31 @@ enum PublisherPostbackEvent {
   PAID
   TEST
 }
+
+enum WebhookEventSource {
+  CLICKFUNNELS
+}
+
+enum WebhookEventStatus {
+  PROCESSED
+  FAILED
+  DUPLICATE
+  IGNORED
+}
+
+model WebhookEvent {
+  id           String             @id @default(cuid())
+  source       WebhookEventSource @default(CLICKFUNNELS)
+  eventType    String             @map("event_type")
+  status       WebhookEventStatus
+  leadEmail    String?            @map("lead_email")
+  leadName     String?            @map("lead_name")
+  errorMessage String?            @map("error_message") @db.Text
+  payloadJson  Json               @map("payload_json")
+  createdAt    DateTime           @default(now()) @map("created_at")
+
+  @@index([createdAt])
+  @@index([status])
+  @@index([source])
+  @@map("webhook_events")
+}

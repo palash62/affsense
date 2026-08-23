@@ -88,6 +88,36 @@ export function computeCommissionAmount(price: number, percent: number): string 
   return `$${amount.toFixed(2)}`;
 }
 
+/** Sample affiliate id shown in admin URL previews (not a real publisher id). */
+export const AFFILIATE_TRACKING_SAMPLE_VALUE = "AFFILIATE_ID";
+
+/**
+ * Compose sales page URL with tracking query param for admin preview.
+ * Handles existing query strings and hash fragments.
+ */
+export function buildAffiliateTrackingPreviewUrl(
+  salesPageUrl: string,
+  trackingParam: string,
+  sampleValue: string = AFFILIATE_TRACKING_SAMPLE_VALUE,
+): string | null {
+  const base = salesPageUrl.trim();
+  const key = trackingParam.trim() || "affsense_id";
+  if (!base) return null;
+
+  try {
+    const url = new URL(base);
+    url.searchParams.set(key, sampleValue);
+    return url.toString();
+  } catch {
+    // Relative or incomplete URL — do a best-effort string append.
+    const hashIndex = base.indexOf("#");
+    const beforeHash = hashIndex >= 0 ? base.slice(0, hashIndex) : base;
+    const hash = hashIndex >= 0 ? base.slice(hashIndex) : "";
+    const joiner = beforeHash.includes("?") ? "&" : "?";
+    return `${beforeHash}${joiner}${encodeURIComponent(key)}=${encodeURIComponent(sampleValue)}${hash}`;
+  }
+}
+
 export function readImageDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();

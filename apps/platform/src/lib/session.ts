@@ -91,21 +91,26 @@ async function isValidImpersonator(userId: string, tokenVersion?: number) {
 /**
  * Validates the JWT identity for normal sessions and admin view-as.
  * In view-as mode, tokenVersion is checked against the admin (impersonator), not the target user.
+ * DB/connectivity failures return false so layouts redirect instead of crashing.
  */
 export async function isAuthorizedAppSession(session: AppSession): Promise<boolean> {
   if (!session.user) return false;
 
-  if (session.viewAsMode && session.impersonatorId) {
-    const impersonatorOk = await isValidImpersonator(
-      session.impersonatorId,
-      session.tokenVersion,
-    );
-    if (!impersonatorOk) return false;
-    // Target advertiser/publisher: role + status only — do not compare admin JWT tokenVersion.
-    return hasValidUserSession(session.user.id, session.user.role);
-  }
+  try {
+    if (session.viewAsMode && session.impersonatorId) {
+      const impersonatorOk = await isValidImpersonator(
+        session.impersonatorId,
+        session.tokenVersion,
+      );
+      if (!impersonatorOk) return false;
+      // Target advertiser/publisher: role + status only — do not compare admin JWT tokenVersion.
+      return hasValidUserSession(session.user.id, session.user.role);
+    }
 
-  return hasValidUserSession(session.user.id, session.user.role, session.tokenVersion);
+    return hasValidUserSession(session.user.id, session.user.role, session.tokenVersion);
+  } catch {
+    return false;
+  }
 }
 
 export async function requireAuth(allowedRoles?: UserRole[]) {
