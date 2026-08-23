@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/prisma";
 import type { WebhookEventStatus } from "@prisma/client";
-import {
   CLICKFUNNELS_WEBHOOK_SETTINGS_KEY,
   DEFAULT_CLICKFUNNELS_WEBHOOK_CONFIG,
   mergeClickFunnelsWebhookUpdate,
@@ -66,6 +65,21 @@ export async function updateClickFunnelsWebhookSettings(
   return toClickFunnelsWebhookSettingsApi(next);
 }
 
+export async function resolvePublisherFromAffiliateRef(ref: string | null | undefined) {
+  const affiliateRef = ref?.trim() || null;
+  if (!affiliateRef) return { publisherId: null as string | null, affiliateRef: null as string | null };
+
+  const user = await prisma.user.findFirst({
+    where: { id: affiliateRef, role: "PUBLISHER" },
+    select: { id: true },
+  });
+
+  return {
+    publisherId: user?.id ?? null,
+    affiliateRef,
+  };
+}
+
 export async function getWebhookActivitySummary() {
   const [total, processed, failed, last] = await Promise.all([
     prisma.webhookEvent.count(),
@@ -103,6 +117,11 @@ export async function listWebhookActivity(opts: { page?: number; limit?: number 
         leadEmail: true,
         leadName: true,
         errorMessage: true,
+        affiliateRef: true,
+        publisherId: true,
+        publisher: {
+          select: { id: true, name: true, email: true },
+        },
         createdAt: true,
       },
     }),
@@ -119,6 +138,10 @@ export async function listWebhookActivity(opts: { page?: number; limit?: number 
       leadEmail: row.leadEmail,
       leadName: row.leadName,
       errorMessage: row.errorMessage,
+      affiliateRef: row.affiliateRef,
+      publisherId: row.publisherId,
+      publisherName: row.publisher?.name ?? null,
+      publisherEmail: row.publisher?.email ?? null,
       createdAt: row.createdAt.toISOString(),
     })),
     page,
@@ -130,7 +153,12 @@ export async function listWebhookActivity(opts: { page?: number; limit?: number 
 }
 
 export async function getWebhookActivityById(id: string) {
-  const row = await prisma.webhookEvent.findUnique({ where: { id } });
+  const row = await prisma.webhookEvent.findUnique({
+    where: { id },
+    include: {
+      publisher: { select: { id: true, name: true, email: true } },
+    },
+  });
   if (!row) return null;
   return {
     id: row.id,
@@ -140,6 +168,10 @@ export async function getWebhookActivityById(id: string) {
     leadEmail: row.leadEmail,
     leadName: row.leadName,
     errorMessage: row.errorMessage,
+    affiliateRef: row.affiliateRef,
+    publisherId: row.publisherId,
+    publisherName: row.publisher?.name ?? null,
+    publisherEmail: row.publisher?.email ?? null,
     payloadJson: row.payloadJson,
     createdAt: row.createdAt.toISOString(),
   };
@@ -152,6 +184,8 @@ export async function createWebhookEvent(input: {
   leadEmail?: string | null;
   leadName?: string | null;
   errorMessage?: string | null;
+  publisherId?: string | null;
+  affiliateRef?: string | null;
   payloadJson: unknown;
 }) {
   return prisma.webhookEvent.create({
@@ -162,6 +196,8 @@ export async function createWebhookEvent(input: {
       leadEmail: input.leadEmail ?? null,
       leadName: input.leadName ?? null,
       errorMessage: input.errorMessage ?? null,
+      publisherId: input.publisherId ?? null,
+      affiliateRef: input.affiliateRef ?? null,
       payloadJson: input.payloadJson as never,
     },
   });

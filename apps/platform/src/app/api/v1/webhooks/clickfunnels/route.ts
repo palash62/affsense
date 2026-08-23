@@ -1,5 +1,6 @@
-import { loadClickFunnelsWebhookConfig, createWebhookEvent } from "@/services/clickfunnels-webhook-settings.service";
+import { loadClickFunnelsWebhookConfig, createWebhookEvent, resolvePublisherFromAffiliateRef } from "@/services/clickfunnels-webhook-settings.service";
 import { sanitizeWebhookPayload } from "@/lib/clickfunnels-webhook-settings";
+import { extractAffiliateRefFromWebhookPayload } from "@/lib/clickfunnels-webhook-attribution";
 
 function extractSecret(
   request: Request,
@@ -101,19 +102,46 @@ async function parseBody(request: Request): Promise<unknown> {
 export async function POST(request: Request) {
   const body = await parseBody(request);
   const sanitized = sanitizeWebhookPayload(body);
+  const requestUrl = new URL(request.url);
+
+  async function logEvent(input: {
+    eventType: string;
+    status: "PROCESSED" | "FAILED" | "IGNORED" | "DUPLICATE";
+    leadEmail?: string | null;
+    leadName?: string | null;
+    errorMessage?: string | null;
+    config?: Awaited<ReturnType<typeof loadClickFunnelsWebhookConfig>>;
+  }) {
+    const affiliateRef = extractAffiliateRefFromWebhookPayload(
+      body,
+      input.config?.affiliateTrackingParam ?? "affsense_id",
+      requestUrl,
+    );
+    const attribution = await resolvePublisherFromAffiliateRef(affiliateRef);
+    await createWebhookEvent({
+      eventType: input.eventType,
+      status: input.status,
+      leadEmail: input.leadEmail,
+      leadName: input.leadName,
+      errorMessage: input.errorMessage,
+      publisherId: attribution.publisherId,
+      affiliateRef: attribution.affiliateRef,
+      payloadJson: sanitized,
+    });
+  }
 
   try {
     const config = await loadClickFunnelsWebhookConfig();
 
     if (!config.enabled) {
       const lead = parseLeadFields(body);
-      await createWebhookEvent({
+      await logEvent({
         eventType: lead.eventType || "webhook.disabled",
         status: "IGNORED",
         leadEmail: lead.leadEmail,
         leadName: lead.leadName,
         errorMessage: "ClickFunnels webhooks are disabled",
-        payloadJson: sanitized,
+        config,
       });
       return Response.json(
         {
@@ -130,13 +158,13 @@ export async function POST(request: Request) {
     const expected = config.webhookSecret.trim();
     if (!expected) {
       const lead = parseLeadFields(body);
-      await createWebhookEvent({
+      await logEvent({
         eventType: lead.eventType || "webhook.not_configured",
         status: "FAILED",
         leadEmail: lead.leadEmail,
         leadName: lead.leadName,
         errorMessage: "Platform webhook secret is not configured",
-        payloadJson: sanitized,
+        config,
       });
       return Response.json(
         {
@@ -153,13 +181,13 @@ export async function POST(request: Request) {
     const provided = extractSecret(request, body, config.secretHeaderName);
     if (!provided || provided !== expected) {
       const lead = parseLeadFields(body);
-      await createWebhookEvent({
+      await logEvent({
         eventType: lead.eventType || "webhook.unauthorized",
         status: "FAILED",
         leadEmail: lead.leadEmail,
         leadName: lead.leadName,
         errorMessage: "Invalid webhook secret",
-        payloadJson: sanitized,
+        config,
       });
       return Response.json(
         { error: { code: "UNAUTHORIZED", message: "Invalid webhook secret", status: 401 } },
@@ -168,23 +196,24 @@ export async function POST(request: Request) {
     }
 
     const lead = parseLeadFields(body);
-    await createWebhookEvent({
+    await logEvent({
       eventType: lead.eventType,
       status: "PROCESSED",
       leadEmail: lead.leadEmail,
       leadName: lead.leadName,
-      payloadJson: sanitized,
+      config,
     });
 
     return Response.json({ ok: true });
   } catch (error) {
     console.error("[clickfunnels-webhook] error", error);
     try {
-      await createWebhookEvent({
+      const config = await loadClickFunnelsWebhookConfig();
+      await logEvent({
         eventType: "webhook.error",
         status: "FAILED",
         errorMessage: error instanceof Error ? error.message : "Webhook processing failed",
-        payloadJson: sanitized,
+        config,
       });
     } catch {
       // ignore secondary log failure

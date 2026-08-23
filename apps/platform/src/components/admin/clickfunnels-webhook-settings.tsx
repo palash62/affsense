@@ -56,6 +56,10 @@ type ActivityItem = {
   leadEmail: string | null;
   leadName: string | null;
   errorMessage: string | null;
+  affiliateRef: string | null;
+  publisherId: string | null;
+  publisherName: string | null;
+  publisherEmail: string | null;
   createdAt: string;
 };
 
@@ -596,13 +600,14 @@ export function ClickFunnelsWebhookSettingsForm() {
           </DashboardCardDescription>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[720px] text-left text-sm">
+          <table className="w-full min-w-[860px] text-left text-sm">
             <thead className="bg-muted/60 text-xs uppercase tracking-wide text-muted-foreground">
               <tr>
                 <th className="px-5 py-3 font-semibold">Time</th>
                 <th className="px-5 py-3 font-semibold">Source</th>
                 <th className="px-5 py-3 font-semibold">Event</th>
                 <th className="px-5 py-3 font-semibold">Lead</th>
+                <th className="px-5 py-3 font-semibold">Affiliate</th>
                 <th className="px-5 py-3 font-semibold">Status</th>
                 <th className="px-5 py-3 font-semibold text-right">Action</th>
               </tr>
@@ -611,7 +616,7 @@ export function ClickFunnelsWebhookSettingsForm() {
               {activities.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={6}
+                    colSpan={7}
                     className="px-5 py-10 text-center text-sm text-muted-foreground"
                   >
                     No webhook activity yet. Send a test event or wait for ClickFunnels.
@@ -627,6 +632,17 @@ export function ClickFunnelsWebhookSettingsForm() {
                     <td className="px-5 py-3 font-mono text-xs">{row.eventType}</td>
                     <td className="px-5 py-3">
                       {row.leadEmail || row.leadName || (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </td>
+                    <td className="px-5 py-3">
+                      {row.publisherName ? (
+                        <span className="font-medium">{row.publisherName}</span>
+                      ) : row.affiliateRef ? (
+                        <span className="font-mono text-xs text-muted-foreground">
+                          {row.affiliateRef}
+                        </span>
+                      ) : (
                         <span className="text-muted-foreground">—</span>
                       )}
                     </td>
@@ -682,6 +698,23 @@ export function ClickFunnelsWebhookSettingsForm() {
                   <dd className="mt-0.5">
                     {detail.leadName ? `${detail.leadName} · ` : ""}
                     {detail.leadEmail ?? "—"}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs font-medium text-muted-foreground">Affiliate</dt>
+                  <dd className="mt-0.5">
+                    {detail.publisherName ? (
+                      <>
+                        {detail.publisherName}
+                        {detail.publisherEmail ? (
+                          <span className="text-muted-foreground"> · {detail.publisherEmail}</span>
+                        ) : null}
+                      </>
+                    ) : detail.affiliateRef ? (
+                      <span className="font-mono text-xs">{detail.affiliateRef}</span>
+                    ) : (
+                      "—"
+                    )}
                   </dd>
                 </div>
                 {detail.errorMessage ? (

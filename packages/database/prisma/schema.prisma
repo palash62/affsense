@@ -318,6 +318,7 @@ model User {
   cpaEarnings              CpaEarning[]
   emailWallet              EmailWallet?
   publisherTaskSubmissions PublisherTaskSubmission[]
+  webhookEvents            WebhookEvent[] @relation("WebhookEventPublisher")
   promotion              Promotion? @relation(fields: [promotionId], references: [id], onDelete: SetNull)
   createdPromotions      Promotion[] @relation("PromotionCreatedBy")
 
@@ -1916,11 +1917,15 @@ model WebhookEvent {
   leadEmail    String?            @map("lead_email")
   leadName     String?            @map("lead_name")
   errorMessage String?            @map("error_message") @db.Text
+  publisherId  String?            @map("publisher_id")
+  affiliateRef String?            @map("affiliate_ref")
   payloadJson  Json               @map("payload_json")
   createdAt    DateTime           @default(now()) @map("created_at")
+  publisher    User?              @relation("WebhookEventPublisher", fields: [publisherId], references: [id], onDelete: SetNull)
 
   @@index([createdAt])
   @@index([status])
   @@index([source])
+  @@index([publisherId])
   @@map("webhook_events")
 }

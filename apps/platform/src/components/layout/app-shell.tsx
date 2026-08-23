@@ -39,7 +39,7 @@ function AppShellInner({
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   return (
-    <div className="flex min-h-dvh bg-[var(--theme-bg)]">
+    <div className="flex min-h-dvh items-start bg-[var(--theme-bg)]">
       <NavPrefetch
         role={role}
         canAccessCpaOffers={canAccessCpaOffers}
@@ -73,7 +73,7 @@ function AppShellInner({
             onOpenMobileNav={() => setMobileNavOpen(true)}
           />
         </div>
-        <main className="relative min-w-0 flex-1">
+        <main className="relative min-w-0">
           <Suspense fallback={null}>
             <NavigationProgressBar />
           </Suspense>

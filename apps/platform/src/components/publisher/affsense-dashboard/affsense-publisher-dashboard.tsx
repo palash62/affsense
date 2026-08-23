@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import {
   ArrowUpRight,
   Copy,
@@ -27,6 +28,8 @@ import { Button } from "@/components/ui/button";
 import { ButtonLink } from "@/components/ui/button-link";
 import { cn } from "@/lib/utils";
 import { AnnouncementsFeed } from "@/components/announcements/announcements-feed";
+import { buildDigitalProductAffiliateUrl } from "@/lib/digital-product-affiliate-url";
+import { toast } from "sonner";
 
 export type AffsensePublisherDashboardData = {
   period: string;
@@ -58,6 +61,8 @@ export type AffsensePublisherDashboardData = {
     imageUrl: string | null;
     type: "cpa" | "product";
     hot: boolean;
+    salesPageUrl?: string | null;
+    affiliateTrackingParam?: string | null;
   }>;
   announcements: Array<{
     id: string;
@@ -126,6 +131,27 @@ export function AffsensePublisherDashboard({ data }: { data: AffsensePublisherDa
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const activePeriod = data.period;
+  const { data: session } = useSession();
+  const publisherId = session?.user?.id ?? "";
+
+  async function copyProductLink(offer: AffsensePublisherDashboardData["topOffers"][number]) {
+    if (offer.type !== "product") return;
+    const url = buildDigitalProductAffiliateUrl(
+      offer.salesPageUrl,
+      offer.affiliateTrackingParam,
+      publisherId,
+    );
+    if (!url) {
+      toast.error("Sales page URL is not configured for this product");
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success("Tracked link copied");
+    } catch {
+      toast.error("Could not copy link");
+    }
+  }
 
   return (
     <div className="space-y-5">
@@ -271,12 +297,34 @@ export function AffsensePublisherDashboard({ data }: { data: AffsensePublisherDa
                       </td>
                       <td className="px-5 py-3">
                         <div className="flex gap-2">
-                          <Button size="sm" className="h-8 rounded-md bg-[var(--theme-primary)]">
-                            Promote Now
-                          </Button>
-                          <Button size="sm" variant="outline" className="h-8 w-8 rounded-md p-0">
-                            <Copy className="h-3.5 w-3.5" />
-                          </Button>
+                          {offer.type === "product" ? (
+                            <>
+                              <ButtonLink
+                                href={`/publisher/marketplace?product=${offer.id}`}
+                                size="sm"
+                                className="h-8 rounded-md bg-[var(--theme-primary)]"
+                              >
+                                Promote Now
+                              </ButtonLink>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-8 w-8 rounded-md p-0"
+                                onClick={() => void copyProductLink(offer)}
+                              >
+                                <Copy className="h-3.5 w-3.5" />
+                              </Button>
+                            </>
+                          ) : (
+                            <>
+                              <Button size="sm" className="h-8 rounded-md bg-[var(--theme-primary)]">
+                                Promote Now
+                              </Button>
+                              <Button size="sm" variant="outline" className="h-8 w-8 rounded-md p-0">
+                                <Copy className="h-3.5 w-3.5" />
+                              </Button>
+                            </>
+                          )}
                         </div>
                       </td>
                     </tr>

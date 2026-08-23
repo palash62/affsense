@@ -49,6 +49,27 @@ export type SerializedProductCategory = {
   productCount: number;
 };
 
+/** Publisher marketplace view — no secrets or draft-only admin fields. */
+export type SerializedPublisherDigitalProduct = {
+  id: string;
+  name: string;
+  category: string;
+  niche: string;
+  productType: string;
+  price: number;
+  frontEndCommission: number;
+  upsellCommission: number | null;
+  featured: boolean;
+  isNew: boolean;
+  thumbTone: string | null;
+  vendor: string | null;
+  imageUrl: string | null;
+  shortDescription: string;
+  salesPageUrl: string | null;
+  affiliateTrackingParam: string | null;
+  previewUrl: string | null;
+};
+
 function mapProductStatus(status: DigitalProductStatus): "Active" | "Draft" {
   return status === "ACTIVE" ? "Active" : "Draft";
 }
@@ -113,6 +134,31 @@ function serializeProduct(row: {
   };
 }
 
+type ProductRow = Parameters<typeof serializeProduct>[0];
+
+function serializePublisherProduct(row: ProductRow): SerializedPublisherDigitalProduct {
+  const full = serializeProduct(row);
+  return {
+    id: full.id,
+    name: full.name,
+    category: full.category,
+    niche: full.niche,
+    productType: full.productType,
+    price: full.price,
+    frontEndCommission: full.frontEndCommission,
+    upsellCommission: full.upsellCommission,
+    featured: full.featured,
+    isNew: full.isNew,
+    thumbTone: full.thumbTone,
+    vendor: full.vendor,
+    imageUrl: full.imageUrl,
+    shortDescription: full.shortDescription,
+    salesPageUrl: full.salesPageUrl,
+    affiliateTrackingParam: full.affiliateTrackingParam,
+    previewUrl: full.previewUrl,
+  };
+}
+
 function buildProductWhere(filters: DigitalProductListFilters): Prisma.DigitalProductWhereInput {
   const where: Prisma.DigitalProductWhereInput = {};
   if (filters.activeOnly) where.status = "ACTIVE";
@@ -156,6 +202,38 @@ export async function listDigitalProducts(filters: DigitalProductListFilters = {
     limit,
     totalPages: Math.max(1, Math.ceil(total / limit)),
   };
+}
+
+export async function listPublisherDigitalProducts(filters: DigitalProductListFilters = {}) {
+  const page = filters.page ?? 1;
+  const limit = filters.limit ?? 100;
+  const where = buildProductWhere({ ...filters, activeOnly: true });
+  const [rows, total] = await Promise.all([
+    prisma.digitalProduct.findMany({
+      where,
+      include: { category: true },
+      orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
+      skip: (page - 1) * limit,
+      take: limit,
+    }),
+    prisma.digitalProduct.count({ where }),
+  ]);
+  return {
+    items: rows.map(serializePublisherProduct),
+    total,
+    page,
+    limit,
+    totalPages: Math.max(1, Math.ceil(total / limit)),
+  };
+}
+
+export async function getPublisherDigitalProduct(id: string) {
+  const row = await prisma.digitalProduct.findFirst({
+    where: { id, status: "ACTIVE" },
+    include: { category: true },
+  });
+  if (!row) return null;
+  return serializePublisherProduct(row);
 }
 
 export async function getDigitalProductById(id: string) {

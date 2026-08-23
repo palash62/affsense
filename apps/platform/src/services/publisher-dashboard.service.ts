@@ -1,7 +1,7 @@
 import { prisma } from "@cpl/database";
 import { listPublishedAnnouncements } from "@/services/announcement.service";
 import { listActiveCpaOffers } from "@/services/cpa-offer.service";
-import { listDigitalProducts } from "@/services/digital-product.service";
+import { listPublisherDigitalProducts } from "@/services/digital-product.service";
 import { listGetPaidTasks } from "@/services/get-paid-task.service";
 import { reconcilePublisherLeadCreditsForUser } from "@/services/wallet.service";
 
@@ -142,7 +142,7 @@ export async function getAffsensePublisherDashboard(publisherId: string, period:
     }),
     prisma.user.count({ where: { referredById: publisherId } }),
     listGetPaidTasks({ activeOnly: true, showOnDashboard: true, limit: 5 }),
-    listDigitalProducts({ activeOnly: true, limit: 6 }),
+    listPublisherDigitalProducts({ limit: 6 }),
     listActiveCpaOffers({ page: 1, limit: 6 }),
     listPublishedAnnouncements("PUBLISHER", 6),
     prisma.payout.findMany({
@@ -180,6 +180,8 @@ export async function getAffsensePublisherDashboard(publisherId: string, period:
     imageUrl: p.imageUrl,
     type: "product" as const,
     hot: p.featured,
+    salesPageUrl: p.salesPageUrl,
+    affiliateTrackingParam: p.affiliateTrackingParam,
   }));
 
   const topOffers = [...cpaRows, ...productRows]

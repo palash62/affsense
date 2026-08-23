@@ -12,8 +12,8 @@ interface AuthenticatedShellProps {
 
 function ShellSkeleton() {
   return (
-    <div className="flex min-h-dvh bg-background">
-      <aside className="w-64 border-r border-border bg-card p-4">
+    <div className="flex min-h-dvh items-start bg-background">
+      <aside className="sticky top-0 h-dvh min-h-0 shrink-0 self-start overflow-hidden w-64 border-r border-border bg-card p-4">
         <Skeleton className="h-8 w-32" />
         <div className="mt-6 space-y-2">
           {Array.from({ length: 6 }).map((_, i) => (
@@ -23,7 +23,7 @@ function ShellSkeleton() {
       </aside>
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <Skeleton className="h-16 w-full shrink-0" />
-        <main className="flex-1 p-6">
+        <main className="p-6">
           <Skeleton className="h-8 w-48" />
           <Skeleton className="mt-4 h-64 w-full" />
         </main>

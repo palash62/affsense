@@ -32,7 +32,7 @@ export function Sidebar({
   return (
     <aside
       className={cn(
-        "hidden sticky top-0 h-dvh shrink-0 flex-col shadow-lg lg:flex",
+        "hidden sticky top-0 h-dvh min-h-0 shrink-0 self-start overflow-hidden flex-col shadow-lg lg:flex",
         collapsed ? "w-16" : "w-64",
         affsenseChrome ? "bg-[var(--theme-sidebar-from)]" : "",
         className,
