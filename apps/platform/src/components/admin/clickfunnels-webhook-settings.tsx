@@ -159,6 +159,11 @@ export function ClickFunnelsWebhookSettingsForm() {
 
   const globalWebhookUrl = `${platformOrigin}/api/v1/webhooks/clickfunnels`;
 
+  const activeSecret = (draftSecret.trim() || settings?.webhookSecret.trim() || "").trim();
+  const authenticatedWebhookUrl = activeSecret
+    ? `${globalWebhookUrl}?secret=${encodeURIComponent(activeSecret)}`
+    : null;
+
   const refreshActivity = useCallback(async () => {
     const res = await fetch(
       "/api/v1/admin/settings/clickfunnels-webhook/activity?limit=20",
@@ -186,7 +191,7 @@ export function ClickFunnelsWebhookSettingsForm() {
       enabled: Boolean(data.enabled),
       name: data.name ?? "ClickFunnels",
       affiliateTrackingParam: data.affiliateTrackingParam ?? "affsense_id",
-      webhookSecret: "",
+      webhookSecret: typeof data.webhookSecret === "string" ? data.webhookSecret : "",
       webhookSecretConfigured: Boolean(data.webhookSecretConfigured),
       secretHeaderName: data.secretHeaderName ?? "X-Affsense-Secret",
       notes: data.notes ?? "",
@@ -232,7 +237,8 @@ export function ClickFunnelsWebhookSettingsForm() {
         enabled: Boolean(data.enabled),
         name: data.name,
         affiliateTrackingParam: data.affiliateTrackingParam,
-        webhookSecret: "",
+        webhookSecret:
+          typeof data.webhookSecret === "string" ? data.webhookSecret : settings.webhookSecret,
         webhookSecretConfigured: Boolean(data.webhookSecretConfigured),
         secretHeaderName: data.secretHeaderName,
         notes: data.notes ?? "",
@@ -259,16 +265,20 @@ export function ClickFunnelsWebhookSettingsForm() {
         toast.error(json.error?.message ?? "Failed to regenerate secret");
         return;
       }
+      const newSecret =
+        typeof json.data?.webhookSecret === "string" ? json.data.webhookSecret : "";
       setSettings((prev) =>
         prev
           ? {
               ...prev,
+              webhookSecret: newSecret || prev.webhookSecret,
               webhookSecretConfigured: true,
               summary: json.data?.summary ?? prev.summary,
             }
           : prev,
       );
       setDraftSecret("");
+      setShowSecret(true);
       toast.success("Webhook secret regenerated — update ClickFunnels with the new secret");
     } finally {
       setSaving(false);
@@ -314,11 +324,14 @@ export function ClickFunnelsWebhookSettingsForm() {
     return <p className="text-sm text-muted-foreground">Loading webhook settings...</p>;
   }
 
+  const storedSecret = settings.webhookSecret.trim();
   const secretDisplay = draftSecret
     ? draftSecret
-    : settings.webhookSecretConfigured
-      ? "••••••••••••••••••••••••••••••••"
-      : "";
+    : showSecret && storedSecret
+      ? storedSecret
+      : settings.webhookSecretConfigured
+        ? "••••••••••••••••••••••••••••••••"
+        : "";
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
@@ -412,27 +425,66 @@ export function ClickFunnelsWebhookSettingsForm() {
             label={settings.enabled ? "Active" : "Inactive"}
           />
         </div>
-        <div className="mt-4 space-y-2">
-          <Label>Webhook URL</Label>
-          <div className="flex items-center gap-2">
-            <Input
-              readOnly
-              value={globalWebhookUrl}
-              className="h-10 rounded-md bg-muted font-mono text-sm"
-            />
-            <Button
-              type="button"
-              variant="outline"
-              className="h-10 shrink-0 gap-2"
-              onClick={() => void copyText(globalWebhookUrl, "Webhook URL")}
-            >
-              <Copy className="h-4 w-4" />
-              Copy
-            </Button>
+        <div className="mt-4 space-y-4">
+          <div className="space-y-2">
+            <Label>Webhook URL</Label>
+            <div className="flex items-center gap-2">
+              <Input
+                readOnly
+                value={globalWebhookUrl}
+                className="h-10 rounded-md bg-muted font-mono text-sm"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                className="h-10 shrink-0 gap-2"
+                onClick={() => void copyText(globalWebhookUrl, "Webhook URL")}
+              >
+                <Copy className="h-4 w-4" />
+                Copy
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Base endpoint for all ClickFunnels funnels and offers.
+            </p>
           </div>
-          <p className="text-xs text-muted-foreground">
-            Use this single webhook endpoint for all ClickFunnels funnels and offers.
-          </p>
+          {authenticatedWebhookUrl ? (
+            <div className="space-y-2">
+              <Label>Authenticated URL (recommended for ClickFunnels)</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  readOnly
+                  value={
+                    showSecret
+                      ? authenticatedWebhookUrl
+                      : `${globalWebhookUrl}?secret=••••••••`
+                  }
+                  className="h-10 rounded-md bg-muted font-mono text-sm"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-10 shrink-0 gap-2"
+                  onClick={() =>
+                    void copyText(authenticatedWebhookUrl, "Authenticated webhook URL")
+                  }
+                >
+                  <Copy className="h-4 w-4" />
+                  Copy
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Paste this URL into ClickFunnels. The{" "}
+                <code className="rounded bg-muted px-1">?secret=</code> query param
+                authenticates when ClickFunnels cannot set custom headers.
+              </p>
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              Generate or set a webhook secret below to get an authenticated URL for
+              ClickFunnels.
+            </p>
+          )}
         </div>
       </DashboardCard>
 
@@ -513,7 +565,7 @@ export function ClickFunnelsWebhookSettingsForm() {
               <Input
                 id="wh-secret"
                 type={showSecret ? "text" : "password"}
-                value={showSecret && draftSecret ? draftSecret : secretDisplay}
+                value={secretDisplay}
                 onChange={(e) => setDraftSecret(e.target.value)}
                 placeholder={
                   settings.webhookSecretConfigured
@@ -544,9 +596,11 @@ export function ClickFunnelsWebhookSettingsForm() {
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              Send this secret in header{" "}
-              <code className="rounded bg-muted px-1">{settings.secretHeaderName}</code> or JSON
-              field <code className="rounded bg-muted px-1">secret</code>.
+              Prefer the authenticated URL above for ClickFunnels. Or send this secret in
+              header{" "}
+              <code className="rounded bg-muted px-1">{settings.secretHeaderName}</code>,
+              query <code className="rounded bg-muted px-1">?secret=</code>, or JSON field{" "}
+              <code className="rounded bg-muted px-1">secret</code>.
             </p>
           </div>
 

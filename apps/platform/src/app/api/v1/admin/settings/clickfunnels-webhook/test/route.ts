@@ -1,5 +1,6 @@
 import { withAuth, ADMIN_PORTAL_ROLES } from "@/lib/api-handler";
 import { errorResponse, Errors } from "@/lib/errors";
+import { handleClickFunnelsWebhookPost } from "@/lib/handle-clickfunnels-webhook";
 import {
   loadClickFunnelsWebhookConfig,
   createWebhookEvent,
@@ -7,7 +8,7 @@ import {
 } from "@/services/clickfunnels-webhook-settings.service";
 import { sanitizeWebhookPayload } from "@/lib/clickfunnels-webhook-settings";
 
-export async function POST(request: Request) {
+export async function POST() {
   return withAuth(async () => {
     try {
       const config = await loadClickFunnelsWebhookConfig();
@@ -18,7 +19,6 @@ export async function POST(request: Request) {
         throw Errors.validation("Generate or set a webhook secret before testing.");
       }
 
-      const origin = new URL(request.url).origin;
       const payload = {
         event: "test",
         source: "affsense_admin_test",
@@ -30,7 +30,8 @@ export async function POST(request: Request) {
         sentAt: new Date().toISOString(),
       };
 
-      const res = await fetch(`${origin}/api/v1/webhooks/clickfunnels`, {
+      // In-process call — avoid self-fetching public HTTPS (breaks behind TLS-terminating proxy).
+      const internalRequest = new Request("http://127.0.0.1/api/v1/webhooks/clickfunnels", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -39,6 +40,7 @@ export async function POST(request: Request) {
         body: JSON.stringify(payload),
       });
 
+      const res = await handleClickFunnelsWebhookPost(internalRequest);
       const body = await res.json().catch(() => ({}));
       if (!res.ok) {
         await createWebhookEvent({

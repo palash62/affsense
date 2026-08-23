@@ -65,12 +65,14 @@ export function parseClickFunnelsWebhookConfig(value: unknown): ClickFunnelsWebh
 export function toClickFunnelsWebhookSettingsApi(
   config: ClickFunnelsWebhookConfig,
 ): ClickFunnelsWebhookSettingsApi {
+  const secret = config.webhookSecret.trim();
   return {
     enabled: config.enabled,
     name: config.name,
     affiliateTrackingParam: config.affiliateTrackingParam,
-    webhookSecret: "",
-    webhookSecretConfigured: Boolean(config.webhookSecret.trim()),
+    // Admin-only settings API: return plaintext so authenticated webhook URL can be copied.
+    webhookSecret: secret,
+    webhookSecretConfigured: Boolean(secret),
     secretHeaderName: config.secretHeaderName,
     notes: config.notes,
   };
