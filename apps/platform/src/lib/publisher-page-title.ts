@@ -39,6 +39,10 @@ export function getPublisherPageMeta(
       title: "Profile Settings",
       subtitle: "Manage your profile, traffic details, and account security",
     },
+    "/publisher/reports/commissions": {
+      title: "Commissions Report",
+      subtitle: "View all your earnings, sales and commissions in detail.",
+    },
     "/publisher/reports/performance": { title: "Performance Reports" },
     "/publisher/reports/offers": { title: "Offer Reports" },
     "/publisher/reports/tasks": { title: "Task Reports" },
@@ -62,6 +66,7 @@ export function getPublisherPageMeta(
   if (exact[path]) return exact[path];
 
   const prefixes: Array<[string, string]> = [
+    ["/publisher/marketplace/", "Marketplace"],
     ["/publisher/payouts/", "Payouts"],
     ["/publisher/reports/", "Reports"],
     ["/publisher/earnings/", "Earnings"],

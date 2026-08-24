@@ -262,10 +262,11 @@ export const PUBLISHER_NAV: AdminNavEntry[] = [
     kind: "item",
     item: {
       label: "Reports",
-      href: "/publisher/reports/performance",
+      href: "/publisher/reports/commissions",
       icon: BarChart3,
       badge: "NEW",
       children: [
+        { label: "Commissions Report", href: "/publisher/reports/commissions", icon: Percent },
         { label: "Performance", href: "/publisher/reports/performance", icon: BarChart3 },
         { label: "Offer Reports", href: "/publisher/reports/offers", icon: Store },
         { label: "Task Reports", href: "/publisher/reports/tasks", icon: ListTodo },

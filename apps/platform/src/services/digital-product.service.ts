@@ -637,3 +637,240 @@ export async function listDigitalProductOrders(opts: {
 
   return { items, total, page, limit, totalPages: Math.max(1, Math.ceil(total / limit)), summary };
 }
+
+const PUBLISHER_COMMISSION_RATE = 0.5;
+
+export type PublisherCommissionType = "Front End" | "Upsell" | "Downsell" | "Refund";
+
+export type PublisherCommissionRow = {
+  id: string;
+  orderId: string;
+  date: string;
+  product: string | null;
+  funnel: string | null;
+  orderType: PublisherCommissionType;
+  amount: number | null;
+  commission: number | null;
+  rate: number;
+  source: string | null;
+  subId: string | null;
+  webhookStatus: string;
+  paymentStatus: string | null;
+};
+
+export type PublisherCommissionKpis = {
+  orders: number;
+  sales: number;
+  commission: number;
+  refunds: number;
+  frontEndCount: number;
+  upsellCount: number;
+};
+
+export type PublisherCommissionChartPoint = {
+  date: string;
+  label: string;
+  sales: number;
+  commission: number;
+};
+
+export type PublisherCommissionSlice = {
+  name: string;
+  value: number;
+};
+
+function classifyCommissionType(raw: string | null, eventType: string): PublisherCommissionType {
+  const lower = `${raw ?? ""} ${eventType}`.toLowerCase();
+  if (lower.includes("refund")) return "Refund";
+  if (lower.includes("upsell")) return "Upsell";
+  if (lower.includes("downsell")) return "Downsell";
+  return "Front End";
+}
+
+function dayKey(iso: string | Date) {
+  const d = typeof iso === "string" ? new Date(iso) : iso;
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function matchesStatusFilter(
+  row: { orderType: PublisherCommissionType; webhookStatus: string; paymentStatus: string | null },
+  status?: string,
+) {
+  if (!status || status === "all") return true;
+  const webhook = row.webhookStatus.toUpperCase();
+  const payment = (row.paymentStatus ?? "").toLowerCase();
+  if (status === "approved") return webhook === "PROCESSED" && row.orderType !== "Refund";
+  if (status === "pending") return webhook === "DUPLICATE" || webhook === "IGNORED";
+  if (status === "failed") return webhook === "FAILED";
+  if (status === "refunded") return row.orderType === "Refund" || payment.includes("refund");
+  return true;
+}
+
+export async function getPublisherCommissionReport(opts: {
+  publisherId: string;
+  from?: Date;
+  to?: Date;
+  product?: string;
+  orderType?: string;
+  source?: string;
+  subId?: string;
+  status?: string;
+  q?: string;
+  page?: number;
+  limit?: number;
+}) {
+  const page = Math.max(1, opts.page ?? 1);
+  const limit = Math.min(100, Math.max(1, opts.limit ?? 10));
+
+  const where: Prisma.WebhookEventWhereInput = { publisherId: opts.publisherId };
+  if (opts.from || opts.to) {
+    where.createdAt = {
+      ...(opts.from ? { gte: opts.from } : {}),
+      ...(opts.to ? { lte: opts.to } : {}),
+    };
+  }
+
+  const events = await prisma.webhookEvent.findMany({
+    where,
+    orderBy: { createdAt: "desc" },
+    take: 5000,
+    select: {
+      id: true,
+      eventType: true,
+      status: true,
+      payloadJson: true,
+      createdAt: true,
+    },
+  });
+
+  const mapped: PublisherCommissionRow[] = events.map((row) => {
+    const fields = extractOrderFields(row.payloadJson);
+    const orderType = classifyCommissionType(fields.orderType ?? row.eventType, row.eventType);
+    const amount = fields.amount;
+    const isRefund = orderType === "Refund";
+    return {
+      id: row.id,
+      orderId: fields.orderId ?? `CF-${row.id.slice(-6).toUpperCase()}`,
+      date: row.createdAt.toISOString(),
+      product: fields.product,
+      funnel: fields.funnel,
+      orderType,
+      amount,
+      commission: amount != null && !isRefund ? amount * PUBLISHER_COMMISSION_RATE : isRefund ? 0 : null,
+      rate: PUBLISHER_COMMISSION_RATE,
+      source: fields.source,
+      subId: fields.subId,
+      webhookStatus: row.status,
+      paymentStatus: fields.paymentStatus,
+    };
+  });
+
+  const products = [...new Set(mapped.map((r) => r.product).filter((v): v is string => Boolean(v)))].sort();
+  const sources = [...new Set(mapped.map((r) => r.source).filter((v): v is string => Boolean(v)))].sort();
+  const subIds = [...new Set(mapped.map((r) => r.subId).filter((v): v is string => Boolean(v)))].sort();
+
+  const q = opts.q?.trim().toLowerCase();
+  const filtered = mapped.filter((row) => {
+    if (opts.product && opts.product !== "all" && row.product !== opts.product) return false;
+    if (opts.source && opts.source !== "all" && row.source !== opts.source) return false;
+    if (opts.subId && opts.subId !== "all" && row.subId !== opts.subId) return false;
+    if (opts.orderType && opts.orderType !== "all") {
+      const want = opts.orderType.toLowerCase().replace(/[_-]/g, " ");
+      if (want === "front" || want === "front end" || want === "frontend") {
+        if (row.orderType !== "Front End") return false;
+      } else if (!row.orderType.toLowerCase().includes(want)) {
+        return false;
+      }
+    }
+    if (!matchesStatusFilter(row, opts.status)) return false;
+    if (q) {
+      const hay = `${row.orderId} ${row.product ?? ""} ${row.funnel ?? ""}`.toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+
+  const kpis: PublisherCommissionKpis = {
+    orders: 0,
+    sales: 0,
+    commission: 0,
+    refunds: 0,
+    frontEndCount: 0,
+    upsellCount: 0,
+  };
+
+  const byDay = new Map<string, { sales: number; commission: number }>();
+  const byType = new Map<string, number>();
+  const byProduct = new Map<string, number>();
+
+  for (const row of filtered) {
+    const amount = row.amount ?? 0;
+    const commission = row.commission ?? 0;
+    const day = dayKey(row.date);
+    const bucket = byDay.get(day) ?? { sales: 0, commission: 0 };
+
+    if (row.orderType === "Refund") {
+      kpis.refunds += amount;
+    } else {
+      kpis.orders += 1;
+      kpis.sales += amount;
+      kpis.commission += commission;
+      bucket.sales += amount;
+      bucket.commission += commission;
+      byType.set(row.orderType, (byType.get(row.orderType) ?? 0) + commission);
+      if (row.product) byProduct.set(row.product, (byProduct.get(row.product) ?? 0) + commission);
+      if (row.orderType === "Front End") kpis.frontEndCount += 1;
+      if (row.orderType === "Upsell") kpis.upsellCount += 1;
+    }
+    byDay.set(day, bucket);
+  }
+
+  const start = opts.from ?? (filtered.length ? new Date(filtered[filtered.length - 1]!.date) : new Date());
+  const end = opts.to ?? new Date();
+  const seriesStart = start <= end ? start : end;
+  const seriesEnd = start <= end ? end : start;
+  const series: PublisherCommissionChartPoint[] = [];
+  const cursor = new Date(seriesStart.getFullYear(), seriesStart.getMonth(), seriesStart.getDate());
+  const last = new Date(seriesEnd.getFullYear(), seriesEnd.getMonth(), seriesEnd.getDate());
+  while (cursor <= last) {
+    const key = dayKey(cursor);
+    const bucket = byDay.get(key) ?? { sales: 0, commission: 0 };
+    series.push({
+      date: key,
+      label: cursor.toLocaleDateString("en-GB", { day: "2-digit", month: "short" }),
+      sales: bucket.sales,
+      commission: bucket.commission,
+    });
+    cursor.setDate(cursor.getDate() + 1);
+  }
+
+  const typeSlices: PublisherCommissionSlice[] = [...byType.entries()]
+    .map(([name, value]) => ({ name, value }))
+    .sort((a, b) => b.value - a.value);
+
+  const productSlices: PublisherCommissionSlice[] = [...byProduct.entries()]
+    .map(([name, value]) => ({ name, value }))
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 5);
+
+  const total = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(total / limit) || 1);
+  const safePage = Math.min(page, totalPages);
+  const items = filtered.slice((safePage - 1) * limit, safePage * limit);
+
+  return {
+    kpis,
+    series,
+    typeSlices,
+    productSlices,
+    items,
+    total,
+    page: safePage,
+    limit,
+    totalPages,
+    filterOptions: { products, sources, subIds },
+  };
+}
