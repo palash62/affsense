@@ -418,3 +418,222 @@ export async function deleteDigitalProductCategory(id: string) {
   await prisma.digitalProductCategory.delete({ where: { id } });
   return { id };
 }
+
+// ─── Orders / Webhook Report ────────────────────────────────────────────────
+
+export type DigitalProductOrderRow = {
+  id: string;
+  orderId: string | null;
+  date: string;
+  customerEmail: string | null;
+  customerName: string | null;
+  product: string | null;
+  funnel: string | null;
+  orderType: string | null;
+  amount: number | null;
+  commission: number | null;
+  affiliateName: string | null;
+  affiliateEmail: string | null;
+  affiliateRef: string | null;
+  source: string | null;
+  subId: string | null;
+  eventType: string;
+  webhookStatus: string;
+  paymentStatus: string | null;
+};
+
+export type DigitalProductOrderSummary = {
+  totalOrders: number;
+  grossRevenue: number;
+  affiliateSales: number;
+  totalCommissions: number;
+  netRevenue: number;
+  refunds: number;
+};
+
+function pickJsonString(obj: Record<string, unknown>, keys: string[]): string | null {
+  for (const key of keys) {
+    const val = obj[key];
+    if (typeof val === "string" && val.trim()) return val.trim();
+  }
+  return null;
+}
+
+function pickJsonNumber(obj: Record<string, unknown>, keys: string[]): number | null {
+  for (const key of keys) {
+    const val = obj[key];
+    if (typeof val === "number" && !Number.isNaN(val)) return val;
+    if (typeof val === "string") {
+      const n = parseFloat(val.replace(/[^0-9.-]/g, ""));
+      if (!Number.isNaN(n)) return n;
+    }
+  }
+  return null;
+}
+
+function extractOrderFields(payload: unknown): {
+  orderId: string | null;
+  product: string | null;
+  funnel: string | null;
+  orderType: string | null;
+  amount: number | null;
+  source: string | null;
+  subId: string | null;
+  paymentStatus: string | null;
+} {
+  if (!payload || typeof payload !== "object") {
+    return { orderId: null, product: null, funnel: null, orderType: null, amount: null, source: null, subId: null, paymentStatus: null };
+  }
+  const p = payload as Record<string, unknown>;
+  const purchase = p.purchase && typeof p.purchase === "object" ? p.purchase as Record<string, unknown> : null;
+  const contact = p.contact && typeof p.contact === "object" ? p.contact as Record<string, unknown> : null;
+  const productObj = p.product && typeof p.product === "object" ? p.product as Record<string, unknown> : null;
+  const funnelObj = p.funnel && typeof p.funnel === "object" ? p.funnel as Record<string, unknown> : null;
+  const productsArr = Array.isArray(p.products) && p.products.length > 0 && typeof p.products[0] === "object" ? p.products[0] as Record<string, unknown> : null;
+
+  const orderId = pickJsonString(p, ["order_id", "id", "transaction_id"])
+    ?? (purchase ? pickJsonString(purchase, ["id", "order_id"]) : null);
+
+  const product = (productObj ? pickJsonString(productObj, ["name", "title"]) : null)
+    ?? pickJsonString(p, ["product_name", "product"])
+    ?? (productsArr ? pickJsonString(productsArr, ["name", "title"]) : null);
+
+  const funnel = (funnelObj ? pickJsonString(funnelObj, ["name", "title"]) : null)
+    ?? pickJsonString(p, ["funnel_name", "funnel"]);
+
+  const orderType = pickJsonString(p, ["purchase_type", "type", "order_type", "event"])
+    ?? (purchase ? pickJsonString(purchase, ["purchase_type", "type"]) : null);
+
+  const amount = (purchase ? pickJsonNumber(purchase, ["total", "amount", "price"]) : null)
+    ?? pickJsonNumber(p, ["amount", "total", "price"]);
+
+  const source = pickJsonString(p, ["utm_source", "source"])
+    ?? (contact ? pickJsonString(contact, ["utm_source", "source"]) : null);
+
+  const subId = pickJsonString(p, ["sub_id", "affiliate_sub_id", "subid"])
+    ?? (contact ? pickJsonString(contact, ["sub_id", "subid"]) : null)
+    ?? (purchase ? pickJsonString(purchase, ["sub_id"]) : null);
+
+  const paymentStatus = pickJsonString(p, ["payment_status", "charge_status", "payment_state"])
+    ?? (purchase ? pickJsonString(purchase, ["payment_status", "charge_status"]) : null);
+
+  return { orderId, product, funnel, orderType, amount, source, subId, paymentStatus };
+}
+
+function normalizeOrderType(raw: string | null): string | null {
+  if (!raw) return null;
+  const lower = raw.toLowerCase();
+  if (lower.includes("upsell") || lower === "upsell") return "Upsell";
+  if (lower.includes("downsell") || lower === "downsell") return "Downsell";
+  if (lower.includes("front") || lower === "front_end" || lower === "order") return "Front End";
+  return raw;
+}
+
+export async function listDigitalProductOrders(opts: {
+  from?: Date;
+  to?: Date;
+  publisherId?: string;
+  eventType?: string;
+  page?: number;
+  limit?: number;
+} = {}) {
+  const page = Math.max(1, opts.page ?? 1);
+  const limit = Math.min(100, Math.max(1, opts.limit ?? 15));
+  const skip = (page - 1) * limit;
+
+  const where: Prisma.WebhookEventWhereInput = {};
+  if (opts.from || opts.to) {
+    where.createdAt = {
+      ...(opts.from ? { gte: opts.from } : {}),
+      ...(opts.to ? { lte: opts.to } : {}),
+    };
+  }
+  if (opts.publisherId) where.publisherId = opts.publisherId;
+  if (opts.eventType) where.eventType = { contains: opts.eventType };
+
+  const [rows, total, allForSummary] = await Promise.all([
+    prisma.webhookEvent.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      skip,
+      take: limit,
+      select: {
+        id: true,
+        eventType: true,
+        status: true,
+        leadEmail: true,
+        leadName: true,
+        affiliateRef: true,
+        publisherId: true,
+        publisher: { select: { id: true, name: true, email: true } },
+        payloadJson: true,
+        createdAt: true,
+      },
+    }),
+    prisma.webhookEvent.count({ where }),
+    // For summary: fetch amounts from all matching PROCESSED rows (cap at 5000 for perf)
+    prisma.webhookEvent.findMany({
+      where: { ...where, status: "PROCESSED" },
+      select: { publisherId: true, eventType: true, payloadJson: true },
+      take: 5000,
+    }),
+  ]);
+
+  // Compute summary from allForSummary
+  let grossRevenue = 0;
+  let affiliateSales = 0;
+  let totalCommissions = 0;
+  let refunds = 0;
+
+  for (const ev of allForSummary) {
+    const fields = extractOrderFields(ev.payloadJson);
+    const amount = fields.amount ?? 0;
+    const type = (fields.orderType ?? ev.eventType ?? "").toLowerCase();
+    if (type.includes("refund")) {
+      refunds += amount;
+    } else {
+      grossRevenue += amount;
+    }
+    if (ev.publisherId) {
+      affiliateSales += 1;
+      totalCommissions += amount * 0.5; // default 50% commission shown in report
+    }
+  }
+  const netRevenue = grossRevenue - totalCommissions - refunds;
+  const summary: DigitalProductOrderSummary = {
+    totalOrders: allForSummary.length,
+    grossRevenue,
+    affiliateSales,
+    totalCommissions,
+    netRevenue,
+    refunds,
+  };
+
+  const items: DigitalProductOrderRow[] = rows.map((row) => {
+    const fields = extractOrderFields(row.payloadJson);
+    const amount = fields.amount;
+    const commission = amount != null && row.publisherId ? amount * 0.5 : null;
+    return {
+      id: row.id,
+      orderId: fields.orderId ?? `CF-${row.id.slice(-6).toUpperCase()}`,
+      date: row.createdAt.toISOString(),
+      customerEmail: row.leadEmail,
+      customerName: row.leadName,
+      product: fields.product,
+      funnel: fields.funnel,
+      orderType: normalizeOrderType(fields.orderType ?? row.eventType),
+      amount,
+      commission,
+      affiliateName: row.publisher?.name ?? null,
+      affiliateEmail: row.publisher?.email ?? null,
+      affiliateRef: row.affiliateRef,
+      source: fields.source,
+      subId: fields.subId,
+      eventType: row.eventType,
+      webhookStatus: row.status,
+      paymentStatus: fields.paymentStatus,
+    };
+  });
+
+  return { items, total, page, limit, totalPages: Math.max(1, Math.ceil(total / limit)), summary };
+}
