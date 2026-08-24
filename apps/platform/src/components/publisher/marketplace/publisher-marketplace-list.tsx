@@ -6,15 +6,12 @@ import { PackageOpen } from "lucide-react";
 import { toast } from "sonner";
 import { PublisherMarketplaceFilters } from "./publisher-marketplace-filters";
 import { PublisherMarketplaceGrid } from "./publisher-marketplace-grid";
-import { PublisherProductDetailSheet } from "./publisher-product-detail-sheet";
 import type { SerializedPublisherDigitalProduct } from "@/services/digital-product.service";
 
 function PublisherMarketplaceListInner() {
   const searchParams = useSearchParams();
   const [products, setProducts] = useState<SerializedPublisherDigitalProduct[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
-  const [sheetOpen, setSheetOpen] = useState(false);
 
   const queryString = useMemo(() => {
     const params = new URLSearchParams();
@@ -45,14 +42,6 @@ function PublisherMarketplaceListInner() {
     loadProducts();
   }, [loadProducts]);
 
-  useEffect(() => {
-    const productId = searchParams.get("product");
-    if (productId) {
-      setSelectedProductId(productId);
-      setSheetOpen(true);
-    }
-  }, [searchParams]);
-
   const categories = useMemo(
     () => [...new Set(products.map((p) => p.category))].sort(),
     [products],
@@ -60,11 +49,6 @@ function PublisherMarketplaceListInner() {
 
   const hasFilters = Boolean(searchParams.get("q") || searchParams.get("category"));
   const total = products.length;
-
-  function openProduct(product: SerializedPublisherDigitalProduct) {
-    setSelectedProductId(product.id);
-    setSheetOpen(true);
-  }
 
   return (
     <div className="space-y-5">
@@ -100,14 +84,8 @@ function PublisherMarketplaceListInner() {
           </p>
         </div>
       ) : (
-        <PublisherMarketplaceGrid products={products} onPromote={openProduct} />
+        <PublisherMarketplaceGrid products={products} />
       )}
-
-      <PublisherProductDetailSheet
-        productId={selectedProductId}
-        open={sheetOpen}
-        onOpenChange={setSheetOpen}
-      />
     </div>
   );
 }

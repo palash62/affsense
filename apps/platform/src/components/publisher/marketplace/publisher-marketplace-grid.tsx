@@ -2,20 +2,18 @@
 
 import { Star, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import { ButtonLink } from "@/components/ui/button-link";
 import type { SerializedPublisherDigitalProduct } from "@/services/digital-product.service";
 
 export function PublisherMarketplaceGrid({
   products,
-  onPromote,
 }: {
   products: SerializedPublisherDigitalProduct[];
-  onPromote: (product: SerializedPublisherDigitalProduct) => void;
 }) {
   return (
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
       {products.map((product) => (
-        <PublisherMarketplaceCard key={product.id} product={product} onPromote={onPromote} />
+        <PublisherMarketplaceCard key={product.id} product={product} />
       ))}
     </div>
   );
@@ -23,10 +21,8 @@ export function PublisherMarketplaceGrid({
 
 function PublisherMarketplaceCard({
   product,
-  onPromote,
 }: {
   product: SerializedPublisherDigitalProduct;
-  onPromote: (product: SerializedPublisherDigitalProduct) => void;
 }) {
   const letter = (product.name.trim()[0] || "?").toUpperCase();
 
@@ -95,14 +91,13 @@ function PublisherMarketplaceCard({
           <p className="truncate text-xs text-muted-foreground">{product.vendor}</p>
         ) : null}
 
-        <Button
-          type="button"
+        <ButtonLink
+          href={`/publisher/marketplace/${product.id}`}
           size="sm"
           className="mt-auto h-9 w-full rounded-md bg-[var(--theme-primary)] hover:opacity-90"
-          onClick={() => onPromote(product)}
         >
-          Promote
-        </Button>
+          View
+        </ButtonLink>
       </div>
     </article>
   );

@@ -300,7 +300,7 @@ export function AffsensePublisherDashboard({ data }: { data: AffsensePublisherDa
                           {offer.type === "product" ? (
                             <>
                               <ButtonLink
-                                href={`/publisher/marketplace?product=${offer.id}`}
+                                href={`/publisher/marketplace/${offer.id}`}
                                 size="sm"
                                 className="h-8 rounded-md bg-[var(--theme-primary)]"
                               >
