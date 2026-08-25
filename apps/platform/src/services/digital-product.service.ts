@@ -5,6 +5,10 @@ import type {
   Prisma,
 } from "@prisma/client";
 import { Errors, AppError } from "@/lib/errors";
+import {
+  extractLeadFromClickFunnelsPayload,
+  extractOrderFieldsFromClickFunnelsPayload,
+} from "@/lib/clickfunnels-webhook-payload";
 
 export type DigitalProductListFilters = {
   q?: string;
@@ -451,26 +455,6 @@ export type DigitalProductOrderSummary = {
   refunds: number;
 };
 
-function pickJsonString(obj: Record<string, unknown>, keys: string[]): string | null {
-  for (const key of keys) {
-    const val = obj[key];
-    if (typeof val === "string" && val.trim()) return val.trim();
-  }
-  return null;
-}
-
-function pickJsonNumber(obj: Record<string, unknown>, keys: string[]): number | null {
-  for (const key of keys) {
-    const val = obj[key];
-    if (typeof val === "number" && !Number.isNaN(val)) return val;
-    if (typeof val === "string") {
-      const n = parseFloat(val.replace(/[^0-9.-]/g, ""));
-      if (!Number.isNaN(n)) return n;
-    }
-  }
-  return null;
-}
-
 function extractOrderFields(payload: unknown): {
   orderId: string | null;
   product: string | null;
@@ -481,43 +465,7 @@ function extractOrderFields(payload: unknown): {
   subId: string | null;
   paymentStatus: string | null;
 } {
-  if (!payload || typeof payload !== "object") {
-    return { orderId: null, product: null, funnel: null, orderType: null, amount: null, source: null, subId: null, paymentStatus: null };
-  }
-  const p = payload as Record<string, unknown>;
-  const purchase = p.purchase && typeof p.purchase === "object" ? p.purchase as Record<string, unknown> : null;
-  const contact = p.contact && typeof p.contact === "object" ? p.contact as Record<string, unknown> : null;
-  const productObj = p.product && typeof p.product === "object" ? p.product as Record<string, unknown> : null;
-  const funnelObj = p.funnel && typeof p.funnel === "object" ? p.funnel as Record<string, unknown> : null;
-  const productsArr = Array.isArray(p.products) && p.products.length > 0 && typeof p.products[0] === "object" ? p.products[0] as Record<string, unknown> : null;
-
-  const orderId = pickJsonString(p, ["order_id", "id", "transaction_id"])
-    ?? (purchase ? pickJsonString(purchase, ["id", "order_id"]) : null);
-
-  const product = (productObj ? pickJsonString(productObj, ["name", "title"]) : null)
-    ?? pickJsonString(p, ["product_name", "product"])
-    ?? (productsArr ? pickJsonString(productsArr, ["name", "title"]) : null);
-
-  const funnel = (funnelObj ? pickJsonString(funnelObj, ["name", "title"]) : null)
-    ?? pickJsonString(p, ["funnel_name", "funnel"]);
-
-  const orderType = pickJsonString(p, ["purchase_type", "type", "order_type", "event"])
-    ?? (purchase ? pickJsonString(purchase, ["purchase_type", "type"]) : null);
-
-  const amount = (purchase ? pickJsonNumber(purchase, ["total", "amount", "price"]) : null)
-    ?? pickJsonNumber(p, ["amount", "total", "price"]);
-
-  const source = pickJsonString(p, ["utm_source", "source"])
-    ?? (contact ? pickJsonString(contact, ["utm_source", "source"]) : null);
-
-  const subId = pickJsonString(p, ["sub_id", "affiliate_sub_id", "subid"])
-    ?? (contact ? pickJsonString(contact, ["sub_id", "subid"]) : null)
-    ?? (purchase ? pickJsonString(purchase, ["sub_id"]) : null);
-
-  const paymentStatus = pickJsonString(p, ["payment_status", "charge_status", "payment_state"])
-    ?? (purchase ? pickJsonString(purchase, ["payment_status", "charge_status"]) : null);
-
-  return { orderId, product, funnel, orderType, amount, source, subId, paymentStatus };
+  return extractOrderFieldsFromClickFunnelsPayload(payload);
 }
 
 function normalizeOrderType(raw: string | null): string | null {
@@ -611,14 +559,15 @@ export async function listDigitalProductOrders(opts: {
 
   const items: DigitalProductOrderRow[] = rows.map((row) => {
     const fields = extractOrderFields(row.payloadJson);
+    const leadFallback = extractLeadFromClickFunnelsPayload(row.payloadJson);
     const amount = fields.amount;
     const commission = amount != null && row.publisherId ? amount * 0.5 : null;
     return {
       id: row.id,
       orderId: fields.orderId ?? `CF-${row.id.slice(-6).toUpperCase()}`,
       date: row.createdAt.toISOString(),
-      customerEmail: row.leadEmail,
-      customerName: row.leadName,
+      customerEmail: row.leadEmail ?? leadFallback.leadEmail,
+      customerName: row.leadName ?? leadFallback.leadName,
       product: fields.product,
       funnel: fields.funnel,
       orderType: normalizeOrderType(fields.orderType ?? row.eventType),

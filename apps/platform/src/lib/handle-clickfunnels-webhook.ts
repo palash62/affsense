@@ -5,6 +5,7 @@ import {
 } from "@/services/clickfunnels-webhook-settings.service";
 import { sanitizeWebhookPayload } from "@/lib/clickfunnels-webhook-settings";
 import { extractAffiliateRefFromWebhookPayload } from "@/lib/clickfunnels-webhook-attribution";
+import { extractLeadFromClickFunnelsPayload } from "@/lib/clickfunnels-webhook-payload";
 
 function extractSecret(
   request: Request,
@@ -38,44 +39,12 @@ function extractSecret(
   return null;
 }
 
-function pickString(record: Record<string, unknown>, keys: string[]): string | null {
-  for (const key of keys) {
-    const value = record[key];
-    if (typeof value === "string" && value.trim()) return value.trim();
-  }
-  return null;
-}
-
 function parseLeadFields(body: unknown): {
   eventType: string;
   leadEmail: string | null;
   leadName: string | null;
 } {
-  if (!body || typeof body !== "object") {
-    return { eventType: "webhook", leadEmail: null, leadName: null };
-  }
-  const record = body as Record<string, unknown>;
-  const nested =
-    record.contact && typeof record.contact === "object"
-      ? (record.contact as Record<string, unknown>)
-      : record;
-
-  const eventType =
-    pickString(record, ["event", "event_type", "eventType", "type", "status"]) ??
-    "purchase";
-  const leadEmail = pickString(nested, ["email", "Email", "buyer_email", "customer_email"]);
-  const first = pickString(nested, ["first_name", "firstName"]);
-  const last = pickString(nested, ["last_name", "lastName"]);
-  const combined = [first, last].filter(Boolean).join(" ");
-  const leadName =
-    pickString(nested, ["name", "full_name", "fullName", "buyer_name"]) ??
-    (combined || null);
-
-  return {
-    eventType,
-    leadEmail,
-    leadName,
-  };
+  return extractLeadFromClickFunnelsPayload(body);
 }
 
 async function parseBody(request: Request): Promise<unknown> {
