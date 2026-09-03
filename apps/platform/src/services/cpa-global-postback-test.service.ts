@@ -6,7 +6,7 @@ export type CpaTestClickOption = {
   id: string;
   offerId: string;
   offerName: string;
-  advertiserId: string;
+  advertiserId: string | null;
   createdAt: string;
 };
 

@@ -31,7 +31,7 @@ type TestClick = {
   id: string;
   offerId: string;
   offerName: string;
-  advertiserId: string;
+  advertiserId: string | null;
   createdAt: string;
 };
 
