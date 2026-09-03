@@ -1,10 +1,5 @@
-﻿import { PlaceholderPage } from "@/components/layout/placeholder-page";
+import { PublisherCpaOffersList } from "@/components/publisher/cpa-offers/publisher-cpa-offers-list";
 
 export default function Page() {
-  return (
-    <PlaceholderPage
-      title="CPA Offers"
-      description="Promote high-converting CPA offers."
-    />
-  );
+  return <PublisherCpaOffersList />;
 }

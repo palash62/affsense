@@ -51,7 +51,7 @@ type TestFireResult = {
   deliveries: TestDelivery[];
 };
 
-export function AdminGlobalPostbackForm() {
+export function AdminGlobalPostbackForm({ embedded = false }: { embedded?: boolean }) {
   const { data: session } = useSession();
   const timezone = session?.user?.timezone;
   const [loading, setLoading] = useState(true);
@@ -171,14 +171,16 @@ export function AdminGlobalPostbackForm() {
 
   return (
     <div className="space-y-6">
-      <PageHero
-        eyebrow="Network"
-        title="Global Postback"
-        description="Configure postback security and parallel webhook delivery for CPA conversions."
-      />
+      {!embedded ? (
+        <PageHero
+          eyebrow="CPA Offers"
+          title="CPA Postback"
+          description="Configure postback security and parallel webhook delivery for CPA conversions."
+        />
+      ) : null}
 
       <section className="rounded-2xl border border-border bg-card p-5 sm:p-6">
-        <h2 className="text-base font-semibold text-foreground">Postback URL Info</h2>
+        <h2 className="text-base font-semibold text-foreground">CPA Postback URL Info</h2>
         <p className="mt-1 text-sm text-muted-foreground">
           These settings apply platform-wide to inbound CPA network postbacks and optional parallel
           delivery. Inbound postbacks hit the <strong>tracking domain</strong> (not leadvix.io).

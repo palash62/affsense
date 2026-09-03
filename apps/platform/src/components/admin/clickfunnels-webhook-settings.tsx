@@ -5,9 +5,11 @@ import {
   Copy,
   Eye,
   EyeOff,
+  Filter,
   FlaskConical,
   RefreshCw,
   Save,
+  Search,
   Webhook,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -30,6 +32,21 @@ import {
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 
+const PAGE_SIZE = 20;
+
+type ActivityFilters = {
+  q: string;
+  status: string;
+  from: string;
+  to: string;
+};
+
+const emptyActivityFilters: ActivityFilters = {
+  q: "",
+  status: "",
+  from: "",
+  to: "",
+};
 type Summary = {
   totalReceived: number;
   processed: number;
@@ -146,6 +163,13 @@ export function ClickFunnelsWebhookSettingsForm() {
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
   const [activities, setActivities] = useState<ActivityItem[]>([]);
+  const [activityLoading, setActivityLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [draftFilters, setDraftFilters] = useState<ActivityFilters>(emptyActivityFilters);
+  const [appliedFilters, setAppliedFilters] =
+    useState<ActivityFilters>(emptyActivityFilters);
   const [detail, setDetail] = useState<ActivityDetail | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
 
@@ -165,19 +189,40 @@ export function ClickFunnelsWebhookSettingsForm() {
     : null;
 
   const refreshActivity = useCallback(async () => {
-    const res = await fetch(
-      "/api/v1/admin/settings/clickfunnels-webhook/activity?limit=20",
-    );
-    const json = await res.json().catch(() => ({}));
-    if (res.ok) {
-      setActivities(json.data?.items ?? []);
-      if (json.data?.summary) {
-        setSettings((prev) =>
-          prev ? { ...prev, summary: json.data.summary } : prev,
-        );
+    setActivityLoading(true);
+    try {
+      const params = new URLSearchParams();
+      params.set("page", String(page));
+      params.set("limit", String(PAGE_SIZE));
+      if (appliedFilters.q.trim()) params.set("q", appliedFilters.q.trim());
+      if (appliedFilters.status.trim()) params.set("status", appliedFilters.status.trim());
+      if (appliedFilters.from.trim()) {
+        params.set("from", new Date(appliedFilters.from).toISOString());
       }
+      if (appliedFilters.to.trim()) {
+        const end = new Date(appliedFilters.to);
+        end.setHours(23, 59, 59, 999);
+        params.set("to", end.toISOString());
+      }
+
+      const res = await fetch(
+        `/api/v1/admin/settings/clickfunnels-webhook/activity?${params}`,
+      );
+      const json = await res.json().catch(() => ({}));
+      if (res.ok) {
+        setActivities(json.data?.items ?? []);
+        setTotal(json.data?.total ?? 0);
+        setTotalPages(Math.max(1, json.data?.totalPages ?? 1));
+        if (json.data?.summary) {
+          setSettings((prev) =>
+            prev ? { ...prev, summary: json.data.summary } : prev,
+          );
+        }
+      }
+    } finally {
+      setActivityLoading(false);
     }
-  }, []);
+  }, [page, appliedFilters]);
 
   const loadSettings = useCallback(async () => {
     const res = await fetch("/api/v1/admin/settings/clickfunnels-webhook");
@@ -201,16 +246,23 @@ export function ClickFunnelsWebhookSettingsForm() {
   }, []);
 
   useEffect(() => {
-    void loadSettings().then(() =>
-      fetch("/api/v1/admin/settings/clickfunnels-webhook/activity?limit=20")
-        .then((r) => r.json())
-        .then((json) => {
-          if (json.data?.items) setActivities(json.data.items);
-        })
-        .catch(() => {}),
-    );
+    void loadSettings();
   }, [loadSettings]);
 
+  useEffect(() => {
+    void refreshActivity();
+  }, [refreshActivity]);
+
+  function applyActivityFilters() {
+    setPage(1);
+    setAppliedFilters({ ...draftFilters });
+  }
+
+  function clearActivityFilters() {
+    setDraftFilters(emptyActivityFilters);
+    setAppliedFilters(emptyActivityFilters);
+    setPage(1);
+  }
   async function save() {
     if (!settings) return;
     setSaving(true);
@@ -222,7 +274,6 @@ export function ClickFunnelsWebhookSettingsForm() {
           enabled: settings.enabled,
           name: settings.name,
           affiliateTrackingParam: settings.affiliateTrackingParam,
-          secretHeaderName: settings.secretHeaderName,
           notes: settings.notes,
           webhookSecret: draftSecret.trim() || undefined,
         }),
@@ -336,7 +387,7 @@ export function ClickFunnelsWebhookSettingsForm() {
   return (
     <div className="mx-auto max-w-5xl space-y-6">
       <div>
-        <h2 className="text-xl font-semibold text-foreground">Webhook</h2>
+        <h2 className="text-xl font-semibold text-foreground">Digital Webhook</h2>
         <p className="mt-1 text-sm text-muted-foreground">
           Manage your platform-wide webhook integrations.
         </p>
@@ -426,31 +477,9 @@ export function ClickFunnelsWebhookSettingsForm() {
           />
         </div>
         <div className="mt-4 space-y-4">
-          <div className="space-y-2">
-            <Label>Webhook URL</Label>
-            <div className="flex items-center gap-2">
-              <Input
-                readOnly
-                value={globalWebhookUrl}
-                className="h-10 rounded-md bg-muted font-mono text-sm"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                className="h-10 shrink-0 gap-2"
-                onClick={() => void copyText(globalWebhookUrl, "Webhook URL")}
-              >
-                <Copy className="h-4 w-4" />
-                Copy
-              </Button>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Base endpoint for all ClickFunnels funnels and offers.
-            </p>
-          </div>
           {authenticatedWebhookUrl ? (
             <div className="space-y-2">
-              <Label>Authenticated URL (recommended for ClickFunnels)</Label>
+              <Label>Webhook URL</Label>
               <div className="flex items-center gap-2">
                 <Input
                   readOnly
@@ -465,9 +494,7 @@ export function ClickFunnelsWebhookSettingsForm() {
                   type="button"
                   variant="outline"
                   className="h-10 shrink-0 gap-2"
-                  onClick={() =>
-                    void copyText(authenticatedWebhookUrl, "Authenticated webhook URL")
-                  }
+                  onClick={() => void copyText(authenticatedWebhookUrl, "Webhook URL")}
                 >
                   <Copy className="h-4 w-4" />
                   Copy
@@ -476,13 +503,12 @@ export function ClickFunnelsWebhookSettingsForm() {
               <p className="text-xs text-muted-foreground">
                 Paste this URL into ClickFunnels. The{" "}
                 <code className="rounded bg-muted px-1">?secret=</code> query param
-                authenticates when ClickFunnels cannot set custom headers.
+                authenticates the request.
               </p>
             </div>
           ) : (
             <p className="text-xs text-muted-foreground">
-              Generate or set a webhook secret below to get an authenticated URL for
-              ClickFunnels.
+              Generate or set a webhook secret below to get a webhook URL for ClickFunnels.
             </p>
           )}
         </div>
@@ -533,30 +559,17 @@ export function ClickFunnelsWebhookSettingsForm() {
             </div>
           </div>
 
-          <div className="grid gap-5 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="wh-param">Tracking Parameter</Label>
-              <Input
-                id="wh-param"
-                value={settings.affiliateTrackingParam}
-                onChange={(e) =>
-                  setSettings({ ...settings, affiliateTrackingParam: e.target.value })
-                }
-                className="h-10 rounded-md font-mono"
-                placeholder="affsense_id"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="wh-header">Secret header name</Label>
-              <Input
-                id="wh-header"
-                value={settings.secretHeaderName}
-                onChange={(e) =>
-                  setSettings({ ...settings, secretHeaderName: e.target.value })
-                }
-                className="h-10 rounded-md font-mono"
-              />
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="wh-param">Tracking Parameter</Label>
+            <Input
+              id="wh-param"
+              value={settings.affiliateTrackingParam}
+              onChange={(e) =>
+                setSettings({ ...settings, affiliateTrackingParam: e.target.value })
+              }
+              className="h-10 rounded-md font-mono sm:max-w-md"
+              placeholder="affsense_id"
+            />
           </div>
 
           <div className="space-y-2">
@@ -596,11 +609,9 @@ export function ClickFunnelsWebhookSettingsForm() {
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              Prefer the authenticated URL above for ClickFunnels. Or send this secret in
-              header{" "}
-              <code className="rounded bg-muted px-1">{settings.secretHeaderName}</code>,
-              query <code className="rounded bg-muted px-1">?secret=</code>, or JSON field{" "}
-              <code className="rounded bg-muted px-1">secret</code>.
+              Included in the webhook URL as{" "}
+              <code className="rounded bg-muted px-1">?secret=</code>. Regenerating it
+              requires updating the URL in ClickFunnels.
             </p>
           </div>
 
@@ -653,6 +664,84 @@ export function ClickFunnelsWebhookSettingsForm() {
             Latest events received by the global ClickFunnels endpoint
           </DashboardCardDescription>
         </div>
+
+        <div className="space-y-3 border-b border-border bg-muted/30 p-4">
+          <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+            <Filter className="h-4 w-4 text-muted-foreground" />
+            Filters
+          </div>
+          <div className="flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-end">
+            <div className="w-full space-y-1 sm:w-44">
+              <label className="text-xs font-medium text-muted-foreground">From</label>
+              <Input
+                type="date"
+                value={draftFilters.from}
+                onChange={(e) =>
+                  setDraftFilters((prev) => ({ ...prev, from: e.target.value }))
+                }
+                className="bg-white"
+              />
+            </div>
+            <div className="w-full space-y-1 sm:w-44">
+              <label className="text-xs font-medium text-muted-foreground">To</label>
+              <Input
+                type="date"
+                value={draftFilters.to}
+                onChange={(e) =>
+                  setDraftFilters((prev) => ({ ...prev, to: e.target.value }))
+                }
+                className="bg-white"
+              />
+            </div>
+            <div className="w-full space-y-1 sm:w-44">
+              <label className="text-xs font-medium text-muted-foreground">Status</label>
+              <select
+                value={draftFilters.status}
+                onChange={(e) =>
+                  setDraftFilters((prev) => ({ ...prev, status: e.target.value }))
+                }
+                className="flex h-9 w-full rounded-md border border-input bg-white px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+              >
+                <option value="">All statuses</option>
+                <option value="PROCESSED">Processed</option>
+                <option value="FAILED">Failed</option>
+                <option value="DUPLICATE">Duplicate</option>
+                <option value="IGNORED">Ignored</option>
+              </select>
+            </div>
+            <div className="min-w-[12rem] flex-1 space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">Search</label>
+              <div className="relative">
+                <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  className="bg-white pl-9"
+                  value={draftFilters.q}
+                  onChange={(e) =>
+                    setDraftFilters((prev) => ({ ...prev, q: e.target.value }))
+                  }
+                  placeholder="Lead, event, or affiliate"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") applyActivityFilters();
+                  }}
+                />
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button type="button" onClick={applyActivityFilters} disabled={activityLoading}>
+                Apply
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={clearActivityFilters}
+                disabled={activityLoading}
+              >
+                Clear
+              </Button>
+            </div>
+          </div>
+        </div>
+
         <div className="overflow-x-auto">
           <table className="w-full min-w-[860px] text-left text-sm">
             <thead className="bg-muted/60 text-xs uppercase tracking-wide text-muted-foreground">
@@ -667,7 +756,16 @@ export function ClickFunnelsWebhookSettingsForm() {
               </tr>
             </thead>
             <tbody>
-              {activities.length === 0 ? (
+              {activityLoading && activities.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={7}
+                    className="px-5 py-10 text-center text-sm text-muted-foreground"
+                  >
+                    Loading activity…
+                  </td>
+                </tr>
+              ) : activities.length === 0 ? (
                 <tr>
                   <td
                     colSpan={7}
@@ -720,8 +818,37 @@ export function ClickFunnelsWebhookSettingsForm() {
             </tbody>
           </table>
         </div>
-      </DashboardCard>
 
+        {totalPages > 1 || total > 0 ? (
+          <div className="flex items-center justify-between border-t border-border bg-muted/40 px-5 py-3">
+            <p className="text-xs text-muted-foreground">
+              {activityLoading
+                ? "Loading…"
+                : `Showing ${activities.length} of ${total} · page ${page} of ${totalPages}`}
+            </p>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={page <= 1 || activityLoading}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+              >
+                Previous
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={page >= totalPages || activityLoading}
+                onClick={() => setPage((p) => p + 1)}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        ) : null}
+      </DashboardCard>
       <Sheet open={detailOpen} onOpenChange={setDetailOpen}>
         <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto">
           <SheetHeader>

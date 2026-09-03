@@ -36,6 +36,8 @@ type CpaOfferCardProps = {
   showRevenue?: boolean;
   /** Show advertiser label (admin). */
   showAdvertiser?: boolean;
+  /** Show public/private visibility badge. */
+  showVisibility?: boolean;
   footer?: ReactNode;
   className?: string;
 };
@@ -44,6 +46,7 @@ export function CpaOfferCard({
   offer,
   showRevenue = false,
   showAdvertiser = false,
+  showVisibility = false,
   footer,
   className,
 }: CpaOfferCardProps) {
@@ -103,6 +106,18 @@ export function CpaOfferCard({
           <span className="rounded-md bg-[color-mix(in_srgb,var(--theme-accent-purple,#713BFF)_14%,white)] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--theme-accent-purple,#713BFF)]">
             {offer.category}
           </span>
+          {showVisibility ? (
+            <span
+              className={cn(
+                "rounded-md px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+                offer.visibility === "PRIVATE"
+                  ? "bg-[color-mix(in_srgb,var(--warning)_16%,white)] text-[var(--warning)]"
+                  : "bg-muted text-muted-foreground",
+              )}
+            >
+              {offer.visibility === "PRIVATE" ? "Private" : "Public"}
+            </span>
+          ) : null}
         </div>
 
         <CpaOfferGeoFlags country={offer.country} />

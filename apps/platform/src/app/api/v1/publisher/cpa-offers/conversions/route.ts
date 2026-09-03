@@ -1,16 +1,17 @@
-import { withAuth, ADMIN_PORTAL_ROLES, parsePagination } from "@/lib/api-handler";
+import { withAuth, parsePagination } from "@/lib/api-handler";
 import { errorResponse } from "@/lib/errors";
-import { webhookActivityListQuerySchema } from "@/lib/validations";
-import { listWebhookActivity } from "@/services/clickfunnels-webhook-settings.service";
+import { cpaConversionListQuerySchema } from "@/lib/validations";
+import { listCpaConversionsForPublisher } from "@/services/cpa-offer.service";
 
 export async function GET(request: Request) {
-  return withAuth(async () => {
+  return withAuth(async (session) => {
     try {
       const { searchParams } = new URL(request.url);
       const { page, limit } = parsePagination(searchParams);
-      const parsed = webhookActivityListQuerySchema.safeParse({
+
+      const parsed = cpaConversionListQuerySchema.safeParse({
         q: searchParams.get("q") ?? undefined,
-        status: searchParams.get("status") ?? undefined,
+        offerId: searchParams.get("offerId") ?? undefined,
         from: searchParams.get("from") ?? undefined,
         to: searchParams.get("to") ?? undefined,
         page,
@@ -30,10 +31,10 @@ export async function GET(request: Request) {
         );
       }
 
-      const data = await listWebhookActivity(parsed.data);
+      const data = await listCpaConversionsForPublisher(session.user.id, parsed.data);
       return Response.json({ data });
     } catch (error) {
       return errorResponse(error);
     }
-  }, ADMIN_PORTAL_ROLES);
+  }, ["PUBLISHER"]);
 }

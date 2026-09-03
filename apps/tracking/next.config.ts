@@ -11,6 +11,9 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ["@prisma/client", "prisma"],
   transpilePackages: ["@cpl/database", "@cpl/shared", "@cpl/tracking-core"],
   productionBrowserSourceMaps: false,
+  turbopack: {
+    root: monorepoRoot,
+  },
   experimental: {
     webpackMemoryOptimizations: true,
     cpus: 1,

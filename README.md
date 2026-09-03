@@ -93,9 +93,10 @@ CPA Offer Marketplace is available to all advertisers by default. To restrict it
 ## Environment Variables
 
 ```env
-DATABASE_URL="mysql://root:password@localhost:3306/cpl"
+# Local: Docker Desktop container affsense-mysql (port 3308)
+DATABASE_URL="mysql://root@localhost:3308/affsense?connection_limit=10&pool_timeout=20"
 AUTH_SECRET="your-secret-key-min-32-characters"
-AUTH_URL="http://localhost:3000"
+AUTH_URL="http://localhost:3020"
 ```
 
 ## Documentation

@@ -7,7 +7,8 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 LOCAL_PLATFORM_PORT="${LOCAL_PLATFORM_PORT:-3010}"
 LOCAL_PLATFORM_URL="http://localhost:${LOCAL_PLATFORM_PORT}"
 
-DATABASE_URL="${DATABASE_URL:-mysql://root:password@localhost:3306/cpl}"
+# Docker Desktop MySQL (affsense-mysql): host 3308 → container 3306
+DATABASE_URL="${DATABASE_URL:-mysql://root@localhost:3308/affsense}"
 INTERNAL_SERVICE_TOKEN="${INTERNAL_SERVICE_TOKEN:-dev-internal-token-change-in-production-64chars-minimum!!}"
 AUTH_SECRET="${AUTH_SECRET:-dev-secret-change-in-production-min-32-chars}"
 

@@ -15,7 +15,7 @@ export async function GET(
   const { offerId } = await params;
   const offer = await prisma.cpaOffer.findUnique({
     where: { id: offerId },
-    select: { id: true, status: true, trackingUrl: true },
+    select: { id: true, status: true, trackingUrl: true, visibility: true },
   });
 
   if (!offer) {
@@ -28,6 +28,7 @@ export async function GET(
 
   const requestUrl = new URL(request.url);
   const advId = requestUrl.searchParams.get("adv_id")?.trim() || null;
+  const pubId = requestUrl.searchParams.get("pub_id")?.trim() || null;
   const subId = requestUrl.searchParams.get("sub_id")?.trim() || null;
   const src = requestUrl.searchParams.get("src")?.trim() || null;
   const leadIdParam = requestUrl.searchParams.get("lead_id")?.trim() || null;
@@ -73,6 +74,40 @@ export async function GET(
         });
       }
     }
+  } else if (pubId) {
+    const publisher = await prisma.user.findFirst({
+      where: { id: pubId, role: "PUBLISHER", status: "ACTIVE" },
+      select: { id: true },
+    });
+
+    if (publisher) {
+      if (offer.visibility === "PRIVATE") {
+        const access = await prisma.publisherCpaOfferAccess.findUnique({
+          where: {
+            publisherId_offerId: { publisherId: publisher.id, offerId: offer.id },
+          },
+          select: { status: true },
+        });
+        if (access?.status !== "APPROVED") {
+          return NextResponse.json(
+            { error: { code: "FORBIDDEN", message: "Access not approved for this offer" } },
+            { status: 403 },
+          );
+        }
+      }
+
+      const click = await prisma.cpaOfferClick.create({
+        data: {
+          offerId: offer.id,
+          publisherId: publisher.id,
+          subId: subId?.slice(0, 191) || null,
+          src: src?.slice(0, 191) || null,
+          ip: clientIp(request)?.slice(0, 191) || null,
+          userAgent: request.headers.get("user-agent")?.slice(0, 1000) || null,
+        },
+      });
+      clickId = click.id;
+    }
   }
 
   let destination = offer.trackingUrl;
@@ -88,6 +123,7 @@ export async function GET(
       : new URL(destination);
 
     if (advId) target.searchParams.set("adv_id", advId);
+    if (pubId) target.searchParams.set("pub_id", pubId);
     if (subId) target.searchParams.set("sub_id", subId);
     if (src) target.searchParams.set("src", src);
 

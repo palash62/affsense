@@ -1155,6 +1155,7 @@ const optionalHttpUrlSchema = z
   });
 
 const cpaOfferStatusSchema = z.enum(["ACTIVE", "PAUSED", "ARCHIVED"]);
+const cpaOfferVisibilitySchema = z.enum(["PUBLIC", "PRIVATE"]);
 const cpaRevenueModelSchema = z.enum(["RPA", "RPS", "RPC", "RPI", "RPL", "RPM"]);
 const cpaPayoutModelSchema = z.enum(["CPC", "CPA", "CPS", "CPI", "CPL", "CPM"]);
 const cpaPayoutTypeSchema = z.enum(["FLAT", "PERCENT"]);
@@ -1233,6 +1234,7 @@ export const adminCpaOfferCreateSchema = z.object({
   revenue: z.coerce.number().positive("Revenue must be greater than 0").max(1_000_000),
   payout: z.coerce.number().positive("Payout must be greater than 0").max(1_000_000),
   status: cpaOfferStatusSchema.optional(),
+  visibility: cpaOfferVisibilitySchema.optional().default("PUBLIC"),
 });
 
 export const adminCpaOfferUpdateSchema = z.object({
@@ -1252,6 +1254,7 @@ export const adminCpaOfferUpdateSchema = z.object({
   revenue: z.coerce.number().positive().max(1_000_000).optional(),
   payout: z.coerce.number().positive().max(1_000_000).optional(),
   status: cpaOfferStatusSchema.optional(),
+  visibility: cpaOfferVisibilitySchema.optional(),
 });
 
 export const advertiserCpaOfferCreateSchema = adminCpaOfferCreateSchema.omit({
@@ -1270,10 +1273,30 @@ export const cpaOfferListQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).optional(),
 });
 
+export const cpaOfferAccessRequestListQuerySchema = z.object({
+  status: z.enum(["PENDING", "APPROVED", "REJECTED", "ALL"]).optional(),
+  page: z.coerce.number().int().min(1).optional(),
+  limit: z.coerce.number().int().min(1).max(100).optional(),
+});
+
+export const cpaOfferAccessDecisionSchema = z.object({
+  decision: z.enum(["APPROVED", "REJECTED"]),
+  adminNote: z.string().trim().max(5000).optional(),
+});
+
 export const cpaConversionListQuerySchema = z.object({
   q: z.string().trim().optional(),
   offerId: z.string().trim().optional(),
   advertiserId: z.string().trim().optional(),
+  from: z.string().trim().optional(),
+  to: z.string().trim().optional(),
+  page: z.coerce.number().int().min(1).optional(),
+  limit: z.coerce.number().int().min(1).max(100).optional(),
+});
+
+export const webhookActivityListQuerySchema = z.object({
+  q: z.string().trim().optional(),
+  status: z.enum(["PROCESSED", "FAILED", "DUPLICATE", "IGNORED"]).optional(),
   from: z.string().trim().optional(),
   to: z.string().trim().optional(),
   page: z.coerce.number().int().min(1).optional(),

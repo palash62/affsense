@@ -26,6 +26,10 @@ export function getPublisherPageMeta(
       subtitle: "Browse offer wall tasks and rewards",
     },
     "/publisher/cpa-offers": { title: "CPA Offers", subtitle: "Promote high-converting CPA offers" },
+    "/publisher/cpa-offers/report": {
+      title: "CPA Report",
+      subtitle: "Conversions and earnings from your promoted CPA offers",
+    },
     "/publisher/promotions": { title: "My Promotions", subtitle: "Manage your active promotions" },
     "/publisher/referrals": { title: "Referrals", subtitle: "Invite affiliates and earn commissions" },
     "/publisher/earnings": {

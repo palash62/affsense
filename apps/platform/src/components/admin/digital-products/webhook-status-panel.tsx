@@ -62,7 +62,7 @@ export function WebhookStatusPanel() {
             href="/admin/settings?section=webhooks"
             className="font-medium text-[var(--theme-primary)] hover:underline"
           >
-            Settings → Webhook
+            Settings → Digital Webhook
           </Link>
           . No per-product webhook configuration is required.
         </p>

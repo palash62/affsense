@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import type { WebhookEventStatus } from "@prisma/client";
+import type { Prisma, WebhookEventStatus } from "@prisma/client";
 import {
   CLICKFUNNELS_WEBHOOK_SETTINGS_KEY,
   DEFAULT_CLICKFUNNELS_WEBHOOK_CONFIG,
@@ -100,13 +100,51 @@ export async function getWebhookActivitySummary() {
   };
 }
 
-export async function listWebhookActivity(opts: { page?: number; limit?: number } = {}) {
+export async function listWebhookActivity(
+  opts: {
+    page?: number;
+    limit?: number;
+    status?: WebhookEventStatus;
+    q?: string;
+    from?: string;
+    to?: string;
+  } = {},
+) {
   const page = Math.max(1, opts.page ?? 1);
   const limit = Math.min(100, Math.max(1, opts.limit ?? 20));
   const skip = (page - 1) * limit;
 
+  const where: Prisma.WebhookEventWhereInput = {};
+
+  if (opts.status) {
+    where.status = opts.status;
+  }
+
+  const q = opts.q?.trim();
+  if (q) {
+    where.OR = [
+      { leadEmail: { contains: q } },
+      { leadName: { contains: q } },
+      { eventType: { contains: q } },
+      { affiliateRef: { contains: q } },
+    ];
+  }
+
+  if (opts.from || opts.to) {
+    where.createdAt = {};
+    if (opts.from) {
+      const from = new Date(opts.from);
+      if (!Number.isNaN(from.getTime())) where.createdAt.gte = from;
+    }
+    if (opts.to) {
+      const to = new Date(opts.to);
+      if (!Number.isNaN(to.getTime())) where.createdAt.lte = to;
+    }
+  }
+
   const [rows, total, summary] = await Promise.all([
     prisma.webhookEvent.findMany({
+      where,
       orderBy: { createdAt: "desc" },
       skip,
       take: limit,
@@ -126,7 +164,7 @@ export async function listWebhookActivity(opts: { page?: number; limit?: number 
         createdAt: true,
       },
     }),
-    prisma.webhookEvent.count(),
+    prisma.webhookEvent.count({ where }),
     getWebhookActivitySummary(),
   ]);
 

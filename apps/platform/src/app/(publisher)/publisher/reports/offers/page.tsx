@@ -1,10 +1,5 @@
-﻿import { PlaceholderPage } from "@/components/layout/placeholder-page";
+import { redirect } from "next/navigation";
 
 export default function Page() {
-  return (
-    <PlaceholderPage
-      title="Offer Reports"
-      description="Content coming soon."
-    />
-  );
+  redirect("/publisher/cpa-offers/report");
 }

@@ -75,7 +75,7 @@ export const ADMIN_LEGACY_NAV: NavItem[] = [
       { label: "All Offers", href: "/admin/cpa-offers/offers", icon: Store },
       { label: "Report", href: "/admin/cpa-offers/report", icon: BarChart3 },
       { label: "CPA Payouts", href: "/admin/cpa-offers/payouts", icon: Banknote },
-      { label: "Global Postback", href: "/admin/global-postback", icon: Webhook },
+      { label: "CPA Postback", href: "/admin/settings?section=cpa-postback", icon: Webhook },
     ],
   },
   { label: "Leads", href: "/admin/leads", icon: FileText },
@@ -130,7 +130,15 @@ export const ADMIN_NAV: AdminNavEntry[] = [
       ],
     },
   },
-  { kind: "item", item: { label: "CPA Offers", href: "/admin/offer-network", icon: Store } },
+  { kind: "item", item: { label: "CPA Offers", href: "/admin/offer-network", icon: Store,
+      children: [
+        { label: "All Offers", href: "/admin/offer-network", icon: Store },
+        { label: "Add New Offer", href: "/admin/cpa-offers/new", icon: Plus },
+        { label: "Offer Requests", href: "/admin/offer-network/requests", icon: ClipboardList },
+        { label: "Report", href: "/admin/cpa-offers/report", icon: BarChart3 },
+      ],
+    },
+  },
   {
     kind: "item",
     item: {
@@ -167,14 +175,6 @@ export const ADMIN_NAV: AdminNavEntry[] = [
   {
     kind: "item",
     item: { label: "Platform Settings", href: "/admin/settings", icon: Settings },
-  },
-  {
-    kind: "item",
-    item: {
-      label: "Webhook",
-      href: "/admin/settings?section=webhooks",
-      icon: Webhook,
-    },
   },
   {
     kind: "item",
@@ -248,7 +248,18 @@ export const PUBLISHER_NAV: AdminNavEntry[] = [
       ],
     },
   },
-  { kind: "item", item: { label: "CPA Offers", href: "/publisher/cpa-offers", icon: Store } },
+  {
+    kind: "item",
+    item: {
+      label: "CPA Offers",
+      href: "/publisher/cpa-offers",
+      icon: Store,
+      children: [
+        { label: "Browse Offers", href: "/publisher/cpa-offers", icon: Store },
+        { label: "Report", href: "/publisher/cpa-offers/report", icon: BarChart3 },
+      ],
+    },
+  },
   { kind: "item", item: { label: "My Promotions", href: "/publisher/promotions", icon: Percent } },
   { kind: "item", item: { label: "Referrals", href: "/publisher/referrals", icon: Gift } },
 

@@ -171,6 +171,7 @@ function AdminCpaOffersListInner() {
               offer={offer}
               showRevenue
               showAdvertiser
+              showVisibility
               footer={
                 <>
                   <Button

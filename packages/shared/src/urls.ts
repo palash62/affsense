@@ -88,14 +88,23 @@ export function buildCpaOfferPostbackUrl(
   return `${trackingBaseUrl ?? getTrackingUrl()}/pbtr/${encodeURIComponent(postbackToken)}?click_id={click_id}&payout={payout}`;
 }
 
-/** Platform redirect link advertisers use to send traffic into a CPA offer. */
+export type CpaOfferTrackingParams = {
+  advertiserId?: string;
+  publisherId?: string;
+  src?: string;
+  subId?: string;
+  leadId?: string;
+};
+
+/** Platform redirect link advertisers/publishers use to send traffic into a CPA offer. */
 export function buildCpaOfferTrackingUrl(
   offerId: string,
-  params?: { advertiserId?: string; src?: string; subId?: string; leadId?: string },
+  params?: CpaOfferTrackingParams,
   trackingBaseUrl?: string,
 ) {
   const url = new URL(`${trackingBaseUrl ?? getTrackingUrl()}/cpa/${encodeURIComponent(offerId)}`);
   if (params?.advertiserId) url.searchParams.set("adv_id", params.advertiserId);
+  if (params?.publisherId) url.searchParams.set("pub_id", params.publisherId);
   if (params?.src) url.searchParams.set("src", params.src);
   if (params?.subId) url.searchParams.set("sub_id", params.subId);
   if (params?.leadId) url.searchParams.set("lead_id", params.leadId);
@@ -105,7 +114,7 @@ export function buildCpaOfferTrackingUrl(
 /** Resolve a CPA offer id to the platform tracking redirect URL. */
 export function resolveCpaOfferRedirectUrl(
   offerId: string,
-  params?: { advertiserId?: string; src?: string; subId?: string; leadId?: string },
+  params?: CpaOfferTrackingParams,
   trackingBaseUrl?: string,
 ) {
   return buildCpaOfferTrackingUrl(offerId, params, trackingBaseUrl);

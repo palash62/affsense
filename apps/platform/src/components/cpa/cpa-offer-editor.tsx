@@ -50,6 +50,7 @@ type EditorValues = {
   cookieDuration: string;
   trackingUrl: string;
   statusActive: boolean;
+  visibility: "PUBLIC" | "PRIVATE";
   countries: string[];
   disallowedCountries: string[];
   allowedTrafficSources: string[];
@@ -251,6 +252,7 @@ function valuesFromOffer(
     cookieDuration: details.cookieDuration || "30 days",
     trackingUrl: offer?.trackingUrl ?? "",
     statusActive: offer?.status === "ACTIVE",
+    visibility: offer?.visibility ?? "PUBLIC",
     countries: countriesFromStorage(offer?.country ?? ""),
     disallowedCountries: details.disallowedCountries ?? [],
     allowedTrafficSources: details.allowedTrafficSources ?? [],
@@ -361,6 +363,7 @@ export function CpaOfferEditor({
       revenue: payout,
       payout,
       status,
+      ...(role === "ADMIN" ? { visibility: values.visibility } : {}),
     };
   }
 
@@ -610,6 +613,24 @@ export function CpaOfferEditor({
                 />
               </button>
             </div>
+            {role === "ADMIN" ? (
+              <Field label="Affiliate Visibility" hint="Private offers require affiliate approval before they can promote.">
+                <Select
+                  value={values.visibility}
+                  onValueChange={(value) =>
+                    value && patch({ visibility: value as EditorValues["visibility"] })
+                  }
+                >
+                  <SelectTrigger className="h-10 w-full bg-card">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="PUBLIC">Public — any affiliate can promote</SelectItem>
+                    <SelectItem value="PRIVATE">Private — affiliates must request access</SelectItem>
+                  </SelectContent>
+                </Select>
+              </Field>
+            ) : null}
           </SectionCard>
 
           <SectionCard step={3} title="Targeting & Restrictions">

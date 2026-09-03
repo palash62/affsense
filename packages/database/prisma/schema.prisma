@@ -50,6 +50,17 @@ enum CpaOfferStatus {
   ARCHIVED
 }
 
+enum CpaOfferVisibility {
+  PUBLIC
+  PRIVATE
+}
+
+enum PublisherCpaOfferAccessStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 enum GlobalPostbackType {
   S2S
   IMAGE
@@ -309,7 +320,8 @@ model User {
   advertiserDomains        AdvertiserDomain[]
   landingPages             LandingPage[]
   pageTemplateFavorites    PageTemplateFavorite[]
-  cpaOfferClicks           CpaOfferClick[]
+  cpaOfferClicks           CpaOfferClick[]        @relation("AdvertiserCpaOfferClicks")
+  publisherCpaOfferClicks CpaOfferClick[]       @relation("PublisherCpaOfferClicks")
   cpaOfferConversions      CpaOfferConversion[]
   createdCpaOffers         CpaOffer[]           @relation("CpaOfferCreatedBy")
   advertiserGlobalPostback AdvertiserGlobalPostback?
@@ -318,6 +330,8 @@ model User {
   cpaEarnings              CpaEarning[]
   emailWallet              EmailWallet?
   publisherTaskSubmissions PublisherTaskSubmission[]
+  cpaOfferAccessRequests PublisherCpaOfferAccess[] @relation("PublisherCpaOfferAccess")
+  reviewedCpaOfferAccessRequests PublisherCpaOfferAccess[] @relation("ReviewedCpaOfferAccess")
   webhookEvents            WebhookEvent[] @relation("WebhookEventPublisher")
   promotion              Promotion? @relation(fields: [promotionId], references: [id], onDelete: SetNull)
   createdPromotions      Promotion[] @relation("PromotionCreatedBy")
@@ -1493,6 +1507,7 @@ model CpaOffer {
   revenue         Decimal        @db.Decimal(10, 2)
   payout          Decimal        @db.Decimal(10, 2)
   status          CpaOfferStatus @default(PAUSED)
+  visibility      CpaOfferVisibility @default(PUBLIC)
   postbackToken   String         @unique @map("postback_token")
   createdAt       DateTime       @default(now()) @map("created_at")
   updatedAt       DateTime       @updatedAt @map("updated_at")
@@ -1500,9 +1515,11 @@ model CpaOffer {
   clicks          CpaOfferClick[]
   cpaEarnings     CpaEarning[]
   optinPages      AdvertiserOptinPage[]
+  publisherAccessRequests PublisherCpaOfferAccess[]
   createdBy       User?          @relation("CpaOfferCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
 
   @@index([status, createdAt])
+  @@index([visibility])
   @@index([network])
   @@index([category])
   @@index([createdByUserId])
@@ -1512,7 +1529,8 @@ model CpaOffer {
 model CpaOfferClick {
   id           String   @id @default(cuid())
   offerId      String   @map("offer_id")
-  advertiserId String   @map("advertiser_id")
+  advertiserId String?  @map("advertiser_id")
+  publisherId  String?  @map("publisher_id")
   leadId       String?  @map("lead_id")
   subId        String?  @map("sub_id")
   src          String?
@@ -1520,14 +1538,36 @@ model CpaOfferClick {
   userAgent    String?  @map("user_agent") @db.Text
   createdAt    DateTime @default(now()) @map("created_at")
   offer        CpaOffer @relation(fields: [offerId], references: [id], onDelete: Cascade)
-  advertiser   User     @relation(fields: [advertiserId], references: [id], onDelete: Cascade)
+  advertiser   User?    @relation("AdvertiserCpaOfferClicks", fields: [advertiserId], references: [id], onDelete: Cascade)
+  publisher    User?    @relation("PublisherCpaOfferClicks", fields: [publisherId], references: [id], onDelete: Cascade)
   lead         Lead?    @relation(fields: [leadId], references: [id], onDelete: SetNull)
   conversions  CpaOfferConversion[]
 
   @@index([offerId, createdAt])
   @@index([advertiserId])
+  @@index([publisherId])
   @@index([leadId])
   @@map("cpa_offer_clicks")
+}
+
+model PublisherCpaOfferAccess {
+  id               String                        @id @default(cuid())
+  publisherId      String                        @map("publisher_id")
+  offerId          String                        @map("offer_id")
+  status           PublisherCpaOfferAccessStatus @default(PENDING)
+  adminNote        String?                       @map("admin_note") @db.Text
+  reviewedByUserId String?                       @map("reviewed_by_user_id")
+  reviewedAt       DateTime?                     @map("reviewed_at")
+  createdAt        DateTime                      @default(now()) @map("created_at")
+  updatedAt        DateTime                      @updatedAt @map("updated_at")
+  publisher        User                          @relation("PublisherCpaOfferAccess", fields: [publisherId], references: [id], onDelete: Cascade)
+  offer            CpaOffer                      @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  reviewedBy       User?                         @relation("ReviewedCpaOfferAccess", fields: [reviewedByUserId], references: [id], onDelete: SetNull)
+
+  @@unique([publisherId, offerId])
+  @@index([status, createdAt])
+  @@index([offerId])
+  @@map("publisher_cpa_offer_access")
 }
 
 model CpaOfferConversion {

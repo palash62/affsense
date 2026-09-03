@@ -29,6 +29,7 @@ import { ButtonLink } from "@/components/ui/button-link";
 import { cn } from "@/lib/utils";
 import { AnnouncementsFeed } from "@/components/announcements/announcements-feed";
 import { buildDigitalProductAffiliateUrl } from "@/lib/digital-product-affiliate-url";
+import { buildCpaOfferTrackingUrl } from "@cpl/shared";
 import { toast } from "sonner";
 
 export type AffsensePublisherDashboardData = {
@@ -61,6 +62,7 @@ export type AffsensePublisherDashboardData = {
     imageUrl: string | null;
     type: "cpa" | "product";
     hot: boolean;
+    canPromote?: boolean;
     salesPageUrl?: string | null;
     affiliateTrackingParam?: string | null;
   }>;
@@ -145,6 +147,25 @@ export function AffsensePublisherDashboard({ data }: { data: AffsensePublisherDa
       toast.error("Sales page URL is not configured for this product");
       return;
     }
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success("Tracked link copied");
+    } catch {
+      toast.error("Could not copy link");
+    }
+  }
+
+  async function copyCpaLink(offer: AffsensePublisherDashboardData["topOffers"][number]) {
+    if (offer.type !== "cpa") return;
+    if (!offer.canPromote) {
+      toast.error("Request access on the CPA Offers page before copying a tracking link");
+      return;
+    }
+    if (!publisherId) {
+      toast.error("Sign in to copy your tracking link");
+      return;
+    }
+    const url = buildCpaOfferTrackingUrl(offer.id, { publisherId });
     try {
       await navigator.clipboard.writeText(url);
       toast.success("Tracked link copied");
@@ -317,10 +338,20 @@ export function AffsensePublisherDashboard({ data }: { data: AffsensePublisherDa
                             </>
                           ) : (
                             <>
-                              <Button size="sm" className="h-8 rounded-md bg-[var(--theme-primary)]">
-                                Promote Now
-                              </Button>
-                              <Button size="sm" variant="outline" className="h-8 w-8 rounded-md p-0">
+                              <ButtonLink
+                                href="/publisher/cpa-offers"
+                                size="sm"
+                                className="h-8 rounded-md bg-[var(--theme-primary)]"
+                              >
+                                {offer.canPromote ? "Promote Now" : "Request Access"}
+                              </ButtonLink>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-8 w-8 rounded-md p-0"
+                                disabled={!offer.canPromote}
+                                onClick={() => void copyCpaLink(offer)}
+                              >
                                 <Copy className="h-3.5 w-3.5" />
                               </Button>
                             </>

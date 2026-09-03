@@ -61,6 +61,20 @@ export function getAdminPageMeta(
     };
   }
 
+  if (path === "/admin/offer-network/requests") {
+    return {
+      title: "Offer Requests",
+      subtitle: "Review affiliate requests for private CPA offers",
+    };
+  }
+
+  if (path === "/admin/cpa-offers/report") {
+    return {
+      title: "CPA Report",
+      subtitle: "Conversion postbacks by offer, advertiser, and affiliate traffic",
+    };
+  }
+
   if (path === "/admin/cpa-offers/new") {
     return {
       title: "Add New CPA Offer",
@@ -184,7 +198,7 @@ export function getAdminPageMeta(
     "/admin/cpa-offers/offers": "All Offers",
     "/admin/cpa-offers/report": "CPA Report",
     "/admin/cpa-offers/payouts": "CPA Payouts",
-    "/admin/global-postback": "Global Postback",
+    "/admin/global-postback": "CPA Postback",
     "/admin/leads": "Leads",
     "/admin/fraud": "Fraud Center",
     "/admin/wallets": "Wallets",

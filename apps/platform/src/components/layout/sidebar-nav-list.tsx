@@ -31,6 +31,8 @@ function isItemActive(pathname: string, href: string) {
       pathname.startsWith("/admin/offer-network/") ||
       pathname === "/admin/cpa-offers/new" ||
       pathname.startsWith("/admin/cpa-offers/new/") ||
+      pathname === "/admin/cpa-offers/report" ||
+      pathname.startsWith("/admin/cpa-offers/report/") ||
       /^\/admin\/cpa-offers\/[^/]+\/edit$/.test(pathname)
     );
   }
@@ -113,6 +115,22 @@ function isChildActive(pathname: string, child: NavItem, siblings: NavItem[]) {
       pathname.startsWith("/admin/digital-products/categories/")
     );
   }
+  if (child.href === "/admin/offer-network") {
+    return pathname === "/admin/offer-network";
+  }
+  if (child.href === "/admin/cpa-offers/new") {
+    return (
+      pathname === "/admin/cpa-offers/new" ||
+      pathname.startsWith("/admin/cpa-offers/new/") ||
+      /^\/admin\/cpa-offers\/[^/]+\/edit$/.test(pathname)
+    );
+  }
+  if (child.href === "/admin/offer-network/requests") {
+    return (
+      pathname === "/admin/offer-network/requests" ||
+      pathname.startsWith("/admin/offer-network/requests/")
+    );
+  }
   if (child.href === "/admin/get-paid-tasks") {
     return pathname === "/admin/get-paid-tasks";
   }
@@ -157,6 +175,19 @@ function isChildActive(pathname: string, child: NavItem, siblings: NavItem[]) {
     return (
       pathname === "/advertiser/global-postback" ||
       pathname.startsWith("/advertiser/global-postback/")
+    );
+  }
+  if (child.href === "/publisher/cpa-offers/report") {
+    return (
+      pathname === "/publisher/cpa-offers/report" ||
+      pathname.startsWith("/publisher/cpa-offers/report/")
+    );
+  }
+  if (child.href === "/publisher/cpa-offers") {
+    return (
+      pathname === "/publisher/cpa-offers" ||
+      (pathname.startsWith("/publisher/cpa-offers/") &&
+        !pathname.startsWith("/publisher/cpa-offers/report"))
     );
   }
   // Generic fallback: exact or prefix, but not claiming a sibling's more-specific path
