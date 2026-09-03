@@ -17,7 +17,7 @@ import {
 type ClickRow = {
   id: string;
   offerId: string;
-  advertiserId: string;
+  advertiserId: string | null;
   src: string | null;
   subId: string | null;
 };

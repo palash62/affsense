@@ -17,7 +17,7 @@ export function resolveCpaClickAttribution(input: {
     | {
         id: string;
         offerId: string;
-        advertiserId: string;
+        advertiserId: string | null;
         src: string | null;
         subId: string | null;
       }
