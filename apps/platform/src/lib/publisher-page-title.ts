@@ -23,7 +23,7 @@ export function getPublisherPageMeta(
     },
     "/publisher/offer-wall": {
       title: "Offer Wall",
-      subtitle: "Browse offer wall tasks and rewards",
+      subtitle: "Complete OGAds offers and earn rewards",
     },
     "/publisher/cpa-offers": { title: "CPA Offers", subtitle: "Promote high-converting CPA offers" },
     "/publisher/cpa-offers/report": {

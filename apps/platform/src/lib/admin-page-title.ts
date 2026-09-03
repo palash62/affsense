@@ -54,6 +54,13 @@ export function getAdminPageMeta(
     };
   }
 
+  if (path === "/admin/offer-wall") {
+    return {
+      title: "Offer Wall",
+      subtitle: "Live OGAds offers shown to affiliates",
+    };
+  }
+
   if (path === "/admin/offer-network") {
     return {
       title: "CPA Offers",

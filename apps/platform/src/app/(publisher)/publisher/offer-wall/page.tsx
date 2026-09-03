@@ -1,10 +1,5 @@
-import { PlaceholderPage } from "@/components/layout/placeholder-page";
+import { PublisherOfferWallList } from "@/components/publisher/offer-wall/publisher-offer-wall-list";
 
 export default function Page() {
-  return (
-    <PlaceholderPage
-      title="Offer Wall"
-      description="Browse offer wall tasks and rewards."
-    />
-  );
+  return <PublisherOfferWallList />;
 }

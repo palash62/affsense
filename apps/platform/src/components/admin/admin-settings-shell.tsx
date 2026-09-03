@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
-import { Cloud, CreditCard, Crosshair, Link2, Mail, ScrollText, Settings, UserCog, Webhook } from "lucide-react";
+import { Cloud, CreditCard, Crosshair, LayoutGrid, Link2, Mail, ScrollText, Settings, UserCog, Webhook } from "lucide-react";
 import { AdminPreferencesForm } from "@/components/admin/admin-preferences-form";
 import { PlatformSettingsForm } from "@/components/forms/platform-settings-form";
 import { SmtpSettingsForm } from "@/components/forms/smtp-settings-form";
@@ -13,6 +13,7 @@ import { StripeSettingsForm } from "@/components/forms/stripe-settings-form";
 import { PixelSettingsForm } from "@/components/forms/pixel-settings-form";
 import { ClickFunnelsWebhookSettingsForm } from "@/components/admin/clickfunnels-webhook-settings";
 import { AdminGlobalPostbackForm } from "@/components/admin/admin-global-postback-form";
+import { OgadsOfferWallSettingsForm } from "@/components/admin/ogads-offer-wall-settings";
 import { EmailLogsTable } from "@/components/admin/email-logs-table";
 import { PageSection } from "@/components/admin/page-section";
 import { cn } from "@/lib/utils";
@@ -24,6 +25,7 @@ type SectionId =
   | "pixels"
   | "webhooks"
   | "cpa-postback"
+  | "offer-wall"
   | "email"
   | "email-marketing"
   | "email-log";
@@ -86,6 +88,14 @@ const SECTIONS: SectionItem[] = [
     title: "CPA Postback",
     description:
       "Network conversion postback for CPA offers — security key, parallel URL, and test fire",
+    gradient: "leads",
+  },
+  {
+    id: "offer-wall",
+    label: "Offer Wall",
+    icon: LayoutGrid,
+    title: "Offer Wall",
+    description: "OGAds Offer API key and postback URL for the affiliate Offer Wall",
     gradient: "leads",
   },
   {
@@ -174,6 +184,7 @@ export function AdminSettingsShell({ initialTimezone }: { initialTimezone: strin
             {activeId === "pixels" && <PixelSettingsForm />}
             {activeId === "webhooks" && <ClickFunnelsWebhookSettingsForm />}
             {activeId === "cpa-postback" && <AdminGlobalPostbackForm embedded />}
+            {activeId === "offer-wall" && <OgadsOfferWallSettingsForm />}
             {activeId === "email" && <SmtpSettingsForm />}
             {activeId === "email-marketing" && (
               <div className="space-y-10">

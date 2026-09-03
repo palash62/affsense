@@ -333,6 +333,7 @@ model User {
   cpaOfferAccessRequests PublisherCpaOfferAccess[] @relation("PublisherCpaOfferAccess")
   reviewedCpaOfferAccessRequests PublisherCpaOfferAccess[] @relation("ReviewedCpaOfferAccess")
   webhookEvents            WebhookEvent[] @relation("WebhookEventPublisher")
+  offerwallConversions     OfferwallConversion[]
   promotion              Promotion? @relation(fields: [promotionId], references: [id], onDelete: SetNull)
   createdPromotions      Promotion[] @relation("PromotionCreatedBy")
 
@@ -1968,4 +1969,20 @@ model WebhookEvent {
   @@index([source])
   @@index([publisherId])
   @@map("webhook_events")
+}
+
+model OfferwallConversion {
+  id            String   @id @default(cuid())
+  publisherId   String   @map("publisher_id")
+  offerId       String   @map("offer_id")
+  externalKey   String   @unique @map("external_key")
+  payout        Decimal  @db.Decimal(12, 4)
+  ip            String?
+  rawQuery      Json?    @map("raw_query")
+  createdAt     DateTime @default(now()) @map("created_at")
+  publisher     User     @relation(fields: [publisherId], references: [id], onDelete: Cascade)
+
+  @@index([publisherId, createdAt])
+  @@index([offerId])
+  @@map("offerwall_conversions")
 }

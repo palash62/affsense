@@ -130,6 +130,7 @@ export const ADMIN_NAV: AdminNavEntry[] = [
       ],
     },
   },
+  { kind: "item", item: { label: "Offer Wall", href: "/admin/offer-wall", icon: LayoutGrid } },
   { kind: "item", item: { label: "CPA Offers", href: "/admin/offer-network", icon: Store,
       children: [
         { label: "All Offers", href: "/admin/offer-network", icon: Store },
@@ -244,10 +245,10 @@ export const PUBLISHER_NAV: AdminNavEntry[] = [
       icon: ListTodo,
       children: [
         { label: "Paid Task", href: "/publisher/get-paid-tasks", icon: ListTodo },
-        { label: "Offer Wall", href: "/publisher/offer-wall", icon: LayoutGrid },
       ],
     },
   },
+  { kind: "item", item: { label: "Offer Wall", href: "/publisher/offer-wall", icon: LayoutGrid } },
   {
     kind: "item",
     item: {
