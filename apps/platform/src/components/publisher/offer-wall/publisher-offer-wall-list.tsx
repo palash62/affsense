@@ -1,11 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { Coins, LayoutGrid, RefreshCw, Search } from "lucide-react";
 import { toast } from "sonner";
 import { parseOfferCountries } from "@/components/cpa/cpa-offer-geo-flags";
 import { Button } from "@/components/ui/button";
+import { ButtonLink } from "@/components/ui/button-link";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -220,9 +220,9 @@ export function PublisherOfferWallList({
                   : "Try again later.")}
           </p>
           {!configured && settingsHref ? (
-            <Button asChild className="mt-4">
-              <Link href={settingsHref}>Open Offer Wall settings</Link>
-            </Button>
+            <ButtonLink href={settingsHref} className="mt-4">
+              Open Offer Wall settings
+            </ButtonLink>
           ) : null}
         </div>
       ) : (
