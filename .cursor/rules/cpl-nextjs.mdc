@@ -29,4 +29,4 @@ This is **not** stock Next.js — read `node_modules/next/dist/docs/` before cha
 
 ## Internal API
 
-Tracking → platform lead submit: `leadgenlink.site` proxies to `leadvix.io/api/internal/v1/leads/submit` with `X-Service-Token` (`INTERNAL_SERVICE_TOKEN`).
+Tracking → platform lead submit: `track.leadtb.com` proxies to `leadvix.io/api/internal/v1/leads/submit` with `X-Service-Token` (`INTERNAL_SERVICE_TOKEN`).

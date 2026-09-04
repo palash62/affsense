@@ -7,7 +7,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
 PLATFORM_URL="${PLATFORM_URL:-https://leadvix.io}"
-TRACKING_URL="${TRACKING_URL:-https://leadgenlink.site}"
+TRACKING_URL="${TRACKING_URL:-https://track.leadtb.com}"
 DATABASE_URL="${DATABASE_URL:-mysql://cpl:cpl_dev_pass@localhost:3306/cpl}"
 
 echo "==> CPL production bootstrap"

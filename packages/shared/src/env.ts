@@ -21,7 +21,7 @@ export function getTrackingUrl(): string {
     process.env.TRACKING_URL ?? process.env.NEXT_PUBLIC_TRACKING_URL,
     "",
   );
-  const productionFallback = "http://leadgenlink.site";
+  const productionFallback = "https://track.leadtb.com";
   const localFallback = "http://localhost:3001";
 
   if (configured) {

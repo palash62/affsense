@@ -30,7 +30,7 @@ www.leadvix.io {
 	redir https://leadvix.io{uri} permanent
 }
 
-leadgenlink.site {
+track.leadtb.com {
 	reverse_proxy 127.0.0.1:3001 {
 		transport http {
 			read_timeout 120s

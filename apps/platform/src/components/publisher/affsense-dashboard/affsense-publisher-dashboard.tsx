@@ -28,8 +28,7 @@ import { Button } from "@/components/ui/button";
 import { ButtonLink } from "@/components/ui/button-link";
 import { cn } from "@/lib/utils";
 import { AnnouncementsFeed } from "@/components/announcements/announcements-feed";
-import { buildDigitalProductAffiliateUrl } from "@/lib/digital-product-affiliate-url";
-import { buildCpaOfferTrackingUrl } from "@cpl/shared";
+import { buildDigitalProductTrackingUrl, buildCpaOfferTrackingUrl } from "@cpl/shared";
 import { toast } from "sonner";
 
 export type AffsensePublisherDashboardData = {
@@ -138,15 +137,15 @@ export function AffsensePublisherDashboard({ data }: { data: AffsensePublisherDa
 
   async function copyProductLink(offer: AffsensePublisherDashboardData["topOffers"][number]) {
     if (offer.type !== "product") return;
-    const url = buildDigitalProductAffiliateUrl(
-      offer.salesPageUrl,
-      offer.affiliateTrackingParam,
-      publisherId,
-    );
-    if (!url) {
+    if (!offer.salesPageUrl?.trim()) {
       toast.error("Sales page URL is not configured for this product");
       return;
     }
+    if (!publisherId) {
+      toast.error("Sign in to copy your tracking link");
+      return;
+    }
+    const url = buildDigitalProductTrackingUrl(offer.id, { publisherId });
     try {
       await navigator.clipboard.writeText(url);
       toast.success("Tracked link copied");

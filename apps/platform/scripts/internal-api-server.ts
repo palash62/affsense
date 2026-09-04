@@ -18,7 +18,7 @@ import type { UserRole } from "@prisma/client";
 
 const PORT = Number(process.env.INTERNAL_API_PORT ?? process.env.PORT ?? 3000);
 const HOST = process.env.INTERNAL_API_HOST ?? "0.0.0.0";
-const TRACKING_URL = process.env.NEXT_PUBLIC_TRACKING_URL ?? "http://leadgenlink.site";
+const TRACKING_URL = process.env.NEXT_PUBLIC_TRACKING_URL ?? "https://track.leadtb.com";
 const SESSION_COOKIE = "cpl-lite-session";
 const SESSION_TTL_MS = 24 * 60 * 60 * 1000;
 

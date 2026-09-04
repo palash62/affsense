@@ -10,7 +10,7 @@ alwaysApply: true
 | App | Path | Local port | Domain (prod) |
 |-----|------|------------|---------------|
 | Platform | `apps/platform` | 3010 | leadvix.io (prod: 3000) |
-| Tracking | `apps/tracking` | 3001 | leadgenlink.site |
+| Tracking | `apps/tracking` | 3001 | track.leadtb.com |
 
 Shared: `packages/database` (Prisma), `packages/shared`, `packages/tracking-core`.
 

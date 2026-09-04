@@ -1,46 +1,17 @@
-import { buildAffiliateTrackingPreviewUrl } from "@/components/admin/digital-products/digital-product-types";
-import { sanitizeTrackingParam } from "@cpl/shared";
+import {
+  buildDigitalProductDestinationUrl,
+  DEFAULT_DIGITAL_PRODUCT_AFFILIATE_PARAM,
+  type DigitalProductAffiliateUrlExtras,
+} from "@cpl/shared";
 
-/** Default ClickFunnels / platform tracking query param. */
-export const DEFAULT_AFFILIATE_TRACKING_PARAM = "affsense_id";
+/** @deprecated Prefer DEFAULT_DIGITAL_PRODUCT_AFFILIATE_PARAM from @cpl/shared */
+export const DEFAULT_AFFILIATE_TRACKING_PARAM = DEFAULT_DIGITAL_PRODUCT_AFFILIATE_PARAM;
 
-export type DigitalProductAffiliateUrlExtras = {
-  source?: string;
-  subid?: string;
-  campaign?: string;
-};
-
-function appendTrackingExtras(
-  url: string,
-  extras?: DigitalProductAffiliateUrlExtras,
-): string {
-  if (!extras) return url;
-  const source = sanitizeTrackingParam(extras.source);
-  const subid = sanitizeTrackingParam(extras.subid);
-  const campaign = sanitizeTrackingParam(extras.campaign);
-  if (!source && !subid && !campaign) return url;
-
-  try {
-    const parsed = new URL(url);
-    if (source) parsed.searchParams.set("source", source);
-    if (subid) parsed.searchParams.set("subid", subid);
-    if (campaign) parsed.searchParams.set("campaign", campaign);
-    return parsed.toString();
-  } catch {
-    const parts: string[] = [];
-    if (source) parts.push(`source=${encodeURIComponent(source)}`);
-    if (subid) parts.push(`subid=${encodeURIComponent(subid)}`);
-    if (campaign) parts.push(`campaign=${encodeURIComponent(campaign)}`);
-    const hashIndex = url.indexOf("#");
-    const beforeHash = hashIndex >= 0 ? url.slice(0, hashIndex) : url;
-    const hash = hashIndex >= 0 ? url.slice(hashIndex) : "";
-    const joiner = beforeHash.includes("?") ? "&" : "?";
-    return `${beforeHash}${joiner}${parts.join("&")}${hash}`;
-  }
-}
+export type { DigitalProductAffiliateUrlExtras };
 
 /**
- * Build a publisher-specific tracked sales URL for a digital product.
+ * Build a publisher-specific tracked sales URL for a digital product
+ * (final destination after tracking redirect).
  */
 export function buildDigitalProductAffiliateUrl(
   salesPageUrl: string | null | undefined,
@@ -48,12 +19,10 @@ export function buildDigitalProductAffiliateUrl(
   publisherId: string,
   extras?: DigitalProductAffiliateUrlExtras,
 ): string | null {
-  if (!salesPageUrl?.trim() || !publisherId.trim()) return null;
-  const base = buildAffiliateTrackingPreviewUrl(
+  return buildDigitalProductDestinationUrl(
     salesPageUrl,
-    trackingParam?.trim() || DEFAULT_AFFILIATE_TRACKING_PARAM,
+    trackingParam,
     publisherId,
+    extras,
   );
-  if (!base) return null;
-  return appendTrackingExtras(base, extras);
 }

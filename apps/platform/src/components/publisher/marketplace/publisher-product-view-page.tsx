@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { SMART_LINK_PLATFORMS } from "@/lib/smart-link";
-import { buildDigitalProductAffiliateUrl } from "@/lib/digital-product-affiliate-url";
+import { buildDigitalProductTrackingUrl } from "@cpl/shared";
 import type { SerializedPublisherDigitalProduct } from "@/services/digital-product.service";
 
 async function copyText(text: string, label: string) {
@@ -43,33 +43,20 @@ export function PublisherProductViewPage({
 
   const sourceValue = source === "other" ? customSource : source === "none" ? "" : source;
 
-  const primaryUrl = useMemo(
-    () =>
-      buildDigitalProductAffiliateUrl(
-        product.salesPageUrl,
-        product.affiliateTrackingParam,
-        publisherId,
-      ),
-    [product.salesPageUrl, product.affiliateTrackingParam, publisherId],
-  );
+  const primaryUrl = useMemo(() => {
+    if (!publisherId.trim() || !product.salesPageUrl?.trim()) return null;
+    return buildDigitalProductTrackingUrl(product.id, { publisherId });
+  }, [product.id, product.salesPageUrl, publisherId]);
 
-  const previewUrl = useMemo(
-    () =>
-      buildDigitalProductAffiliateUrl(
-        product.salesPageUrl,
-        product.affiliateTrackingParam,
-        publisherId,
-        { source: sourceValue, subid: subId, campaign },
-      ),
-    [
-      product.salesPageUrl,
-      product.affiliateTrackingParam,
+  const previewUrl = useMemo(() => {
+    if (!publisherId.trim() || !product.salesPageUrl?.trim()) return null;
+    return buildDigitalProductTrackingUrl(product.id, {
       publisherId,
-      sourceValue,
-      subId,
-      campaign,
-    ],
-  );
+      src: sourceValue || undefined,
+      subId: subId || undefined,
+      campaign: campaign || undefined,
+    });
+  }, [product.id, product.salesPageUrl, publisherId, sourceValue, subId, campaign]);
 
   const funnelUrl = product.previewUrl?.trim() || product.salesPageUrl?.trim() || null;
   const letter = (product.name.trim()[0] || "?").toUpperCase();
@@ -193,11 +180,11 @@ export function PublisherProductViewPage({
       <section className="rounded-[var(--radius-card,0.875rem)] border border-border bg-card p-5 shadow-[var(--shadow-card)]">
         <h2 className="text-sm font-semibold text-foreground">Your affiliate link</h2>
         <p className="mt-1 text-xs text-muted-foreground">
-          Share this URL so sales can be attributed to you via{" "}
+          Share this Affsense tracking URL. It redirects to the sales page with{" "}
           <code className="rounded bg-muted px-1 py-0.5">
             {product.affiliateTrackingParam?.trim() || "affsense_id"}
-          </code>
-          .
+          </code>{" "}
+          so sales can be attributed to you.
         </p>
 
         {primaryUrl ? (

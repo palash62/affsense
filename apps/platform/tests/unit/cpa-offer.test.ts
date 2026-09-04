@@ -33,9 +33,9 @@ import { prisma } from "@/lib/prisma";
 
 describe("buildGlobalCpaPostbackUrl", () => {
   it("builds network-wide postback URL with macros (no offer token)", () => {
-    const url = buildGlobalCpaPostbackUrl("https://leadgenlink.site");
+    const url = buildGlobalCpaPostbackUrl("https://track.leadtb.com");
     expect(url).toBe(
-      "https://leadgenlink.site/pbtr?click_id={click_id}&payout={payout}",
+      "https://track.leadtb.com/pbtr?click_id={click_id}&payout={payout}",
     );
   });
 });
@@ -45,9 +45,9 @@ describe("buildCpaOfferTrackingUrl", () => {
     const url = buildCpaOfferTrackingUrl(
       "offer1",
       { advertiserId: "adv-9", src: "facebook", subId: "camp-a" },
-      "https://leadgenlink.site",
+      "https://track.leadtb.com",
     );
-    expect(url).toContain("https://leadgenlink.site/cpa/offer1?");
+    expect(url).toContain("https://track.leadtb.com/cpa/offer1?");
     expect(url).toContain("adv_id=adv-9");
     expect(url).toContain("src=facebook");
     expect(url).toContain("sub_id=camp-a");
@@ -57,7 +57,7 @@ describe("buildCpaOfferTrackingUrl", () => {
     const url = buildCpaOfferTrackingUrl(
       "offer1",
       { advertiserId: "adv-9", leadId: "lead-abc" },
-      "https://leadgenlink.site",
+      "https://track.leadtb.com",
     );
     expect(url).toContain("lead_id=lead-abc");
   });
@@ -66,7 +66,7 @@ describe("buildCpaOfferTrackingUrl", () => {
     const url = buildCpaOfferTrackingUrl(
       "offer1",
       { publisherId: "pub-42", src: "email" },
-      "https://leadgenlink.site",
+      "https://track.leadtb.com",
     );
     expect(url).toContain("pub_id=pub-42");
     expect(url).toContain("src=email");
@@ -94,7 +94,7 @@ describe("resolveCpaOfferRedirectUrl", () => {
 describe("serializeCpaOffer", () => {
   it("includes marketplace fields without exposing per-offer postback URL", () => {
     const prev = process.env.TRACKING_URL;
-    process.env.TRACKING_URL = "https://leadgenlink.site";
+    process.env.TRACKING_URL = "https://track.leadtb.com";
     try {
       const serialized = serializeCpaOffer({
         id: "offer1",

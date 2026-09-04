@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Write production .env files for leadvix.io + leadgenlink.site (HTTP).
+# Write production .env files for leadvix.io + track.leadtb.com (HTTP).
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 PLATFORM_ENV="$ROOT/apps/platform/.env"
@@ -26,7 +26,7 @@ preserve_env() {
 }
 
 PLATFORM_URL="${PLATFORM_URL:-https://leadvix.io}"
-TRACKING_URL="${TRACKING_URL:-https://leadgenlink.site}"
+TRACKING_URL="${TRACKING_URL:-https://track.leadtb.com}"
 # With docker-compose.prod.yml network_mode: host, localhost is the VPS (MySQL on host).
 DATABASE_URL="${DATABASE_URL:-mysql://cpl:cpl_dev_pass@localhost:3306/cpl}"
 INTERNAL_SERVICE_TOKEN="${INTERNAL_SERVICE_TOKEN:-change-me-to-a-random-64-char-secret}"

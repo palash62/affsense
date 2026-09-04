@@ -1,5 +1,89 @@
 import { getPlatformUrl, getTrackingUrl } from "./env";
-import { buildTrackingUrl } from "./smart-link";
+import { buildTrackingUrl, sanitizeTrackingParam } from "./smart-link";
+
+/** Default ClickFunnels / platform tracking query param for digital products. */
+export const DEFAULT_DIGITAL_PRODUCT_AFFILIATE_PARAM = "affsense_id";
+
+export type DigitalProductAffiliateUrlExtras = {
+  source?: string;
+  subid?: string;
+  campaign?: string;
+};
+
+export type DigitalProductTrackingParams = {
+  publisherId?: string;
+  src?: string;
+  subId?: string;
+  campaign?: string;
+};
+
+/**
+ * Append affiliate tracking param (+ optional source/subid/campaign) to a sales page URL.
+ * Used as the final redirect destination after /dp/{productId}.
+ */
+export function buildDigitalProductDestinationUrl(
+  salesPageUrl: string | null | undefined,
+  trackingParam: string | null | undefined,
+  publisherId: string,
+  extras?: DigitalProductAffiliateUrlExtras,
+): string | null {
+  if (!salesPageUrl?.trim() || !publisherId.trim()) return null;
+  const key = trackingParam?.trim() || DEFAULT_DIGITAL_PRODUCT_AFFILIATE_PARAM;
+  const base = salesPageUrl.trim();
+
+  let withAffiliate: string;
+  try {
+    const url = new URL(base);
+    url.searchParams.set(key, publisherId);
+    withAffiliate = url.toString();
+  } catch {
+    const hashIndex = base.indexOf("#");
+    const beforeHash = hashIndex >= 0 ? base.slice(0, hashIndex) : base;
+    const hash = hashIndex >= 0 ? base.slice(hashIndex) : "";
+    const joiner = beforeHash.includes("?") ? "&" : "?";
+    withAffiliate = `${beforeHash}${joiner}${encodeURIComponent(key)}=${encodeURIComponent(publisherId)}${hash}`;
+  }
+
+  if (!extras) return withAffiliate;
+  const source = sanitizeTrackingParam(extras.source);
+  const subid = sanitizeTrackingParam(extras.subid);
+  const campaign = sanitizeTrackingParam(extras.campaign);
+  if (!source && !subid && !campaign) return withAffiliate;
+
+  try {
+    const parsed = new URL(withAffiliate);
+    if (source) parsed.searchParams.set("source", source);
+    if (subid) parsed.searchParams.set("subid", subid);
+    if (campaign) parsed.searchParams.set("campaign", campaign);
+    return parsed.toString();
+  } catch {
+    const parts: string[] = [];
+    if (source) parts.push(`source=${encodeURIComponent(source)}`);
+    if (subid) parts.push(`subid=${encodeURIComponent(subid)}`);
+    if (campaign) parts.push(`campaign=${encodeURIComponent(campaign)}`);
+    const hashIndex = withAffiliate.indexOf("#");
+    const beforeHash = hashIndex >= 0 ? withAffiliate.slice(0, hashIndex) : withAffiliate;
+    const hash = hashIndex >= 0 ? withAffiliate.slice(hashIndex) : "";
+    const joiner = beforeHash.includes("?") ? "&" : "?";
+    return `${beforeHash}${joiner}${parts.join("&")}${hash}`;
+  }
+}
+
+/** Publisher share link on the tracking domain; redirects to the sales page. */
+export function buildDigitalProductTrackingUrl(
+  productId: string,
+  params?: DigitalProductTrackingParams,
+  trackingBaseUrl?: string,
+) {
+  const url = new URL(
+    `${trackingBaseUrl ?? getTrackingUrl()}/dp/${encodeURIComponent(productId)}`,
+  );
+  if (params?.publisherId) url.searchParams.set("pub_id", params.publisherId);
+  if (params?.src) url.searchParams.set("src", params.src);
+  if (params?.subId) url.searchParams.set("sub_id", params.subId);
+  if (params?.campaign) url.searchParams.set("campaign", params.campaign);
+  return url.toString();
+}
 
 export function buildSmartLinkUrl(
   slug: string,

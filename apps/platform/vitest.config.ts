@@ -14,6 +14,9 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      "@cpl/shared": path.resolve(__dirname, "../../packages/shared/src/index.ts"),
+      "@cpl/database": path.resolve(__dirname, "../../packages/database/src/index.ts"),
+      "@cpl/tracking-core": path.resolve(__dirname, "../../packages/tracking-core/src/index.ts"),
     },
   },
 });

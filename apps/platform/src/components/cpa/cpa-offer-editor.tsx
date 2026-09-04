@@ -24,7 +24,12 @@ import {
 import { cn } from "@/lib/utils";
 import { readApiErrorMessage } from "@/lib/errors";
 import type { CpaOfferDetails, CpaTrackingMethod } from "@/lib/cpa-offer-details";
-import type { CpaPayoutModel, SerializedCpaOffer } from "@/services/cpa-offer.service";
+import type {
+  CpaPayoutModel,
+  CpaPayoutType,
+  CpaRevenueModel,
+  SerializedCpaOffer,
+} from "@/services/cpa-offer.service";
 
 type EditorRole = "ADMIN" | "ADVERTISER";
 
@@ -44,6 +49,9 @@ type EditorValues = {
   offerType: string;
   description: string;
   thumbnailUrl: string;
+  revenueModel: CpaRevenueModel;
+  payoutType: CpaPayoutType;
+  revenue: string;
   payout: string;
   payoutModel: CpaPayoutModel;
   approvalTime: string;
@@ -95,6 +103,29 @@ const CONVERSION_TYPE_OPTIONS: Array<{ value: CpaPayoutModel; label: string }> =
   { value: "CPM", label: "CPM — Cost Per Impression" },
 ];
 
+const REVENUE_MODEL_OPTIONS: Array<{ value: CpaRevenueModel; label: string }> = [
+  { value: "RPA", label: "RPA - Revenue Per Conversion" },
+  { value: "RPS", label: "RPS - Revenue Per Sale" },
+  { value: "RPC", label: "RPC - Revenue Per Click" },
+  { value: "RPI", label: "RPI - Revenue Per Install" },
+  { value: "RPL", label: "RPL - Revenue Per Lead" },
+  { value: "RPM", label: "RPM - Revenue Per Impression" },
+];
+
+const PAYOUT_MODEL_OPTIONS: Array<{ value: CpaPayoutModel; label: string }> = [
+  { value: "CPC", label: "CPC - Cost Per Click" },
+  { value: "CPA", label: "CPA - Cost Per Conversion" },
+  { value: "CPS", label: "CPS - Cost Per Sale" },
+  { value: "CPI", label: "CPI - Cost Per Install" },
+  { value: "CPL", label: "CPL - Cost Per Lead" },
+  { value: "CPM", label: "Cost Per Impression" },
+];
+
+const PAYOUT_TYPE_OPTIONS: Array<{ value: CpaPayoutType; label: string }> = [
+  { value: "FLAT", label: "Flat Fixed Payout" },
+  { value: "PERCENT", label: "% based Payout" },
+];
+
 const APPROVAL_TIME_OPTIONS = ["Instant", "24 hours", "48 hours", "7 days"];
 const COOKIE_DURATION_OPTIONS = ["1 day", "7 days", "30 days", "90 days"];
 const TRAFFIC_SOURCE_OPTIONS = [
@@ -132,9 +163,12 @@ function conversionLabel(model: CpaPayoutModel) {
   return CONVERSION_TYPE_OPTIONS.find((opt) => opt.value === model)?.label ?? model;
 }
 
-function formatMoney(value: string) {
+function formatMoney(value: string, payoutType: CpaPayoutType = "FLAT") {
   const amount = Number(value);
-  if (!Number.isFinite(amount) || amount <= 0) return "$0.00";
+  if (!Number.isFinite(amount) || amount <= 0) {
+    return payoutType === "PERCENT" ? "0%" : "$0.00";
+  }
+  if (payoutType === "PERCENT") return `${amount.toFixed(2)}%`;
   return `$${amount.toFixed(2)}`;
 }
 
@@ -246,6 +280,9 @@ function valuesFromOffer(
     offerType: details.offerType || offer?.payoutModel || "CPA",
     description: offer?.description ?? "",
     thumbnailUrl: offer?.thumbnailUrl ?? "",
+    revenueModel: offer?.revenueModel ?? "RPA",
+    payoutType: offer?.payoutType ?? "FLAT",
+    revenue: offer?.revenue ?? offer?.payout ?? "",
     payout: offer?.payout ?? "",
     payoutModel: offer?.payoutModel ?? "CPA",
     approvalTime: details.approvalTime || "24 hours",
@@ -308,16 +345,19 @@ export function CpaOfferEditor({
   );
 
   const payoutAmount = Number(values.payout);
-  const canSubmit = useMemo(
-    () =>
+  const revenueAmount = Number(values.revenue);
+  const amountSuffix = values.payoutType === "PERCENT" ? "%" : "$";
+  const canSubmit = useMemo(() => {
+    const baseOk =
       values.name.trim().length >= 2 &&
       values.category.trim().length >= 1 &&
       values.trackingUrl.trim().length >= 1 &&
       Number.isFinite(payoutAmount) &&
       payoutAmount > 0 &&
-      (role === "ADVERTISER" || values.advertiserLabel.trim().length >= 1),
-    [values, payoutAmount, role],
-  );
+      (role === "ADVERTISER" || values.advertiserLabel.trim().length >= 1);
+    if (role !== "ADMIN") return baseOk;
+    return baseOk && Number.isFinite(revenueAmount) && revenueAmount > 0;
+  }, [values, payoutAmount, revenueAmount, role]);
 
   const trackingPreview = useMemo(() => {
     const base = values.trackingUrl.trim() || "https://your-offer-url.com";
@@ -344,9 +384,30 @@ export function CpaOfferEditor({
 
   function buildPayload(publish: boolean) {
     const payout = Number(values.payout);
+    const revenue = Number(values.revenue);
     const publishRequested = role === "ADVERTISER" && publish;
     const status =
       role === "ADMIN" ? (publish ? "ACTIVE" : "PAUSED") : "PAUSED";
+    if (role === "ADMIN") {
+      return {
+        name: values.name.trim(),
+        advertiserLabel: values.advertiserLabel.trim() || advertiserLabelDefault,
+        category: values.category.trim(),
+        country: countriesToStorage(values.countries),
+        trackingUrl: values.trackingUrl.trim(),
+        previewUrl: values.trackingUrl.trim() || "#",
+        thumbnailUrl: values.thumbnailUrl.trim() || null,
+        description: values.description.trim() || null,
+        details: buildDetails(values, publishRequested),
+        payoutModel: values.payoutModel,
+        revenueModel: values.revenueModel,
+        payoutType: values.payoutType,
+        revenue,
+        payout,
+        status,
+        visibility: values.visibility,
+      };
+    }
     return {
       name: values.name.trim(),
       advertiserLabel: values.advertiserLabel.trim() || advertiserLabelDefault,
@@ -363,7 +424,6 @@ export function CpaOfferEditor({
       revenue: payout,
       payout,
       status,
-      ...(role === "ADMIN" ? { visibility: values.visibility } : {}),
     };
   }
 
@@ -512,37 +572,161 @@ export function CpaOfferEditor({
           </SectionCard>
 
           <SectionCard step={2} title="Offer Details">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              <Field label="Payout Amount (USD)" required>
-                <Input
-                  className="h-10 w-full"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={values.payout}
-                  onChange={(e) => patch({ payout: e.target.value })}
-                  placeholder="25.00"
-                />
-              </Field>
-              <Field label="Conversion Type">
-                <Select
-                  value={values.payoutModel}
-                  onValueChange={(value) =>
-                    value && patch({ payoutModel: value as CpaPayoutModel })
-                  }
+            {role === "ADMIN" ? (
+              <div className="space-y-4 rounded-xl border border-border bg-muted/20 p-4">
+                <div>
+                  <h3 className="text-sm font-semibold text-foreground">Payout</h3>
+                  <p className="text-xs text-muted-foreground">
+                    Revenue from advertiser and payout to affiliates.
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <Field
+                    label="Revenue Model"
+                    required
+                    hint="How you'll get paid by advertiser."
+                  >
+                    <Select
+                      value={values.revenueModel}
+                      onValueChange={(value) =>
+                        value && patch({ revenueModel: value as CpaRevenueModel })
+                      }
+                    >
+                      <SelectTrigger className="h-10 w-full bg-card">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {REVENUE_MODEL_OPTIONS.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                  <Field
+                    label="Payout Model"
+                    required
+                    hint="Payment model for affiliates."
+                  >
+                    <Select
+                      value={values.payoutModel}
+                      onValueChange={(value) =>
+                        value && patch({ payoutModel: value as CpaPayoutModel })
+                      }
+                    >
+                      <SelectTrigger className="h-10 w-full bg-card">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {PAYOUT_MODEL_OPTIONS.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                </div>
+                <Field
+                  label="Payout Type"
+                  required
+                  hint="Choose how affiliates will be paid: fixed amount or percentage of sale."
+                  className="max-w-md"
                 >
-                  <SelectTrigger className="h-10 w-full bg-card">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {CONVERSION_TYPE_OPTIONS.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </Field>
+                  <Select
+                    value={values.payoutType}
+                    onValueChange={(value) =>
+                      value && patch({ payoutType: value as CpaPayoutType })
+                    }
+                  >
+                    <SelectTrigger className="h-10 w-full bg-card">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PAYOUT_TYPE_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Field>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <Field
+                    label={`Revenue (${amountSuffix})`}
+                    required
+                    hint="Enter the amount you will be paid by the advertiser."
+                  >
+                    <Input
+                      className="h-10 w-full"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={values.revenue}
+                      onChange={(e) => {
+                        const revenue = e.target.value;
+                        patch({
+                          revenue,
+                          payout: values.payout || revenue,
+                        });
+                      }}
+                      placeholder="160.00"
+                    />
+                  </Field>
+                  <Field
+                    label={`Payout (${amountSuffix})`}
+                    required
+                    hint="Set the payout amount for affiliates."
+                  >
+                    <Input
+                      className="h-10 w-full"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={values.payout}
+                      onChange={(e) => patch({ payout: e.target.value })}
+                      placeholder="120.00"
+                    />
+                  </Field>
+                </div>
+              </div>
+            ) : null}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {role === "ADVERTISER" ? (
+                <>
+                  <Field label="Payout Amount (USD)" required>
+                    <Input
+                      className="h-10 w-full"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={values.payout}
+                      onChange={(e) => patch({ payout: e.target.value })}
+                      placeholder="25.00"
+                    />
+                  </Field>
+                  <Field label="Conversion Type">
+                    <Select
+                      value={values.payoutModel}
+                      onValueChange={(value) =>
+                        value && patch({ payoutModel: value as CpaPayoutModel })
+                      }
+                    >
+                      <SelectTrigger className="h-10 w-full bg-card">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {CONVERSION_TYPE_OPTIONS.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                </>
+              ) : null}
               <Field label="Approval Time">
                 <Select
                   value={values.approvalTime}
@@ -883,11 +1067,21 @@ export function CpaOfferEditor({
                 <dd className="truncate font-medium">{values.name.trim() || "Not Set"}</dd>
               </div>
               <div className="flex justify-between gap-3">
-                <dt className="text-muted-foreground">Payout Amount</dt>
-                <dd className="font-medium">{formatMoney(values.payout)}</dd>
+                <dt className="text-muted-foreground">
+                  {role === "ADMIN" ? "Affiliate Payout" : "Payout Amount"}
+                </dt>
+                <dd className="font-medium">{formatMoney(values.payout, values.payoutType)}</dd>
               </div>
+              {role === "ADMIN" ? (
+                <div className="flex justify-between gap-3">
+                  <dt className="text-muted-foreground">Revenue</dt>
+                  <dd className="font-medium">{formatMoney(values.revenue, values.payoutType)}</dd>
+                </div>
+              ) : null}
               <div className="flex justify-between gap-3">
-                <dt className="text-muted-foreground">Conversion Type</dt>
+                <dt className="text-muted-foreground">
+                  {role === "ADMIN" ? "Payout Model" : "Conversion Type"}
+                </dt>
                 <dd className="truncate font-medium">{conversionLabel(values.payoutModel)}</dd>
               </div>
               <div className="flex items-center justify-between gap-3">
