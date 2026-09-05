@@ -68,6 +68,13 @@ export function getAdminPageMeta(
     };
   }
 
+  if (path === "/admin/offer-network/categories") {
+    return {
+      title: "CPA Offer Categories",
+      subtitle: "Organize CPA offers by category",
+    };
+  }
+
   if (path === "/admin/offer-network/requests") {
     return {
       title: "Offer Requests",
@@ -229,6 +236,7 @@ export function getAdminPageMeta(
     ["/admin/publishers/", "Affiliates"],
     ["/admin/campaigns/", "Campaigns"],
     ["/admin/cpa-offers/", "CPA Offers"],
+    ["/admin/offer-network/", "CPA Offers"],
     ["/admin/digital-products/", "Digital Products"],
     ["/admin/get-paid-tasks/", "Get Paid Tasks"],
     ["/admin/funnel-templates/", "Funnel Templates"],

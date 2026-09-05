@@ -135,6 +135,7 @@ export const ADMIN_NAV: AdminNavEntry[] = [
       children: [
         { label: "All Offers", href: "/admin/offer-network", icon: Store },
         { label: "Add New Offer", href: "/admin/cpa-offers/new", icon: Plus },
+        { label: "Categories", href: "/admin/offer-network/categories", icon: Tags },
         { label: "Offer Requests", href: "/admin/offer-network/requests", icon: ClipboardList },
         { label: "Report", href: "/admin/cpa-offers/report", icon: BarChart3 },
       ],

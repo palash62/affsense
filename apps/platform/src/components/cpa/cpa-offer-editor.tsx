@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Copy, Plus, Send, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
@@ -72,19 +72,6 @@ type EditorValues = {
   creatives: string[];
   resourceLinks: string[];
 };
-
-const CATEGORY_OPTIONS = [
-  "Make Money",
-  "Finance",
-  "Insurance",
-  "Health",
-  "Dating",
-  "E-commerce",
-  "Software",
-  "Gaming",
-  "Education",
-  "Nutra",
-];
 
 const OFFER_TYPE_OPTIONS = [
   { value: "CPA", label: "CPA — Cost Per Action" },
@@ -343,6 +330,34 @@ export function CpaOfferEditor({
   const [values, setValues] = useState<EditorValues>(() =>
     valuesFromOffer(offer, advertiserLabelDefault),
   );
+  const [categoryOptions, setCategoryOptions] = useState<string[]>(() =>
+    offer?.category?.trim() ? [offer.category.trim()] : [],
+  );
+
+  useEffect(() => {
+    const ac = new AbortController();
+    void fetch("/api/v1/admin/cpa-offers/categories", { signal: ac.signal })
+      .then(async (res) => {
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok) return;
+        const names = (json.data as Array<{ name?: string }> | undefined)
+          ?.map((row) => row.name?.trim())
+          .filter((name): name is string => Boolean(name));
+        if (!names?.length) return;
+        setCategoryOptions((prev) => {
+          const merged = new Set(names);
+          for (const name of prev) merged.add(name);
+          const current = values.category.trim();
+          if (current) merged.add(current);
+          return [...merged].sort((a, b) => a.localeCompare(b));
+        });
+      })
+      .catch(() => {
+        /* ignore abort / network */
+      });
+    return () => ac.abort();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- load once on mount
+  }, []);
 
   const payoutAmount = Number(values.payout);
   const revenueAmount = Number(values.revenue);
@@ -511,7 +526,7 @@ export function CpaOfferEditor({
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
-                    {CATEGORY_OPTIONS.map((option) => (
+                    {categoryOptions.map((option) => (
                       <SelectItem key={option} value={option}>
                         {option}
                       </SelectItem>

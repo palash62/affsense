@@ -118,6 +118,12 @@ function isChildActive(pathname: string, child: NavItem, siblings: NavItem[]) {
   if (child.href === "/admin/offer-network") {
     return pathname === "/admin/offer-network";
   }
+  if (child.href === "/admin/offer-network/categories") {
+    return (
+      pathname === "/admin/offer-network/categories" ||
+      pathname.startsWith("/admin/offer-network/categories/")
+    );
+  }
   if (child.href === "/admin/cpa-offers/new") {
     return (
       pathname === "/admin/cpa-offers/new" ||

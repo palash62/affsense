@@ -1527,6 +1527,16 @@ model CpaOffer {
   @@map("cpa_offers")
 }
 
+model CpaOfferCategory {
+  id        String                @id @default(cuid())
+  name      String                @unique
+  status    CatalogCategoryStatus @default(ACTIVE)
+  createdAt DateTime              @default(now()) @map("created_at")
+  updatedAt DateTime              @updatedAt @map("updated_at")
+
+  @@map("cpa_offer_categories")
+}
+
 model CpaOfferClick {
   id           String   @id @default(cuid())
   offerId      String   @map("offer_id")
