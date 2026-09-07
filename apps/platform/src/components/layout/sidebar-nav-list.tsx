@@ -33,6 +33,8 @@ function isItemActive(pathname: string, href: string) {
       pathname.startsWith("/admin/cpa-offers/new/") ||
       pathname === "/admin/cpa-offers/report" ||
       pathname.startsWith("/admin/cpa-offers/report/") ||
+      pathname === "/admin/cpa-offers/report-log" ||
+      pathname.startsWith("/admin/cpa-offers/report-log/") ||
       /^\/admin\/cpa-offers\/[^/]+\/edit$/.test(pathname)
     );
   }
@@ -58,7 +60,17 @@ function isChildActive(pathname: string, child: NavItem, siblings: NavItem[]) {
     );
   }
   if (child.href === "/admin/cpa-offers/report") {
-    return pathname === "/admin/cpa-offers/report" || pathname.startsWith("/admin/cpa-offers/report/");
+    return (
+      pathname === "/admin/cpa-offers/report" ||
+      (pathname.startsWith("/admin/cpa-offers/report/") &&
+        !pathname.startsWith("/admin/cpa-offers/report-log"))
+    );
+  }
+  if (child.href === "/admin/cpa-offers/report-log") {
+    return (
+      pathname === "/admin/cpa-offers/report-log" ||
+      pathname.startsWith("/admin/cpa-offers/report-log/")
+    );
   }
   if (child.href === "/admin/cpa-offers/payouts") {
     return pathname === "/admin/cpa-offers/payouts" || pathname.startsWith("/admin/cpa-offers/payouts/");

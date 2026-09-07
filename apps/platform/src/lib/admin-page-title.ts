@@ -85,7 +85,14 @@ export function getAdminPageMeta(
   if (path === "/admin/cpa-offers/report") {
     return {
       title: "CPA Report",
-      subtitle: "Conversion postbacks by offer, advertiser, and affiliate traffic",
+      subtitle: "Affiliate and offer performance — clicks, conversions, CR, and EPC",
+    };
+  }
+
+  if (path === "/admin/cpa-offers/report-log") {
+    return {
+      title: "CPA Report Log",
+      subtitle: "Conversion postbacks and clicks by offer, advertiser, and affiliate",
     };
   }
 
@@ -211,6 +218,7 @@ export function getAdminPageMeta(
     "/admin/cpa-offers": "CPA Offers",
     "/admin/cpa-offers/offers": "All Offers",
     "/admin/cpa-offers/report": "CPA Report",
+    "/admin/cpa-offers/report-log": "CPA Report Log",
     "/admin/cpa-offers/payouts": "CPA Payouts",
     "/admin/global-postback": "CPA Postback",
     "/admin/leads": "Leads",

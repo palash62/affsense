@@ -2114,3 +2114,321 @@ export async function listCpaClicksForPublisher(
     stats,
   };
 }
+
+export type SerializedCpaAffiliateOfferReportRow = {
+  publisherId: string;
+  publisherName: string;
+  offerId: string;
+  offerName: string;
+  offerStatus: CpaOfferStatus | null;
+  clicks: number;
+  conversions: number;
+  conversionRate: number;
+  epc: string;
+  payout: string;
+  revenue: string;
+  profit: string;
+};
+
+export type CpaAffiliateOfferReportStats = {
+  clicks: number;
+  conversions: number;
+  conversionRate: number;
+  epc: string;
+  payout: string;
+  revenue: string;
+  profit: string;
+};
+
+export type CpaAffiliateOfferReportResult = {
+  items: SerializedCpaAffiliateOfferReportRow[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  stats: CpaAffiliateOfferReportStats;
+};
+
+function buildAffiliateOfferClickWhere(
+  filters: CpaConversionListFilters,
+): Prisma.CpaOfferClickWhereInput {
+  const where: Prisma.CpaOfferClickWhereInput = {
+    publisherId: { not: null },
+  };
+
+  const offerId = filters.offerId?.trim();
+  if (offerId) where.offerId = offerId;
+
+  const advertiserId = filters.advertiserId?.trim();
+  if (advertiserId) where.advertiserId = advertiserId;
+
+  const publisherId = filters.publisherId?.trim();
+  if (publisherId) where.publisherId = publisherId;
+
+  if (filters.from || filters.to) {
+    where.createdAt = {};
+    if (filters.from) {
+      const from = new Date(filters.from);
+      if (!Number.isNaN(from.getTime())) where.createdAt.gte = from;
+    }
+    if (filters.to) {
+      const to = new Date(filters.to);
+      if (!Number.isNaN(to.getTime())) where.createdAt.lte = to;
+    }
+  }
+
+  const q = filters.q?.trim();
+  if (q) {
+    where.OR = [
+      { id: { contains: q } },
+      { offer: { name: { contains: q } } },
+      { offerId: { contains: q } },
+      { advertiser: { name: { contains: q } } },
+      { publisher: { name: { contains: q } } },
+    ];
+  }
+
+  return where;
+}
+
+function buildAffiliateOfferConversionWhere(
+  filters: CpaConversionListFilters,
+): Prisma.CpaOfferConversionWhereInput {
+  const where: Prisma.CpaOfferConversionWhereInput = {
+    clickRecord: { publisherId: { not: null } },
+  };
+
+  const offerId = filters.offerId?.trim();
+  if (offerId) where.offerId = offerId;
+
+  const advertiserId = filters.advertiserId?.trim();
+  if (advertiserId) where.advertiserId = advertiserId;
+
+  const publisherId = filters.publisherId?.trim();
+  if (publisherId) {
+    where.clickRecord = { publisherId };
+  }
+
+  if (filters.from || filters.to) {
+    where.createdAt = {};
+    if (filters.from) {
+      const from = new Date(filters.from);
+      if (!Number.isNaN(from.getTime())) where.createdAt.gte = from;
+    }
+    if (filters.to) {
+      const to = new Date(filters.to);
+      if (!Number.isNaN(to.getTime())) where.createdAt.lte = to;
+    }
+  }
+
+  const q = filters.q?.trim();
+  if (q) {
+    where.OR = [
+      { clickId: { contains: q } },
+      { offer: { name: { contains: q } } },
+      { offerId: { contains: q } },
+      { advertiser: { name: { contains: q } } },
+      { clickRecord: { publisher: { name: { contains: q } } } },
+    ];
+  }
+
+  return where;
+}
+
+export async function listCpaAffiliateOfferReportForAdmin(
+  filters: CpaConversionListFilters,
+): Promise<CpaAffiliateOfferReportResult> {
+  const page = Math.max(1, filters.page ?? 1);
+  const limit = Math.min(100, Math.max(1, filters.limit ?? 20));
+
+  const clickWhere = buildAffiliateOfferClickWhere(filters);
+  const conversionWhere = buildAffiliateOfferConversionWhere(filters);
+
+  const [clickGroups, conversionRows] = await Promise.all([
+    prisma.cpaOfferClick.groupBy({
+      by: ["publisherId", "offerId"],
+      where: clickWhere,
+      _count: { _all: true },
+    }),
+    prisma.cpaOfferConversion.findMany({
+      where: conversionWhere,
+      select: {
+        id: true,
+        offerId: true,
+        payout: true,
+        offer: { select: { name: true, status: true, revenue: true, payout: true } },
+        clickRecord: { select: { publisherId: true } },
+      },
+    }),
+  ]);
+
+  const conversionIds = conversionRows.map((r) => r.id);
+  const deliveries =
+    conversionIds.length === 0
+      ? []
+      : await prisma.cpaPostbackDelivery.findMany({
+          where: {
+            conversionId: { in: conversionIds },
+            target: "ADVERTISER_GLOBAL",
+          },
+          select: { conversionId: true, status: true },
+        });
+
+  const statusByConversionId = new Map<string, { hasPending: boolean; hasRejected: boolean }>();
+  for (const d of deliveries) {
+    const cur = statusByConversionId.get(d.conversionId) ?? {
+      hasPending: false,
+      hasRejected: false,
+    };
+    if (d.status === "PENDING") cur.hasPending = true;
+    if (d.status === "FAILED" || d.status === "SKIPPED") cur.hasRejected = true;
+    statusByConversionId.set(d.conversionId, cur);
+  }
+
+  type Acc = {
+    publisherId: string;
+    offerId: string;
+    clicks: number;
+    conversions: number;
+    payout: number;
+    revenue: number;
+  };
+
+  const byKey = new Map<string, Acc>();
+  const keyOf = (publisherId: string, offerId: string) => `${publisherId}::${offerId}`;
+
+  for (const g of clickGroups) {
+    if (!g.publisherId) continue;
+    const key = keyOf(g.publisherId, g.offerId);
+    byKey.set(key, {
+      publisherId: g.publisherId,
+      offerId: g.offerId,
+      clicks: g._count._all,
+      conversions: 0,
+      payout: 0,
+      revenue: 0,
+    });
+  }
+
+  for (const row of conversionRows) {
+    const publisherId = row.clickRecord?.publisherId;
+    if (!publisherId) continue;
+
+    const statusFlags = statusByConversionId.get(row.id);
+    let status: "A" | "P" | "R" = "A";
+    if (statusFlags?.hasPending) status = "P";
+    else if (statusFlags?.hasRejected) status = "R";
+    if (status !== "A") continue;
+
+    const key = keyOf(publisherId, row.offerId);
+    const acc = byKey.get(key) ?? {
+      publisherId,
+      offerId: row.offerId,
+      clicks: 0,
+      conversions: 0,
+      payout: 0,
+      revenue: 0,
+    };
+
+    acc.conversions += 1;
+    acc.revenue += Number(row.offer.revenue ?? 0);
+    acc.payout +=
+      row.payout != null ? Number(row.payout) : Number(row.offer.payout ?? 0);
+    byKey.set(key, acc);
+  }
+
+  const publisherIds = Array.from(new Set([...byKey.values()].map((r) => r.publisherId)));
+  const offerIds = Array.from(new Set([...byKey.values()].map((r) => r.offerId)));
+
+  const [publishers, offers] = await Promise.all([
+    publisherIds.length
+      ? prisma.user.findMany({
+          where: { id: { in: publisherIds } },
+          select: { id: true, name: true },
+        })
+      : Promise.resolve([] as { id: string; name: string }[]),
+    offerIds.length
+      ? prisma.cpaOffer.findMany({
+          where: { id: { in: offerIds } },
+          select: { id: true, name: true, status: true },
+        })
+      : Promise.resolve([] as { id: string; name: string; status: CpaOfferStatus }[]),
+  ]);
+
+  const publisherNameById = new Map(publishers.map((p) => [p.id, p.name]));
+  const offerById = new Map(offers.map((o) => [o.id, o]));
+
+  const allRows: SerializedCpaAffiliateOfferReportRow[] = Array.from(byKey.values())
+    .map((acc) => {
+      const clicks = acc.clicks;
+      const conversions = acc.conversions;
+      const payout = round2(acc.payout);
+      const revenue = round2(acc.revenue);
+      const profit = round2(revenue - payout);
+      const conversionRate =
+        clicks > 0 ? Math.round((conversions / clicks) * 10000) / 100 : 0;
+      const epc = clicks > 0 ? round2(payout / clicks) : 0;
+      const offer = offerById.get(acc.offerId);
+
+      return {
+        publisherId: acc.publisherId,
+        publisherName: publisherNameById.get(acc.publisherId) ?? "Unknown",
+        offerId: acc.offerId,
+        offerName: offer?.name ?? acc.offerId,
+        offerStatus: offer?.status ?? null,
+        clicks,
+        conversions,
+        conversionRate,
+        epc: moneyToString(epc),
+        payout: moneyToString(payout),
+        revenue: moneyToString(revenue),
+        profit: moneyToString(profit),
+      };
+    })
+    .sort((a, b) => {
+      const byPub = a.publisherName.localeCompare(b.publisherName);
+      if (byPub !== 0) return byPub;
+      return a.offerName.localeCompare(b.offerName);
+    });
+
+  const totals = allRows.reduce(
+    (sum, row) => {
+      sum.clicks += row.clicks;
+      sum.conversions += row.conversions;
+      sum.payout += Number(row.payout);
+      sum.revenue += Number(row.revenue);
+      return sum;
+    },
+    { clicks: 0, conversions: 0, payout: 0, revenue: 0 },
+  );
+
+  const totalPayout = round2(totals.payout);
+  const totalRevenue = round2(totals.revenue);
+  const totalProfit = round2(totalRevenue - totalPayout);
+  const totalCr =
+    totals.clicks > 0
+      ? Math.round((totals.conversions / totals.clicks) * 10000) / 100
+      : 0;
+  const totalEpc = totals.clicks > 0 ? round2(totalPayout / totals.clicks) : 0;
+
+  const total = allRows.length;
+  const totalPages = Math.max(1, Math.ceil(total / limit));
+  const items = allRows.slice((page - 1) * limit, page * limit);
+
+  return {
+    items,
+    total,
+    page,
+    limit,
+    totalPages,
+    stats: {
+      clicks: totals.clicks,
+      conversions: totals.conversions,
+      conversionRate: totalCr,
+      epc: moneyToString(totalEpc),
+      payout: moneyToString(totalPayout),
+      revenue: moneyToString(totalRevenue),
+      profit: moneyToString(totalProfit),
+    },
+  };
+}

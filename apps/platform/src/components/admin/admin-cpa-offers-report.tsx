@@ -422,7 +422,7 @@ export function AdminCpaOffersReport({
     <div className="space-y-6">
       <PageHero
         eyebrow="CPA Offers"
-        title="Report"
+        title="Report Log"
         description="Clicks and conversion postbacks by offer, advertiser, click ID, and payout."
         badge={loading ? undefined : `${total} ${noun} · ${rangeLabel}`}
       />
