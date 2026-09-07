@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { formatAdvertiserOptionLabel } from "@/lib/deposit";
 import { readApiErrorMessage } from "@/lib/errors";
 import type { CpaOfferDetails, CpaTrackingMethod } from "@/lib/cpa-offer-details";
 import type {
@@ -33,11 +34,19 @@ import type {
 
 type EditorRole = "ADMIN" | "ADVERTISER";
 
+type AdvertiserOption = {
+  id: string;
+  name: string;
+  email: string;
+  advertiserProfile?: { company: string } | null;
+};
+
 type CpaOfferEditorProps = {
   role: EditorRole;
   mode?: "create" | "edit";
   offer?: SerializedCpaOffer | null;
   advertiserLabelDefault?: string;
+  advertisers?: AdvertiserOption[];
 };
 
 type UrlParam = { key: string; value: string };
@@ -45,6 +54,7 @@ type UrlParam = { key: string; value: string };
 type EditorValues = {
   name: string;
   advertiserLabel: string;
+  ownerAdvertiserId: string;
   category: string;
   offerType: string;
   description: string;
@@ -263,6 +273,7 @@ function valuesFromOffer(
   return {
     name: offer?.name ?? "",
     advertiserLabel: offer?.advertiserLabel || advertiserLabelDefault,
+    ownerAdvertiserId: offer?.ownerAdvertiserId ?? "",
     category: offer?.category ?? "",
     offerType: details.offerType || offer?.payoutModel || "CPA",
     description: offer?.description ?? "",
@@ -323,6 +334,7 @@ export function CpaOfferEditor({
   mode = "create",
   offer,
   advertiserLabelDefault = "Platform",
+  advertisers = [],
 }: CpaOfferEditorProps) {
   const router = useRouter();
   const cancelHref = role === "ADMIN" ? "/admin/offer-network" : "/advertiser/cpa-offers";
@@ -369,7 +381,7 @@ export function CpaOfferEditor({
       values.trackingUrl.trim().length >= 1 &&
       Number.isFinite(payoutAmount) &&
       payoutAmount > 0 &&
-      (role === "ADVERTISER" || values.advertiserLabel.trim().length >= 1);
+      (role === "ADVERTISER" || values.ownerAdvertiserId.trim().length >= 1);
     if (role !== "ADMIN") return baseOk;
     return baseOk && Number.isFinite(revenueAmount) && revenueAmount > 0;
   }, [values, payoutAmount, revenueAmount, role]);
@@ -404,9 +416,13 @@ export function CpaOfferEditor({
     const status =
       role === "ADMIN" ? (publish ? "ACTIVE" : "PAUSED") : "PAUSED";
     if (role === "ADMIN") {
+      const selected = advertisers.find((a) => a.id === values.ownerAdvertiserId);
       return {
         name: values.name.trim(),
-        advertiserLabel: values.advertiserLabel.trim() || advertiserLabelDefault,
+        ownerAdvertiserId: values.ownerAdvertiserId.trim(),
+        advertiserLabel: selected
+          ? formatAdvertiserOptionLabel(selected).split(" · ")[0] || selected.name
+          : values.advertiserLabel.trim() || advertiserLabelDefault,
         category: values.category.trim(),
         country: countriesToStorage(values.countries),
         trackingUrl: values.trackingUrl.trim(),
@@ -554,13 +570,36 @@ export function CpaOfferEditor({
             </div>
             {role === "ADMIN" ? (
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <Field label="Advertiser" required className="sm:col-span-1">
-                  <Input
-                    className="h-10 w-full"
-                    value={values.advertiserLabel}
-                    onChange={(e) => patch({ advertiserLabel: e.target.value })}
-                    placeholder="Platform"
-                  />
+                <Field
+                  label="Advertiser"
+                  required
+                  className="sm:col-span-1"
+                  hint="This advertiser will see the offer in their CPA Offers panel."
+                >
+                  <Select
+                    value={values.ownerAdvertiserId || undefined}
+                    onValueChange={(value) => {
+                      if (!value) return;
+                      const selected = advertisers.find((a) => a.id === value);
+                      patch({
+                        ownerAdvertiserId: value,
+                        advertiserLabel: selected
+                          ? selected.advertiserProfile?.company?.trim() || selected.name
+                          : values.advertiserLabel,
+                      });
+                    }}
+                  >
+                    <SelectTrigger className="h-10 w-full">
+                      <SelectValue placeholder="Select advertiser" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {advertisers.map((advertiser) => (
+                        <SelectItem key={advertiser.id} value={advertiser.id}>
+                          {formatAdvertiserOptionLabel(advertiser)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </Field>
               </div>
             ) : null}

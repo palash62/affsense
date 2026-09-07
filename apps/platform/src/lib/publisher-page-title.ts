@@ -17,6 +17,10 @@ export function getPublisherPageMeta(
 
   const exact: Record<string, { title: string; subtitle?: string }> = {
     "/publisher/marketplace": { title: "Marketplace", subtitle: "Browse products to promote" },
+    "/publisher/marketplace/report": {
+      title: "Marketplace Report",
+      subtitle: "Orders and clicks from your digital product promotions",
+    },
     "/publisher/get-paid-tasks": {
       title: "Paid Task",
       subtitle: "Complete tasks and earn rewards",

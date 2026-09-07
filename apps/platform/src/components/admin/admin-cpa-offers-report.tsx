@@ -22,6 +22,14 @@ import { CpaOfferStatusDot } from "@/components/cpa/cpa-offer-thumb";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
   Table,
   TableBody,
   TableCell,
@@ -31,9 +39,16 @@ import {
 } from "@/components/ui/table";
 import { formatAdvertiserOptionLabel } from "@/lib/deposit";
 import { cn } from "@/lib/utils";
-import type { CpaConversionListResult } from "@/services/cpa-offer.service";
+import type {
+  CpaClickListResult,
+  CpaConversionListResult,
+  SerializedCpaClick,
+  SerializedCpaConversion,
+} from "@/services/cpa-offer.service";
 
 const PAGE_SIZE = 20;
+
+type ReportTab = "conversions" | "clicks";
 
 type AdvertiserOption = {
   id: string;
@@ -42,10 +57,17 @@ type AdvertiserOption = {
   advertiserProfile?: { company: string } | null;
 };
 
+type PublisherOption = {
+  id: string;
+  name: string;
+  email: string;
+};
+
 type AppliedFilters = {
   q: string;
   offerId: string;
   advertiserId: string;
+  publisherId: string;
   from: string;
   to: string;
 };
@@ -54,6 +76,7 @@ const emptyFilters: AppliedFilters = {
   q: "",
   offerId: "",
   advertiserId: "",
+  publisherId: "",
   from: "",
   to: "",
 };
@@ -294,10 +317,14 @@ function AdvertiserSearchSelect({
 
 export function AdminCpaOffersReport({
   advertisers,
+  publishers,
 }: {
   advertisers: AdvertiserOption[];
+  publishers: PublisherOption[];
 }) {
-  const [result, setResult] = useState<CpaConversionListResult | null>(null);
+  const [tab, setTab] = useState<ReportTab>("conversions");
+  const [conversionResult, setConversionResult] = useState<CpaConversionListResult | null>(null);
+  const [clickResult, setClickResult] = useState<CpaClickListResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [draft, setDraft] = useState<AppliedFilters>(emptyFilters);
   const [applied, setApplied] = useState<AppliedFilters>(emptyFilters);
@@ -311,6 +338,7 @@ export function AdminCpaOffersReport({
     if (applied.q.trim()) params.set("q", applied.q.trim());
     if (applied.offerId.trim()) params.set("offerId", applied.offerId.trim());
     if (applied.advertiserId.trim()) params.set("advertiserId", applied.advertiserId.trim());
+    if (applied.publisherId.trim()) params.set("publisherId", applied.publisherId.trim());
     if (applied.from.trim()) params.set("from", new Date(applied.from).toISOString());
     if (applied.to.trim()) {
       const end = new Date(applied.to);
@@ -318,11 +346,19 @@ export function AdminCpaOffersReport({
       params.set("to", end.toISOString());
     }
 
-    const res = await fetch(`/api/v1/admin/cpa-offers/conversions?${params}`);
+    const endpoint =
+      tab === "clicks"
+        ? `/api/v1/admin/cpa-offers/clicks?${params}`
+        : `/api/v1/admin/cpa-offers/conversions?${params}`;
+    const res = await fetch(endpoint);
     const body = await res.json().catch(() => ({}));
-    setResult(body.data ?? null);
+    if (tab === "clicks") {
+      setClickResult(body.data ?? null);
+    } else {
+      setConversionResult(body.data ?? null);
+    }
     setLoading(false);
-  }, [page, applied]);
+  }, [page, applied, tab]);
 
   useEffect(() => {
     void load();
@@ -339,17 +375,36 @@ export function AdminCpaOffersReport({
     setPage(1);
   }
 
-  const items = result?.items ?? [];
-  const total = result?.total ?? 0;
-  const totalPages = result?.totalPages ?? 1;
-  const stats = result?.stats;
+  function onTabChange(next: string | number | null) {
+    const value = String(next ?? "conversions") as ReportTab;
+    if (value !== "conversions" && value !== "clicks") return;
+    setTab(value);
+    setPage(1);
+  }
+
+  const activeResult = tab === "clicks" ? clickResult : conversionResult;
+  const items = activeResult?.items ?? [];
+  const total = activeResult?.total ?? 0;
+  const totalPages = activeResult?.totalPages ?? 1;
+  const stats = activeResult?.stats;
+
+  const conversionItems = (conversionResult?.items ?? []) as SerializedCpaConversion[];
+  const clickItems = (clickResult?.items ?? []) as SerializedCpaClick[];
 
   const pageStats = useMemo(() => {
-    const payoutSum = items.reduce((sum, row) => sum + Number(row.payout ?? 0), 0);
-    const uniqueOffers = new Set(items.map((row) => row.offerId)).size;
-    const withClickId = items.filter((row) => Boolean(row.clickId)).length;
-    return { payoutSum, uniqueOffers, withClickId };
-  }, [items]);
+    if (tab === "clicks") {
+      return {
+        payoutSum: 0,
+        uniqueOffers: new Set(clickItems.map((row) => row.offerId)).size,
+        withClickId: clickItems.length,
+        convertedCount: clickItems.filter((row) => row.converted).length,
+      };
+    }
+    const payoutSum = conversionItems.reduce((sum, row) => sum + Number(row.payout ?? 0), 0);
+    const uniqueOffers = new Set(conversionItems.map((row) => row.offerId)).size;
+    const withClickId = conversionItems.filter((row) => Boolean(row.clickId)).length;
+    return { payoutSum, uniqueOffers, withClickId, convertedCount: 0 };
+  }, [tab, conversionItems, clickItems]);
 
   const appliedAdvertiser = useMemo(
     () => advertisers.find((a) => a.id === applied.advertiserId) ?? null,
@@ -361,13 +416,15 @@ export function AdminCpaOffersReport({
       ? [applied.from || "…", applied.to || "…"].join(" → ")
       : "All time";
 
+  const noun = tab === "clicks" ? "clicks" : "conversions";
+
   return (
     <div className="space-y-6">
       <PageHero
         eyebrow="CPA Offers"
         title="Report"
-        description="Conversion postbacks by offer, advertiser, click ID, and payout."
-        badge={loading ? undefined : `${total} conversions · ${rangeLabel}`}
+        description="Clicks and conversion postbacks by offer, advertiser, click ID, and payout."
+        badge={loading ? undefined : `${total} ${noun} · ${rangeLabel}`}
       />
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -413,8 +470,14 @@ export function AdminCpaOffersReport({
           accent="purple"
         />
         <NeutralStatCard
-          label="With click ID"
-          value={loading ? "…" : pageStats.withClickId}
+          label={tab === "clicks" ? "Converted (page)" : "With click ID"}
+          value={
+            loading
+              ? "…"
+              : tab === "clicks"
+                ? pageStats.convertedCount
+                : pageStats.withClickId
+          }
           icon={Activity}
           accent="green"
         />
@@ -443,14 +506,14 @@ export function AdminCpaOffersReport({
           <div>
             <p className="text-sm font-semibold">Filters</p>
             <p className="text-xs text-white/75">
-              Narrow conversions by advertiser, date, offer, or search
+              Narrow by advertiser, affiliate, date, offer, or search
             </p>
           </div>
         </div>
 
         <div className="bg-gradient-to-br from-slate-50/80 to-white p-4">
           <div className="grid grid-cols-1 items-end gap-3 sm:grid-cols-2 xl:grid-cols-12">
-            <div className="space-y-1 sm:col-span-2 xl:col-span-3">
+            <div className="space-y-1 sm:col-span-2 xl:col-span-2">
               <label className="text-xs font-medium text-muted-foreground">Advertiser</label>
               <AdvertiserSearchSelect
                 advertisers={advertisers}
@@ -459,6 +522,27 @@ export function AdminCpaOffersReport({
                   setDraft((prev) => ({ ...prev, advertiserId }))
                 }
               />
+            </div>
+            <div className="space-y-1 sm:col-span-2 xl:col-span-2">
+              <label className="text-xs font-medium text-muted-foreground">Affiliate</label>
+              <Select
+                value={draft.publisherId || "all"}
+                onValueChange={(v) =>
+                  setDraft((prev) => ({ ...prev, publisherId: v === "all" ? "" : (v ?? "") }))
+                }
+              >
+                <SelectTrigger className="h-9 w-full bg-white">
+                  <SelectValue placeholder="All affiliates" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All affiliates</SelectItem>
+                  {publishers.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-1 xl:col-span-2">
               <label className="text-xs font-medium text-muted-foreground">From</label>
@@ -469,7 +553,7 @@ export function AdminCpaOffersReport({
                 className="h-9 bg-white"
               />
             </div>
-            <div className="space-y-1 xl:col-span-2">
+            <div className="space-y-1 xl:col-span-1">
               <label className="text-xs font-medium text-muted-foreground">To</label>
               <Input
                 type="date"
@@ -495,7 +579,7 @@ export function AdminCpaOffersReport({
                   className="h-9 bg-white pl-9"
                   value={draft.q}
                   onChange={(e) => setDraft((prev) => ({ ...prev, q: e.target.value }))}
-                  placeholder="Offer, advertiser, or click ID"
+                  placeholder="Offer, advertiser, affiliate, or click ID"
                   onKeyDown={(e) => {
                     if (e.key === "Enter") applyFilters();
                   }}
@@ -514,174 +598,388 @@ export function AdminCpaOffersReport({
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-[18px] border border-border bg-card shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-gradient-to-r from-sky-50 via-white to-emerald-50 px-5 py-3.5">
-          <div>
-            <p className="text-sm font-semibold text-foreground">Conversion log</p>
-            <p className="text-xs text-muted-foreground">
-              {loading
-                ? "Loading…"
-                : `Showing ${items.length} of ${total} conversions · page ${page} of ${totalPages}`}
-            </p>
-          </div>
-          {!loading && total > 0 ? (
-            <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">
-              Page payout {formatCurrency(pageStats.payoutSum)}
-            </span>
-          ) : null}
-        </div>
+      <Tabs value={tab} onValueChange={onTabChange} className="gap-4">
+        <TabsList
+          variant="line"
+          className="h-auto w-full justify-start rounded-none border-b border-border bg-transparent p-0"
+        >
+          <TabsTrigger
+            value="conversions"
+            className="rounded-none border-b-2 border-transparent px-4 py-2.5 data-active:border-primary data-active:bg-transparent data-active:shadow-none"
+          >
+            Conversions
+          </TabsTrigger>
+          <TabsTrigger
+            value="clicks"
+            className="rounded-none border-b-2 border-transparent px-4 py-2.5 data-active:border-primary data-active:bg-transparent data-active:shadow-none"
+          >
+            Clicks
+          </TabsTrigger>
+        </TabsList>
 
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-muted/90 hover:bg-muted/90">
-              <TableHead>Date</TableHead>
-              <TableHead>Advertiser</TableHead>
-              <TableHead>Offer</TableHead>
-              <TableHead>Click ID</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Payout</TableHead>
-              <TableHead className="text-right">Revenue</TableHead>
-              <TableHead>Raw</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading ? (
-              <TableRow>
-                <TableCell colSpan={8} className="py-12 text-center text-sm text-muted-foreground">
-                  Loading conversions…
-                </TableCell>
-              </TableRow>
-            ) : items.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={8} className="py-12 text-center">
-                  <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-50 text-violet-600">
-                    <Activity className="h-5 w-5" />
-                  </div>
-                  <p className="text-sm font-medium text-foreground">No conversions found</p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Try widening the date range or clearing filters.
-                  </p>
-                </TableCell>
-              </TableRow>
-            ) : (
-              items.map((row) => (
-                <TableRow key={row.id} className="hover:bg-sky-50/40">
-                  <TableCell className="whitespace-nowrap text-sm text-foreground">
-                    <span className="rounded-md bg-sky-50 px-2 py-0.5 text-xs font-medium text-sky-800">
-                      {formatDateTime(row.createdAt)}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    {row.advertiserName ? (
-                      <div>
-                        <p className="font-medium text-foreground">{row.advertiserName}</p>
-                        {row.advertiserId ? (
-                          <p className="font-mono text-[11px] text-muted-foreground">
-                            #{row.advertiserId.slice(-8)}
-                          </p>
-                        ) : null}
-                      </div>
-                    ) : (
-                      <span className="text-muted-foreground">—</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2.5">
-                      <CpaOfferStatusDot status={row.offerStatus} />
-                      <div>
-                        <p className="font-medium text-foreground">{row.offerName}</p>
-                        <p className="font-mono text-[11px] text-muted-foreground">
-                          #{row.offerId.slice(-8)}
-                        </p>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell className="max-w-[10rem] truncate font-mono text-xs text-muted-foreground">
-                    {row.clickId ? (
-                      <span className="rounded bg-violet-50 px-1.5 py-0.5 text-violet-700">
-                        {row.clickId}
-                      </span>
-                    ) : (
-                      "—"
-                    )}
-                  </TableCell>
-                  <TableCell className="whitespace-nowrap">
-                    {row.status === "A" ? (
-                      <span className="rounded bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">
-                        A
-                      </span>
-                    ) : row.status === "P" ? (
-                      <span className="rounded bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-700">
-                        P
-                      </span>
-                    ) : (
-                      <span className="rounded bg-red-50 px-2 py-0.5 text-xs font-semibold text-red-700">
-                        R
-                      </span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {row.payout != null ? (
-                      <span className="inline-flex rounded-full bg-emerald-50 px-2.5 py-0.5 text-sm font-semibold tabular-nums text-emerald-700">
-                        {formatCurrency(Number(row.payout))}
-                      </span>
-                    ) : (
-                      "—"
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {row.revenue != null ? (
-                      <span className="inline-flex rounded-full bg-sky-50 px-2.5 py-0.5 text-sm font-semibold tabular-nums text-sky-700">
-                        {formatCurrency(Number(row.revenue))}
-                      </span>
-                    ) : (
-                      "—"
-                    )}
-                  </TableCell>
-                  <TableCell
-                    className="max-w-[14rem] truncate font-mono text-[11px] text-muted-foreground"
-                    title={
-                      typeof row.rawQuery === "string"
-                        ? row.rawQuery
-                        : JSON.stringify(row.rawQuery ?? "")
-                    }
-                  >
-                    {formatRawQuery(row.rawQuery)}
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-
-        {totalPages > 1 ? (
-          <div className="flex items-center justify-between border-t border-border bg-muted/50 px-5 py-3">
-            <p className="text-xs text-muted-foreground">
-              Page {page} of {totalPages}
-            </p>
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={page <= 1 || loading}
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-              >
-                Previous
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={page >= totalPages || loading}
-                onClick={() => setPage((p) => p + 1)}
-              >
-                Next
-              </Button>
+        <TabsContent value="conversions" className="mt-0">
+          <div className="overflow-hidden rounded-[18px] border border-border bg-card shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-gradient-to-r from-sky-50 via-white to-emerald-50 px-5 py-3.5">
+              <div>
+                <p className="text-sm font-semibold text-foreground">Conversion log</p>
+                <p className="text-xs text-muted-foreground">
+                  {loading
+                    ? "Loading…"
+                    : `Showing ${conversionItems.length} of ${conversionResult?.total ?? 0} conversions · page ${page} of ${conversionResult?.totalPages ?? 1}`}
+                </p>
+              </div>
+              {!loading && (conversionResult?.total ?? 0) > 0 ? (
+                <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">
+                  Page payout {formatCurrency(pageStats.payoutSum)}
+                </span>
+              ) : null}
             </div>
+
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/90 hover:bg-muted/90">
+                  <TableHead>Date</TableHead>
+                  <TableHead>Advertiser</TableHead>
+                  <TableHead>Affiliate</TableHead>
+                  <TableHead>Offer</TableHead>
+                  <TableHead>Click ID</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Payout</TableHead>
+                  <TableHead className="text-right">Revenue</TableHead>
+                  <TableHead>Raw</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={9} className="py-12 text-center text-sm text-muted-foreground">
+                      Loading conversions…
+                    </TableCell>
+                  </TableRow>
+                ) : conversionItems.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={9} className="py-12 text-center">
+                      <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-50 text-violet-600">
+                        <Activity className="h-5 w-5" />
+                      </div>
+                      <p className="text-sm font-medium text-foreground">No conversions found</p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Try widening the date range or clearing filters.
+                      </p>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  conversionItems.map((row) => (
+                    <TableRow key={row.id} className="hover:bg-sky-50/40">
+                      <TableCell className="whitespace-nowrap text-sm text-foreground">
+                        <span className="rounded-md bg-sky-50 px-2 py-0.5 text-xs font-medium text-sky-800">
+                          {formatDateTime(row.createdAt)}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        {row.advertiserName ? (
+                          <div>
+                            <p className="font-medium text-foreground">{row.advertiserName}</p>
+                            {row.advertiserId ? (
+                              <p className="font-mono text-[11px] text-muted-foreground">
+                                #{row.advertiserId.slice(-8)}
+                              </p>
+                            ) : null}
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {row.publisherName ? (
+                          <div>
+                            <p className="font-medium text-foreground">{row.publisherName}</p>
+                            {row.publisherId ? (
+                              <p className="font-mono text-[11px] text-muted-foreground">
+                                #{row.publisherId.slice(-8)}
+                              </p>
+                            ) : null}
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2.5">
+                          <CpaOfferStatusDot status={row.offerStatus} />
+                          <div>
+                            <p className="font-medium text-foreground">{row.offerName}</p>
+                            <p className="font-mono text-[11px] text-muted-foreground">
+                              #{row.offerId.slice(-8)}
+                            </p>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="max-w-[10rem] truncate font-mono text-xs text-muted-foreground">
+                        {row.clickId ? (
+                          <span className="rounded bg-violet-50 px-1.5 py-0.5 text-violet-700">
+                            {row.clickId}
+                          </span>
+                        ) : (
+                          "—"
+                        )}
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap">
+                        {row.status === "A" ? (
+                          <span className="rounded bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">
+                            A
+                          </span>
+                        ) : row.status === "P" ? (
+                          <span className="rounded bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-700">
+                            P
+                          </span>
+                        ) : (
+                          <span className="rounded bg-red-50 px-2 py-0.5 text-xs font-semibold text-red-700">
+                            R
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {row.payout != null ? (
+                          <span className="inline-flex rounded-full bg-emerald-50 px-2.5 py-0.5 text-sm font-semibold tabular-nums text-emerald-700">
+                            {formatCurrency(Number(row.payout))}
+                          </span>
+                        ) : (
+                          "—"
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {row.revenue != null ? (
+                          <span className="inline-flex rounded-full bg-sky-50 px-2.5 py-0.5 text-sm font-semibold tabular-nums text-sky-700">
+                            {formatCurrency(Number(row.revenue))}
+                          </span>
+                        ) : (
+                          "—"
+                        )}
+                      </TableCell>
+                      <TableCell
+                        className="max-w-[14rem] truncate font-mono text-[11px] text-muted-foreground"
+                        title={
+                          typeof row.rawQuery === "string"
+                            ? row.rawQuery
+                            : JSON.stringify(row.rawQuery ?? "")
+                        }
+                      >
+                        {formatRawQuery(row.rawQuery)}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+
+            {(conversionResult?.totalPages ?? 1) > 1 ? (
+              <div className="flex items-center justify-between border-t border-border bg-muted/50 px-5 py-3">
+                <p className="text-xs text-muted-foreground">
+                  Page {page} of {conversionResult?.totalPages ?? 1}
+                </p>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={page <= 1 || loading}
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  >
+                    Previous
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={page >= totalPages || loading}
+                    onClick={() => setPage((p) => p + 1)}
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            ) : null}
           </div>
-        ) : null}
-      </div>
+        </TabsContent>
+
+        <TabsContent value="clicks" className="mt-0">
+          <div className="overflow-hidden rounded-[18px] border border-border bg-card shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-gradient-to-r from-sky-50 via-white to-emerald-50 px-5 py-3.5">
+              <div>
+                <p className="text-sm font-semibold text-foreground">Click log</p>
+                <p className="text-xs text-muted-foreground">
+                  {loading
+                    ? "Loading…"
+                    : `Showing ${clickItems.length} of ${clickResult?.total ?? 0} clicks · page ${page} of ${clickResult?.totalPages ?? 1}`}
+                </p>
+              </div>
+              {!loading && (clickResult?.total ?? 0) > 0 ? (
+                <span className="rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold text-sky-800">
+                  Page converted {pageStats.convertedCount}
+                </span>
+              ) : null}
+            </div>
+
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/90 hover:bg-muted/90">
+                  <TableHead>Date</TableHead>
+                  <TableHead>Advertiser</TableHead>
+                  <TableHead>Affiliate</TableHead>
+                  <TableHead>Offer</TableHead>
+                  <TableHead>Click ID</TableHead>
+                  <TableHead>IP</TableHead>
+                  <TableHead>Device</TableHead>
+                  <TableHead>Browser</TableHead>
+                  <TableHead>Source</TableHead>
+                  <TableHead>Sub ID</TableHead>
+                  <TableHead>Converted</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={11} className="py-12 text-center text-sm text-muted-foreground">
+                      Loading clicks…
+                    </TableCell>
+                  </TableRow>
+                ) : clickItems.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={11} className="py-12 text-center">
+                      <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-50 text-violet-600">
+                        <Activity className="h-5 w-5" />
+                      </div>
+                      <p className="text-sm font-medium text-foreground">No clicks found</p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Try widening the date range or clearing filters.
+                      </p>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  clickItems.map((row) => (
+                    <TableRow key={row.id} className="hover:bg-sky-50/40">
+                      <TableCell className="whitespace-nowrap text-sm text-foreground">
+                        <span className="rounded-md bg-sky-50 px-2 py-0.5 text-xs font-medium text-sky-800">
+                          {formatDateTime(row.createdAt)}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        {row.advertiserName ? (
+                          <div>
+                            <p className="font-medium text-foreground">{row.advertiserName}</p>
+                            {row.advertiserId ? (
+                              <p className="font-mono text-[11px] text-muted-foreground">
+                                #{row.advertiserId.slice(-8)}
+                              </p>
+                            ) : null}
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {row.publisherName ? (
+                          <div>
+                            <p className="font-medium text-foreground">{row.publisherName}</p>
+                            {row.publisherId ? (
+                              <p className="font-mono text-[11px] text-muted-foreground">
+                                #{row.publisherId.slice(-8)}
+                              </p>
+                            ) : null}
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2.5">
+                          <CpaOfferStatusDot status={row.offerStatus} />
+                          <div>
+                            <p className="font-medium text-foreground">{row.offerName}</p>
+                            <p className="font-mono text-[11px] text-muted-foreground">
+                              #{row.offerId.slice(-8)}
+                            </p>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="max-w-[10rem] truncate font-mono text-xs text-muted-foreground">
+                        <span className="rounded bg-violet-50 px-1.5 py-0.5 text-violet-700" title={row.id}>
+                          {row.id}
+                        </span>
+                      </TableCell>
+                      <TableCell
+                        className="max-w-[8rem] truncate font-mono text-xs text-muted-foreground"
+                        title={row.ip ?? undefined}
+                      >
+                        {row.ip || "—"}
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap text-sm text-foreground">
+                        {row.device}
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap text-sm text-foreground">
+                        {row.browser}
+                      </TableCell>
+                      <TableCell
+                        className="max-w-[8rem] truncate text-sm text-foreground"
+                        title={row.source ?? undefined}
+                      >
+                        {row.source || "—"}
+                      </TableCell>
+                      <TableCell
+                        className="max-w-[8rem] truncate font-mono text-xs text-muted-foreground"
+                        title={row.subId ?? undefined}
+                      >
+                        {row.subId || "—"}
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap">
+                        {row.converted ? (
+                          <span className="rounded bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">
+                            Yes
+                          </span>
+                        ) : (
+                          <span className="rounded bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">
+                            No
+                          </span>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+
+            {(clickResult?.totalPages ?? 1) > 1 ? (
+              <div className="flex items-center justify-between border-t border-border bg-muted/50 px-5 py-3">
+                <p className="text-xs text-muted-foreground">
+                  Page {page} of {clickResult?.totalPages ?? 1}
+                </p>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={page <= 1 || loading}
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  >
+                    Previous
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={page >= (clickResult?.totalPages ?? 1) || loading}
+                    onClick={() => setPage((p) => p + 1)}
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            ) : null}
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
+

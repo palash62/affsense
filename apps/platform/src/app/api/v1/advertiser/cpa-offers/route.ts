@@ -1,7 +1,7 @@
 import { withAuth, parsePagination } from "@/lib/api-handler";
 import { canAdvertiserAccessCpaOffers } from "@/lib/cpa-offers-access";
 import { advertiserCpaOfferCreateSchema, cpaOfferListQuerySchema } from "@/lib/validations";
-import { createCpaOffer, listActiveCpaOffers } from "@/services/cpa-offer.service";
+import { createCpaOffer, listCpaOffersForAdvertiserOwner } from "@/services/cpa-offer.service";
 import { prisma } from "@/lib/prisma";
 import { parseCpaOfferDetails } from "@/lib/cpa-offer-details";
 
@@ -45,7 +45,7 @@ export async function GET(request: Request) {
       );
     }
 
-    const data = await listActiveCpaOffers(parsed.data);
+    const data = await listCpaOffersForAdvertiserOwner(session.user.id, parsed.data);
     return Response.json({ data });
   }, ["ADVERTISER"]);
 }
@@ -93,6 +93,7 @@ export async function POST(request: Request) {
       ...parsed.data,
       advertiserLabel: user?.advertiserProfile?.company || user?.name || "Advertiser",
       createdByUserId: session.user.id,
+      ownerAdvertiserId: session.user.id,
       details: { ...details, publishRequested: details.publishRequested === true },
       status: "PAUSED",
     });

@@ -1,7 +1,7 @@
 import { withAuth, parsePagination, ADMIN_PORTAL_ROLES } from "@/lib/api-handler";
 import { errorResponse } from "@/lib/errors";
 import { cpaConversionListQuerySchema } from "@/lib/validations";
-import { listCpaConversionsForAdmin } from "@/services/cpa-offer.service";
+import { listCpaClicksForAdmin } from "@/services/cpa-offer.service";
 
 export async function GET(request: Request) {
   return withAuth(async () => {
@@ -32,7 +32,7 @@ export async function GET(request: Request) {
         );
       }
 
-      const data = await listCpaConversionsForAdmin(parsed.data);
+      const data = await listCpaClicksForAdmin(parsed.data);
       return Response.json({ data });
     } catch (error) {
       return errorResponse(error);

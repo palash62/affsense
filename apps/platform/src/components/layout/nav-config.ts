@@ -237,7 +237,18 @@ export const PUBLISHER_LEGACY_NAV: NavItem[] = [
 export const PUBLISHER_NAV: AdminNavEntry[] = [
   { kind: "section", label: "EARN" },
   { kind: "item", item: { label: "Dashboard", href: "/publisher", icon: LayoutDashboard } },
-  { kind: "item", item: { label: "Marketplace", href: "/publisher/marketplace", icon: ShoppingBag } },
+  {
+    kind: "item",
+    item: {
+      label: "Marketplace",
+      href: "/publisher/marketplace",
+      icon: ShoppingBag,
+      children: [
+        { label: "Digital Product", href: "/publisher/marketplace", icon: Package },
+        { label: "Report", href: "/publisher/marketplace/report", icon: BarChart3 },
+      ],
+    },
+  },
   {
     kind: "item",
     item: {

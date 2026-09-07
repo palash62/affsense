@@ -196,6 +196,19 @@ function isChildActive(pathname: string, child: NavItem, siblings: NavItem[]) {
         !pathname.startsWith("/publisher/cpa-offers/report"))
     );
   }
+  if (child.href === "/publisher/marketplace/report") {
+    return (
+      pathname === "/publisher/marketplace/report" ||
+      pathname.startsWith("/publisher/marketplace/report/")
+    );
+  }
+  if (child.href === "/publisher/marketplace") {
+    return (
+      pathname === "/publisher/marketplace" ||
+      (pathname.startsWith("/publisher/marketplace/") &&
+        !pathname.startsWith("/publisher/marketplace/report"))
+    );
+  }
   // Generic fallback: exact or prefix, but not claiming a sibling's more-specific path
   if (pathname === child.href || pathname.startsWith(`${child.href}/`)) {
     const claimedBySibling = siblings.some(

@@ -1,18 +1,17 @@
-import { withAuth, parsePagination, ADMIN_PORTAL_ROLES } from "@/lib/api-handler";
+import { withAuth, parsePagination } from "@/lib/api-handler";
 import { errorResponse } from "@/lib/errors";
 import { cpaConversionListQuerySchema } from "@/lib/validations";
-import { listCpaConversionsForAdmin } from "@/services/cpa-offer.service";
+import { listCpaClicksForPublisher } from "@/services/cpa-offer.service";
 
 export async function GET(request: Request) {
-  return withAuth(async () => {
+  return withAuth(async (session) => {
     try {
       const { searchParams } = new URL(request.url);
       const { page, limit } = parsePagination(searchParams);
+
       const parsed = cpaConversionListQuerySchema.safeParse({
         q: searchParams.get("q") ?? undefined,
         offerId: searchParams.get("offerId") ?? undefined,
-        advertiserId: searchParams.get("advertiserId") ?? undefined,
-        publisherId: searchParams.get("publisherId") ?? undefined,
         from: searchParams.get("from") ?? undefined,
         to: searchParams.get("to") ?? undefined,
         page,
@@ -32,10 +31,10 @@ export async function GET(request: Request) {
         );
       }
 
-      const data = await listCpaConversionsForAdmin(parsed.data);
+      const data = await listCpaClicksForPublisher(session.user.id, parsed.data);
       return Response.json({ data });
     } catch (error) {
       return errorResponse(error);
     }
-  }, ADMIN_PORTAL_ROLES);
+  }, ["PUBLISHER"]);
 }

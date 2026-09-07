@@ -1225,7 +1225,8 @@ export const adminCpaOfferCreateSchema = z.object({
   previewUrl: cpaPreviewUrlValueSchema.optional().default("#"),
   trackingUrl: httpUrlSchema,
   thumbnailUrl: cpaThumbnailSchema,
-  advertiserLabel: z.string().trim().min(1, "Advertiser is required.").max(120),
+  advertiserLabel: z.string().trim().min(1, "Advertiser is required.").max(120).optional(),
+  ownerAdvertiserId: z.string().trim().min(1, "Select an advertiser."),
   description: z.string().trim().max(10_000).optional().nullable(),
   details: cpaOfferDetailsSchema,
   revenueModel: cpaRevenueModelSchema.optional(),
@@ -1246,6 +1247,7 @@ export const adminCpaOfferUpdateSchema = z.object({
   trackingUrl: httpUrlSchema.optional(),
   thumbnailUrl: cpaThumbnailSchema,
   advertiserLabel: z.string().trim().min(1).max(120).optional(),
+  ownerAdvertiserId: z.string().trim().min(1).optional(),
   description: z.string().trim().max(10_000).optional().nullable(),
   details: cpaOfferDetailsSchema,
   revenueModel: cpaRevenueModelSchema.optional(),
@@ -1259,6 +1261,7 @@ export const adminCpaOfferUpdateSchema = z.object({
 
 export const advertiserCpaOfferCreateSchema = adminCpaOfferCreateSchema.omit({
   advertiserLabel: true,
+  ownerAdvertiserId: true,
   status: true,
 });
 
@@ -1288,6 +1291,27 @@ export const cpaConversionListQuerySchema = z.object({
   q: z.string().trim().optional(),
   offerId: z.string().trim().optional(),
   advertiserId: z.string().trim().optional(),
+  publisherId: z.string().trim().optional(),
+  from: z.string().trim().optional(),
+  to: z.string().trim().optional(),
+  page: z.coerce.number().int().min(1).optional(),
+  limit: z.coerce.number().int().min(1).max(100).optional(),
+});
+
+export const digitalProductClickListQuerySchema = z.object({
+  q: z.string().trim().optional(),
+  productId: z.string().trim().optional(),
+  publisherId: z.string().trim().optional(),
+  from: z.string().trim().optional(),
+  to: z.string().trim().optional(),
+  page: z.coerce.number().int().min(1).optional(),
+  limit: z.coerce.number().int().min(1).max(100).optional(),
+});
+
+export const digitalProductOrdersListQuerySchema = z.object({
+  q: z.string().trim().optional(),
+  productId: z.string().trim().optional(),
+  eventType: z.string().trim().optional(),
   from: z.string().trim().optional(),
   to: z.string().trim().optional(),
   page: z.coerce.number().int().min(1).optional(),

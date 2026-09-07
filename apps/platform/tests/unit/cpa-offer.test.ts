@@ -117,6 +117,7 @@ describe("serializeCpaOffer", () => {
         description: null,
         details: null,
         createdByUserId: null,
+        ownerAdvertiserId: null,
         createdAt: new Date("2026-01-01T00:00:00.000Z"),
         updatedAt: new Date("2026-01-02T00:00:00.000Z"),
       });
@@ -124,6 +125,8 @@ describe("serializeCpaOffer", () => {
       expect(serialized.payout).toBe("12.50");
       expect(serialized.revenue).toBe("20.00");
       expect(serialized.advertiserLabel).toBe("Cash Network");
+      expect(serialized.ownerAdvertiserId).toBeNull();
+      expect(serialized.ownerAdvertiserName).toBeNull();
       expect(serialized.revenueModel).toBe("RPA");
       expect(serialized.payoutModel).toBe("CPA");
       expect(serialized.payoutType).toBe("FLAT");

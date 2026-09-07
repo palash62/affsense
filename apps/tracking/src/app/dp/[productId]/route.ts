@@ -5,6 +5,12 @@ import {
 } from "@cpl/shared";
 import { NextResponse } from "next/server";
 
+function clientIp(request: Request): string | null {
+  const forwarded = request.headers.get("x-forwarded-for");
+  if (forwarded) return forwarded.split(",")[0]?.trim() || null;
+  return request.headers.get("x-real-ip");
+}
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ productId: string }> },
@@ -58,6 +64,22 @@ export async function GET(
       { error: { code: "FORBIDDEN", message: "Invalid publisher" } },
       { status: 403 },
     );
+  }
+
+  try {
+    await prisma.digitalProductClick.create({
+      data: {
+        productId: product.id,
+        publisherId: publisher.id,
+        src: src?.slice(0, 191) || null,
+        subId: subId?.slice(0, 191) || null,
+        campaign: campaign?.slice(0, 191) || null,
+        ip: clientIp(request)?.slice(0, 191) || null,
+        userAgent: request.headers.get("user-agent")?.slice(0, 1000) || null,
+      },
+    });
+  } catch {
+    // Best-effort: still redirect even if click write fails.
   }
 
   const destination = buildDigitalProductDestinationUrl(

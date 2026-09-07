@@ -324,6 +324,7 @@ model User {
   publisherCpaOfferClicks CpaOfferClick[]       @relation("PublisherCpaOfferClicks")
   cpaOfferConversions      CpaOfferConversion[]
   createdCpaOffers         CpaOffer[]           @relation("CpaOfferCreatedBy")
+  ownedCpaOffers           CpaOffer[]           @relation("AdvertiserOwnedCpaOffers")
   advertiserGlobalPostback AdvertiserGlobalPostback?
   publisherPostback        PublisherPostback?
   cpaWallet                CpaWallet?
@@ -334,6 +335,7 @@ model User {
   reviewedCpaOfferAccessRequests PublisherCpaOfferAccess[] @relation("ReviewedCpaOfferAccess")
   webhookEvents            WebhookEvent[] @relation("WebhookEventPublisher")
   offerwallConversions     OfferwallConversion[]
+  publisherDigitalProductClicks DigitalProductClick[] @relation("PublisherDigitalProductClicks")
   promotion              Promotion? @relation(fields: [promotionId], references: [id], onDelete: SetNull)
   createdPromotions      Promotion[] @relation("PromotionCreatedBy")
 
@@ -1502,6 +1504,7 @@ model CpaOffer {
   description     String?        @db.Text
   details         Json?
   createdByUserId String?        @map("created_by_user_id")
+  ownerAdvertiserId String?      @map("owner_advertiser_id")
   revenueModel    String         @default("RPA") @map("revenue_model")
   payoutModel     String         @default("CPA") @map("payout_model")
   payoutType      String         @default("FLAT") @map("payout_type")
@@ -1518,12 +1521,14 @@ model CpaOffer {
   optinPages      AdvertiserOptinPage[]
   publisherAccessRequests PublisherCpaOfferAccess[]
   createdBy       User?          @relation("CpaOfferCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  ownerAdvertiser User?          @relation("AdvertiserOwnedCpaOffers", fields: [ownerAdvertiserId], references: [id], onDelete: SetNull)
 
   @@index([status, createdAt])
   @@index([visibility])
   @@index([network])
   @@index([category])
   @@index([createdByUserId])
+  @@index([ownerAdvertiserId])
   @@map("cpa_offers")
 }
 
@@ -1774,11 +1779,30 @@ model DigitalProduct {
   createdAt             DateTime             @default(now()) @map("created_at")
   updatedAt             DateTime             @updatedAt @map("updated_at")
   category              DigitalProductCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  clicks                DigitalProductClick[]
 
   @@index([status])
   @@index([categoryId])
   @@index([featured])
   @@map("digital_products")
+}
+
+model DigitalProductClick {
+  id          String         @id @default(cuid())
+  productId   String         @map("product_id")
+  publisherId String         @map("publisher_id")
+  src         String?
+  subId       String?        @map("sub_id")
+  campaign    String?
+  ip          String?
+  userAgent   String?        @map("user_agent") @db.Text
+  createdAt   DateTime       @default(now()) @map("created_at")
+  product     DigitalProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+  publisher   User           @relation("PublisherDigitalProductClicks", fields: [publisherId], references: [id], onDelete: Cascade)
+
+  @@index([productId, createdAt])
+  @@index([publisherId, createdAt])
+  @@map("digital_product_clicks")
 }
 
 model GetPaidTaskCategory {

@@ -1,17 +1,16 @@
 import { withAuth, parsePagination, ADMIN_PORTAL_ROLES } from "@/lib/api-handler";
 import { errorResponse } from "@/lib/errors";
-import { cpaConversionListQuerySchema } from "@/lib/validations";
-import { listCpaConversionsForAdmin } from "@/services/cpa-offer.service";
+import { digitalProductClickListQuerySchema } from "@/lib/validations";
+import { listDigitalProductClicksForAdmin } from "@/services/digital-product.service";
 
 export async function GET(request: Request) {
   return withAuth(async () => {
     try {
       const { searchParams } = new URL(request.url);
       const { page, limit } = parsePagination(searchParams);
-      const parsed = cpaConversionListQuerySchema.safeParse({
+      const parsed = digitalProductClickListQuerySchema.safeParse({
         q: searchParams.get("q") ?? undefined,
-        offerId: searchParams.get("offerId") ?? undefined,
-        advertiserId: searchParams.get("advertiserId") ?? undefined,
+        productId: searchParams.get("productId") ?? undefined,
         publisherId: searchParams.get("publisherId") ?? undefined,
         from: searchParams.get("from") ?? undefined,
         to: searchParams.get("to") ?? undefined,
@@ -32,7 +31,7 @@ export async function GET(request: Request) {
         );
       }
 
-      const data = await listCpaConversionsForAdmin(parsed.data);
+      const data = await listDigitalProductClicksForAdmin(parsed.data);
       return Response.json({ data });
     } catch (error) {
       return errorResponse(error);

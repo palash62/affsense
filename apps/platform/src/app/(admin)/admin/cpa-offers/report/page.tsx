@@ -1,6 +1,7 @@
 import { isAdminPortalRole } from "@/lib/admin-portal";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
+import { prisma } from "@/lib/prisma";
 import { AdminCpaOffersReport } from "@/components/admin/admin-cpa-offers-report";
 import { listDepositAdvertiserOptions } from "@/services/wallet.service";
 
@@ -12,7 +13,14 @@ export default async function AdminCpaOffersReportPage() {
     redirect("/login");
   }
 
-  const advertisers = await listDepositAdvertiserOptions();
+  const [advertisers, publishers] = await Promise.all([
+    listDepositAdvertiserOptions(),
+    prisma.user.findMany({
+      where: { role: "PUBLISHER" },
+      select: { id: true, name: true, email: true },
+      orderBy: { name: "asc" },
+    }),
+  ]);
 
-  return <AdminCpaOffersReport advertisers={advertisers} />;
+  return <AdminCpaOffersReport advertisers={advertisers} publishers={publishers} />;
 }

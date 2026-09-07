@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { Activity, CalendarRange, DollarSign, Filter, Search } from "lucide-react";
 import { PageHero } from "@/components/admin/page-hero";
 import { GradientStatCard, NeutralStatCard } from "@/components/admin/gradient-stat-card";
@@ -8,6 +8,7 @@ import { formatCurrency } from "@/components/admin/admin-ui";
 import { CpaOfferStatusDot } from "@/components/cpa/cpa-offer-thumb";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
   TableBody,
@@ -16,9 +17,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { CpaConversionListResult } from "@/services/cpa-offer.service";
+import type {
+  CpaClickListResult,
+  CpaConversionListResult,
+  SerializedCpaClick,
+  SerializedCpaConversion,
+} from "@/services/cpa-offer.service";
 
 const PAGE_SIZE = 20;
+
+type ReportTab = "conversions" | "clicks";
 
 type AppliedFilters = {
   q: string;
@@ -51,7 +59,9 @@ function cellValue(value: string | null | undefined) {
 }
 
 export function PublisherCpaOffersReport() {
-  const [result, setResult] = useState<CpaConversionListResult | null>(null);
+  const [tab, setTab] = useState<ReportTab>("conversions");
+  const [conversionResult, setConversionResult] = useState<CpaConversionListResult | null>(null);
+  const [clickResult, setClickResult] = useState<CpaClickListResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [draft, setDraft] = useState<AppliedFilters>(emptyFilters);
   const [applied, setApplied] = useState<AppliedFilters>(emptyFilters);
@@ -71,11 +81,19 @@ export function PublisherCpaOffersReport() {
       params.set("to", end.toISOString());
     }
 
-    const res = await fetch(`/api/v1/publisher/cpa-offers/conversions?${params}`);
+    const endpoint =
+      tab === "clicks"
+        ? `/api/v1/publisher/cpa-offers/clicks?${params}`
+        : `/api/v1/publisher/cpa-offers/conversions?${params}`;
+    const res = await fetch(endpoint);
     const body = await res.json().catch(() => ({}));
-    setResult(body.data ?? null);
+    if (tab === "clicks") {
+      setClickResult(body.data ?? null);
+    } else {
+      setConversionResult(body.data ?? null);
+    }
     setLoading(false);
-  }, [page, applied]);
+  }, [page, applied, tab]);
 
   useEffect(() => {
     void load();
@@ -92,29 +110,46 @@ export function PublisherCpaOffersReport() {
     setPage(1);
   }
 
-  const items = result?.items ?? [];
-  const total = result?.total ?? 0;
-  const totalPages = result?.totalPages ?? 1;
-  const stats = result?.stats;
+  function onTabChange(next: string | number | null) {
+    const value = String(next ?? "conversions") as ReportTab;
+    if (value !== "conversions" && value !== "clicks") return;
+    setTab(value);
+    setPage(1);
+  }
+
+  const activeResult = tab === "clicks" ? clickResult : conversionResult;
+  const items = activeResult?.items ?? [];
+  const total = activeResult?.total ?? 0;
+  const totalPages = activeResult?.totalPages ?? 1;
+  const stats = activeResult?.stats;
+
+  const conversionItems = (conversionResult?.items ?? []) as SerializedCpaConversion[];
+  const clickItems = (clickResult?.items ?? []) as SerializedCpaClick[];
 
   const pageStats = useMemo(() => {
-    const payoutSum = items.reduce((sum, row) => sum + Number(row.payout ?? 0), 0);
-    const withClickId = items.filter((row) => Boolean(row.clickId)).length;
-    return { payoutSum, withClickId };
-  }, [items]);
+    if (tab === "clicks") {
+      const convertedCount = clickItems.filter((row) => row.converted).length;
+      return { payoutSum: 0, withClickId: clickItems.length, convertedCount };
+    }
+    const payoutSum = conversionItems.reduce((sum, row) => sum + Number(row.payout ?? 0), 0);
+    const withClickId = conversionItems.filter((row) => Boolean(row.clickId)).length;
+    return { payoutSum, withClickId, convertedCount: 0 };
+  }, [tab, conversionItems, clickItems]);
 
   const rangeLabel =
     applied.from || applied.to
       ? [applied.from || "…", applied.to || "…"].join(" → ")
       : "All time";
 
+  const noun = tab === "clicks" ? "clicks" : "conversions";
+
   return (
     <div className="space-y-6">
       <PageHero
         eyebrow="CPA Offers"
         title="Report"
-        description="Conversion postbacks by offer, click ID, and earnings."
-        badge={loading ? undefined : `${total} conversions · ${rangeLabel}`}
+        description="Clicks and conversion postbacks by offer, click ID, and earnings."
+        badge={loading ? undefined : `${total} ${noun} · ${rangeLabel}`}
       />
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
@@ -150,8 +185,14 @@ export function PublisherCpaOffersReport() {
           accent="purple"
         />
         <NeutralStatCard
-          label="With click ID"
-          value={loading ? "…" : pageStats.withClickId}
+          label={tab === "clicks" ? "Converted (page)" : "With click ID"}
+          value={
+            loading
+              ? "…"
+              : tab === "clicks"
+                ? pageStats.convertedCount
+                : pageStats.withClickId
+          }
           icon={Activity}
           accent="green"
         />
@@ -173,7 +214,7 @@ export function PublisherCpaOffersReport() {
           <Filter className="h-4 w-4 text-white/80" />
           <div>
             <p className="text-sm font-semibold">Filters</p>
-            <p className="text-xs text-white/75">Narrow conversions by date, offer, or search</p>
+            <p className="text-xs text-white/75">Narrow by date, offer, or search</p>
           </div>
         </div>
 
@@ -233,170 +274,362 @@ export function PublisherCpaOffersReport() {
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-[18px] border border-border bg-card shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-gradient-to-r from-sky-50 via-white to-emerald-50 px-5 py-3.5">
-          <div>
-            <p className="text-sm font-semibold text-foreground">Conversion log</p>
-            <p className="text-xs text-muted-foreground">
-              {loading
-                ? "Loading…"
-                : `Showing ${items.length} of ${total} conversions · page ${page} of ${totalPages}`}
-            </p>
-          </div>
-          {!loading && total > 0 ? (
-            <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">
-              Page earnings {formatCurrency(pageStats.payoutSum)}
-            </span>
-          ) : null}
-        </div>
+      <Tabs value={tab} onValueChange={onTabChange} className="gap-4">
+        <TabsList variant="line" className="h-auto w-full justify-start rounded-none border-b border-border bg-transparent p-0">
+          <TabsTrigger
+            value="conversions"
+            className="rounded-none border-b-2 border-transparent px-4 py-2.5 data-active:border-primary data-active:bg-transparent data-active:shadow-none"
+          >
+            Conversions
+          </TabsTrigger>
+          <TabsTrigger
+            value="clicks"
+            className="rounded-none border-b-2 border-transparent px-4 py-2.5 data-active:border-primary data-active:bg-transparent data-active:shadow-none"
+          >
+            Clicks
+          </TabsTrigger>
+        </TabsList>
 
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-muted/90 hover:bg-muted/90">
-              <TableHead>Date</TableHead>
-              <TableHead>Offer</TableHead>
-              <TableHead>Click ID</TableHead>
-              <TableHead>IP</TableHead>
-              <TableHead>Device</TableHead>
-              <TableHead>Browser</TableHead>
-              <TableHead>Source</TableHead>
-              <TableHead>Sub ID</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Earnings</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading ? (
-              <TableRow>
-                <TableCell colSpan={10} className="py-12 text-center text-sm text-muted-foreground">
-                  Loading conversions…
-                </TableCell>
-              </TableRow>
-            ) : items.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={10} className="py-12 text-center">
-                  <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-50 text-violet-600">
-                    <Activity className="h-5 w-5" />
-                  </div>
-                  <p className="text-sm font-medium text-foreground">No conversions found</p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Try widening the date range or clearing filters.
-                  </p>
-                </TableCell>
-              </TableRow>
-            ) : (
-              items.map((row) => (
-                <TableRow key={row.id} className="hover:bg-sky-50/40">
-                  <TableCell className="whitespace-nowrap text-sm text-foreground">
-                    <span className="rounded-md bg-sky-50 px-2 py-0.5 text-xs font-medium text-sky-800">
-                      {formatDateTime(row.createdAt)}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2.5">
-                      <CpaOfferStatusDot status={row.offerStatus} />
-                      <div>
-                        <p className="font-medium text-foreground">{row.offerName}</p>
-                        <p className="font-mono text-[11px] text-muted-foreground">
-                          #{row.offerId.slice(-8)}
-                        </p>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell className="max-w-[10rem] truncate font-mono text-xs text-muted-foreground">
-                    {row.clickId ? (
-                      <span
-                        className="rounded bg-violet-50 px-1.5 py-0.5 text-violet-700"
-                        title={row.clickId}
-                      >
-                        {row.clickId}
-                      </span>
-                    ) : (
-                      "—"
-                    )}
-                  </TableCell>
-                  <TableCell
-                    className="max-w-[8rem] truncate font-mono text-xs text-muted-foreground"
-                    title={row.ip ?? undefined}
-                  >
-                    {cellValue(row.ip)}
-                  </TableCell>
-                  <TableCell className="whitespace-nowrap text-sm text-foreground">
-                    {row.device}
-                  </TableCell>
-                  <TableCell className="whitespace-nowrap text-sm text-foreground">
-                    {row.browser}
-                  </TableCell>
-                  <TableCell
-                    className="max-w-[8rem] truncate text-sm text-foreground"
-                    title={row.source ?? undefined}
-                  >
-                    {cellValue(row.source)}
-                  </TableCell>
-                  <TableCell
-                    className="max-w-[8rem] truncate font-mono text-xs text-muted-foreground"
-                    title={row.subId ?? undefined}
-                  >
-                    {cellValue(row.subId)}
-                  </TableCell>
-                  <TableCell className="whitespace-nowrap">
-                    {row.status === "A" ? (
-                      <span className="rounded bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">
-                        A
-                      </span>
-                    ) : row.status === "P" ? (
-                      <span className="rounded bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-700">
-                        P
-                      </span>
-                    ) : (
-                      <span className="rounded bg-red-50 px-2 py-0.5 text-xs font-semibold text-red-700">
-                        R
-                      </span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {row.payout ? (
-                      <span className="inline-flex rounded-full bg-emerald-50 px-2.5 py-0.5 text-sm font-semibold tabular-nums text-emerald-700">
-                        {formatCurrency(Number(row.payout))}
-                      </span>
-                    ) : (
-                      "—"
-                    )}
-                  </TableCell>
+        <TabsContent value="conversions" className="mt-0">
+          <ReportTableCard
+            title="Conversion log"
+            loading={loading}
+            itemsLength={conversionItems.length}
+            total={conversionResult?.total ?? 0}
+            page={page}
+            totalPages={conversionResult?.totalPages ?? 1}
+            noun="conversions"
+            badge={
+              !loading && (conversionResult?.total ?? 0) > 0 ? (
+                <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">
+                  Page earnings {formatCurrency(pageStats.payoutSum)}
+                </span>
+              ) : null
+            }
+            onPrev={() => setPage((p) => Math.max(1, p - 1))}
+            onNext={() => setPage((p) => p + 1)}
+          >
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/90 hover:bg-muted/90">
+                  <TableHead>Date</TableHead>
+                  <TableHead>Offer</TableHead>
+                  <TableHead>Click ID</TableHead>
+                  <TableHead>IP</TableHead>
+                  <TableHead>Device</TableHead>
+                  <TableHead>Browser</TableHead>
+                  <TableHead>Source</TableHead>
+                  <TableHead>Sub ID</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Earnings</TableHead>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+              </TableHeader>
+              <TableBody>
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={10} className="py-12 text-center text-sm text-muted-foreground">
+                      Loading conversions…
+                    </TableCell>
+                  </TableRow>
+                ) : conversionItems.length === 0 ? (
+                  <EmptyRow colSpan={10} label="No conversions found" />
+                ) : (
+                  conversionItems.map((row) => (
+                    <TableRow key={row.id} className="hover:bg-sky-50/40">
+                      <TableCell className="whitespace-nowrap text-sm text-foreground">
+                        <span className="rounded-md bg-sky-50 px-2 py-0.5 text-xs font-medium text-sky-800">
+                          {formatDateTime(row.createdAt)}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2.5">
+                          <CpaOfferStatusDot status={row.offerStatus} />
+                          <div>
+                            <p className="font-medium text-foreground">{row.offerName}</p>
+                            <p className="font-mono text-[11px] text-muted-foreground">
+                              #{row.offerId.slice(-8)}
+                            </p>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="max-w-[10rem] truncate font-mono text-xs text-muted-foreground">
+                        {row.clickId ? (
+                          <span
+                            className="rounded bg-violet-50 px-1.5 py-0.5 text-violet-700"
+                            title={row.clickId}
+                          >
+                            {row.clickId}
+                          </span>
+                        ) : (
+                          "—"
+                        )}
+                      </TableCell>
+                      <TableCell
+                        className="max-w-[8rem] truncate font-mono text-xs text-muted-foreground"
+                        title={row.ip ?? undefined}
+                      >
+                        {cellValue(row.ip)}
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap text-sm text-foreground">
+                        {row.device}
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap text-sm text-foreground">
+                        {row.browser}
+                      </TableCell>
+                      <TableCell
+                        className="max-w-[8rem] truncate text-sm text-foreground"
+                        title={row.source ?? undefined}
+                      >
+                        {cellValue(row.source)}
+                      </TableCell>
+                      <TableCell
+                        className="max-w-[8rem] truncate font-mono text-xs text-muted-foreground"
+                        title={row.subId ?? undefined}
+                      >
+                        {cellValue(row.subId)}
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap">
+                        <StatusBadge status={row.status} />
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {row.payout ? (
+                          <span className="inline-flex rounded-full bg-emerald-50 px-2.5 py-0.5 text-sm font-semibold tabular-nums text-emerald-700">
+                            {formatCurrency(Number(row.payout))}
+                          </span>
+                        ) : (
+                          "—"
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </ReportTableCard>
+        </TabsContent>
 
-        {totalPages > 1 ? (
-          <div className="flex items-center justify-between border-t border-border bg-muted/50 px-5 py-3">
-            <p className="text-xs text-muted-foreground">
-              Page {page} of {totalPages}
-            </p>
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={page <= 1 || loading}
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-              >
-                Previous
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={page >= totalPages || loading}
-                onClick={() => setPage((p) => p + 1)}
-              >
-                Next
-              </Button>
-            </div>
-          </div>
-        ) : null}
+        <TabsContent value="clicks" className="mt-0">
+          <ReportTableCard
+            title="Click log"
+            loading={loading}
+            itemsLength={clickItems.length}
+            total={clickResult?.total ?? 0}
+            page={page}
+            totalPages={clickResult?.totalPages ?? 1}
+            noun="clicks"
+            badge={
+              !loading && (clickResult?.total ?? 0) > 0 ? (
+                <span className="rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold text-sky-800">
+                  Page converted {pageStats.convertedCount}
+                </span>
+              ) : null
+            }
+            onPrev={() => setPage((p) => Math.max(1, p - 1))}
+            onNext={() => setPage((p) => p + 1)}
+          >
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/90 hover:bg-muted/90">
+                  <TableHead>Date</TableHead>
+                  <TableHead>Offer</TableHead>
+                  <TableHead>Click ID</TableHead>
+                  <TableHead>IP</TableHead>
+                  <TableHead>Device</TableHead>
+                  <TableHead>Browser</TableHead>
+                  <TableHead>Source</TableHead>
+                  <TableHead>Sub ID</TableHead>
+                  <TableHead>Converted</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={9} className="py-12 text-center text-sm text-muted-foreground">
+                      Loading clicks…
+                    </TableCell>
+                  </TableRow>
+                ) : clickItems.length === 0 ? (
+                  <EmptyRow colSpan={9} label="No clicks found" />
+                ) : (
+                  clickItems.map((row) => (
+                    <TableRow key={row.id} className="hover:bg-sky-50/40">
+                      <TableCell className="whitespace-nowrap text-sm text-foreground">
+                        <span className="rounded-md bg-sky-50 px-2 py-0.5 text-xs font-medium text-sky-800">
+                          {formatDateTime(row.createdAt)}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2.5">
+                          <CpaOfferStatusDot status={row.offerStatus} />
+                          <div>
+                            <p className="font-medium text-foreground">{row.offerName}</p>
+                            <p className="font-mono text-[11px] text-muted-foreground">
+                              #{row.offerId.slice(-8)}
+                            </p>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="max-w-[10rem] truncate font-mono text-xs text-muted-foreground">
+                        <span
+                          className="rounded bg-violet-50 px-1.5 py-0.5 text-violet-700"
+                          title={row.id}
+                        >
+                          {row.id}
+                        </span>
+                      </TableCell>
+                      <TableCell
+                        className="max-w-[8rem] truncate font-mono text-xs text-muted-foreground"
+                        title={row.ip ?? undefined}
+                      >
+                        {cellValue(row.ip)}
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap text-sm text-foreground">
+                        {row.device}
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap text-sm text-foreground">
+                        {row.browser}
+                      </TableCell>
+                      <TableCell
+                        className="max-w-[8rem] truncate text-sm text-foreground"
+                        title={row.source ?? undefined}
+                      >
+                        {cellValue(row.source)}
+                      </TableCell>
+                      <TableCell
+                        className="max-w-[8rem] truncate font-mono text-xs text-muted-foreground"
+                        title={row.subId ?? undefined}
+                      >
+                        {cellValue(row.subId)}
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap">
+                        {row.converted ? (
+                          <span className="rounded bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">
+                            Yes
+                          </span>
+                        ) : (
+                          <span className="rounded bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">
+                            No
+                          </span>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </ReportTableCard>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
+
+function StatusBadge({ status }: { status: "A" | "P" | "R" }) {
+  if (status === "A") {
+    return (
+      <span className="rounded bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">
+        A
+      </span>
+    );
+  }
+  if (status === "P") {
+    return (
+      <span className="rounded bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-700">
+        P
+      </span>
+    );
+  }
+  return (
+    <span className="rounded bg-red-50 px-2 py-0.5 text-xs font-semibold text-red-700">
+      R
+    </span>
+  );
+}
+
+function EmptyRow({ colSpan, label }: { colSpan: number; label: string }) {
+  return (
+    <TableRow>
+      <TableCell colSpan={colSpan} className="py-12 text-center">
+        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-50 text-violet-600">
+          <Activity className="h-5 w-5" />
+        </div>
+        <p className="text-sm font-medium text-foreground">{label}</p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Try widening the date range or clearing filters.
+        </p>
+      </TableCell>
+    </TableRow>
+  );
+}
+
+function ReportTableCard({
+  title,
+  loading,
+  itemsLength,
+  total,
+  page,
+  totalPages,
+  noun,
+  badge,
+  onPrev,
+  onNext,
+  children,
+}: {
+  title: string;
+  loading: boolean;
+  itemsLength: number;
+  total: number;
+  page: number;
+  totalPages: number;
+  noun: string;
+  badge?: ReactNode;
+  onPrev: () => void;
+  onNext: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <div className="overflow-hidden rounded-[18px] border border-border bg-card shadow-sm">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-gradient-to-r from-sky-50 via-white to-emerald-50 px-5 py-3.5">
+        <div>
+          <p className="text-sm font-semibold text-foreground">{title}</p>
+          <p className="text-xs text-muted-foreground">
+            {loading
+              ? "Loading…"
+              : `Showing ${itemsLength} of ${total} ${noun} · page ${page} of ${totalPages}`}
+          </p>
+        </div>
+        {badge}
       </div>
+
+      {children}
+
+      {totalPages > 1 ? (
+        <div className="flex items-center justify-between border-t border-border bg-muted/50 px-5 py-3">
+          <p className="text-xs text-muted-foreground">
+            Page {page} of {totalPages}
+          </p>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={page <= 1 || loading}
+              onClick={onPrev}
+            >
+              Previous
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={page >= totalPages || loading}
+              onClick={onNext}
+            >
+              Next
+            </Button>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

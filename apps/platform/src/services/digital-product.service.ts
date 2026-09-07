@@ -5,6 +5,7 @@ import type {
   Prisma,
 } from "@prisma/client";
 import { Errors, AppError } from "@/lib/errors";
+import { parseUserAgent } from "@/lib/publisher-leads";
 import {
   extractLeadFromClickFunnelsPayload,
   extractOrderFieldsFromClickFunnelsPayload,
@@ -821,5 +822,254 @@ export async function getPublisherCommissionReport(opts: {
     limit,
     totalPages,
     filterOptions: { products, sources, subIds },
+  };
+}
+
+export type SerializedDigitalProductClick = {
+  id: string;
+  productId: string;
+  productName: string;
+  publisherId: string;
+  publisherName: string | null;
+  publisherEmail: string | null;
+  src: string | null;
+  subId: string | null;
+  campaign: string | null;
+  ip: string | null;
+  device: string;
+  browser: string;
+  createdAt: string;
+};
+
+export type DigitalProductClickListStats = {
+  hits: number;
+  clicks: number;
+};
+
+export type DigitalProductClickListResult = {
+  items: SerializedDigitalProductClick[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  stats: DigitalProductClickListStats;
+};
+
+export type DigitalProductClickListFilters = {
+  q?: string;
+  productId?: string;
+  publisherId?: string;
+  from?: string;
+  to?: string;
+  page?: number;
+  limit?: number;
+};
+
+async function digitalProductClickWindowStats(
+  where: Prisma.DigitalProductClickWhereInput,
+): Promise<DigitalProductClickListStats> {
+  const [hits, ipGroups] = await Promise.all([
+    prisma.digitalProductClick.count({ where }),
+    prisma.digitalProductClick.groupBy({
+      by: ["ip"],
+      where: { ...where, ip: { not: null } },
+      _count: { _all: true },
+    }),
+  ]);
+  const uniqueIpCount = ipGroups.length;
+  return { hits, clicks: uniqueIpCount > 0 ? uniqueIpCount : hits };
+}
+
+function serializeDigitalProductClick(row: {
+  id: string;
+  productId: string;
+  publisherId: string;
+  src: string | null;
+  subId: string | null;
+  campaign: string | null;
+  ip: string | null;
+  userAgent: string | null;
+  createdAt: Date;
+  product: { name: string };
+  publisher: { name: string; email: string } | null;
+}): SerializedDigitalProductClick {
+  const { device, browser } = parseUserAgent(row.userAgent);
+  return {
+    id: row.id,
+    productId: row.productId,
+    productName: row.product.name,
+    publisherId: row.publisherId,
+    publisherName: row.publisher?.name ?? null,
+    publisherEmail: row.publisher?.email ?? null,
+    src: row.src,
+    subId: row.subId,
+    campaign: row.campaign,
+    ip: row.ip,
+    device,
+    browser,
+    createdAt: row.createdAt.toISOString(),
+  };
+}
+
+function buildDigitalProductClickWhere(
+  filters: DigitalProductClickListFilters,
+  forcedPublisherId?: string,
+): Prisma.DigitalProductClickWhereInput {
+  const where: Prisma.DigitalProductClickWhereInput = {};
+  if (forcedPublisherId) where.publisherId = forcedPublisherId;
+
+  const productId = filters.productId?.trim();
+  if (productId) where.productId = productId;
+
+  const publisherId = filters.publisherId?.trim();
+  if (publisherId && !forcedPublisherId) where.publisherId = publisherId;
+
+  if (filters.from || filters.to) {
+    where.createdAt = {};
+    if (filters.from) {
+      const from = new Date(filters.from);
+      if (!Number.isNaN(from.getTime())) where.createdAt.gte = from;
+    }
+    if (filters.to) {
+      const to = new Date(filters.to);
+      if (!Number.isNaN(to.getTime())) where.createdAt.lte = to;
+    }
+  }
+
+  const q = filters.q?.trim();
+  if (q) {
+    where.OR = [
+      { id: { contains: q } },
+      { productId: { contains: q } },
+      { product: { name: { contains: q } } },
+      { src: { contains: q } },
+      { subId: { contains: q } },
+      { campaign: { contains: q } },
+      { ip: { contains: q } },
+      ...(forcedPublisherId
+        ? []
+        : [
+            { publisher: { name: { contains: q } } },
+            { publisher: { email: { contains: q } } },
+          ]),
+    ];
+  }
+
+  return where;
+}
+
+export async function listDigitalProductClicksForAdmin(
+  filters: DigitalProductClickListFilters,
+): Promise<DigitalProductClickListResult> {
+  const page = Math.max(1, filters.page ?? 1);
+  const limit = Math.min(100, Math.max(1, filters.limit ?? 20));
+  const where = buildDigitalProductClickWhere(filters);
+
+  const [total, rows, stats] = await Promise.all([
+    prisma.digitalProductClick.count({ where }),
+    prisma.digitalProductClick.findMany({
+      where,
+      include: {
+        product: { select: { name: true } },
+        publisher: { select: { name: true, email: true } },
+      },
+      orderBy: { createdAt: "desc" },
+      skip: (page - 1) * limit,
+      take: limit,
+    }),
+    digitalProductClickWindowStats(where),
+  ]);
+
+  return {
+    items: rows.map(serializeDigitalProductClick),
+    total,
+    page,
+    limit,
+    totalPages: Math.max(1, Math.ceil(total / limit)),
+    stats,
+  };
+}
+
+export async function listDigitalProductClicksForPublisher(
+  publisherId: string,
+  filters: DigitalProductClickListFilters,
+): Promise<DigitalProductClickListResult> {
+  const page = Math.max(1, filters.page ?? 1);
+  const limit = Math.min(100, Math.max(1, filters.limit ?? 20));
+  const where = buildDigitalProductClickWhere(filters, publisherId);
+
+  const [total, rows, stats] = await Promise.all([
+    prisma.digitalProductClick.count({ where }),
+    prisma.digitalProductClick.findMany({
+      where,
+      include: {
+        product: { select: { name: true } },
+        publisher: { select: { name: true, email: true } },
+      },
+      orderBy: { createdAt: "desc" },
+      skip: (page - 1) * limit,
+      take: limit,
+    }),
+    digitalProductClickWindowStats(where),
+  ]);
+
+  return {
+    items: rows.map(serializeDigitalProductClick),
+    total,
+    page,
+    limit,
+    totalPages: Math.max(1, Math.ceil(total / limit)),
+    stats,
+  };
+}
+
+export async function listPublisherDigitalProductOrders(
+  publisherId: string,
+  opts: {
+    q?: string;
+    productId?: string;
+    eventType?: string;
+    from?: string;
+    to?: string;
+    page?: number;
+    limit?: number;
+  } = {},
+) {
+  const from = opts.from ? new Date(opts.from) : undefined;
+  const to = opts.to ? new Date(opts.to) : undefined;
+  const result = await listDigitalProductOrders({
+    publisherId,
+    from: from && !Number.isNaN(from.getTime()) ? from : undefined,
+    to: to && !Number.isNaN(to.getTime()) ? to : undefined,
+    eventType: opts.eventType,
+    page: opts.page,
+    limit: opts.limit ?? 20,
+  });
+
+  const q = opts.q?.trim().toLowerCase();
+  const productId = opts.productId?.trim().toLowerCase();
+  let items = result.items;
+  if (q || productId) {
+    items = items.filter((row) => {
+      if (productId) {
+        const hay = `${row.product ?? ""}`.toLowerCase();
+        if (!hay.includes(productId)) return false;
+      }
+      if (q) {
+        const hay = `${row.orderId} ${row.product ?? ""} ${row.funnel ?? ""} ${row.source ?? ""} ${row.subId ?? ""}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+  }
+
+  return {
+    ...result,
+    items,
+    total: q || productId ? items.length : result.total,
+    totalPages:
+      q || productId
+        ? Math.max(1, Math.ceil(items.length / (opts.limit ?? 20)))
+        : result.totalPages,
   };
 }

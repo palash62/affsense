@@ -2,6 +2,7 @@ import { isAdminPortalRole } from "@/lib/admin-portal";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { CpaOfferEditor } from "@/components/cpa/cpa-offer-editor";
+import { listDepositAdvertiserOptions } from "@/services/wallet.service";
 
 export const dynamic = "force-dynamic";
 
@@ -11,5 +12,14 @@ export default async function AdminCpaOfferNewPage() {
     redirect("/login");
   }
 
-  return <CpaOfferEditor role="ADMIN" mode="create" advertiserLabelDefault="Platform" />;
+  const advertisers = await listDepositAdvertiserOptions();
+
+  return (
+    <CpaOfferEditor
+      role="ADMIN"
+      mode="create"
+      advertiserLabelDefault="Platform"
+      advertisers={advertisers}
+    />
+  );
 }

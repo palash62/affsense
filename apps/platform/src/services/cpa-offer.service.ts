@@ -33,6 +33,8 @@ export type SerializedCpaOffer = {
   description: string | null;
   details: CpaOfferDetails;
   createdByUserId: string | null;
+  ownerAdvertiserId: string | null;
+  ownerAdvertiserName: string | null;
   revenueModel: CpaRevenueModel;
   payoutModel: CpaPayoutModel;
   payoutType: CpaPayoutType;
@@ -102,8 +104,14 @@ export function serializeCpaOffer(
     description?: string | null;
     details?: Prisma.JsonValue | null;
     createdByUserId?: string | null;
+    ownerAdvertiserId?: string | null;
+    ownerAdvertiser?: { name: string; advertiserProfile?: { company: string } | null } | null;
   },
 ): SerializedCpaOffer {
+  const ownerName =
+    row.ownerAdvertiser?.advertiserProfile?.company?.trim() ||
+    row.ownerAdvertiser?.name?.trim() ||
+    null;
   return {
     id: row.id,
     name: row.name,
@@ -117,6 +125,8 @@ export function serializeCpaOffer(
     description: row.description ?? null,
     details: parseCpaOfferDetails(row.details),
     createdByUserId: row.createdByUserId ?? null,
+    ownerAdvertiserId: row.ownerAdvertiserId ?? null,
+    ownerAdvertiserName: ownerName,
     revenueModel: asRevenueModel(row.revenueModel),
     payoutModel: asPayoutModel(row.payoutModel),
     payoutType: asPayoutType(row.payoutType),
@@ -171,16 +181,24 @@ function buildWhere(
 
 async function listCpaOffers(
   filters: CpaOfferListFilters,
-  options?: { activeOnly?: boolean },
+  options?: { activeOnly?: boolean; ownerAdvertiserId?: string },
 ): Promise<CpaOfferListResult> {
   const page = Math.max(1, filters.page ?? 1);
   const limit = Math.min(100, Math.max(1, filters.limit ?? 20));
   const where = buildWhere(filters, options);
+  if (options?.ownerAdvertiserId) {
+    where.ownerAdvertiserId = options.ownerAdvertiserId;
+  }
 
   const [total, rows] = await Promise.all([
     prisma.cpaOffer.count({ where }),
     prisma.cpaOffer.findMany({
       where,
+      include: {
+        ownerAdvertiser: {
+          select: { name: true, advertiserProfile: { select: { company: true } } },
+        },
+      },
       orderBy: { createdAt: "desc" },
       skip: (page - 1) * limit,
       take: limit,
@@ -202,6 +220,13 @@ export function listCpaOffersForAdmin(filters: CpaOfferListFilters) {
 
 export function listActiveCpaOffers(filters: CpaOfferListFilters) {
   return listCpaOffers(filters, { activeOnly: true });
+}
+
+export function listCpaOffersForAdvertiserOwner(
+  advertiserId: string,
+  filters: CpaOfferListFilters,
+) {
+  return listCpaOffers(filters, { activeOnly: true, ownerAdvertiserId: advertiserId });
 }
 
 function resolvePublisherAccess(
@@ -442,7 +467,14 @@ export async function reviewCpaOfferAccessRequest(
 }
 
 export async function getCpaOfferById(id: string): Promise<SerializedCpaOffer> {
-  const row = await prisma.cpaOffer.findUnique({ where: { id } });
+  const row = await prisma.cpaOffer.findUnique({
+    where: { id },
+    include: {
+      ownerAdvertiser: {
+        select: { name: true, advertiserProfile: { select: { company: true } } },
+      },
+    },
+  });
   if (!row) throw Errors.notFound("CPA offer");
   return serializeCpaOffer(row);
 }
@@ -450,6 +482,27 @@ export async function getCpaOfferById(id: string): Promise<SerializedCpaOffer> {
 export async function getActiveCpaOfferById(id: string): Promise<SerializedCpaOffer> {
   const row = await prisma.cpaOffer.findFirst({
     where: { id, status: "ACTIVE" },
+    include: {
+      ownerAdvertiser: {
+        select: { name: true, advertiserProfile: { select: { company: true } } },
+      },
+    },
+  });
+  if (!row) throw Errors.notFound("CPA offer");
+  return serializeCpaOffer(row);
+}
+
+export async function getActiveCpaOfferForAdvertiserOwner(
+  id: string,
+  advertiserId: string,
+): Promise<SerializedCpaOffer> {
+  const row = await prisma.cpaOffer.findFirst({
+    where: { id, status: "ACTIVE", ownerAdvertiserId: advertiserId },
+    include: {
+      ownerAdvertiser: {
+        select: { name: true, advertiserProfile: { select: { company: true } } },
+      },
+    },
   });
   if (!row) throw Errors.notFound("CPA offer");
   return serializeCpaOffer(row);
@@ -467,6 +520,7 @@ export type CpaOfferInput = {
   description?: string | null;
   details?: CpaOfferDetails | null;
   createdByUserId?: string | null;
+  ownerAdvertiserId?: string | null;
   revenueModel?: CpaRevenueModel;
   payoutModel?: CpaPayoutModel;
   payoutType?: CpaPayoutType;
@@ -476,10 +530,28 @@ export type CpaOfferInput = {
   visibility?: CpaOfferVisibility;
 };
 
+async function resolveOwnerAdvertiserLabel(ownerAdvertiserId: string | null | undefined) {
+  if (!ownerAdvertiserId?.trim()) return null;
+  const user = await prisma.user.findFirst({
+    where: { id: ownerAdvertiserId, role: "ADVERTISER" },
+    select: {
+      name: true,
+      advertiserProfile: { select: { company: true } },
+    },
+  });
+  if (!user) throw Errors.validation("Invalid advertiser");
+  return (user.advertiserProfile?.company?.trim() || user.name.trim() || "Advertiser").slice(0, 120);
+}
+
 export async function createCpaOffer(input: CpaOfferInput): Promise<SerializedCpaOffer> {
   const previewUrl = input.previewUrl?.trim() || "#";
   const network = input.network?.trim() || "Direct";
   const details = cpaOfferDetailsToJson(input.details);
+  const ownerAdvertiserId = input.ownerAdvertiserId?.trim() || null;
+  const resolvedLabel =
+    (await resolveOwnerAdvertiserLabel(ownerAdvertiserId)) ||
+    (input.advertiserLabel?.trim() || "Platform").slice(0, 120);
+
   const row = await prisma.cpaOffer.create({
     data: {
       name: input.name.trim(),
@@ -489,10 +561,11 @@ export async function createCpaOffer(input: CpaOfferInput): Promise<SerializedCp
       previewUrl,
       trackingUrl: input.trackingUrl.trim(),
       thumbnailUrl: input.thumbnailUrl?.trim() || null,
-      advertiserLabel: (input.advertiserLabel?.trim() || "Platform").slice(0, 120),
+      advertiserLabel: resolvedLabel,
       description: input.description?.trim() || null,
       details: details === undefined ? undefined : details,
       createdByUserId: input.createdByUserId ?? null,
+      ownerAdvertiserId,
       revenueModel: input.revenueModel ?? "RPA",
       payoutModel: input.payoutModel ?? "CPA",
       payoutType: input.payoutType ?? "FLAT",
@@ -502,6 +575,11 @@ export async function createCpaOffer(input: CpaOfferInput): Promise<SerializedCp
       visibility: input.visibility ?? "PUBLIC",
       postbackToken: randomBytes(16).toString("hex"),
     } as Prisma.CpaOfferUncheckedCreateInput,
+    include: {
+      ownerAdvertiser: {
+        select: { name: true, advertiserProfile: { select: { company: true } } },
+      },
+    },
   });
   return serializeCpaOffer(row);
 }
@@ -516,6 +594,17 @@ export async function updateCpaOffer(
   const details =
     input.details === undefined ? undefined : cpaOfferDetailsToJson(input.details) ?? Prisma.JsonNull;
 
+  let ownerAdvertiserId = input.ownerAdvertiserId;
+  let advertiserLabel = input.advertiserLabel;
+  if (ownerAdvertiserId !== undefined) {
+    const trimmed = ownerAdvertiserId?.trim() || null;
+    ownerAdvertiserId = trimmed;
+    if (trimmed) {
+      const resolved = await resolveOwnerAdvertiserLabel(trimmed);
+      if (resolved) advertiserLabel = resolved;
+    }
+  }
+
   const row = await prisma.cpaOffer.update({
     where: { id },
     data: {
@@ -528,12 +617,13 @@ export async function updateCpaOffer(
       ...(input.thumbnailUrl !== undefined
         ? { thumbnailUrl: input.thumbnailUrl?.trim() || null }
         : {}),
-      ...(input.advertiserLabel !== undefined
-        ? { advertiserLabel: (input.advertiserLabel.trim() || "Platform").slice(0, 120) }
+      ...(advertiserLabel !== undefined
+        ? { advertiserLabel: (advertiserLabel.trim() || "Platform").slice(0, 120) }
         : {}),
       ...(input.description !== undefined ? { description: input.description?.trim() || null } : {}),
       ...(details !== undefined ? { details } : {}),
       ...(input.createdByUserId !== undefined ? { createdByUserId: input.createdByUserId } : {}),
+      ...(ownerAdvertiserId !== undefined ? { ownerAdvertiserId } : {}),
       ...(input.revenueModel !== undefined ? { revenueModel: input.revenueModel } : {}),
       ...(input.payoutModel !== undefined ? { payoutModel: input.payoutModel } : {}),
       ...(input.payoutType !== undefined ? { payoutType: input.payoutType } : {}),
@@ -542,6 +632,11 @@ export async function updateCpaOffer(
       ...(input.status !== undefined ? { status: input.status } : {}),
       ...(input.visibility !== undefined ? { visibility: input.visibility } : {}),
     } as Prisma.CpaOfferUncheckedUpdateInput,
+    include: {
+      ownerAdvertiser: {
+        select: { name: true, advertiserProfile: { select: { company: true } } },
+      },
+    },
   });
   return serializeCpaOffer(row);
 }
@@ -1291,6 +1386,8 @@ export type SerializedCpaConversion = {
   offerStatus: CpaOfferStatus;
   advertiserId: string | null;
   advertiserName: string | null;
+  publisherId: string | null;
+  publisherName: string | null;
   clickId: string | null;
   payout: string;
   revenue: string;
@@ -1317,6 +1414,7 @@ export type CpaConversionListFilters = {
   q?: string;
   offerId?: string;
   advertiserId?: string;
+  publisherId?: string;
   from?: string;
   to?: string;
   page?: number;
@@ -1344,6 +1442,8 @@ function serializeCpaConversionRow(
       userAgent: string | null;
       src: string | null;
       subId: string | null;
+      publisherId?: string | null;
+      publisher?: { name: string } | null;
     } | null;
   },
   status: "A" | "P" | "R",
@@ -1357,6 +1457,8 @@ function serializeCpaConversionRow(
     offerStatus: row.offer.status,
     advertiserId: row.advertiserId,
     advertiserName: row.advertiser?.name ?? null,
+    publisherId: click?.publisherId ?? null,
+    publisherName: click?.publisher?.name ?? null,
     clickId: row.clickId,
     payout: row.payout != null ? decimalToString(row.payout) : decimalToString(row.offer.payout),
     revenue: row.offer.revenue != null ? decimalToString(row.offer.revenue) : "0",
@@ -1399,6 +1501,12 @@ export async function listCpaConversionsForAdmin(
   if (advertiserId) where.advertiserId = advertiserId;
   if (advertiserId) clickWhere.advertiserId = advertiserId;
 
+  const publisherId = filters.publisherId?.trim();
+  if (publisherId) {
+    where.clickRecord = { ...(where.clickRecord as object), publisherId };
+    clickWhere.publisherId = publisherId;
+  }
+
   if (filters.from || filters.to) {
     where.createdAt = {};
     clickWhere.createdAt = {};
@@ -1425,6 +1533,7 @@ export async function listCpaConversionsForAdmin(
       { offer: { name: { contains: q } } },
       { offerId: { contains: q } },
       { advertiser: { name: { contains: q } } },
+      { clickRecord: { publisher: { name: { contains: q } } } },
     ];
 
     clickWhere.OR = [
@@ -1432,6 +1541,7 @@ export async function listCpaConversionsForAdmin(
       { offer: { name: { contains: q } } },
       { offerId: { contains: q } },
       { advertiser: { name: { contains: q } } },
+      { publisher: { name: { contains: q } } },
     ];
   }
 
@@ -1442,7 +1552,16 @@ export async function listCpaConversionsForAdmin(
       include: {
         offer: { select: { name: true, status: true, revenue: true, payout: true } },
         advertiser: { select: { name: true } },
-        clickRecord: { select: { ip: true, userAgent: true, src: true, subId: true } },
+        clickRecord: {
+          select: {
+            ip: true,
+            userAgent: true,
+            src: true,
+            subId: true,
+            publisherId: true,
+            publisher: { select: { name: true } },
+          },
+        },
       },
       orderBy: { createdAt: "desc" },
       skip: (page - 1) * limit,
@@ -1726,6 +1845,268 @@ export async function listCpaConversionsForPublisher(
     items: rows.map((row) =>
       serializeCpaConversionRow(row, resolveConversionStatus(byConversionId, row.id)),
     ),
+    total,
+    page,
+    limit,
+    totalPages: Math.max(1, Math.ceil(total / limit)),
+    stats,
+  };
+}
+
+export type SerializedCpaClick = {
+  id: string;
+  offerId: string;
+  offerName: string;
+  offerStatus: CpaOfferStatus;
+  advertiserId: string | null;
+  advertiserName: string | null;
+  publisherId: string | null;
+  publisherName: string | null;
+  ip: string | null;
+  device: string;
+  browser: string;
+  source: string | null;
+  subId: string | null;
+  converted: boolean;
+  createdAt: string;
+};
+
+export type CpaClickListResult = {
+  items: SerializedCpaClick[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  stats: CpaConversionsReportStats;
+};
+
+export type CpaClickListFilters = CpaConversionListFilters;
+
+function serializeCpaClickRow(row: {
+  id: string;
+  offerId: string;
+  advertiserId: string | null;
+  publisherId: string | null;
+  ip: string | null;
+  userAgent: string | null;
+  src: string | null;
+  subId: string | null;
+  createdAt: Date;
+  offer: { name: string; status: CpaOfferStatus };
+  advertiser: { name: string } | null;
+  publisher: { name: string } | null;
+  conversions: { id: string }[];
+}): SerializedCpaClick {
+  const { device, browser } = parseUserAgent(row.userAgent);
+  return {
+    id: row.id,
+    offerId: row.offerId,
+    offerName: row.offer.name,
+    offerStatus: row.offer.status,
+    advertiserId: row.advertiserId,
+    advertiserName: row.advertiser?.name ?? null,
+    publisherId: row.publisherId,
+    publisherName: row.publisher?.name ?? null,
+    ip: row.ip,
+    device,
+    browser,
+    source: row.src,
+    subId: row.subId,
+    converted: row.conversions.length > 0,
+    createdAt: row.createdAt.toISOString(),
+  };
+}
+
+async function reportStatsForClickWindow(
+  clickWhere: Prisma.CpaOfferClickWhereInput,
+  conversionWhere: Prisma.CpaOfferConversionWhereInput,
+): Promise<CpaConversionsReportStats> {
+  const [clickStats, status, money] = await Promise.all([
+    clickWindowStatsFromWhere(clickWhere),
+    conversionStatusCountsFromWhere(conversionWhere),
+    revenuePayoutProfitTotalsFromWhere(conversionWhere),
+  ]);
+
+  return {
+    hits: clickStats.hits,
+    clicks: clickStats.clicks,
+    conversionsApproved: status.approved,
+    conversionsPending: status.pending,
+    conversionsRejected: status.rejected,
+    revenue: moneyToString(money.revenue),
+    payout: moneyToString(money.payout),
+    profit: moneyToString(money.profit),
+  };
+}
+
+export async function listCpaClicksForAdmin(
+  filters: CpaClickListFilters,
+): Promise<CpaClickListResult> {
+  const page = Math.max(1, filters.page ?? 1);
+  const limit = Math.min(100, Math.max(1, filters.limit ?? 20));
+
+  const where: Prisma.CpaOfferClickWhereInput = {};
+  const conversionWhere: Prisma.CpaOfferConversionWhereInput = {};
+
+  const offerId = filters.offerId?.trim();
+  if (offerId) {
+    where.offerId = offerId;
+    conversionWhere.offerId = offerId;
+  }
+
+  const advertiserId = filters.advertiserId?.trim();
+  if (advertiserId) {
+    where.advertiserId = advertiserId;
+    conversionWhere.advertiserId = advertiserId;
+  }
+
+  const publisherId = filters.publisherId?.trim();
+  if (publisherId) {
+    where.publisherId = publisherId;
+    conversionWhere.clickRecord = { publisherId };
+  }
+
+  if (filters.from || filters.to) {
+    where.createdAt = {};
+    conversionWhere.createdAt = {};
+    if (filters.from) {
+      const from = new Date(filters.from);
+      if (!Number.isNaN(from.getTime())) {
+        where.createdAt.gte = from;
+        conversionWhere.createdAt.gte = from;
+      }
+    }
+    if (filters.to) {
+      const to = new Date(filters.to);
+      if (!Number.isNaN(to.getTime())) {
+        where.createdAt.lte = to;
+        conversionWhere.createdAt.lte = to;
+      }
+    }
+  }
+
+  const q = filters.q?.trim();
+  if (q) {
+    where.OR = [
+      { id: { contains: q } },
+      { offer: { name: { contains: q } } },
+      { offerId: { contains: q } },
+      { advertiser: { name: { contains: q } } },
+      { publisher: { name: { contains: q } } },
+      { subId: { contains: q } },
+      { src: { contains: q } },
+      { ip: { contains: q } },
+    ];
+
+    conversionWhere.OR = [
+      { clickId: { contains: q } },
+      { offer: { name: { contains: q } } },
+      { offerId: { contains: q } },
+      { advertiser: { name: { contains: q } } },
+    ];
+  }
+
+  const [total, rows, stats] = await Promise.all([
+    prisma.cpaOfferClick.count({ where }),
+    prisma.cpaOfferClick.findMany({
+      where,
+      include: {
+        offer: { select: { name: true, status: true } },
+        advertiser: { select: { name: true } },
+        publisher: { select: { name: true } },
+        conversions: { select: { id: true }, take: 1 },
+      },
+      orderBy: { createdAt: "desc" },
+      skip: (page - 1) * limit,
+      take: limit,
+    }),
+    reportStatsForClickWindow(where, conversionWhere),
+  ]);
+
+  return {
+    items: rows.map(serializeCpaClickRow),
+    total,
+    page,
+    limit,
+    totalPages: Math.max(1, Math.ceil(total / limit)),
+    stats,
+  };
+}
+
+export async function listCpaClicksForPublisher(
+  publisherId: string,
+  filters: CpaClickListFilters,
+): Promise<CpaClickListResult> {
+  const page = Math.max(1, filters.page ?? 1);
+  const limit = Math.min(100, Math.max(1, filters.limit ?? 20));
+
+  const where: Prisma.CpaOfferClickWhereInput = { publisherId };
+  const conversionWhere: Prisma.CpaOfferConversionWhereInput = {
+    clickRecord: { publisherId },
+  };
+
+  const offerId = filters.offerId?.trim();
+  if (offerId) {
+    where.offerId = offerId;
+    conversionWhere.offerId = offerId;
+  }
+
+  if (filters.from || filters.to) {
+    where.createdAt = {};
+    conversionWhere.createdAt = {};
+    if (filters.from) {
+      const from = new Date(filters.from);
+      if (!Number.isNaN(from.getTime())) {
+        where.createdAt.gte = from;
+        conversionWhere.createdAt.gte = from;
+      }
+    }
+    if (filters.to) {
+      const to = new Date(filters.to);
+      if (!Number.isNaN(to.getTime())) {
+        where.createdAt.lte = to;
+        conversionWhere.createdAt.lte = to;
+      }
+    }
+  }
+
+  const q = filters.q?.trim();
+  if (q) {
+    where.OR = [
+      { id: { contains: q } },
+      { offer: { name: { contains: q } } },
+      { offerId: { contains: q } },
+      { subId: { contains: q } },
+      { src: { contains: q } },
+      { ip: { contains: q } },
+    ];
+
+    conversionWhere.OR = [
+      { clickId: { contains: q } },
+      { offer: { name: { contains: q } } },
+      { offerId: { contains: q } },
+    ];
+  }
+
+  const [total, rows, stats] = await Promise.all([
+    prisma.cpaOfferClick.count({ where }),
+    prisma.cpaOfferClick.findMany({
+      where,
+      include: {
+        offer: { select: { name: true, status: true } },
+        advertiser: { select: { name: true } },
+        publisher: { select: { name: true } },
+        conversions: { select: { id: true }, take: 1 },
+      },
+      orderBy: { createdAt: "desc" },
+      skip: (page - 1) * limit,
+      take: limit,
+    }),
+    reportStatsForClickWindow(where, conversionWhere),
+  ]);
+
+  return {
+    items: rows.map(serializeCpaClickRow),
     total,
     page,
     limit,
