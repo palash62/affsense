@@ -1073,3 +1073,278 @@ export async function listPublisherDigitalProductOrders(
         : result.totalPages,
   };
 }
+
+function round2(n: number) {
+  return Math.round(n * 100) / 100;
+}
+
+function moneyToString(n: number) {
+  return round2(n).toFixed(2);
+}
+
+function normalizeProductNameKey(name: string | null | undefined) {
+  return (name ?? "").trim().toLowerCase();
+}
+
+export type SerializedDigitalProductAffiliateReportRow = {
+  publisherId: string;
+  publisherName: string;
+  productId: string | null;
+  productName: string;
+  clicks: number;
+  conversions: number;
+  conversionRate: number;
+  epc: string;
+  commission: string;
+  revenue: string;
+  profit: string;
+};
+
+export type DigitalProductAffiliateReportStats = {
+  clicks: number;
+  conversions: number;
+  conversionRate: number;
+  epc: string;
+  commission: string;
+  revenue: string;
+  profit: string;
+};
+
+export type DigitalProductAffiliateReportResult = {
+  items: SerializedDigitalProductAffiliateReportRow[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  stats: DigitalProductAffiliateReportStats;
+};
+
+export async function listDigitalProductAffiliateProductReportForAdmin(
+  filters: DigitalProductClickListFilters,
+): Promise<DigitalProductAffiliateReportResult> {
+  const page = Math.max(1, filters.page ?? 1);
+  const limit = Math.min(100, Math.max(1, filters.limit ?? 20));
+
+  const clickWhere = buildDigitalProductClickWhere(filters);
+
+  const webhookWhere: Prisma.WebhookEventWhereInput = {
+    status: "PROCESSED",
+    publisherId: { not: null },
+  };
+
+  const publisherId = filters.publisherId?.trim();
+  if (publisherId) webhookWhere.publisherId = publisherId;
+
+  if (filters.from || filters.to) {
+    webhookWhere.createdAt = {};
+    if (filters.from) {
+      const from = new Date(filters.from);
+      if (!Number.isNaN(from.getTime())) webhookWhere.createdAt.gte = from;
+    }
+    if (filters.to) {
+      const to = new Date(filters.to);
+      if (!Number.isNaN(to.getTime())) webhookWhere.createdAt.lte = to;
+    }
+  }
+
+  const catalogProducts = await prisma.digitalProduct.findMany({
+    select: { id: true, name: true },
+  });
+  const productById = new Map(catalogProducts.map((p) => [p.id, p]));
+  const productIdByName = new Map<string, string>();
+  for (const p of catalogProducts) {
+    const key = normalizeProductNameKey(p.name);
+    if (key && !productIdByName.has(key)) productIdByName.set(key, p.id);
+  }
+
+  const filterProductId = filters.productId?.trim();
+  const filterProductName = filterProductId
+    ? productById.get(filterProductId)?.name ?? null
+    : null;
+  const filterProductNameKey = normalizeProductNameKey(filterProductName);
+
+  const q = filters.q?.trim().toLowerCase();
+
+  const [clickGroups, orderEvents] = await Promise.all([
+    prisma.digitalProductClick.groupBy({
+      by: ["publisherId", "productId"],
+      where: clickWhere,
+      _count: { _all: true },
+    }),
+    prisma.webhookEvent.findMany({
+      where: webhookWhere,
+      select: {
+        publisherId: true,
+        eventType: true,
+        payloadJson: true,
+      },
+      take: 10000,
+    }),
+  ]);
+
+  type Acc = {
+    publisherId: string;
+    productId: string | null;
+    productName: string;
+    nameKey: string;
+    clicks: number;
+    conversions: number;
+    commission: number;
+    revenue: number;
+  };
+
+  const byKey = new Map<string, Acc>();
+  const keyOf = (publisherId: string, productId: string | null, nameKey: string) =>
+    productId ? `${publisherId}::id::${productId}` : `${publisherId}::name::${nameKey || "_"}`;
+
+  for (const g of clickGroups) {
+    const product = productById.get(g.productId);
+    const productName = product?.name ?? g.productId;
+    const nameKey = normalizeProductNameKey(productName);
+    const key = keyOf(g.publisherId, g.productId, nameKey);
+    byKey.set(key, {
+      publisherId: g.publisherId,
+      productId: g.productId,
+      productName,
+      nameKey,
+      clicks: g._count._all,
+      conversions: 0,
+      commission: 0,
+      revenue: 0,
+    });
+  }
+
+  for (const ev of orderEvents) {
+    if (!ev.publisherId) continue;
+    const fields = extractOrderFields(ev.payloadJson);
+    const type = (fields.orderType ?? ev.eventType ?? "").toLowerCase();
+    if (type.includes("refund")) continue;
+
+    const productName = fields.product?.trim() || "Unknown product";
+    const nameKey = normalizeProductNameKey(productName);
+    const matchedProductId = nameKey ? productIdByName.get(nameKey) ?? null : null;
+
+    if (filterProductId) {
+      if (matchedProductId) {
+        if (matchedProductId !== filterProductId) continue;
+      } else if (!filterProductNameKey || nameKey !== filterProductNameKey) {
+        if (!nameKey.includes(filterProductId.toLowerCase())) continue;
+      }
+    }
+
+    if (q) {
+      const hay = `${productName} ${matchedProductId ?? ""} ${ev.publisherId}`.toLowerCase();
+      if (!hay.includes(q)) continue;
+    }
+
+    const key = keyOf(ev.publisherId, matchedProductId, nameKey);
+    const acc = byKey.get(key) ?? {
+      publisherId: ev.publisherId,
+      productId: matchedProductId,
+      productName: matchedProductId
+        ? productById.get(matchedProductId)?.name ?? productName
+        : productName,
+      nameKey,
+      clicks: 0,
+      conversions: 0,
+      commission: 0,
+      revenue: 0,
+    };
+
+    const amount = fields.amount ?? 0;
+    acc.conversions += 1;
+    acc.revenue += amount;
+    acc.commission += amount * PUBLISHER_COMMISSION_RATE;
+    byKey.set(key, acc);
+  }
+
+  // Apply q filter to click-only rows (orders already filtered above)
+  if (q) {
+    for (const [key, acc] of [...byKey.entries()]) {
+      if (acc.conversions > 0) continue;
+      const hay = `${acc.productName} ${acc.productId ?? ""} ${acc.publisherId}`.toLowerCase();
+      if (!hay.includes(q)) byKey.delete(key);
+    }
+  }
+
+  const publisherIds = Array.from(new Set([...byKey.values()].map((r) => r.publisherId)));
+  const publishers = publisherIds.length
+    ? await prisma.user.findMany({
+        where: { id: { in: publisherIds } },
+        select: { id: true, name: true },
+      })
+    : [];
+  const publisherNameById = new Map(publishers.map((p) => [p.id, p.name]));
+
+  const allRows: SerializedDigitalProductAffiliateReportRow[] = Array.from(byKey.values())
+    .map((acc) => {
+      const clicks = acc.clicks;
+      const conversions = acc.conversions;
+      const commission = round2(acc.commission);
+      const revenue = round2(acc.revenue);
+      const profit = round2(revenue - commission);
+      const conversionRate =
+        clicks > 0 ? Math.round((conversions / clicks) * 10000) / 100 : 0;
+      const epc = clicks > 0 ? round2(commission / clicks) : 0;
+
+      return {
+        publisherId: acc.publisherId,
+        publisherName: publisherNameById.get(acc.publisherId) ?? "Unknown",
+        productId: acc.productId,
+        productName: acc.productName,
+        clicks,
+        conversions,
+        conversionRate,
+        epc: moneyToString(epc),
+        commission: moneyToString(commission),
+        revenue: moneyToString(revenue),
+        profit: moneyToString(profit),
+      };
+    })
+    .sort((a, b) => {
+      const byPub = a.publisherName.localeCompare(b.publisherName);
+      if (byPub !== 0) return byPub;
+      return a.productName.localeCompare(b.productName);
+    });
+
+  const totals = allRows.reduce(
+    (sum, row) => {
+      sum.clicks += row.clicks;
+      sum.conversions += row.conversions;
+      sum.commission += Number(row.commission);
+      sum.revenue += Number(row.revenue);
+      return sum;
+    },
+    { clicks: 0, conversions: 0, commission: 0, revenue: 0 },
+  );
+
+  const totalCommission = round2(totals.commission);
+  const totalRevenue = round2(totals.revenue);
+  const totalProfit = round2(totalRevenue - totalCommission);
+  const totalCr =
+    totals.clicks > 0
+      ? Math.round((totals.conversions / totals.clicks) * 10000) / 100
+      : 0;
+  const totalEpc = totals.clicks > 0 ? round2(totalCommission / totals.clicks) : 0;
+
+  const total = allRows.length;
+  const totalPages = Math.max(1, Math.ceil(total / limit));
+  const items = allRows.slice((page - 1) * limit, page * limit);
+
+  return {
+    items,
+    total,
+    page,
+    limit,
+    totalPages,
+    stats: {
+      clicks: totals.clicks,
+      conversions: totals.conversions,
+      conversionRate: totalCr,
+      epc: moneyToString(totalEpc),
+      commission: moneyToString(totalCommission),
+      revenue: moneyToString(totalRevenue),
+      profit: moneyToString(totalProfit),
+    },
+  };
+}

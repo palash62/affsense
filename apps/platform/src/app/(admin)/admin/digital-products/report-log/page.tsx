@@ -4,9 +4,9 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { defaultCampaignDateFrom, defaultCampaignDateTo } from "@/lib/advertiser-campaigns";
-import { AdminDigitalProductsAffiliateReport } from "@/components/admin/digital-products/admin-digital-products-affiliate-report";
+import { AdminDigitalProductsReport } from "@/components/admin/digital-products/admin-digital-products-report";
 
-export default async function DigitalProductsReportPage() {
+export default async function DigitalProductsReportLogPage() {
   const session = await getSession();
   if (!session) redirect("/login");
 
@@ -17,7 +17,7 @@ export default async function DigitalProductsReportPage() {
   });
 
   return (
-    <AdminDigitalProductsAffiliateReport
+    <AdminDigitalProductsReport
       publishers={publishers}
       defaultFrom={defaultCampaignDateFrom()}
       defaultTo={defaultCampaignDateTo()}

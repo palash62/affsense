@@ -115,6 +115,7 @@ export const ADMIN_NAV: AdminNavEntry[] = [
         { label: "Add New Product", href: "/admin/digital-products/new", icon: Plus },
         { label: "Product Categories", href: "/admin/digital-products/categories", icon: Tags },
         { label: "Report", href: "/admin/digital-products/report", icon: BarChart3 },
+        { label: "Report Log", href: "/admin/digital-products/report-log", icon: ScrollText },
       ],
     },
   },

@@ -36,6 +36,20 @@ export function getAdminPageMeta(
     };
   }
 
+  if (path === "/admin/digital-products/report") {
+    return {
+      title: "Digital Products Report",
+      subtitle: "Affiliate and product performance — clicks, orders, CR, and EPC",
+    };
+  }
+
+  if (path === "/admin/digital-products/report-log") {
+    return {
+      title: "Digital Products Report Log",
+      subtitle: "Orders and clicks by product, affiliate, and traffic",
+    };
+  }
+
   if (path === "/admin/get-paid-tasks") {
     return {
       title: "Get Paid Tasks",
@@ -220,6 +234,8 @@ export function getAdminPageMeta(
     "/admin/cpa-offers/report": "CPA Report",
     "/admin/cpa-offers/report-log": "CPA Report Log",
     "/admin/cpa-offers/payouts": "CPA Payouts",
+    "/admin/digital-products/report": "Digital Products Report",
+    "/admin/digital-products/report-log": "Digital Products Report Log",
     "/admin/global-postback": "CPA Postback",
     "/admin/leads": "Leads",
     "/admin/fraud": "Fraud Center",

@@ -127,6 +127,19 @@ function isChildActive(pathname: string, child: NavItem, siblings: NavItem[]) {
       pathname.startsWith("/admin/digital-products/categories/")
     );
   }
+  if (child.href === "/admin/digital-products/report") {
+    return (
+      pathname === "/admin/digital-products/report" ||
+      (pathname.startsWith("/admin/digital-products/report/") &&
+        !pathname.startsWith("/admin/digital-products/report-log"))
+    );
+  }
+  if (child.href === "/admin/digital-products/report-log") {
+    return (
+      pathname === "/admin/digital-products/report-log" ||
+      pathname.startsWith("/admin/digital-products/report-log/")
+    );
+  }
   if (child.href === "/admin/offer-network") {
     return pathname === "/admin/offer-network";
   }

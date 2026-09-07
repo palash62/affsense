@@ -188,8 +188,8 @@ export function AdminDigitalProductsReport({
   return (
     <div className="flex flex-col gap-5">
       <PageHero
-        title="Digital Products Report"
-        description="Track orders and affiliate clicks for digital products."
+        title="Digital Products Report Log"
+        description="Orders and click events by product, affiliate, and traffic."
         eyebrow="Digital Products"
         badge={loading ? undefined : `${total} ${tab}`}
       />
