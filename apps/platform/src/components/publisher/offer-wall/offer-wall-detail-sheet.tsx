@@ -37,7 +37,9 @@ export function OfferWallDetailSheet({
         <SheetHeader className="border-b border-border px-4 py-3">
           <SheetTitle className="pr-8 text-left">{offer?.name ?? "Offer details"}</SheetTitle>
           <SheetDescription className="sr-only">
-            {offer ? `${offer.type || "Offer"} · ${formatCurrency(payout)}` : "Offer details"}
+            {offer
+              ? `${offer.type || "Offer"} · ${points != null ? formatOfferWallPoints(points) : formatCurrency(payout)}`
+              : "Offer details"}
           </SheetDescription>
         </SheetHeader>
 
@@ -77,11 +79,6 @@ export function OfferWallDetailSheet({
                 >
                   {points != null ? formatOfferWallPoints(points) : formatCurrency(payout)}
                 </p>
-                {points != null ? (
-                  <p className="text-sm font-medium text-muted-foreground tabular-nums">
-                    {formatCurrency(payout)}
-                  </p>
-                ) : null}
               </div>
             </div>
 

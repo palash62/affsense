@@ -43,7 +43,6 @@ export function OfferWallEarnLink({
 }) {
   const points = offerWallPayoutPoints(payout, pointsRatio);
   const label = points != null ? formatOfferWallPoints(points) : formatCurrency(payout);
-  const subLabel = points != null ? formatCurrency(payout) : null;
   return (
     <a
       href={href}
@@ -62,14 +61,10 @@ export function OfferWallEarnLink({
         <>
           <span className="text-[11px] font-medium leading-none opacity-90">Earn</span>
           <span className="mt-0.5 text-sm font-bold tabular-nums leading-tight">{label}</span>
-          {subLabel ? (
-            <span className="text-[10px] font-medium leading-none opacity-80">{subLabel}</span>
-          ) : null}
         </>
       ) : (
         <>
           Earn {label}
-          {subLabel ? <span className="text-xs font-medium opacity-85">({subLabel})</span> : null}
           <ExternalLink className="h-4 w-4" />
         </>
       )}
@@ -155,11 +150,6 @@ export function OfferWallRow({
             <span className="mt-0.5 text-sm font-bold tabular-nums leading-tight">
               {points != null ? formatOfferWallPoints(points) : formatCurrency(payout)}
             </span>
-            {points != null ? (
-              <span className="text-[10px] font-medium leading-none">
-                {formatCurrency(payout)}
-              </span>
-            ) : null}
           </span>
         )}
         {featured ? (
