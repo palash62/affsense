@@ -16,6 +16,22 @@ export function buildOgadsPostbackUrl(secret?: string) {
   return `${base}?secret=${encodeURIComponent(key)}`;
 }
 
+/**
+ * Postback URL pre-filled with OGAds macros, ready to paste into
+ * members.ogads.com -> Tools -> Postback URL.
+ */
+export function buildOgadsPostbackUrlWithMacros(secret?: string) {
+  const macros = [
+    "offer_id={offer_id}",
+    "payout={payout}",
+    "aff_sub4={aff_sub4}",
+    "ip={session_ip}",
+    "transaction_id={transaction_id}",
+  ].join("&");
+  const base = buildOgadsPostbackUrl(secret);
+  return `${base}${base.includes("?") ? "&" : "?"}${macros}`;
+}
+
 export async function loadOgadsOfferWallConfig(): Promise<OgadsOfferWallConfig> {
   const row = await prisma.platformSetting.findUnique({
     where: { key: OGADS_OFFER_WALL_SETTINGS_KEY },
@@ -26,7 +42,11 @@ export async function loadOgadsOfferWallConfig(): Promise<OgadsOfferWallConfig> 
 
 export async function getOgadsOfferWallSettingsForAdmin() {
   const config = await loadOgadsOfferWallConfig();
-  return toOgadsOfferWallSettingsApi(config, buildOgadsPostbackUrl(config.postbackSecret));
+  return toOgadsOfferWallSettingsApi(
+    config,
+    buildOgadsPostbackUrl(config.postbackSecret),
+    buildOgadsPostbackUrlWithMacros(config.postbackSecret),
+  );
 }
 
 export async function updateOgadsOfferWallSettings(
@@ -38,6 +58,9 @@ export async function updateOgadsOfferWallSettings(
     affiliatePercent?: number;
     postbackSecret?: string;
     regenerateSecret?: boolean;
+    affiliateId?: string;
+    wallId?: string;
+    pointsRatio?: number;
   },
   adminId: string,
 ) {
@@ -61,6 +84,9 @@ export async function updateOgadsOfferWallSettings(
         endpoint: next.endpoint,
         max: next.max,
         affiliatePercent: next.affiliatePercent,
+        affiliateId: next.affiliateId,
+        wallId: next.wallId,
+        pointsRatio: next.pointsRatio,
         apiKeyUpdated: typeof input.apiKey === "string",
         secretRotated: Boolean(input.regenerateSecret),
         secretUpdated: Boolean(
@@ -71,5 +97,9 @@ export async function updateOgadsOfferWallSettings(
     },
   });
 
-  return toOgadsOfferWallSettingsApi(next, buildOgadsPostbackUrl(next.postbackSecret));
+  return toOgadsOfferWallSettingsApi(
+    next,
+    buildOgadsPostbackUrl(next.postbackSecret),
+    buildOgadsPostbackUrlWithMacros(next.postbackSecret),
+  );
 }

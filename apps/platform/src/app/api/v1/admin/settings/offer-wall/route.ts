@@ -27,6 +27,9 @@ export async function PATCH(request: Request) {
           postbackSecret:
             typeof body.postbackSecret === "string" ? body.postbackSecret : undefined,
           regenerateSecret: body.regenerateSecret === true,
+          affiliateId: typeof body.affiliateId === "string" ? body.affiliateId : undefined,
+          wallId: typeof body.wallId === "string" ? body.wallId : undefined,
+          pointsRatio: typeof body.pointsRatio === "number" ? body.pointsRatio : undefined,
         },
         session.user.id,
       );

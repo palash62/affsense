@@ -48,6 +48,7 @@ export function PublisherOfferWallList({
   const [typeFilter, setTypeFilter] = useState("all");
   const [countryFilter, setCountryFilter] = useState("all");
   const [selected, setSelected] = useState<OfferWallItem | null>(null);
+  const [pointsRatio, setPointsRatio] = useState(0);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -62,6 +63,7 @@ export function PublisherOfferWallList({
       setItems(json.data?.items ?? []);
       setConfigured(Boolean(json.data?.configured));
       setMessage(typeof json.data?.message === "string" ? json.data.message : null);
+      setPointsRatio(Number(json.data?.pointsRatio) || 0);
     } catch {
       toast.error("Failed to load offers");
       setItems([]);
@@ -233,6 +235,7 @@ export function PublisherOfferWallList({
               offer={offer}
               featured={offer.id === featuredId}
               onSelect={() => setSelected(offer)}
+              pointsRatio={pointsRatio}
             />
           ))}
         </div>
@@ -241,6 +244,7 @@ export function PublisherOfferWallList({
     <OfferWallDetailSheet
       offer={selected}
       featured={Boolean(selected && selected.id === featuredId)}
+      pointsRatio={pointsRatio}
       open={Boolean(selected)}
       onOpenChange={(open) => {
         if (!open) setSelected(null);

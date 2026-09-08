@@ -29,6 +29,10 @@ type SettingsState = {
   postbackSecret: string;
   postbackSecretConfigured: boolean;
   postbackUrl: string;
+  postbackUrlWithMacros: string;
+  affiliateId: string;
+  wallId: string;
+  pointsRatio: number;
 };
 
 async function copyText(text: string, label: string) {
@@ -63,6 +67,7 @@ export function OgadsOfferWallSettingsForm() {
   }, [load]);
 
   const postbackDisplay = useMemo(() => settings?.postbackUrl ?? "", [settings]);
+  const macroDisplay = useMemo(() => settings?.postbackUrlWithMacros ?? "", [settings]);
 
   async function save() {
     if (!settings) return;
@@ -77,6 +82,9 @@ export function OgadsOfferWallSettingsForm() {
           max: settings.max,
           affiliatePercent: settings.affiliatePercent,
           apiKey: draftApiKey.trim() || undefined,
+          affiliateId: settings.affiliateId,
+          wallId: settings.wallId,
+          pointsRatio: settings.pointsRatio,
         }),
       });
       const json = await res.json().catch(() => ({}));
@@ -231,6 +239,73 @@ export function OgadsOfferWallSettingsForm() {
       </DashboardCard>
 
       <DashboardCard>
+        <DashboardCardTitle>Offerwall IDs</DashboardCardTitle>
+        <DashboardCardDescription>
+          Your OGAds Affiliate ID and the OfferwallInc Wall Id, kept for reference. Offers are
+          pulled straight from the OGAds Offer API above, so no mediation layer is used.
+        </DashboardCardDescription>
+
+        <div className="mt-6 space-y-5">
+          <div className="space-y-2">
+            <Label>Affiliate ID</Label>
+            <Input
+              value={settings.affiliateId}
+              onChange={(e) =>
+                setSettings((prev) => (prev ? { ...prev, affiliateId: e.target.value } : prev))
+              }
+              placeholder="e.g. 27283"
+              className="max-w-xs font-mono text-sm"
+            />
+            <p className="text-xs text-muted-foreground">
+              From the OGAds dashboard account drop-down.
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Wall Id</Label>
+            <Input
+              value={settings.wallId}
+              onChange={(e) =>
+                setSettings((prev) => (prev ? { ...prev, wallId: e.target.value } : prev))
+              }
+              placeholder="e.g. 2160"
+              className="max-w-xs font-mono text-sm"
+            />
+            <p className="text-xs text-muted-foreground">
+              From offerwallinc.com. Reference only — the wall here renders natively.
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Points ratio</Label>
+            <Input
+              type="number"
+              min={0}
+              value={settings.pointsRatio}
+              onChange={(e) =>
+                setSettings((prev) =>
+                  prev ? { ...prev, pointsRatio: Number(e.target.value) || 0 } : prev,
+                )
+              }
+              className="max-w-xs"
+            />
+            <p className="text-xs text-muted-foreground">
+              {settings.pointsRatio > 0
+                ? `$1.00 = ${settings.pointsRatio.toLocaleString()} points. Affiliates see points on the wall; wallets stay in USD.`
+                : "0 shows dollar payouts only. Set a ratio to display points instead."}
+            </p>
+          </div>
+
+          <div className="flex justify-end">
+            <Button type="button" disabled={saving} onClick={() => void save()} className="gap-2">
+              <Save className="h-4 w-4" />
+              {saving ? "Saving…" : "Save"}
+            </Button>
+          </div>
+        </div>
+      </DashboardCard>
+
+      <DashboardCard>
         <DashboardCardTitle>Postback URL</DashboardCardTitle>
         <DashboardCardDescription>
           Paste this into OGAds Tools → Postback URL so conversions credit the affiliate wallet.
@@ -251,6 +326,23 @@ export function OgadsOfferWallSettingsForm() {
               Copy
             </Button>
           </div>
+          <div className="flex gap-2">
+            <Input readOnly value={macroDisplay} className="font-mono text-xs" />
+            <Button
+              type="button"
+              variant="outline"
+              className="shrink-0 gap-2"
+              onClick={() => void copyText(macroDisplay, "Postback URL with macros")}
+              disabled={!macroDisplay}
+            >
+              <Copy className="h-4 w-4" />
+              With macros
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Use the macro version so conversions arrive with offer, payout, affiliate, and
+            transaction id. Duplicate transaction ids are ignored.
+          </p>
           <Button
             type="button"
             variant="outline"

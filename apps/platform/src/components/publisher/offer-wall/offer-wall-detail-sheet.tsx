@@ -2,6 +2,7 @@
 
 import { CpaOfferGeoFlags } from "@/components/cpa/cpa-offer-geo-flags";
 import { formatCurrency } from "@/components/admin/admin-ui";
+import { formatOfferWallPoints, offerWallPayoutPoints } from "@/lib/offer-wall-points";
 import {
   Sheet,
   SheetContent,
@@ -18,13 +19,16 @@ export function OfferWallDetailSheet({
   featured,
   open,
   onOpenChange,
+  pointsRatio = 0,
 }: {
   offer: OfferWallItem | null;
   featured?: boolean;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  pointsRatio?: number;
 }) {
   const payout = Number(offer?.payout) || 0;
+  const points = offerWallPayoutPoints(payout, pointsRatio);
   const letter = (offer?.name.trim()[0] || "?").toUpperCase();
 
   return (
@@ -71,8 +75,13 @@ export function OfferWallDetailSheet({
                     featured ? "text-[var(--theme-primary)]" : "text-[var(--theme-success)]",
                   )}
                 >
-                  {formatCurrency(payout)}
+                  {points != null ? formatOfferWallPoints(points) : formatCurrency(payout)}
                 </p>
+                {points != null ? (
+                  <p className="text-sm font-medium text-muted-foreground tabular-nums">
+                    {formatCurrency(payout)}
+                  </p>
+                ) : null}
               </div>
             </div>
 
@@ -101,10 +110,11 @@ export function OfferWallDetailSheet({
               payout={payout}
               featured={featured}
               layout="bar"
+              pointsRatio={pointsRatio}
             />
           ) : (
             <span className="inline-flex h-11 w-full items-center justify-center rounded-md bg-muted text-sm font-semibold text-muted-foreground">
-              Earn {formatCurrency(payout)}
+              Earn {points != null ? formatOfferWallPoints(points) : formatCurrency(payout)}
             </span>
           )}
         </SheetFooter>

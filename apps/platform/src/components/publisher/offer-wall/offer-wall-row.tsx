@@ -3,6 +3,7 @@
 import { ExternalLink } from "lucide-react";
 import { CpaOfferGeoFlags } from "@/components/cpa/cpa-offer-geo-flags";
 import { formatCurrency } from "@/components/admin/admin-ui";
+import { formatOfferWallPoints, offerWallPayoutPoints } from "@/lib/offer-wall-points";
 import { cn } from "@/lib/utils";
 
 export type OfferWallItem = {
@@ -30,6 +31,7 @@ export function OfferWallEarnLink({
   layout = "stack",
   stopPropagation,
   className,
+  pointsRatio = 0,
 }: {
   href: string;
   payout: number;
@@ -37,8 +39,11 @@ export function OfferWallEarnLink({
   layout?: "stack" | "bar";
   stopPropagation?: boolean;
   className?: string;
+  pointsRatio?: number;
 }) {
-  const label = formatCurrency(payout);
+  const points = offerWallPayoutPoints(payout, pointsRatio);
+  const label = points != null ? formatOfferWallPoints(points) : formatCurrency(payout);
+  const subLabel = points != null ? formatCurrency(payout) : null;
   return (
     <a
       href={href}
@@ -57,10 +62,14 @@ export function OfferWallEarnLink({
         <>
           <span className="text-[11px] font-medium leading-none opacity-90">Earn</span>
           <span className="mt-0.5 text-sm font-bold tabular-nums leading-tight">{label}</span>
+          {subLabel ? (
+            <span className="text-[10px] font-medium leading-none opacity-80">{subLabel}</span>
+          ) : null}
         </>
       ) : (
         <>
           Earn {label}
+          {subLabel ? <span className="text-xs font-medium opacity-85">({subLabel})</span> : null}
           <ExternalLink className="h-4 w-4" />
         </>
       )}
@@ -72,12 +81,15 @@ export function OfferWallRow({
   offer,
   featured,
   onSelect,
+  pointsRatio = 0,
 }: {
   offer: OfferWallItem;
   featured?: boolean;
   onSelect: () => void;
+  pointsRatio?: number;
 }) {
   const payout = Number(offer.payout) || 0;
+  const points = offerWallPayoutPoints(payout, pointsRatio);
   const letter = (offer.name.trim()[0] || "?").toUpperCase();
 
   return (
@@ -135,13 +147,19 @@ export function OfferWallRow({
             payout={payout}
             featured={featured}
             stopPropagation
+            pointsRatio={pointsRatio}
           />
         ) : (
           <span className="inline-flex min-h-11 w-full flex-col items-center justify-center rounded-md bg-muted px-3 py-2 text-center text-muted-foreground">
             <span className="text-[11px] font-medium leading-none">Earn</span>
             <span className="mt-0.5 text-sm font-bold tabular-nums leading-tight">
-              {formatCurrency(payout)}
+              {points != null ? formatOfferWallPoints(points) : formatCurrency(payout)}
             </span>
+            {points != null ? (
+              <span className="text-[10px] font-medium leading-none">
+                {formatCurrency(payout)}
+              </span>
+            ) : null}
           </span>
         )}
         {featured ? (

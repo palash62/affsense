@@ -28,10 +28,16 @@ export async function handleOgadsOfferWallPostback(request: Request) {
 
   const { searchParams } = new URL(request.url);
   const secret = pickParam(searchParams, "secret");
-  if (config.postbackSecret) {
-    if (!secret || secret !== config.postbackSecret) {
-      throw new AppError("UNAUTHORIZED", "Invalid postback secret", 401);
-    }
+  // Fail closed: an unset secret must not mean "accept anything".
+  if (!config.postbackSecret) {
+    throw new AppError(
+      "UNAUTHORIZED",
+      "Offer Wall postback secret is not configured",
+      401,
+    );
+  }
+  if (!secret || secret !== config.postbackSecret) {
+    throw new AppError("UNAUTHORIZED", "Invalid postback secret", 401);
   }
 
   const publisherId = pickParam(searchParams, "aff_sub4", "aff_sub", "user_id", "userid");

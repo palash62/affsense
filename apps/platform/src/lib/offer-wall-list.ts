@@ -7,6 +7,7 @@ export type OfferWallListPayload = {
   items: OgadsOfferDto[];
   configured: boolean;
   message: string | null;
+  pointsRatio: number;
 };
 
 export async function getOfferWallListForRequest(
@@ -25,6 +26,7 @@ export async function getOfferWallListForRequest(
       items: [],
       configured,
       message: "Offer Wall is disabled by admin.",
+      pointsRatio: config.pointsRatio,
     };
   }
 
@@ -35,6 +37,7 @@ export async function getOfferWallListForRequest(
       message:
         options?.unconfiguredMessage ??
         "Offer Wall is not configured yet. Ask admin to add the OGAds API key.",
+      pointsRatio: config.pointsRatio,
     };
   }
 
@@ -63,5 +66,6 @@ export async function getOfferWallListForRequest(
     items,
     configured: true,
     message: result.error ?? null,
+    pointsRatio: config.pointsRatio,
   };
 }

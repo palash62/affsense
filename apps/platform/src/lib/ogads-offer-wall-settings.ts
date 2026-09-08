@@ -1,4 +1,5 @@
 import { randomBytes } from "crypto";
+import { clampOfferWallPointsRatio } from "@/lib/offer-wall-points";
 
 export const OGADS_OFFER_WALL_SETTINGS_KEY = "ogads_offer_wall";
 
@@ -10,6 +11,9 @@ export type OgadsOfferWallConfig = {
   max: number;
   affiliatePercent: number;
   postbackSecret: string;
+  affiliateId: string;
+  wallId: string;
+  pointsRatio: number;
 };
 
 export type OgadsOfferWallSettingsApi = {
@@ -22,6 +26,10 @@ export type OgadsOfferWallSettingsApi = {
   postbackSecret: string;
   postbackSecretConfigured: boolean;
   postbackUrl: string;
+  postbackUrlWithMacros: string;
+  affiliateId: string;
+  wallId: string;
+  pointsRatio: number;
 };
 
 export const DEFAULT_OGADS_OFFER_WALL_CONFIG: OgadsOfferWallConfig = {
@@ -32,6 +40,10 @@ export const DEFAULT_OGADS_OFFER_WALL_CONFIG: OgadsOfferWallConfig = {
   max: 100,
   affiliatePercent: 100,
   postbackSecret: "",
+  affiliateId: "",
+  wallId: "",
+  // 0 keeps the wall in dollars; a positive ratio shows points instead.
+  pointsRatio: 0,
 };
 
 export function clampOfferWallAffiliatePercent(value: unknown): number {
@@ -49,6 +61,7 @@ export function applyOfferWallAffiliatePayout(amount: number, percent: number): 
 export function generateOfferWallSecret(): string {
   return randomBytes(24).toString("hex");
 }
+
 
 function coerceString(value: unknown): string {
   return typeof value === "string" ? value : "";
@@ -74,12 +87,16 @@ export function parseOgadsOfferWallConfig(value: unknown): OgadsOfferWallConfig 
       raw.affiliatePercent ?? DEFAULT_OGADS_OFFER_WALL_CONFIG.affiliatePercent,
     ),
     postbackSecret: coerceString(raw.postbackSecret).trim(),
+    affiliateId: coerceString(raw.affiliateId).trim(),
+    wallId: coerceString(raw.wallId).trim(),
+    pointsRatio: clampOfferWallPointsRatio(raw.pointsRatio),
   };
 }
 
 export function toOgadsOfferWallSettingsApi(
   config: OgadsOfferWallConfig,
   postbackUrl: string,
+  postbackUrlWithMacros: string,
 ): OgadsOfferWallSettingsApi {
   return {
     enabled: config.enabled,
@@ -92,6 +109,10 @@ export function toOgadsOfferWallSettingsApi(
     postbackSecret: "",
     postbackSecretConfigured: Boolean(config.postbackSecret.trim()),
     postbackUrl,
+    postbackUrlWithMacros,
+    affiliateId: config.affiliateId,
+    wallId: config.wallId,
+    pointsRatio: config.pointsRatio,
   };
 }
 
@@ -105,6 +126,9 @@ export function mergeOgadsOfferWallUpdate(
     affiliatePercent?: number;
     postbackSecret?: string;
     regenerateSecret?: boolean;
+    affiliateId?: string;
+    wallId?: string;
+    pointsRatio?: number;
   },
 ): OgadsOfferWallConfig {
   const next: OgadsOfferWallConfig = { ...existing };
@@ -124,6 +148,11 @@ export function mergeOgadsOfferWallUpdate(
     next.postbackSecret = generateOfferWallSecret();
   } else if (typeof input.postbackSecret === "string" && input.postbackSecret.trim()) {
     next.postbackSecret = input.postbackSecret.trim();
+  }
+  if (typeof input.affiliateId === "string") next.affiliateId = input.affiliateId.trim();
+  if (typeof input.wallId === "string") next.wallId = input.wallId.trim();
+  if (typeof input.pointsRatio === "number") {
+    next.pointsRatio = clampOfferWallPointsRatio(input.pointsRatio);
   }
 
   return next;
