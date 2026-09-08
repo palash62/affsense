@@ -223,7 +223,12 @@ export async function dispatchPublisherPostback(leadId: string): Promise<Publish
   }
 
   const postback = await prisma.publisherPostback.findUnique({
-    where: { publisherId: lead.publisherId },
+    where: {
+      publisherId_channel: {
+        publisherId: lead.publisherId,
+        channel: "CPL",
+      },
+    },
   });
   if (!postback || postback.status !== "ACTIVE" || !postback.endpoint.trim()) {
     return null;
@@ -254,9 +259,16 @@ export async function dispatchPublisherPostback(leadId: string): Promise<Publish
 export async function firePublisherPostbackTest(input: {
   publisherId: string;
   endpoint?: string;
+  channel?: "CPL" | "CPA" | "DIGITAL_PRODUCT";
 }): Promise<PublisherPostbackFireResult> {
+  const channel = input.channel ?? "CPL";
   const saved = await prisma.publisherPostback.findUnique({
-    where: { publisherId: input.publisherId },
+    where: {
+      publisherId_channel: {
+        publisherId: input.publisherId,
+        channel,
+      },
+    },
   });
   const endpoint = (input.endpoint ?? saved?.endpoint ?? "").trim();
   if (!endpoint) {
@@ -280,7 +292,7 @@ export async function firePublisherPostbackTest(input: {
     context: buildPublisherPostbackMacroContext({
       leadId: "test-lead-id",
       publisherId: input.publisherId,
-      campaignId: "test-campaign-id",
+      campaignId: channel === "DIGITAL_PRODUCT" ? "test-product-id" : "test-campaign-id",
       payout: 1,
       source: "test",
       subId: "test-sub",

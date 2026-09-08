@@ -14,15 +14,41 @@ export const GLOBAL_POSTBACK_MACROS = [
 ] as const;
 
 export const PUBLISHER_POSTBACK_MACROS = [
-  { macro: "{click_id}", description: "Lead / conversion id" },
-  { macro: "{lead_id}", description: "Lead id" },
+  { macro: "{click_id}", description: "Lead / conversion / order id" },
+  { macro: "{lead_id}", description: "Lead or conversion id" },
   { macro: "{payout}", description: "Publisher payout" },
   { macro: "{currency}", description: "Currency" },
   { macro: "{aff_id}", description: "Publisher id" },
-  { macro: "{offer_id}", description: "Campaign id" },
+  { macro: "{offer_id}", description: "Campaign / offer / product id" },
   { macro: "{source}", description: "Source (?src=)" },
   { macro: "{date}", description: "Date" },
   { macro: "{sub_id}", description: "Sub ID from ?sub_id=" },
+  { macro: "{sub1}", description: "Same as {sub_id}" },
+] as const;
+
+export const PUBLISHER_CPA_POSTBACK_MACROS = [
+  { macro: "{click_id}", description: "CPA click id" },
+  { macro: "{lead_id}", description: "Conversion id" },
+  { macro: "{payout}", description: "Publisher payout" },
+  { macro: "{currency}", description: "Currency" },
+  { macro: "{aff_id}", description: "Publisher id" },
+  { macro: "{offer_id}", description: "CPA offer id" },
+  { macro: "{source}", description: "Source (?src=)" },
+  { macro: "{date}", description: "Date" },
+  { macro: "{sub_id}", description: "Sub ID from ?sub_id=" },
+  { macro: "{sub1}", description: "Same as {sub_id}" },
+] as const;
+
+export const PUBLISHER_DIGITAL_PRODUCT_POSTBACK_MACROS = [
+  { macro: "{click_id}", description: "Order id (or webhook event id)" },
+  { macro: "{lead_id}", description: "Webhook event id" },
+  { macro: "{payout}", description: "Publisher commission" },
+  { macro: "{currency}", description: "Currency" },
+  { macro: "{aff_id}", description: "Publisher id" },
+  { macro: "{offer_id}", description: "Product name / id" },
+  { macro: "{source}", description: "Source from order payload" },
+  { macro: "{date}", description: "Date" },
+  { macro: "{sub_id}", description: "Sub ID from order payload" },
   { macro: "{sub1}", description: "Same as {sub_id}" },
 ] as const;
 

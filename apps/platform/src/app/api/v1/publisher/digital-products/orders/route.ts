@@ -11,6 +11,7 @@ export async function GET(request: Request) {
       const parsed = digitalProductOrdersListQuerySchema.safeParse({
         q: searchParams.get("q") ?? undefined,
         productId: searchParams.get("productId") ?? undefined,
+        subId: searchParams.get("subId") ?? undefined,
         eventType: searchParams.get("eventType") ?? undefined,
         from: searchParams.get("from") ?? undefined,
         to: searchParams.get("to") ?? undefined,

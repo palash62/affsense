@@ -1,35 +1,46 @@
-import type { CpaPostbackDeliveryStatus, GlobalPostbackStatus } from "@prisma/client";
+import type {
+  CpaPostbackDeliveryStatus,
+  GlobalPostbackStatus,
+  PublisherPostbackChannel,
+} from "@prisma/client";
 import { endOfDay, startOfDay } from "date-fns";
 import { prisma } from "@/lib/prisma";
 import { Errors } from "@/lib/errors";
 
 export type SerializedPublisherPostback = {
   id: string | null;
+  channel: PublisherPostbackChannel;
   type: "S2S";
   status: GlobalPostbackStatus;
   endpoint: string;
   updatedAt: string | null;
 };
 
-const DEFAULT: SerializedPublisherPostback = {
-  id: null,
-  type: "S2S",
-  status: "INACTIVE",
-  endpoint: "",
-  updatedAt: null,
-};
+function defaultSerialized(channel: PublisherPostbackChannel): SerializedPublisherPostback {
+  return {
+    id: null,
+    channel,
+    type: "S2S",
+    status: "INACTIVE",
+    endpoint: "",
+    updatedAt: null,
+  };
+}
 
 function serialize(
+  channel: PublisherPostbackChannel,
   row: {
     id: string;
+    channel: PublisherPostbackChannel;
     status: GlobalPostbackStatus;
     endpoint: string;
     updatedAt: Date;
   } | null,
 ): SerializedPublisherPostback {
-  if (!row) return { ...DEFAULT };
+  if (!row) return defaultSerialized(channel);
   return {
     id: row.id,
+    channel: row.channel,
     type: "S2S",
     status: row.status,
     endpoint: row.endpoint,
@@ -52,11 +63,14 @@ export function assertHttpTemplateUrl(endpoint: string) {
 
 export async function getPublisherPostback(
   publisherId: string,
+  channel: PublisherPostbackChannel = "CPL",
 ): Promise<SerializedPublisherPostback> {
   const row = await prisma.publisherPostback.findUnique({
-    where: { publisherId },
+    where: {
+      publisherId_channel: { publisherId, channel },
+    },
   });
-  return serialize(row);
+  return serialize(channel, row);
 }
 
 export async function upsertPublisherPostback(
@@ -64,8 +78,10 @@ export async function upsertPublisherPostback(
   input: {
     status: GlobalPostbackStatus;
     endpoint: string;
+    channel?: PublisherPostbackChannel;
   },
 ): Promise<SerializedPublisherPostback> {
+  const channel = input.channel ?? "CPL";
   const status = input.status;
   const endpoint = input.endpoint.trim();
 
@@ -78,9 +94,12 @@ export async function upsertPublisherPostback(
   }
 
   const row = await prisma.publisherPostback.upsert({
-    where: { publisherId },
+    where: {
+      publisherId_channel: { publisherId, channel },
+    },
     create: {
       publisherId,
+      channel,
       type: "S2S",
       status,
       endpoint,
@@ -92,7 +111,7 @@ export async function upsertPublisherPostback(
     },
   });
 
-  return serialize(row);
+  return serialize(channel, row);
 }
 
 export type PublisherPostbackDeliveryRow = {
@@ -187,4 +206,84 @@ export async function listPublisherPostbackDeliveries(filters: {
       totalPages: Math.max(1, Math.ceil(total / limit)),
     },
   };
+}
+
+export type ChannelPostbackDeliveryRow = {
+  id: string;
+  refId: string;
+  url: string;
+  status: CpaPostbackDeliveryStatus;
+  httpStatus: number | null;
+  error: string | null;
+  payout: number | null;
+  createdAt: string;
+};
+
+export async function listPublisherCpaPostbackDeliveries(
+  publisherId: string,
+  limit = 10,
+): Promise<ChannelPostbackDeliveryRow[]> {
+  const rows = await prisma.cpaPostbackDelivery.findMany({
+    where: {
+      target: "PUBLISHER",
+      conversion: {
+        clickRecord: { publisherId },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+    take: Math.min(50, Math.max(1, limit)),
+    select: {
+      id: true,
+      conversionId: true,
+      url: true,
+      status: true,
+      httpStatus: true,
+      error: true,
+      createdAt: true,
+      conversion: { select: { payout: true } },
+    },
+  });
+
+  return rows.map((row) => ({
+    id: row.id,
+    refId: row.conversionId,
+    url: row.url,
+    status: row.status,
+    httpStatus: row.httpStatus,
+    error: row.error,
+    payout: row.conversion.payout != null ? Number(row.conversion.payout) : null,
+    createdAt: row.createdAt.toISOString(),
+  }));
+}
+
+export async function listPublisherDigitalProductPostbackDeliveries(
+  publisherId: string,
+  limit = 10,
+): Promise<ChannelPostbackDeliveryRow[]> {
+  const rows = await prisma.digitalProductPostbackDelivery.findMany({
+    where: { publisherId },
+    orderBy: { createdAt: "desc" },
+    take: Math.min(50, Math.max(1, limit)),
+    select: {
+      id: true,
+      webhookEventId: true,
+      url: true,
+      status: true,
+      httpStatus: true,
+      error: true,
+      payout: true,
+      createdAt: true,
+    },
+  });
+
+  return rows.map((row) => ({
+    id: row.id,
+    refId: row.webhookEventId,
+    url: row.url,
+    status: row.status,
+    httpStatus: row.httpStatus,
+    error: row.error,
+    payout: row.payout != null ? Number(row.payout) : null,
+    createdAt: row.createdAt.toISOString(),
+  }));
 }

@@ -19,7 +19,15 @@ export function getPublisherPageMeta(
     "/publisher/marketplace": { title: "Marketplace", subtitle: "Browse products to promote" },
     "/publisher/marketplace/report": {
       title: "Marketplace Report",
+      subtitle: "Product performance — clicks, orders, conversion rate, and EPC",
+    },
+    "/publisher/marketplace/report-log": {
+      title: "Marketplace Report Log",
       subtitle: "Orders and clicks from your digital product promotions",
+    },
+    "/publisher/marketplace/postback": {
+      title: "Digital Product Postback",
+      subtitle: "S2S callback when your digital product sales are recorded",
     },
     "/publisher/get-paid-tasks": {
       title: "Paid Task",
@@ -32,7 +40,15 @@ export function getPublisherPageMeta(
     "/publisher/cpa-offers": { title: "CPA Offers", subtitle: "Promote high-converting CPA offers" },
     "/publisher/cpa-offers/report": {
       title: "CPA Report",
+      subtitle: "Offer performance — clicks, conversions, conversion rate, and EPC",
+    },
+    "/publisher/cpa-offers/report-log": {
+      title: "CPA Report Log",
       subtitle: "Conversions and earnings from your promoted CPA offers",
+    },
+    "/publisher/cpa-offers/postback": {
+      title: "CPA Postback",
+      subtitle: "S2S callback when your CPA offers convert",
     },
     "/publisher/promotions": { title: "My Promotions", subtitle: "Manage your active promotions" },
     "/publisher/referrals": { title: "Referrals", subtitle: "Invite affiliates and earn commissions" },

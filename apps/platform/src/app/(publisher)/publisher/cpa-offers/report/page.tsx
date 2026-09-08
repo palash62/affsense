@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { isPublisherPortalRole } from "@/lib/publisher-page-title";
-import { PublisherCpaOffersReport } from "@/components/publisher/cpa-offers/publisher-cpa-offers-report";
+import { PublisherCpaAffiliateOfferReport } from "@/components/publisher/cpa-offers/publisher-cpa-affiliate-offer-report";
 
 export const dynamic = "force-dynamic";
 
@@ -11,5 +11,5 @@ export default async function PublisherCpaOffersReportPage() {
     redirect("/login");
   }
 
-  return <PublisherCpaOffersReport />;
+  return <PublisherCpaAffiliateOfferReport />;
 }

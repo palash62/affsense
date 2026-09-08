@@ -7,7 +7,7 @@ import {
 
 export async function GET() {
   return withAuth(async (session) => {
-    const data = await getPublisherPostback(session.user.id);
+    const data = await getPublisherPostback(session.user.id, "CPL");
     return Response.json({ data });
   }, ["PUBLISHER"]);
 }
@@ -32,6 +32,7 @@ export async function PATCH(request: Request) {
     const data = await upsertPublisherPostback(session.user.id, {
       status: parsed.data.status,
       endpoint: parsed.data.endpoint,
+      channel: "CPL",
     });
     return Response.json({ data });
   }, ["PUBLISHER"]);

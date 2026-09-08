@@ -75,6 +75,7 @@ enum GlobalPostbackStatus {
 enum CpaPostbackDeliveryTarget {
   ADMIN_PARALLEL
   ADVERTISER_GLOBAL
+  PUBLISHER
 }
 
 enum CpaPostbackDeliveryStatus {
@@ -327,7 +328,8 @@ model User {
   createdCpaOffers         CpaOffer[]           @relation("CpaOfferCreatedBy")
   ownedCpaOffers           CpaOffer[]           @relation("AdvertiserOwnedCpaOffers")
   advertiserGlobalPostback AdvertiserGlobalPostback?
-  publisherPostback        PublisherPostback?
+  publisherPostbacks       PublisherPostback[]
+  publisherPostbackDeliveries PublisherPostbackDelivery[]
   cpaWallet                CpaWallet?
   cpaEarnings              CpaEarning[]
   emailWallet              EmailWallet?
@@ -336,6 +338,7 @@ model User {
   reviewedCpaOfferAccessRequests PublisherCpaOfferAccess[] @relation("ReviewedCpaOfferAccess")
   webhookEvents            WebhookEvent[] @relation("WebhookEventPublisher")
   offerwallConversions     OfferwallConversion[]
+  digitalProductPostbackDeliveries DigitalProductPostbackDelivery[]
   publisherDigitalProductClicks DigitalProductClick[] @relation("PublisherDigitalProductClicks")
   promotion              Promotion? @relation(fields: [promotionId], references: [id], onDelete: SetNull)
   createdPromotions      Promotion[] @relation("PromotionCreatedBy")
@@ -1995,17 +1998,20 @@ model PromotionEvent {
 }
 
 model PublisherPostback {
-  id          String               @id @default(cuid())
-  publisherId String               @unique @map("publisher_id")
-  type        GlobalPostbackType   @default(S2S)
-  status      GlobalPostbackStatus @default(INACTIVE)
-  endpoint    String               @db.Text
-  createdAt   DateTime             @default(now()) @map("created_at")
-  updatedAt   DateTime             @updatedAt @map("updated_at")
+  id          String                   @id @default(cuid())
+  publisherId String                   @map("publisher_id")
+  channel     PublisherPostbackChannel @default(CPL)
+  type        GlobalPostbackType       @default(S2S)
+  status      GlobalPostbackStatus     @default(INACTIVE)
+  endpoint    String                   @db.Text
+  createdAt   DateTime                 @default(now()) @map("created_at")
+  updatedAt   DateTime                 @updatedAt @map("updated_at")
 
-  publisher   User                        @relation(fields: [publisherId], references: [id], onDelete: Cascade)
-  deliveries  PublisherPostbackDelivery[]
+  publisher  User                        @relation(fields: [publisherId], references: [id], onDelete: Cascade)
+  deliveries PublisherPostbackDelivery[]
 
+  @@unique([publisherId, channel])
+  @@index([publisherId])
   @@map("publisher_postbacks")
 }
 
@@ -2024,12 +2030,19 @@ model PublisherPostbackDelivery {
   createdAt   DateTime                  @default(now()) @map("created_at")
   updatedAt   DateTime                  @updatedAt @map("updated_at")
 
-  publisher PublisherPostback @relation(fields: [publisherId], references: [publisherId], onDelete: Cascade)
+  publisher User               @relation(fields: [publisherId], references: [id], onDelete: Cascade)
+  postback  PublisherPostback? @relation(fields: [postbackId], references: [id], onDelete: SetNull)
 
   @@unique([leadId])
   @@index([publisherId, createdAt])
   @@index([status, createdAt])
   @@map("publisher_postback_deliveries")
+}
+
+enum PublisherPostbackChannel {
+  CPL
+  CPA
+  DIGITAL_PRODUCT
 }
 
 enum PublisherPostbackEvent {
@@ -2061,12 +2074,35 @@ model WebhookEvent {
   payloadJson  Json               @map("payload_json")
   createdAt    DateTime           @default(now()) @map("created_at")
   publisher    User?              @relation("WebhookEventPublisher", fields: [publisherId], references: [id], onDelete: SetNull)
+  postbackDelivery DigitalProductPostbackDelivery?
 
   @@index([createdAt])
   @@index([status])
   @@index([source])
   @@index([publisherId])
   @@map("webhook_events")
+}
+
+model DigitalProductPostbackDelivery {
+  id             String                    @id @default(cuid())
+  publisherId    String                    @map("publisher_id")
+  webhookEventId String                    @unique @map("webhook_event_id")
+  postbackId     String?                   @map("postback_id")
+  url            String                    @db.Text
+  status         CpaPostbackDeliveryStatus @default(PENDING)
+  httpStatus     Int?                      @map("http_status")
+  error          String?                   @db.Text
+  payout         Decimal?                  @db.Decimal(10, 2)
+  attempts       Int                       @default(0)
+  createdAt      DateTime                  @default(now()) @map("created_at")
+  updatedAt      DateTime                  @updatedAt @map("updated_at")
+
+  publisher    User         @relation(fields: [publisherId], references: [id], onDelete: Cascade)
+  webhookEvent WebhookEvent @relation(fields: [webhookEventId], references: [id], onDelete: Cascade)
+
+  @@index([publisherId, createdAt])
+  @@index([status, createdAt])
+  @@map("digital_product_postback_deliveries")
 }
 
 model OfferwallConversion {

@@ -1289,6 +1289,7 @@ export const cpaOfferAccessDecisionSchema = z.object({
 export const cpaConversionListQuerySchema = z.object({
   q: z.string().trim().optional(),
   offerId: z.string().trim().optional(),
+  subId: z.string().trim().optional(),
   advertiserId: z.string().trim().optional(),
   publisherId: z.string().trim().optional(),
   from: z.string().trim().optional(),
@@ -1300,6 +1301,7 @@ export const cpaConversionListQuerySchema = z.object({
 export const digitalProductClickListQuerySchema = z.object({
   q: z.string().trim().optional(),
   productId: z.string().trim().optional(),
+  subId: z.string().trim().optional(),
   publisherId: z.string().trim().optional(),
   from: z.string().trim().optional(),
   to: z.string().trim().optional(),
@@ -1310,6 +1312,7 @@ export const digitalProductClickListQuerySchema = z.object({
 export const digitalProductOrdersListQuerySchema = z.object({
   q: z.string().trim().optional(),
   productId: z.string().trim().optional(),
+  subId: z.string().trim().optional(),
   eventType: z.string().trim().optional(),
   from: z.string().trim().optional(),
   to: z.string().trim().optional(),
@@ -1383,5 +1386,5 @@ export const adminPublisherSmartLinkCampaignsSchema = z.object({
 
 export const publisherPostbackSchema = z.object({
   status: z.enum(["ACTIVE", "INACTIVE"]),
-  endpoint: z.string().url("Must be a valid URL").max(500),
+  endpoint: z.string().trim().max(2000),
 });

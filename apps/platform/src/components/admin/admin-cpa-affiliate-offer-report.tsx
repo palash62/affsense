@@ -60,6 +60,7 @@ type PublisherOption = {
 type AppliedFilters = {
   q: string;
   offerId: string;
+  subId: string;
   advertiserId: string;
   publisherId: string;
   from: string;
@@ -69,6 +70,7 @@ type AppliedFilters = {
 const emptyFilters: AppliedFilters = {
   q: "",
   offerId: "",
+  subId: "",
   advertiserId: "",
   publisherId: "",
   from: "",
@@ -95,6 +97,7 @@ export function AdminCpaAffiliateOfferReport({
     params.set("limit", String(PAGE_SIZE));
     if (applied.q.trim()) params.set("q", applied.q.trim());
     if (applied.offerId.trim()) params.set("offerId", applied.offerId.trim());
+    if (applied.subId.trim()) params.set("subId", applied.subId.trim());
     if (applied.advertiserId.trim()) params.set("advertiserId", applied.advertiserId.trim());
     if (applied.publisherId.trim()) params.set("publisherId", applied.publisherId.trim());
     if (applied.from.trim()) params.set("from", new Date(applied.from).toISOString());
@@ -296,6 +299,15 @@ export function AdminCpaAffiliateOfferReport({
                 onChange={(e) => setDraft((prev) => ({ ...prev, offerId: e.target.value }))}
               />
             </div>
+            <div className="space-y-1 xl:col-span-2">
+              <label className="text-xs font-medium text-muted-foreground">Sub ID</label>
+              <Input
+                className="h-9 bg-white font-mono text-xs"
+                placeholder="Optional"
+                value={draft.subId}
+                onChange={(e) => setDraft((prev) => ({ ...prev, subId: e.target.value }))}
+              />
+            </div>
             <div className="space-y-1 sm:col-span-2 xl:col-span-2">
               <label className="text-xs font-medium text-muted-foreground">Search</label>
               <div className="relative">
@@ -330,6 +342,7 @@ export function AdminCpaAffiliateOfferReport({
             <TableRow className="bg-muted/40 hover:bg-muted/40">
               <TableHead>Affiliate</TableHead>
               <TableHead>Offer</TableHead>
+              <TableHead>Sub ID</TableHead>
               <TableHead className="text-right">Clicks</TableHead>
               <TableHead className="text-right">Conversions</TableHead>
               <TableHead className="text-right">CR%</TableHead>
@@ -342,13 +355,13 @@ export function AdminCpaAffiliateOfferReport({
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={9} className="py-10 text-center text-muted-foreground">
+                <TableCell colSpan={10} className="py-10 text-center text-muted-foreground">
                   Loading…
                 </TableCell>
               </TableRow>
             ) : items.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={9} className="py-10 text-center text-muted-foreground">
+                <TableCell colSpan={10} className="py-10 text-center text-muted-foreground">
                   <div className="mx-auto flex max-w-sm flex-col items-center gap-2">
                     <Activity className="h-8 w-8 text-muted-foreground/50" />
                     <p>No affiliate × offer rows for these filters.</p>
@@ -357,7 +370,7 @@ export function AdminCpaAffiliateOfferReport({
               </TableRow>
             ) : (
               items.map((row) => (
-                <TableRow key={`${row.publisherId}:${row.offerId}`}>
+                <TableRow key={`${row.publisherId}:${row.offerId}:${row.subId ?? ""}`}>
                   <TableCell>
                     <div>
                       <p className="font-medium text-foreground">{row.publisherName}</p>
@@ -376,6 +389,9 @@ export function AdminCpaAffiliateOfferReport({
                         </p>
                       </div>
                     </div>
+                  </TableCell>
+                  <TableCell className="font-mono text-xs text-muted-foreground">
+                    {row.subId ?? "—"}
                   </TableCell>
                   <TableCell className="text-right tabular-nums">{row.clicks}</TableCell>
                   <TableCell className="text-right tabular-nums">{row.conversions}</TableCell>

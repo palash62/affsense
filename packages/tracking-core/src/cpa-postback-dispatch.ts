@@ -189,10 +189,58 @@ async function dispatchAdvertiserGlobal(
   }
 }
 
+async function dispatchPublisherGlobal(
+  conversionId: string,
+  publisherId: string,
+  macroContext: PostbackMacroContext,
+) {
+  try {
+    const global = await prisma.publisherPostback.findUnique({
+      where: {
+        publisherId_channel: {
+          publisherId,
+          channel: "CPA",
+        },
+      },
+    });
+
+    if (!global || global.status !== "ACTIVE" || !global.endpoint.trim()) {
+      return;
+    }
+
+    const publisherMacros: PostbackMacroContext = {
+      ...macroContext,
+      affId: publisherId,
+      affEid: publisherId,
+      leadId: conversionId,
+    };
+
+    const url = substitutePostbackMacros(global.endpoint, publisherMacros);
+    const result = await fireHttpGet(url);
+    await recordDelivery({
+      conversionId,
+      target: "PUBLISHER",
+      url,
+      status: result.ok ? "SUCCESS" : "FAILED",
+      httpStatus: result.status || null,
+      error: result.error ?? null,
+    });
+  } catch (error) {
+    await recordDelivery({
+      conversionId,
+      target: "PUBLISHER",
+      url: "",
+      status: "FAILED",
+      error: error instanceof Error ? error.message : "Dispatch failed",
+    });
+  }
+}
+
 export async function dispatchCpaConversionPostbacks(input: {
   conversionId: string;
   offerId: string;
   advertiserId: string | null;
+  publisherId?: string | null;
   clickId: string | null;
   payout: Prisma.Decimal | number | string | null;
   source?: string | null;
@@ -211,7 +259,7 @@ export async function dispatchCpaConversionPostbacks(input: {
 
   const network = await getCpaNetworkPostbackConfig();
 
-  // Isolate targets: admin failure must not skip advertiser dispatch.
+  // Isolate targets: admin failure must not skip advertiser/publisher dispatch.
   if (network.parallelPostbackUrl) {
     await dispatchAdminParallel(
       input.conversionId,
@@ -222,5 +270,9 @@ export async function dispatchCpaConversionPostbacks(input: {
 
   if (input.advertiserId) {
     await dispatchAdvertiserGlobal(input.conversionId, input.advertiserId, macroContext);
+  }
+
+  if (input.publisherId) {
+    await dispatchPublisherGlobal(input.conversionId, input.publisherId, macroContext);
   }
 }

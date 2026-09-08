@@ -66,6 +66,7 @@ type PublisherOption = {
 type AppliedFilters = {
   q: string;
   offerId: string;
+  subId: string;
   advertiserId: string;
   publisherId: string;
   from: string;
@@ -75,6 +76,7 @@ type AppliedFilters = {
 const emptyFilters: AppliedFilters = {
   q: "",
   offerId: "",
+  subId: "",
   advertiserId: "",
   publisherId: "",
   from: "",
@@ -337,6 +339,7 @@ export function AdminCpaOffersReport({
     params.set("limit", String(PAGE_SIZE));
     if (applied.q.trim()) params.set("q", applied.q.trim());
     if (applied.offerId.trim()) params.set("offerId", applied.offerId.trim());
+    if (applied.subId.trim()) params.set("subId", applied.subId.trim());
     if (applied.advertiserId.trim()) params.set("advertiserId", applied.advertiserId.trim());
     if (applied.publisherId.trim()) params.set("publisherId", applied.publisherId.trim());
     if (applied.from.trim()) params.set("from", new Date(applied.from).toISOString());
@@ -571,6 +574,15 @@ export function AdminCpaOffersReport({
                 className="h-9 bg-white"
               />
             </div>
+            <div className="space-y-1 xl:col-span-1">
+              <label className="text-xs font-medium text-muted-foreground">Sub ID</label>
+              <Input
+                value={draft.subId}
+                onChange={(e) => setDraft((prev) => ({ ...prev, subId: e.target.value }))}
+                placeholder="Sub ID"
+                className="h-9 bg-white font-mono text-xs"
+              />
+            </div>
             <div className="space-y-1 sm:col-span-2 xl:col-span-2">
               <label className="text-xs font-medium text-muted-foreground">Search</label>
               <div className="relative">
@@ -586,7 +598,7 @@ export function AdminCpaOffersReport({
                 />
               </div>
             </div>
-            <div className="flex flex-wrap gap-2 sm:col-span-2 xl:col-span-2 xl:justify-end">
+            <div className="flex flex-wrap gap-2 sm:col-span-2 xl:col-span-1 xl:justify-end">
               <Button type="button" className="h-9" onClick={applyFilters}>
                 Apply
               </Button>
@@ -643,6 +655,7 @@ export function AdminCpaOffersReport({
                   <TableHead>Affiliate</TableHead>
                   <TableHead>Offer</TableHead>
                   <TableHead>Click ID</TableHead>
+                  <TableHead>Sub ID</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Payout</TableHead>
                   <TableHead className="text-right">Revenue</TableHead>
@@ -652,13 +665,13 @@ export function AdminCpaOffersReport({
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="py-12 text-center text-sm text-muted-foreground">
+                    <TableCell colSpan={10} className="py-12 text-center text-sm text-muted-foreground">
                       Loading conversions…
                     </TableCell>
                   </TableRow>
                 ) : conversionItems.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="py-12 text-center">
+                    <TableCell colSpan={10} className="py-12 text-center">
                       <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-50 text-violet-600">
                         <Activity className="h-5 w-5" />
                       </div>
@@ -723,6 +736,9 @@ export function AdminCpaOffersReport({
                         ) : (
                           "—"
                         )}
+                      </TableCell>
+                      <TableCell className="font-mono text-xs text-muted-foreground">
+                        {row.subId ?? "—"}
                       </TableCell>
                       <TableCell className="whitespace-nowrap">
                         {row.status === "A" ? (

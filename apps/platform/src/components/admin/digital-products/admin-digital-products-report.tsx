@@ -57,6 +57,7 @@ type OrdersResult = {
 type AppliedFilters = {
   q: string;
   productId: string;
+  subId: string;
   publisherId: string;
   eventType: string;
   from: string;
@@ -96,6 +97,7 @@ export function AdminDigitalProductsReport({
     () => ({
       q: "",
       productId: "",
+      subId: "",
       publisherId: "",
       eventType: "",
       from: defaultFrom,
@@ -118,6 +120,7 @@ export function AdminDigitalProductsReport({
     params.set("page", String(page));
     params.set("limit", tab === "orders" ? "15" : "20");
     if (applied.publisherId.trim()) params.set("publisherId", applied.publisherId.trim());
+    if (applied.subId.trim()) params.set("subId", applied.subId.trim());
     if (applied.from.trim()) {
       const from =
         tab === "orders"
@@ -359,6 +362,15 @@ export function AdminDigitalProductsReport({
                 </div>
               </>
             )}
+            <div className="space-y-1 xl:col-span-2">
+              <label className="text-xs font-medium text-muted-foreground">Sub ID</label>
+              <Input
+                value={draft.subId}
+                onChange={(e) => setDraft((prev) => ({ ...prev, subId: e.target.value }))}
+                placeholder="Sub ID"
+                className="h-9 bg-white font-mono text-xs"
+              />
+            </div>
             <div className="flex flex-wrap gap-2 sm:col-span-2 xl:col-span-1 xl:justify-end">
               <Button type="button" className="h-9" onClick={applyFilters}>
                 Apply

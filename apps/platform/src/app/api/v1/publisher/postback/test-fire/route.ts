@@ -22,6 +22,7 @@ export async function POST(request: Request) {
     const data = await firePublisherPostbackTest({
       publisherId: session.user.id,
       endpoint: parsed.data.endpoint,
+      channel: "CPL",
     });
     return Response.json({ data });
   }, ["PUBLISHER"]);

@@ -11,6 +11,7 @@ export async function GET(request: Request) {
       const parsed = cpaConversionListQuerySchema.safeParse({
         q: searchParams.get("q") ?? undefined,
         offerId: searchParams.get("offerId") ?? undefined,
+        subId: searchParams.get("subId") ?? undefined,
         advertiserId: searchParams.get("advertiserId") ?? undefined,
         publisherId: searchParams.get("publisherId") ?? undefined,
         from: searchParams.get("from") ?? undefined,

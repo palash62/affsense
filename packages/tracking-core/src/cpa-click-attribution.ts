@@ -4,6 +4,7 @@ export type ResolvedCpaClickAttribution = {
   /** Raw inbound click_id for audit only (may be unmatched). */
   inboundClickId: string | null;
   advertiserId: string | null;
+  publisherId: string | null;
   clickRecordId: string | null;
   source: string | null;
   subId: string | null;
@@ -18,6 +19,7 @@ export function resolveCpaClickAttribution(input: {
         id: string;
         offerId: string;
         advertiserId: string | null;
+        publisherId?: string | null;
         src: string | null;
         subId: string | null;
       }
@@ -34,6 +36,7 @@ export function resolveCpaClickAttribution(input: {
       attributedClickId: input.click.id,
       inboundClickId,
       advertiserId: input.click.advertiserId,
+      publisherId: input.click.publisherId ?? null,
       clickRecordId: input.click.id,
       source: input.click.src,
       subId: input.click.subId,
@@ -44,6 +47,7 @@ export function resolveCpaClickAttribution(input: {
     attributedClickId: null,
     inboundClickId,
     advertiserId: null,
+    publisherId: null,
     clickRecordId: null,
     source: null,
     subId: null,

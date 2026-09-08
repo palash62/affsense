@@ -92,7 +92,7 @@ export async function handleClickFunnelsWebhookPost(request: Request): Promise<R
       requestUrl,
     );
     const attribution = await resolvePublisherFromAffiliateRef(affiliateRef);
-    await createWebhookEvent({
+    const created = await createWebhookEvent({
       eventType: input.eventType,
       status: input.status,
       leadEmail: input.leadEmail,
@@ -102,6 +102,22 @@ export async function handleClickFunnelsWebhookPost(request: Request): Promise<R
       affiliateRef: attribution.affiliateRef,
       payloadJson: sanitized,
     });
+
+    if (input.status === "PROCESSED" && attribution.publisherId) {
+      void import("@/services/digital-product-postback-dispatch")
+        .then(({ dispatchDigitalProductPublisherPostback }) =>
+          dispatchDigitalProductPublisherPostback(created.id),
+        )
+        .catch((error) => {
+          console.error(
+            "[digital-product-postback] dispatch failed",
+            created.id,
+            error,
+          );
+        });
+    }
+
+    return created;
   }
 
   try {

@@ -211,27 +211,55 @@ function isChildActive(pathname: string, child: NavItem, siblings: NavItem[]) {
   if (child.href === "/publisher/cpa-offers/report") {
     return (
       pathname === "/publisher/cpa-offers/report" ||
-      pathname.startsWith("/publisher/cpa-offers/report/")
+      (pathname.startsWith("/publisher/cpa-offers/report/") &&
+        !pathname.startsWith("/publisher/cpa-offers/report-log"))
+    );
+  }
+  if (child.href === "/publisher/cpa-offers/report-log") {
+    return (
+      pathname === "/publisher/cpa-offers/report-log" ||
+      pathname.startsWith("/publisher/cpa-offers/report-log/")
+    );
+  }
+  if (child.href === "/publisher/cpa-offers/postback") {
+    return (
+      pathname === "/publisher/cpa-offers/postback" ||
+      pathname.startsWith("/publisher/cpa-offers/postback/")
     );
   }
   if (child.href === "/publisher/cpa-offers") {
     return (
       pathname === "/publisher/cpa-offers" ||
       (pathname.startsWith("/publisher/cpa-offers/") &&
-        !pathname.startsWith("/publisher/cpa-offers/report"))
+        !pathname.startsWith("/publisher/cpa-offers/report") &&
+        !pathname.startsWith("/publisher/cpa-offers/postback"))
     );
   }
   if (child.href === "/publisher/marketplace/report") {
     return (
       pathname === "/publisher/marketplace/report" ||
-      pathname.startsWith("/publisher/marketplace/report/")
+      (pathname.startsWith("/publisher/marketplace/report/") &&
+        !pathname.startsWith("/publisher/marketplace/report-log"))
+    );
+  }
+  if (child.href === "/publisher/marketplace/report-log") {
+    return (
+      pathname === "/publisher/marketplace/report-log" ||
+      pathname.startsWith("/publisher/marketplace/report-log/")
+    );
+  }
+  if (child.href === "/publisher/marketplace/postback") {
+    return (
+      pathname === "/publisher/marketplace/postback" ||
+      pathname.startsWith("/publisher/marketplace/postback/")
     );
   }
   if (child.href === "/publisher/marketplace") {
     return (
       pathname === "/publisher/marketplace" ||
       (pathname.startsWith("/publisher/marketplace/") &&
-        !pathname.startsWith("/publisher/marketplace/report"))
+        !pathname.startsWith("/publisher/marketplace/report") &&
+        !pathname.startsWith("/publisher/marketplace/postback"))
     );
   }
   // Generic fallback: exact or prefix, but not claiming a sibling's more-specific path

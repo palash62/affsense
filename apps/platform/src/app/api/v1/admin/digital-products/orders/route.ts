@@ -5,6 +5,7 @@ import { listDigitalProductOrders } from "@/services/digital-product.service";
 
 const adminDigitalProductOrdersQuerySchema = z.object({
   publisherId: z.string().trim().optional(),
+  subId: z.string().trim().optional(),
   eventType: z.string().trim().optional(),
   from: z.string().trim().optional(),
   to: z.string().trim().optional(),
@@ -19,6 +20,7 @@ export async function GET(request: Request) {
       const { page, limit } = parsePagination(searchParams);
       const parsed = adminDigitalProductOrdersQuerySchema.safeParse({
         publisherId: searchParams.get("publisherId") ?? undefined,
+        subId: searchParams.get("subId") ?? undefined,
         eventType: searchParams.get("eventType") ?? undefined,
         from: searchParams.get("from") ?? undefined,
         to: searchParams.get("to") ?? undefined,
@@ -50,6 +52,7 @@ export async function GET(request: Request) {
 
       const data = await listDigitalProductOrders({
         publisherId: parsed.data.publisherId,
+        subId: parsed.data.subId,
         eventType: parsed.data.eventType,
         from: from && !Number.isNaN(from.getTime()) ? from : undefined,
         to: to && !Number.isNaN(to.getTime()) ? to : undefined,

@@ -29,6 +29,7 @@ type ReportTab = "orders" | "clicks";
 type AppliedFilters = {
   q: string;
   productId: string;
+  subId: string;
   from: string;
   to: string;
 };
@@ -36,6 +37,7 @@ type AppliedFilters = {
 const emptyFilters: AppliedFilters = {
   q: "",
   productId: "",
+  subId: "",
   from: "",
   to: "",
 };
@@ -81,6 +83,7 @@ export function PublisherMarketplaceReport() {
     params.set("limit", String(PAGE_SIZE));
     if (applied.q.trim()) params.set("q", applied.q.trim());
     if (applied.productId.trim()) params.set("productId", applied.productId.trim());
+    if (applied.subId.trim()) params.set("subId", applied.subId.trim());
     if (applied.from.trim()) params.set("from", new Date(applied.from).toISOString());
     if (applied.to.trim()) {
       const end = new Date(applied.to);
@@ -141,7 +144,7 @@ export function PublisherMarketplaceReport() {
     <div className="space-y-6">
       <PageHero
         eyebrow="Marketplace"
-        title="Report"
+        title="Report Log"
         description="Orders and clicks from your digital product tracking links."
         badge={loading ? undefined : `${total} ${noun} · ${rangeLabel}`}
       />
@@ -225,6 +228,15 @@ export function PublisherMarketplaceReport() {
                 onChange={(e) => setDraft((prev) => ({ ...prev, productId: e.target.value }))}
                 placeholder="Product ID or name"
                 className="bg-white"
+              />
+            </div>
+            <div className="w-full space-y-1 sm:w-44">
+              <label className="text-xs font-medium text-muted-foreground">Sub ID</label>
+              <Input
+                value={draft.subId}
+                onChange={(e) => setDraft((prev) => ({ ...prev, subId: e.target.value }))}
+                placeholder="Sub ID"
+                className="bg-white font-mono text-xs"
               />
             </div>
             <div className="min-w-48 flex-1 space-y-1">

@@ -31,6 +31,7 @@ type ReportTab = "conversions" | "clicks";
 type AppliedFilters = {
   q: string;
   offerId: string;
+  subId: string;
   from: string;
   to: string;
 };
@@ -38,6 +39,7 @@ type AppliedFilters = {
 const emptyFilters: AppliedFilters = {
   q: "",
   offerId: "",
+  subId: "",
   from: "",
   to: "",
 };
@@ -74,6 +76,7 @@ export function PublisherCpaOffersReport() {
     params.set("limit", String(PAGE_SIZE));
     if (applied.q.trim()) params.set("q", applied.q.trim());
     if (applied.offerId.trim()) params.set("offerId", applied.offerId.trim());
+    if (applied.subId.trim()) params.set("subId", applied.subId.trim());
     if (applied.from.trim()) params.set("from", new Date(applied.from).toISOString());
     if (applied.to.trim()) {
       const end = new Date(applied.to);
@@ -147,7 +150,7 @@ export function PublisherCpaOffersReport() {
     <div className="space-y-6">
       <PageHero
         eyebrow="CPA Offers"
-        title="Report"
+        title="Report Log"
         description="Clicks and conversion postbacks by offer, click ID, and earnings."
         badge={loading ? undefined : `${total} ${noun} · ${rangeLabel}`}
       />
@@ -245,6 +248,15 @@ export function PublisherCpaOffersReport() {
                 onChange={(e) => setDraft((prev) => ({ ...prev, offerId: e.target.value }))}
                 placeholder="Offer ID"
                 className="bg-white"
+              />
+            </div>
+            <div className="w-full space-y-1 sm:w-44">
+              <label className="text-xs font-medium text-muted-foreground">Sub ID</label>
+              <Input
+                value={draft.subId}
+                onChange={(e) => setDraft((prev) => ({ ...prev, subId: e.target.value }))}
+                placeholder="Sub ID"
+                className="bg-white font-mono text-xs"
               />
             </div>
             <div className="min-w-[12rem] flex-1 space-y-1">

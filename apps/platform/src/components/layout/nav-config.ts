@@ -248,6 +248,8 @@ export const PUBLISHER_NAV: AdminNavEntry[] = [
       children: [
         { label: "Digital Product", href: "/publisher/marketplace", icon: Package },
         { label: "Report", href: "/publisher/marketplace/report", icon: BarChart3 },
+        { label: "Report Log", href: "/publisher/marketplace/report-log", icon: ScrollText },
+        { label: "Postback", href: "/publisher/marketplace/postback", icon: Webhook },
       ],
     },
   },
@@ -272,6 +274,8 @@ export const PUBLISHER_NAV: AdminNavEntry[] = [
       children: [
         { label: "Browse Offers", href: "/publisher/cpa-offers", icon: Store },
         { label: "Report", href: "/publisher/cpa-offers/report", icon: BarChart3 },
+        { label: "Report Log", href: "/publisher/cpa-offers/report-log", icon: ScrollText },
+        { label: "Postback", href: "/publisher/cpa-offers/postback", icon: Webhook },
       ],
     },
   },

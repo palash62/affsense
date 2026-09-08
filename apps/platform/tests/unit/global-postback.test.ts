@@ -131,11 +131,13 @@ describe("click attribution", () => {
         id: "click1",
         offerId: "offer1",
         advertiserId: "adv1",
+        publisherId: "pub1",
         src: "fb",
         subId: "camp&x=1",
       },
     });
     expect(result.advertiserId).toBe("adv1");
+    expect(result.publisherId).toBe("pub1");
     expect(result.attributedClickId).toBe("click1");
     expect(result.clickRecordId).toBe("click1");
     expect(result.subId).toBe("camp&x=1");

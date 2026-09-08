@@ -18,6 +18,7 @@ type ClickRow = {
   id: string;
   offerId: string;
   advertiserId: string | null;
+  publisherId: string | null;
   src: string | null;
   subId: string | null;
 };
@@ -88,6 +89,7 @@ async function loadClick(inboundClickId: string | null): Promise<ClickRow | null
       id: true,
       offerId: true,
       advertiserId: true,
+      publisherId: true,
       src: true,
       subId: true,
     },
@@ -187,6 +189,7 @@ async function createConversionAndDispatch(input: {
       conversionId: event.id,
       offerId: input.offerId,
       advertiserId: input.attribution.advertiserId,
+      publisherId: input.attribution.publisherId,
       clickId: input.attribution.attributedClickId,
       payout: effectivePayout,
       source: input.attribution.source,

@@ -482,6 +482,7 @@ export async function listDigitalProductOrders(opts: {
   from?: Date;
   to?: Date;
   publisherId?: string;
+  subId?: string;
   eventType?: string;
   page?: number;
   limit?: number;
@@ -489,6 +490,7 @@ export async function listDigitalProductOrders(opts: {
   const page = Math.max(1, opts.page ?? 1);
   const limit = Math.min(100, Math.max(1, opts.limit ?? 15));
   const skip = (page - 1) * limit;
+  const subIdFilter = opts.subId?.trim() || undefined;
 
   const where: Prisma.WebhookEventWhereInput = {};
   if (opts.from || opts.to) {
@@ -500,65 +502,31 @@ export async function listDigitalProductOrders(opts: {
   if (opts.publisherId) where.publisherId = opts.publisherId;
   if (opts.eventType) where.eventType = { contains: opts.eventType };
 
-  const [rows, total, allForSummary] = await Promise.all([
-    prisma.webhookEvent.findMany({
-      where,
-      orderBy: { createdAt: "desc" },
-      skip,
-      take: limit,
-      select: {
-        id: true,
-        eventType: true,
-        status: true,
-        leadEmail: true,
-        leadName: true,
-        affiliateRef: true,
-        publisherId: true,
-        publisher: { select: { id: true, name: true, email: true } },
-        payloadJson: true,
-        createdAt: true,
-      },
-    }),
-    prisma.webhookEvent.count({ where }),
-    // For summary: fetch amounts from all matching PROCESSED rows (cap at 5000 for perf)
-    prisma.webhookEvent.findMany({
-      where: { ...where, status: "PROCESSED" },
-      select: { publisherId: true, eventType: true, payloadJson: true },
-      take: 5000,
-    }),
-  ]);
+  const select = {
+    id: true,
+    eventType: true,
+    status: true,
+    leadEmail: true,
+    leadName: true,
+    affiliateRef: true,
+    publisherId: true,
+    publisher: { select: { id: true, name: true, email: true } },
+    payloadJson: true,
+    createdAt: true,
+  } as const;
 
-  // Compute summary from allForSummary
-  let grossRevenue = 0;
-  let affiliateSales = 0;
-  let totalCommissions = 0;
-  let refunds = 0;
-
-  for (const ev of allForSummary) {
-    const fields = extractOrderFields(ev.payloadJson);
-    const amount = fields.amount ?? 0;
-    const type = (fields.orderType ?? ev.eventType ?? "").toLowerCase();
-    if (type.includes("refund")) {
-      refunds += amount;
-    } else {
-      grossRevenue += amount;
-    }
-    if (ev.publisherId) {
-      affiliateSales += 1;
-      totalCommissions += amount * 0.5; // default 50% commission shown in report
-    }
-  }
-  const netRevenue = grossRevenue - totalCommissions - refunds;
-  const summary: DigitalProductOrderSummary = {
-    totalOrders: allForSummary.length,
-    grossRevenue,
-    affiliateSales,
-    totalCommissions,
-    netRevenue,
-    refunds,
-  };
-
-  const items: DigitalProductOrderRow[] = rows.map((row) => {
+  const mapRow = (row: {
+    id: string;
+    eventType: string;
+    status: string;
+    leadEmail: string | null;
+    leadName: string | null;
+    affiliateRef: string | null;
+    publisherId: string | null;
+    publisher: { id: string; name: string; email: string } | null;
+    payloadJson: unknown;
+    createdAt: Date;
+  }): DigitalProductOrderRow => {
     const fields = extractOrderFields(row.payloadJson);
     const leadFallback = extractLeadFromClickFunnelsPayload(row.payloadJson);
     const amount = fields.amount;
@@ -583,7 +551,113 @@ export async function listDigitalProductOrders(opts: {
       webhookStatus: row.status,
       paymentStatus: fields.paymentStatus,
     };
-  });
+  };
+
+  // Sub ID lives in payload — load a wider window then filter/paginate in memory.
+  if (subIdFilter) {
+    const [allRows, allForSummary] = await Promise.all([
+      prisma.webhookEvent.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        take: 5000,
+        select,
+      }),
+      prisma.webhookEvent.findMany({
+        where: { ...where, status: "PROCESSED" },
+        select: { publisherId: true, eventType: true, payloadJson: true },
+        take: 5000,
+      }),
+    ]);
+
+    const filteredItems = allRows.map(mapRow).filter((row) => row.subId === subIdFilter);
+    const filteredSummaryRows = allForSummary.filter(
+      (ev) => extractOrderFields(ev.payloadJson).subId === subIdFilter,
+    );
+
+    let grossRevenue = 0;
+    let affiliateSales = 0;
+    let totalCommissions = 0;
+    let refunds = 0;
+    for (const ev of filteredSummaryRows) {
+      const fields = extractOrderFields(ev.payloadJson);
+      const amount = fields.amount ?? 0;
+      const type = (fields.orderType ?? ev.eventType ?? "").toLowerCase();
+      if (type.includes("refund")) {
+        refunds += amount;
+      } else {
+        grossRevenue += amount;
+      }
+      if (ev.publisherId) {
+        affiliateSales += 1;
+        totalCommissions += amount * 0.5;
+      }
+    }
+
+    const total = filteredItems.length;
+    const items = filteredItems.slice(skip, skip + limit);
+    return {
+      items,
+      total,
+      page,
+      limit,
+      totalPages: Math.max(1, Math.ceil(total / limit)),
+      summary: {
+        totalOrders: filteredSummaryRows.length,
+        grossRevenue,
+        affiliateSales,
+        totalCommissions,
+        netRevenue: grossRevenue - totalCommissions - refunds,
+        refunds,
+      },
+    };
+  }
+
+  const [rows, total, allForSummary] = await Promise.all([
+    prisma.webhookEvent.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      skip,
+      take: limit,
+      select,
+    }),
+    prisma.webhookEvent.count({ where }),
+    prisma.webhookEvent.findMany({
+      where: { ...where, status: "PROCESSED" },
+      select: { publisherId: true, eventType: true, payloadJson: true },
+      take: 5000,
+    }),
+  ]);
+
+  let grossRevenue = 0;
+  let affiliateSales = 0;
+  let totalCommissions = 0;
+  let refunds = 0;
+
+  for (const ev of allForSummary) {
+    const fields = extractOrderFields(ev.payloadJson);
+    const amount = fields.amount ?? 0;
+    const type = (fields.orderType ?? ev.eventType ?? "").toLowerCase();
+    if (type.includes("refund")) {
+      refunds += amount;
+    } else {
+      grossRevenue += amount;
+    }
+    if (ev.publisherId) {
+      affiliateSales += 1;
+      totalCommissions += amount * 0.5;
+    }
+  }
+  const netRevenue = grossRevenue - totalCommissions - refunds;
+  const summary: DigitalProductOrderSummary = {
+    totalOrders: allForSummary.length,
+    grossRevenue,
+    affiliateSales,
+    totalCommissions,
+    netRevenue,
+    refunds,
+  };
+
+  const items = rows.map(mapRow);
 
   return { items, total, page, limit, totalPages: Math.max(1, Math.ceil(total / limit)), summary };
 }
@@ -858,6 +932,7 @@ export type DigitalProductClickListResult = {
 export type DigitalProductClickListFilters = {
   q?: string;
   productId?: string;
+  subId?: string;
   publisherId?: string;
   from?: string;
   to?: string;
@@ -920,6 +995,9 @@ function buildDigitalProductClickWhere(
 
   const productId = filters.productId?.trim();
   if (productId) where.productId = productId;
+
+  const subId = filters.subId?.trim();
+  if (subId) where.subId = subId;
 
   const publisherId = filters.publisherId?.trim();
   if (publisherId && !forcedPublisherId) where.publisherId = publisherId;
@@ -1028,6 +1106,7 @@ export async function listPublisherDigitalProductOrders(
   opts: {
     q?: string;
     productId?: string;
+    subId?: string;
     eventType?: string;
     from?: string;
     to?: string;
@@ -1039,6 +1118,7 @@ export async function listPublisherDigitalProductOrders(
   const to = opts.to ? new Date(opts.to) : undefined;
   const result = await listDigitalProductOrders({
     publisherId,
+    subId: opts.subId,
     from: from && !Number.isNaN(from.getTime()) ? from : undefined,
     to: to && !Number.isNaN(to.getTime()) ? to : undefined,
     eventType: opts.eventType,
@@ -1091,6 +1171,7 @@ export type SerializedDigitalProductAffiliateReportRow = {
   publisherName: string;
   productId: string | null;
   productName: string;
+  subId: string | null;
   clicks: number;
   conversions: number;
   conversionRate: number;
@@ -1162,12 +1243,13 @@ export async function listDigitalProductAffiliateProductReportForAdmin(
     ? productById.get(filterProductId)?.name ?? null
     : null;
   const filterProductNameKey = normalizeProductNameKey(filterProductName);
+  const filterSubId = filters.subId?.trim() || undefined;
 
   const q = filters.q?.trim().toLowerCase();
 
   const [clickGroups, orderEvents] = await Promise.all([
     prisma.digitalProductClick.groupBy({
-      by: ["publisherId", "productId"],
+      by: ["publisherId", "productId", "subId"],
       where: clickWhere,
       _count: { _all: true },
     }),
@@ -1187,6 +1269,7 @@ export async function listDigitalProductAffiliateProductReportForAdmin(
     productId: string | null;
     productName: string;
     nameKey: string;
+    subId: string | null;
     clicks: number;
     conversions: number;
     commission: number;
@@ -1194,19 +1277,29 @@ export async function listDigitalProductAffiliateProductReportForAdmin(
   };
 
   const byKey = new Map<string, Acc>();
-  const keyOf = (publisherId: string, productId: string | null, nameKey: string) =>
-    productId ? `${publisherId}::id::${productId}` : `${publisherId}::name::${nameKey || "_"}`;
+  const keyOf = (
+    publisherId: string,
+    productId: string | null,
+    nameKey: string,
+    subId: string | null,
+  ) => {
+    const productPart = productId
+      ? `id::${productId}`
+      : `name::${nameKey || "_"}`;
+    return `${publisherId}::${productPart}::${subId ?? ""}`;
+  };
 
   for (const g of clickGroups) {
     const product = productById.get(g.productId);
     const productName = product?.name ?? g.productId;
     const nameKey = normalizeProductNameKey(productName);
-    const key = keyOf(g.publisherId, g.productId, nameKey);
+    const key = keyOf(g.publisherId, g.productId, nameKey, g.subId);
     byKey.set(key, {
       publisherId: g.publisherId,
       productId: g.productId,
       productName,
       nameKey,
+      subId: g.subId,
       clicks: g._count._all,
       conversions: 0,
       commission: 0,
@@ -1219,6 +1312,9 @@ export async function listDigitalProductAffiliateProductReportForAdmin(
     const fields = extractOrderFields(ev.payloadJson);
     const type = (fields.orderType ?? ev.eventType ?? "").toLowerCase();
     if (type.includes("refund")) continue;
+
+    const orderSubId = fields.subId ?? null;
+    if (filterSubId && orderSubId !== filterSubId) continue;
 
     const productName = fields.product?.trim() || "Unknown product";
     const nameKey = normalizeProductNameKey(productName);
@@ -1233,11 +1329,11 @@ export async function listDigitalProductAffiliateProductReportForAdmin(
     }
 
     if (q) {
-      const hay = `${productName} ${matchedProductId ?? ""} ${ev.publisherId}`.toLowerCase();
+      const hay = `${productName} ${matchedProductId ?? ""} ${ev.publisherId} ${orderSubId ?? ""}`.toLowerCase();
       if (!hay.includes(q)) continue;
     }
 
-    const key = keyOf(ev.publisherId, matchedProductId, nameKey);
+    const key = keyOf(ev.publisherId, matchedProductId, nameKey, orderSubId);
     const acc = byKey.get(key) ?? {
       publisherId: ev.publisherId,
       productId: matchedProductId,
@@ -1245,6 +1341,7 @@ export async function listDigitalProductAffiliateProductReportForAdmin(
         ? productById.get(matchedProductId)?.name ?? productName
         : productName,
       nameKey,
+      subId: orderSubId,
       clicks: 0,
       conversions: 0,
       commission: 0,
@@ -1262,7 +1359,7 @@ export async function listDigitalProductAffiliateProductReportForAdmin(
   if (q) {
     for (const [key, acc] of [...byKey.entries()]) {
       if (acc.conversions > 0) continue;
-      const hay = `${acc.productName} ${acc.productId ?? ""} ${acc.publisherId}`.toLowerCase();
+      const hay = `${acc.productName} ${acc.productId ?? ""} ${acc.publisherId} ${acc.subId ?? ""}`.toLowerCase();
       if (!hay.includes(q)) byKey.delete(key);
     }
   }
@@ -1292,6 +1389,7 @@ export async function listDigitalProductAffiliateProductReportForAdmin(
         publisherName: publisherNameById.get(acc.publisherId) ?? "Unknown",
         productId: acc.productId,
         productName: acc.productName,
+        subId: acc.subId,
         clicks,
         conversions,
         conversionRate,
@@ -1304,7 +1402,9 @@ export async function listDigitalProductAffiliateProductReportForAdmin(
     .sort((a, b) => {
       const byPub = a.publisherName.localeCompare(b.publisherName);
       if (byPub !== 0) return byPub;
-      return a.productName.localeCompare(b.productName);
+      const byProduct = a.productName.localeCompare(b.productName);
+      if (byProduct !== 0) return byProduct;
+      return (a.subId ?? "").localeCompare(b.subId ?? "");
     });
 
   const totals = allRows.reduce(
@@ -1347,4 +1447,15 @@ export async function listDigitalProductAffiliateProductReportForAdmin(
       profit: moneyToString(totalProfit),
     },
   };
+}
+
+/** Publisher-scoped affiliate × product report — forces session publisherId. */
+export async function listDigitalProductAffiliateProductReportForPublisher(
+  publisherId: string,
+  filters: Omit<DigitalProductClickListFilters, "publisherId">,
+): Promise<DigitalProductAffiliateReportResult> {
+  return listDigitalProductAffiliateProductReportForAdmin({
+    ...filters,
+    publisherId,
+  });
 }
