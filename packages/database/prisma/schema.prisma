@@ -292,6 +292,7 @@ model User {
   advertiserPublisherBlocks AdvertiserPublisherBlock[] @relation("AdvertiserBlocks")
   blockedByAdvertisers    AdvertiserPublisherBlock[] @relation("PublisherBlocks")
   payouts           Payout[]
+  affiliateInvoices AffiliateInvoice[]
   deposits          Deposit[]
   partnerPayments   PartnerPayment[] @relation("PartnerPaymentCreatedBy")
   notifications     Notification[]
@@ -667,14 +668,77 @@ model LedgerEntry {
   referenceType String          @map("reference_type")
   referenceId   String?         @map("reference_id")
   description   String?
+  /// Set once the entry has been billed on an affiliate invoice; NULL means uninvoiced.
+  invoiceId     String?         @map("invoice_id")
   createdAt     DateTime        @default(now()) @map("created_at")
 
-  wallet Wallet @relation(fields: [walletId], references: [id])
+  wallet  Wallet            @relation(fields: [walletId], references: [id])
+  invoice AffiliateInvoice? @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
 
   @@index([walletId])
   @@index([createdAt])
   @@index([referenceType, referenceId])
+  @@index([invoiceId])
+  @@index([walletId, invoiceId, createdAt])
   @@map("ledger_entries")
+}
+
+enum AffiliateInvoiceStatus {
+  UNPAID
+  PAID
+  CANCELLED
+}
+
+/// Weekly Net-7 invoice billing an affiliate's uninvoiced earnings.
+model AffiliateInvoice {
+  id               String                 @id @default(cuid())
+  number           String                 @unique
+  publisherId      String                 @map("publisher_id")
+  periodStart      DateTime               @map("period_start")
+  periodEnd        DateTime               @map("period_end")
+  /// Mirrors periodEnd to enforce one live invoice per affiliate per period.
+  /// Cleared on cancellation so the period can be invoiced again.
+  periodKey        String?                @map("period_key")
+  issuedAt         DateTime               @map("issued_at")
+  dueAt            DateTime               @map("due_at")
+  subtotal         Decimal                @db.Decimal(12, 4)
+  total            Decimal                @db.Decimal(12, 4)
+  currency         String                 @default("USD")
+  status           AffiliateInvoiceStatus @default(UNPAID)
+  paidAt           DateTime?              @map("paid_at")
+  paymentMethod    PayoutMethod?          @map("payment_method")
+  paymentReference String?                @map("payment_reference")
+  adminNote        String?                @db.Text @map("admin_note")
+  cancelReason     String?                @db.Text @map("cancel_reason")
+  payoutId         String?                @unique @map("payout_id")
+  createdAt        DateTime               @default(now()) @map("created_at")
+  updatedAt        DateTime               @updatedAt @map("updated_at")
+
+  publisher     User                   @relation(fields: [publisherId], references: [id], onDelete: Cascade)
+  lines         AffiliateInvoiceLine[]
+  ledgerEntries LedgerEntry[]
+
+  @@unique([publisherId, periodKey])
+  @@index([status, dueAt])
+  @@index([publisherId, issuedAt])
+  @@index([issuedAt])
+  @@map("affiliate_invoices")
+}
+
+/// One row per earning source on an invoice, so a publisher with thousands of
+/// weekly credits still gets a readable document.
+model AffiliateInvoiceLine {
+  id          String  @id @default(cuid())
+  invoiceId   String  @map("invoice_id")
+  source      String
+  description String?
+  entryCount  Int     @map("entry_count")
+  amount      Decimal @db.Decimal(12, 4)
+
+  invoice AffiliateInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
+  @@map("affiliate_invoice_lines")
 }
 
 model Deposit {

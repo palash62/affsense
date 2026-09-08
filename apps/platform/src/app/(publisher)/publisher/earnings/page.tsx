@@ -7,6 +7,7 @@ import { ArrowDownLeft, Banknote, CheckCircle, Clock, History, Plus, TrendingUp,
 import { getSession } from "@/lib/session";
 import { getWalletBalance, listPublisherLedger } from "@/services/wallet.service";
 import { listPayouts } from "@/services/payout.service";
+import { loadAffiliateInvoicingConfig } from "@/services/affiliate-invoicing-settings.service";
 import { prisma } from "@/lib/prisma";
 import { PENDING_PAYOUT_STATUSES } from "@/lib/payout-status";
 import { GradientStatCard, NeutralStatCard } from "@/components/admin/gradient-stat-card";
@@ -77,7 +78,7 @@ export default async function PublisherEarningsPage({ searchParams }: PageProps)
   const limit = 10;
   const userId = session.user.id;
 
-  const [balance, approvedLeads, pendingPayouts] = await Promise.all([
+  const [balance, approvedLeads, pendingPayouts, invoicingConfig] = await Promise.all([
     getWalletBalance(userId),
     prisma.lead.count({
       where: { publisherId: userId, status: { in: ["APPROVED", "PAID"] } },
@@ -85,7 +86,10 @@ export default async function PublisherEarningsPage({ searchParams }: PageProps)
     prisma.payout.count({
       where: { publisherId: userId, status: { in: [...PENDING_PAYOUT_STATUSES] } },
     }),
+    loadAffiliateInvoicingConfig(),
   ]);
+
+  const invoicingEnabled = invoicingConfig.enabled;
 
   const wallet = balance ?? {
     balance: 0,
@@ -160,25 +164,40 @@ export default async function PublisherEarningsPage({ searchParams }: PageProps)
       {tab === "earnings" ? (
         <>
           <PageSection
-            title="Quick Payout"
-            description="Withdraw your available earnings"
+            title={invoicingEnabled ? "Weekly Payout" : "Quick Payout"}
+            description={
+              invoicingEnabled
+                ? "Your earnings are invoiced automatically every Monday"
+                : "Withdraw your available earnings"
+            }
             icon={ArrowDownLeft}
             gradient="revenue"
             contentClassName="p-6"
           >
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Ready to withdraw</p>
+                <p className="text-sm text-muted-foreground">
+                  {invoicingEnabled ? "Awaiting invoicing" : "Ready to withdraw"}
+                </p>
                 <p className="text-2xl font-bold text-foreground">
                   {formatCurrency(wallet.availableBalance)}
                 </p>
               </div>
-              <ButtonLink
-                href="/publisher/payouts/request"
-                className="h-10 rounded-xl bg-[var(--theme-primary)] px-6 hover:opacity-90"
-              >
-                Request Payout
-              </ButtonLink>
+              {invoicingEnabled ? (
+                <ButtonLink
+                  href="/publisher/invoices"
+                  className="h-10 rounded-xl bg-[var(--theme-primary)] px-6 hover:opacity-90"
+                >
+                  View Invoices
+                </ButtonLink>
+              ) : (
+                <ButtonLink
+                  href="/publisher/payouts/request"
+                  className="h-10 rounded-xl bg-[var(--theme-primary)] px-6 hover:opacity-90"
+                >
+                  Request Payout
+                </ButtonLink>
+              )}
             </div>
           </PageSection>
 
@@ -321,15 +340,26 @@ export default async function PublisherEarningsPage({ searchParams }: PageProps)
                 <>
                   <h3 className="text-lg font-semibold text-foreground">No payout history yet</h3>
                   <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-                    Once you have available earnings, you can request a payout.
+                    {invoicingEnabled
+                      ? "Your earnings are invoiced every Monday and paid on Net-7 terms."
+                      : "Once you have available earnings, you can request a payout."}
                   </p>
-                  <ButtonLink
-                    href="/publisher/payouts/request"
-                    className="mt-4 h-9 gap-1.5 rounded-lg bg-[var(--theme-primary)] px-4 text-sm hover:opacity-90"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Request Payout
-                  </ButtonLink>
+                  {invoicingEnabled ? (
+                    <ButtonLink
+                      href="/publisher/invoices"
+                      className="mt-4 h-9 gap-1.5 rounded-lg bg-[var(--theme-primary)] px-4 text-sm hover:opacity-90"
+                    >
+                      View Invoices
+                    </ButtonLink>
+                  ) : (
+                    <ButtonLink
+                      href="/publisher/payouts/request"
+                      className="mt-4 h-9 gap-1.5 rounded-lg bg-[var(--theme-primary)] px-4 text-sm hover:opacity-90"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Request Payout
+                    </ButtonLink>
+                  )}
                 </>
               )}
             </div>

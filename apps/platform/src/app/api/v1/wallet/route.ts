@@ -1,9 +1,6 @@
 import { withAuth } from "@/lib/api-handler";
 import { errorResponse } from "@/lib/errors";
-import {
-  createWiseDeposit,
-  getWalletBalance,
-} from "@/services/wallet.service";
+import { getWalletBalance } from "@/services/wallet.service";
 import { createCardPaymentIntent } from "@/services/stripe-payment.service";
 
 export async function GET() {
@@ -18,7 +15,6 @@ export async function POST(request: Request) {
     try {
       const body = await request.json();
       const amount = Number(body.amount);
-      const method = body.method === "WISE" ? "WISE" : "CREDIT_CARD";
 
       if (!amount || amount <= 0) {
         return Response.json(
@@ -34,27 +30,6 @@ export async function POST(request: Request) {
         );
       }
 
-      if (method === "WISE") {
-        const wiseReference = typeof body.wiseReference === "string" ? body.wiseReference.trim() : "";
-        if (!wiseReference) {
-          return Response.json(
-            { error: { code: "VALIDATION_ERROR", message: "Wise transfer reference is required", status: 422 } },
-            { status: 422 },
-          );
-        }
-
-        const payerName = typeof body.payerName === "string" ? body.payerName.trim() : undefined;
-        const note = typeof body.note === "string" ? body.note.trim() : undefined;
-
-        const deposit = await createWiseDeposit(session.user.id, amount, wiseReference, {
-          payerName: payerName || undefined,
-          note: note || undefined,
-        });
-
-        const balance = await getWalletBalance(session.user.id);
-        return Response.json({ deposit, balance }, { status: 201 });
-      }
-
       const deposit = await createCardPaymentIntent(session.user.id, amount);
       return Response.json(deposit, { status: 201 });
     } catch (error) {
@@ -63,7 +38,7 @@ export async function POST(request: Request) {
           {
             error: {
               code: "STRIPE_NOT_CONFIGURED",
-              message: "Credit card payments are not available yet. Use Wise or contact support.",
+              message: "Credit card payments are not available yet. Contact support.",
               status: 422,
             },
           },

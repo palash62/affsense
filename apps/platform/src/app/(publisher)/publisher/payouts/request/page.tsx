@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { getPublisherPayoutRequestEligibility } from "@/services/payout.service";
+import { loadAffiliateInvoicingConfig } from "@/services/affiliate-invoicing-settings.service";
 import { getWalletBalance, getPlatformSettings } from "@/services/wallet.service";
 import { RoleHero } from "@/components/layout/role-hero";
 import { PublisherInfoBanner } from "@/components/publisher/publisher-info-banner";
@@ -13,6 +14,11 @@ export default async function RequestPayoutPage() {
   if (!session?.user) redirect("/login");
 
   const userId = session.user.id;
+
+  // Invoicing replaces self-service withdrawals for affiliates.
+  const invoicing = await loadAffiliateInvoicingConfig();
+  if (invoicing.enabled) redirect("/publisher/invoices");
+
   const [balance, settings, payoutEligibility] = await Promise.all([
     getWalletBalance(userId),
     getPlatformSettings(),

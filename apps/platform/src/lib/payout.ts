@@ -13,6 +13,19 @@ export function formatPayoutMethod(method: string) {
   }
 }
 
+export function formatPayoutKind(kind: string | undefined) {
+  switch (kind) {
+    case "PUBLISHER":
+      return "Publisher";
+    case "REFERRAL":
+      return "Referral";
+    case "CPA":
+      return "CPA";
+    default:
+      return kind ? kind.toLowerCase().replace(/_/g, " ") : "—";
+  }
+}
+
 export function formatPublisherOptionLabel(publisher: {
   name: string;
   email: string;

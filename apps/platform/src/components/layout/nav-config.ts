@@ -2,7 +2,6 @@ import type { UserRole } from "@prisma/client";
 import type { LucideIcon } from "lucide-react";
 import {
   Archive,
-  ArrowDownToLine,
   LayoutDashboard,
   History,
   Users,
@@ -157,8 +156,8 @@ export const ADMIN_NAV: AdminNavEntry[] = [
     },
   },
   { kind: "item", item: { label: "Wallets", href: "/admin/wallets", icon: Wallet } },
-  { kind: "item", item: { label: "Deposits", href: "/admin/deposits", icon: ArrowDownToLine } },
   { kind: "item", item: { label: "Payouts", href: "/admin/payout-center", icon: Wallet } },
+  { kind: "item", item: { label: "Invoices", href: "/admin/invoices", icon: Receipt } },
   {
     kind: "item",
     item: { label: "Support Tickets", href: "/admin/support-tickets", icon: Ticket },
@@ -281,6 +280,7 @@ export const PUBLISHER_NAV: AdminNavEntry[] = [
 
   { kind: "section", label: "ACCOUNT" },
   { kind: "item", item: { label: "Earnings & Payouts", href: "/publisher/earnings", icon: Wallet } },
+  { kind: "item", item: { label: "Invoices", href: "/publisher/invoices", icon: FileText } },
   { kind: "item", item: { label: "Transactions", href: "/publisher/transactions", icon: Receipt } },
   { kind: "item", item: { label: "Profile Settings", href: "/publisher/settings", icon: Settings } },
 

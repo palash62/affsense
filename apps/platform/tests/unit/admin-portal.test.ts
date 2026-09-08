@@ -100,7 +100,6 @@ describe("admin portal roles", () => {
       entry.kind === "item" ? [entry.item.href] : [],
     );
     expect(hrefs).toContain("/admin/wallets");
-    expect(hrefs).toContain("/admin/deposits");
     expect(hrefs).toContain("/admin/payout-center");
     expect(hrefs).toContain("/admin/support-tickets");
   });

@@ -284,7 +284,7 @@ export default async function AdminAdvertiserDetailPage({ params }: PageProps) {
         <TabsContent value="wallet" className="mt-4">
           <PageSection
             title="Deposit history"
-            description="Wise, card, and manual admin deposits"
+            description="Card and manual admin deposits"
             icon={Wallet}
             gradient="revenue"
           >

@@ -40,6 +40,10 @@ export function getPublisherPageMeta(
       title: "Earnings & Payouts",
       subtitle: "Track earnings, request payouts, and view history",
     },
+    "/publisher/invoices": {
+      title: "Invoices",
+      subtitle: "Weekly invoices for your earnings, paid on Net-7 terms",
+    },
     "/publisher/payouts": { title: "Payouts", subtitle: "Request and track payouts" },
     "/publisher/payouts/request": { title: "Request Payout", subtitle: "Submit a payout request" },
     "/publisher/transactions": { title: "Transactions", subtitle: "View your transaction history" },

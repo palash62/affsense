@@ -567,7 +567,6 @@ const assignableStaffMenuHrefSchema = z.enum([
   "/admin/leads",
   "/admin/fraud",
   "/admin/wallets",
-  "/admin/deposits",
   "/admin/payouts",
   "/admin/referrals",
   "/admin/reports",

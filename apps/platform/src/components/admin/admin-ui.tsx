@@ -139,6 +139,39 @@ export function PayoutStatusBadge({ status }: { status: string }) {
   );
 }
 
+export function AffiliateInvoiceStatusBadge({
+  status,
+  overdue,
+}: {
+  status: string;
+  overdue?: boolean;
+}) {
+  const styles: Record<string, string> = {
+    PAID: "border-[color-mix(in_srgb,var(--success)_30%,transparent)] bg-[color-mix(in_srgb,var(--success)_10%,white)] text-[var(--success)]",
+    UNPAID: "border-[color-mix(in_srgb,var(--warning)_35%,transparent)] bg-[color-mix(in_srgb,var(--warning)_12%,white)] text-[var(--warning)]",
+    OVERDUE: "border-[color-mix(in_srgb,var(--destructive)_30%,transparent)] bg-[color-mix(in_srgb,var(--destructive)_10%,white)] text-destructive",
+    CANCELLED: "border-border bg-muted text-muted-foreground",
+  };
+  const labels: Record<string, string> = {
+    PAID: "Paid",
+    UNPAID: "Unpaid",
+    OVERDUE: "Overdue",
+    CANCELLED: "Cancelled",
+  };
+
+  // Overdue is derived from the due date, never stored.
+  const key = status === "UNPAID" && overdue ? "OVERDUE" : status;
+
+  return (
+    <Badge
+      variant="outline"
+      className={cn("font-medium", styles[key] ?? "border-border bg-muted text-muted-foreground")}
+    >
+      {labels[key] ?? status}
+    </Badge>
+  );
+}
+
 export function KycStatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
     APPROVED: "border-[color-mix(in_srgb,var(--success)_30%,transparent)] bg-[color-mix(in_srgb,var(--success)_10%,white)] text-[var(--success)]",

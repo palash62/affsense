@@ -1,7 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const prismaMock = {
-  platformSetting: { findMany: vi.fn().mockResolvedValue([]) },
+  platformSetting: {
+    findMany: vi.fn().mockResolvedValue([]),
+    findUnique: vi.fn(),
+  },
   payout: {
     findUnique: vi.fn(),
     findUniqueOrThrow: vi.fn(),
@@ -32,6 +35,11 @@ describe("payout.service", () => {
     prismaMock.$transaction.mockImplementation(async (fn: (tx: unknown) => unknown) =>
       fn(prismaMock),
     );
+    // Self-service payout requests only apply when weekly invoicing is off.
+    prismaMock.platformSetting.findUnique.mockResolvedValue({
+      key: "affiliate_invoicing",
+      value: { enabled: false },
+    });
   });
 
   afterEach(() => {
@@ -39,6 +47,18 @@ describe("payout.service", () => {
   });
 
   describe("requestPayout", () => {
+    it("rejects requests when weekly invoicing is enabled", async () => {
+      prismaMock.platformSetting.findUnique.mockResolvedValue({
+        key: "affiliate_invoicing",
+        value: { enabled: true },
+      });
+
+      const { requestPayout } = await import("@/services/payout.service");
+      await expect(
+        requestPayout("pub-1", 100, "WISE", { email: "pay@example.com" }),
+      ).rejects.toMatchObject({ code: "PAYOUT_VIA_INVOICE" });
+    });
+
     it("rejects amounts below method minimum", async () => {
       const { requestPayout } = await import("@/services/payout.service");
       await expect(

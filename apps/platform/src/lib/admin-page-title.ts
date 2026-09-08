@@ -180,17 +180,17 @@ export function getAdminPageMeta(
     };
   }
 
-  if (path === "/admin/deposits") {
-    return {
-      title: "Deposits",
-      subtitle: "Approve Wise transfers and review full advertiser deposit history",
-    };
-  }
-
   if (path === "/admin/payout-center") {
     return {
       title: "Payouts",
       subtitle: "Approve publisher and referral withdrawals and review payout history",
+    };
+  }
+
+  if (path === "/admin/invoices") {
+    return {
+      title: "Affiliate Invoices",
+      subtitle: "Weekly Net-7 invoices — record payments and review invoice history",
     };
   }
 
@@ -240,7 +240,6 @@ export function getAdminPageMeta(
     "/admin/leads": "Leads",
     "/admin/fraud": "Fraud Center",
     "/admin/wallets": "Wallets",
-    "/admin/deposits": "Deposits",
     "/admin/payouts": "Payouts",
     "/admin/reports": "Reports",
     "/admin/support": "Support",

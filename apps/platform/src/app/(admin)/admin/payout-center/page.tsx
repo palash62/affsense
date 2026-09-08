@@ -7,12 +7,13 @@ import { formatCurrency, PayoutStatusBadge } from "@/components/admin/admin-ui";
 import { AdminPayoutReviewDialog } from "@/components/admin/admin-payout-review-dialog";
 import { AdminPayoutsFilters } from "@/components/admin/admin-payouts-filters";
 import { UsersTablePagination } from "@/components/admin/users-table-pagination";
-import { formatPayoutMethod } from "@/lib/payout";
+import { formatPayoutKind, formatPayoutMethod } from "@/lib/payout";
 import { payoutDetailsSummary } from "@/lib/payout-payment-details";
 import {
   listAdminPayouts,
   listPendingPayouts,
   listPayoutPublisherOptions,
+  PAYOUT_CENTER_KINDS,
 } from "@/services/payout.service";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -42,12 +43,14 @@ export default async function AdminPayoutCenterPage({ searchParams }: PageProps)
   const tz = session?.user?.timezone;
   const params = await searchParams;
   const page = Math.max(1, parseInt(params.page ?? "1", 10));
+  const kindParam =
+    params.kind === "PUBLISHER" || params.kind === "REFERRAL" ? params.kind : undefined;
 
   const [pendingPayouts, history, publishers] = await Promise.all([
     listPendingPayouts(),
     listAdminPayouts({
       publisherId: params.publisher,
-      kind: (params.kind as "PUBLISHER" | "REFERRAL" | "all" | undefined) ?? "all",
+      kinds: kindParam ? [kindParam] : PAYOUT_CENTER_KINDS,
       status: params.status,
       dateFrom: params.from ? new Date(params.from) : undefined,
       dateTo: params.to ? new Date(params.to) : undefined,
@@ -115,7 +118,7 @@ export default async function AdminPayoutCenterPage({ searchParams }: PageProps)
                       </TableCell>
                       <TableCell className="px-4 py-4">
                         <Badge variant="outline" className="font-medium capitalize">
-                          {payout.kind === "REFERRAL" ? "Referral" : "Publisher"}
+                          {formatPayoutKind(payout.kind)}
                         </Badge>
                       </TableCell>
                       <TableCell className="px-4 py-4">
@@ -195,7 +198,7 @@ export default async function AdminPayoutCenterPage({ searchParams }: PageProps)
                         </TableCell>
                         <TableCell className="px-4 py-4">
                           <Badge variant="outline" className="font-medium capitalize">
-                            {payout.kind === "REFERRAL" ? "Referral" : "Publisher"}
+                            {formatPayoutKind(payout.kind)}
                           </Badge>
                         </TableCell>
                         <TableCell className="px-4 py-4">

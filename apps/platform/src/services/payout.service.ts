@@ -9,7 +9,8 @@ import {
   debitCpaWalletForPayout,
   releaseCpaWalletHold,
 } from "@/services/cpa-wallet.service";
-import { Errors } from "@/lib/errors";
+import { AppError, Errors } from "@/lib/errors";
+import { loadAffiliateInvoicingConfig } from "@/services/affiliate-invoicing-settings.service";
 import { getMinPayoutForMethod } from "@/lib/platform-settings";
 import { isPendingPayoutStatus, PENDING_PAYOUT_STATUSES } from "@/lib/payout-status";
 import { payoutPublisherSelect, payoutCpaPublisherSelect, serializePayoutForClient } from "@/lib/payout";
@@ -68,6 +69,17 @@ export async function requestPayout(
   paymentDetails: PayoutPaymentDetails,
   idempotencyKey?: string,
 ) {
+  // While weekly invoicing is on, affiliates are paid from invoices instead of
+  // requesting withdrawals themselves.
+  const invoicing = await loadAffiliateInvoicingConfig();
+  if (invoicing.enabled) {
+    throw new AppError(
+      "PAYOUT_VIA_INVOICE",
+      "Payouts are issued through weekly invoices. Your earnings are invoiced automatically every Monday.",
+      422,
+    );
+  }
+
   const settings = await getPlatformSettings();
   const minAmount = getMinPayoutForMethod(method, settings);
 
@@ -298,11 +310,17 @@ export async function rejectPayout(payoutId: string, adminId: string, reason: st
   return updated;
 }
 
+/** Kinds handled by the payout center; CPA has its own page. */
+export const PAYOUT_CENTER_KINDS = [
+  "PUBLISHER",
+  "REFERRAL",
+] as const satisfies readonly PayoutKind[];
+
 export async function listPendingPayouts() {
   const rows = await prisma.payout.findMany({
     where: {
       status: { in: [...PENDING_PAYOUT_STATUSES] },
-      kind: { in: ["PUBLISHER", "REFERRAL"] },
+      kind: { in: [...PAYOUT_CENTER_KINDS] },
     },
     include: { publisher: { select: payoutPublisherSelect } },
     orderBy: { createdAt: "desc" },
@@ -325,6 +343,7 @@ export async function listPendingCpaPayouts() {
 export async function listAdminPayouts(options: {
   publisherId?: string;
   kind?: PayoutKind | "all";
+  kinds?: readonly PayoutKind[];
   status?: string;
   dateFrom?: Date;
   dateTo?: Date;
@@ -341,7 +360,9 @@ export async function listAdminPayouts(options: {
     where.publisherId = options.publisherId;
   }
 
-  if (options.kind && options.kind !== "all") {
+  if (options.kinds) {
+    where.kind = { in: [...options.kinds] };
+  } else if (options.kind && options.kind !== "all") {
     where.kind = options.kind;
   }
 

@@ -2,17 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check, Copy, CreditCard, ExternalLink, Landmark, Loader2, Plus } from "lucide-react";
-import { toast } from "sonner";
+import { CreditCard, Loader2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import { WISE_PAYMENT_QR_SRC, WISE_PAYMENT_URL } from "@/lib/wise-payment";
 import { WalletStripeCheckout } from "@/components/advertiser/wallet-stripe-checkout";
 
 const QUICK_AMOUNTS = [50, 100, 250, 500, 1000];
-
-type PaymentMethod = "CREDIT_CARD" | "WISE";
 
 type StripeCheckoutState = {
   amount: number;
@@ -66,24 +62,16 @@ export function WalletRechargePanel({
 }) {
   const router = useRouter();
   const [balance, setBalance] = useState(initialBalance);
-  const [method, setMethod] = useState<PaymentMethod>("CREDIT_CARD");
   const [amount, setAmount] = useState("100");
-  const [wiseReference, setWiseReference] = useState("");
-  const [payerName, setPayerName] = useState("");
-  const [note, setNote] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [stripeEnabled, setStripeEnabled] = useState<boolean | null>(null);
   const [stripeCheckout, setStripeCheckout] = useState<StripeCheckoutState | null>(null);
-  const [copiedWiseLink, setCopiedWiseLink] = useState(false);
 
   const numericAmount = Number(amount);
   const canSubmit =
-    !loading &&
-    !stripeCheckout &&
-    numericAmount >= 10 &&
-    (method === "WISE" ? wiseReference.trim().length > 0 : stripeEnabled === true);
+    !loading && !stripeCheckout && numericAmount >= 10 && stripeEnabled === true;
 
   useEffect(() => {
     fetch("/api/v1/wallet/stripe/config")
@@ -94,10 +82,8 @@ export function WalletRechargePanel({
 
   async function deposit() {
     if (!canSubmit) {
-      if (method === "WISE") {
-        setError("Enter amount (min $10) and Wise transfer reference");
-      } else if (stripeEnabled === false) {
-        setError("Credit card payments are not configured yet. Use Wise or contact support.");
+      if (stripeEnabled === false) {
+        setError("Credit card payments are not configured yet. Contact support.");
       } else {
         setError("Minimum deposit is $10.00");
       }
@@ -107,35 +93,6 @@ export function WalletRechargePanel({
     setLoading(true);
     setError(null);
     setSuccess(null);
-
-    if (method === "WISE") {
-      const res = await fetch("/api/v1/wallet", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          amount: numericAmount,
-          method: "WISE",
-          wiseReference: wiseReference.trim(),
-          ...(payerName.trim() ? { payerName: payerName.trim() } : {}),
-          ...(note.trim() ? { note: note.trim() } : {}),
-        }),
-      });
-      const data = await res.json();
-
-      if (res.ok) {
-        setBalance(data.balance);
-        setSuccess(`Wise deposit submitted for $${numericAmount.toFixed(2)}. Pending admin approval.`);
-        setWiseReference("");
-        setPayerName("");
-        setNote("");
-        router.refresh();
-      } else {
-        setError(data?.error?.message ?? "Unable to add funds. Please try again.");
-      }
-
-      setLoading(false);
-      return;
-    }
 
     const res = await fetch("/api/v1/wallet", {
       method: "POST",
@@ -194,47 +151,14 @@ export function WalletRechargePanel({
 
       <div className="space-y-2">
         <Label>Payment method</Label>
-        <div className="grid gap-2 sm:grid-cols-2">
-          <button
-            type="button"
-            onClick={() => {
-              setMethod("CREDIT_CARD");
-              setStripeCheckout(null);
-            }}
-            className={cn(
-              "flex items-center gap-3 rounded-xl border px-4 py-3 text-left transition-colors",
-              method === "CREDIT_CARD"
-                ? "border-[var(--theme-primary)] bg-[var(--theme-primary-soft)]"
-                : "border-border bg-white hover:border-border",
-            )}
-          >
-            <CreditCard className="h-5 w-5 text-[var(--theme-primary)]" />
-            <div>
-              <p className="text-sm font-semibold text-foreground">Credit Card</p>
-              <p className="text-xs text-muted-foreground">
-                {stripeEnabled === false ? "Not configured" : "Stripe checkout"}
-              </p>
-            </div>
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setMethod("WISE");
-              setStripeCheckout(null);
-            }}
-            className={cn(
-              "flex items-center gap-3 rounded-xl border px-4 py-3 text-left transition-colors",
-              method === "WISE"
-                ? "border-[var(--theme-primary)] bg-[var(--theme-primary-soft)]"
-                : "border-border bg-white hover:border-border",
-            )}
-          >
-            <Landmark className="h-5 w-5 text-[var(--theme-primary)]" />
-            <div>
-              <p className="text-sm font-semibold text-foreground">Wise</p>
-              <p className="text-xs text-muted-foreground">Admin reviews transfer</p>
-            </div>
-          </button>
+        <div className="flex items-center gap-3 rounded-xl border border-[var(--theme-primary)] bg-[var(--theme-primary-soft)] px-4 py-3">
+          <CreditCard className="h-5 w-5 text-[var(--theme-primary)]" />
+          <div>
+            <p className="text-sm font-semibold text-foreground">Credit Card</p>
+            <p className="text-xs text-muted-foreground">
+              {stripeEnabled === false ? "Not configured" : "Stripe checkout"}
+            </p>
+          </div>
         </div>
       </div>
 
@@ -262,113 +186,7 @@ export function WalletRechargePanel({
         </div>
       )}
 
-      {method === "WISE" && !stripeCheckout && (
-        <div className="space-y-4">
-          <div className="rounded-xl border border-emerald-200 bg-emerald-50/40 p-4">
-            <p className="text-sm font-medium text-foreground">Choose how to pay</p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Pay first with the QR code or payment link, then submit your transfer reference below.
-            </p>
-            <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              <div className="rounded-xl border border-border bg-card p-4 text-center shadow-sm">
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Scan QR
-                </p>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={WISE_PAYMENT_QR_SRC}
-                  alt="Wise payment QR code"
-                  className="mx-auto mt-3 h-40 w-40 rounded-lg object-contain"
-                />
-              </div>
-              <div className="flex flex-col justify-center gap-3 rounded-xl border border-border bg-card p-4 shadow-sm">
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Pay online
-                </p>
-                <a
-                  href={WISE_PAYMENT_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#163300] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#0f2400]"
-                >
-                  Open Wise payment page
-                  <ExternalLink className="h-4 w-4" />
-                </a>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="h-10 border-border"
-                  onClick={async () => {
-                    try {
-                      await navigator.clipboard.writeText(WISE_PAYMENT_URL);
-                      setCopiedWiseLink(true);
-                      toast.success("Wise payment link copied");
-                      window.setTimeout(() => setCopiedWiseLink(false), 2000);
-                    } catch {
-                      toast.error("Could not copy link");
-                    }
-                  }}
-                >
-                  {copiedWiseLink ? (
-                    <>
-                      <Check className="mr-2 h-4 w-4 text-emerald-600" />
-                      Copied
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="mr-2 h-4 w-4" />
-                      Copy link
-                    </>
-                  )}
-                </Button>
-                <p className="break-all text-[11px] leading-relaxed text-muted-foreground">
-                  {WISE_PAYMENT_URL}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-4 rounded-xl border border-border bg-muted/60 p-4">
-            <p className="text-sm text-muted-foreground">
-              After paying via Wise, enter the reference and payer details below. Funds are credited
-              after admin approval.
-            </p>
-            <div className="space-y-2">
-              <Label htmlFor="wise-reference">Wise transfer reference *</Label>
-              <input
-                id="wise-reference"
-                value={wiseReference}
-                onChange={(e) => setWiseReference(e.target.value)}
-                placeholder="e.g. WISE-123456789"
-                className="h-11 w-full rounded-lg border border-border bg-card px-3 text-sm outline-none focus:border-[var(--theme-primary)] focus:ring-2 focus:ring-[var(--theme-primary)]/15"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="wise-payer">Payer / company name</Label>
-              <input
-                id="wise-payer"
-                value={payerName}
-                onChange={(e) => setPayerName(e.target.value)}
-                placeholder="Name on the Wise transfer"
-                className="h-11 w-full rounded-lg border border-border bg-card px-3 text-sm outline-none focus:border-[var(--theme-primary)] focus:ring-2 focus:ring-[var(--theme-primary)]/15"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="wise-note">Note (optional)</Label>
-              <textarea
-                id="wise-note"
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                rows={2}
-                placeholder="Any extra details for admin review"
-                className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm outline-none focus:border-[var(--theme-primary)] focus:ring-2 focus:ring-[var(--theme-primary)]/15"
-              />
-            </div>
-          </div>
-        </div>
-      )}
-
-      {method === "CREDIT_CARD" && stripeEnabled === false && !stripeCheckout && (
+      {stripeEnabled === false && !stripeCheckout && (
         <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
           Credit card payments are not enabled yet. Ask your platform admin to add Stripe keys in
           Admin → Settings → Payments (Stripe).
@@ -411,7 +229,7 @@ export function WalletRechargePanel({
           ) : (
             <>
               <Plus className="mr-2 h-5 w-5" />
-              {method === "CREDIT_CARD" ? "Continue to Card Payment" : "Submit Wise Deposit"}
+              Continue to Card Payment
             </>
           )}
         </Button>

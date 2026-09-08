@@ -56,7 +56,7 @@ export default async function WalletPage({ searchParams }: PageProps) {
       <RoleHero
         eyebrow="Advertiser Portal"
         title="Wallet"
-        description="Add funds via credit card or Wise, then review your deposit history."
+        description="Add funds by credit card, then review your deposit history."
         action={{ label: "Add Funds", href: "#add-funds", icon: Plus }}
       />
 
@@ -85,7 +85,7 @@ export default async function WalletPage({ searchParams }: PageProps) {
 
       <PageSection
         title="Add Funds"
-        description="Credit card is approved instantly. Wise deposits need admin approval."
+        description="Top up by credit card — funds are credited instantly."
         icon={Plus}
         gradient="revenue"
         contentClassName="p-6"
