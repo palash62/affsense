@@ -2,7 +2,6 @@
 
 import { CpaOfferGeoFlags } from "@/components/cpa/cpa-offer-geo-flags";
 import { formatCurrency } from "@/components/admin/admin-ui";
-import { formatOfferWallPoints, offerWallPayoutPoints } from "@/lib/offer-wall-points";
 import {
   Sheet,
   SheetContent,
@@ -19,16 +18,13 @@ export function OfferWallDetailSheet({
   featured,
   open,
   onOpenChange,
-  pointsRatio = 0,
 }: {
   offer: OfferWallItem | null;
   featured?: boolean;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  pointsRatio?: number;
 }) {
   const payout = Number(offer?.payout) || 0;
-  const points = offerWallPayoutPoints(payout, pointsRatio);
   const letter = (offer?.name.trim()[0] || "?").toUpperCase();
 
   return (
@@ -38,7 +34,7 @@ export function OfferWallDetailSheet({
           <SheetTitle className="pr-8 text-left">{offer?.name ?? "Offer details"}</SheetTitle>
           <SheetDescription className="sr-only">
             {offer
-              ? `${offer.type || "Offer"} · ${points != null ? formatOfferWallPoints(points) : formatCurrency(payout)}`
+              ? `${offer.type || "Offer"} · ${formatCurrency(payout)}`
               : "Offer details"}
           </SheetDescription>
         </SheetHeader>
@@ -77,7 +73,7 @@ export function OfferWallDetailSheet({
                     featured ? "text-[var(--theme-primary)]" : "text-[var(--theme-success)]",
                   )}
                 >
-                  {points != null ? formatOfferWallPoints(points) : formatCurrency(payout)}
+                  {formatCurrency(payout)}
                 </p>
               </div>
             </div>
@@ -107,11 +103,10 @@ export function OfferWallDetailSheet({
               payout={payout}
               featured={featured}
               layout="bar"
-              pointsRatio={pointsRatio}
             />
           ) : (
             <span className="inline-flex h-11 w-full items-center justify-center rounded-md bg-muted text-sm font-semibold text-muted-foreground">
-              Earn {points != null ? formatOfferWallPoints(points) : formatCurrency(payout)}
+              Earn {formatCurrency(payout)}
             </span>
           )}
         </SheetFooter>

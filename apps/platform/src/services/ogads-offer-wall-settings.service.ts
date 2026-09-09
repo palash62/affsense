@@ -9,8 +9,20 @@ import {
   type OgadsOfferWallConfig,
 } from "@/lib/ogads-offer-wall-settings";
 
+const OFFER_WALL_PUBLIC_ORIGIN = "https://affsense.com";
+
+function isLocalPlatformUrl(url: string): boolean {
+  return /localhost|127\.0\.0\.1/i.test(url);
+}
+
+/** Public origin shown in Settings → Offer Wall postback URLs. */
+export function getOgadsPostbackOrigin(): string {
+  const platform = getPlatformUrl().replace(/\/$/, "");
+  return isLocalPlatformUrl(platform) ? platform : OFFER_WALL_PUBLIC_ORIGIN;
+}
+
 export function buildOgadsPostbackUrl(secret?: string) {
-  const base = `${getPlatformUrl().replace(/\/$/, "")}/api/v1/webhooks/ogads`;
+  const base = `${getOgadsPostbackOrigin()}/api/v1/webhooks/ogads`;
   const key = secret?.trim();
   if (!key) return base;
   return `${base}?secret=${encodeURIComponent(key)}`;

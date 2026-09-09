@@ -560,6 +560,30 @@ export async function listAffiliateInvoicesForAdmin(params: AffiliateInvoiceList
   };
 }
 
+export async function getAffiliateInvoiceById(id: string): Promise<SerializedAffiliateInvoice> {
+  const now = new Date();
+  const invoice = await prisma.affiliateInvoice.findUnique({
+    where: { id },
+    include: invoiceInclude,
+  });
+  if (!invoice) throw Errors.notFound("Invoice");
+  return serializeInvoice(invoice, now);
+}
+
+/** Publisher-facing fetch: ownership required, cancelled hidden, admin notes stripped. */
+export async function getAffiliateInvoiceForPublisher(
+  id: string,
+  publisherId: string,
+): Promise<SerializedAffiliateInvoice> {
+  const now = new Date();
+  const invoice = await prisma.affiliateInvoice.findFirst({
+    where: { id, publisherId, status: { not: "CANCELLED" } },
+    include: invoiceInclude,
+  });
+  if (!invoice) throw Errors.notFound("Invoice");
+  return { ...serializeInvoice(invoice, now), adminNote: null };
+}
+
 export async function getAffiliateInvoiceStats() {
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);

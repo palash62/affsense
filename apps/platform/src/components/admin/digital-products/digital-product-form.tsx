@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Copy, Info, Send, Upload } from "lucide-react";
+import { Copy, Info, Send } from "lucide-react";
 import { toast } from "sonner";
 import { AdminBreadcrumbs } from "./admin-breadcrumbs";
 import {
@@ -12,7 +12,6 @@ import {
   SHORT_DESCRIPTION_MAX,
   AFFILIATE_TRACKING_SAMPLE_VALUE,
   buildAffiliateTrackingPreviewUrl,
-  readImageDataUrl,
   type DigitalProductFormValues,
   type DigitalProductStatus,
 } from "./digital-product-types";
@@ -33,6 +32,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { BuilderImageUpload } from "@/modules/page-builder/components/editor/builder-image-upload";
 import { cn } from "@/lib/utils";
 
 function SectionHeader({ number, title }: { number: number; title: string }) {
@@ -67,10 +67,8 @@ async function copyText(text: string, label: string) {
 export function DigitalProductForm({ productId }: { productId?: string }) {
   const router = useRouter();
   const isEdit = Boolean(productId);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const imageFileRef = useRef<File | null>(null);
   const [values, setValues] = useState<DigitalProductFormValues>(DEFAULT_FORM_VALUES);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageUrl, setImageUrl] = useState("");
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(isEdit);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -124,7 +122,7 @@ export function DigitalProductForm({ productId }: { productId?: string }) {
           vendor: data.vendor ?? "",
           webhookSecret: "",
         });
-        if (data.imageUrl) setImagePreview(data.imageUrl);
+        setImageUrl(typeof data.imageUrl === "string" ? data.imageUrl : "");
       })
       .catch((err: unknown) => {
         if (ac.signal.aborted) return;
@@ -162,17 +160,6 @@ export function DigitalProductForm({ productId }: { productId?: string }) {
     setValues((prev) => ({ ...prev, ...partial }));
   }
 
-  function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    imageFileRef.current = file;
-    const url = URL.createObjectURL(file);
-    setImagePreview((prev) => {
-      if (prev?.startsWith("blob:")) URL.revokeObjectURL(prev);
-      return url;
-    });
-  }
-
   async function persistProduct(status: DigitalProductStatus, successMessage: string) {
     if (saving) return;
     setSaving(true);
@@ -194,10 +181,8 @@ export function DigitalProductForm({ productId }: { productId?: string }) {
         referralReward: Number(values.referralReward) || 0,
         price: Number(values.price) || 0,
         vendor: values.vendor,
+        imageUrl: imageUrl.trim() || null,
       };
-      if (imageFileRef.current) {
-        payload.imageUrl = await readImageDataUrl(imageFileRef.current);
-      }
       const res = await fetch(
         productId
           ? `/api/v1/admin/digital-products/${productId}`
@@ -210,12 +195,12 @@ export function DigitalProductForm({ productId }: { productId?: string }) {
       );
       if (!res.ok) {
         const json = await res.json().catch(() => ({}));
-        throw new Error(json.error?.message ?? "save failed");
+        throw new Error(json.error?.message ?? "Could not save product");
       }
       toast.success(successMessage);
       router.push("/admin/digital-products");
-    } catch {
-      toast.error("Could not save product");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Could not save product");
     } finally {
       setSaving(false);
     }
@@ -316,36 +301,15 @@ export function DigitalProductForm({ productId }: { productId?: string }) {
 
             <div className="mt-5 space-y-2">
               <FieldLabel>Product Image</FieldLabel>
-              <div className="flex flex-wrap items-start gap-4">
-                {imagePreview ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={imagePreview}
-                    alt="Product preview"
-                    className="h-24 w-24 rounded-md object-cover shadow-sm"
-                  />
-                ) : (
-                  <span className="flex h-24 w-24 items-center justify-center rounded-md bg-gradient-to-br from-violet-500 to-indigo-600 text-2xl font-bold text-white shadow-sm">
-                    {values.name.slice(0, 1) || "A"}
-                  </span>
-                )}
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="flex min-h-24 min-w-[180px] flex-1 flex-col items-center justify-center rounded-md border-2 border-dashed border-border bg-muted/50 px-4 py-6 text-center transition-colors hover:border-[var(--theme-primary)]/40 hover:bg-muted"
-                >
-                  <Upload className="h-6 w-6 text-muted-foreground" />
-                  <span className="mt-2 text-sm font-medium text-foreground">Upload Image</span>
-                  <span className="mt-0.5 text-xs text-muted-foreground">JPG, PNG · Max 2MB</span>
-                </button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  className="hidden"
-                  onChange={handleImageChange}
-                />
-              </div>
+              <BuilderImageUpload
+                value={imageUrl}
+                onChange={setImageUrl}
+                onClear={() => setImageUrl("")}
+                showUrlInput={false}
+              />
+              <p className="text-xs text-muted-foreground">
+                JPG, PNG, or WebP. Uploaded to platform storage.
+              </p>
             </div>
 
             <div className="mt-5 space-y-2">
@@ -626,7 +590,7 @@ export function DigitalProductForm({ productId }: { productId?: string }) {
 
         <aside className="space-y-5 xl:col-span-4">
           <div className="xl:sticky xl:top-24 xl:space-y-5">
-            <OfferSummaryPanel values={values} imagePreview={imagePreview} />
+            <OfferSummaryPanel values={values} imagePreview={imageUrl || null} />
             <WebhookStatusPanel />
             <PromoMaterialsPanel />
           </div>

@@ -3,6 +3,7 @@
 import { Fragment, useState } from "react";
 import { ChevronDown, ChevronRight, Receipt } from "lucide-react";
 import { AffiliateInvoiceStatusBadge, formatCurrency } from "@/components/admin/admin-ui";
+import { AffiliateInvoiceDownloadButton } from "@/components/invoices/affiliate-invoice-download-button";
 import { formatInvoicePeriod } from "@/lib/affiliate-invoice-period";
 import { formatUserDateTime } from "@/lib/user-timezone";
 import type { SerializedAffiliateInvoice } from "@/services/affiliate-invoice.service";
@@ -50,7 +51,8 @@ export function PublisherInvoicesList({
             <TableHead className="h-11 px-4 text-muted-foreground">Issued</TableHead>
             <TableHead className="h-11 px-4 text-muted-foreground">Due</TableHead>
             <TableHead className="h-11 px-4 text-right text-muted-foreground">Amount</TableHead>
-            <TableHead className="h-11 px-6 text-muted-foreground">Status</TableHead>
+            <TableHead className="h-11 px-4 text-muted-foreground">Status</TableHead>
+            <TableHead className="h-11 px-6 text-right text-muted-foreground">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -94,17 +96,23 @@ export function PublisherInvoicesList({
                       {formatCurrency(invoice.total)}
                     </span>
                   </TableCell>
-                  <TableCell className="px-6 py-4">
+                  <TableCell className="px-4 py-4">
                     <AffiliateInvoiceStatusBadge
                       status={invoice.status}
                       overdue={invoice.overdue}
+                    />
+                  </TableCell>
+                  <TableCell className="px-6 py-4 text-right">
+                    <AffiliateInvoiceDownloadButton
+                      href={`/publisher/invoices/${invoice.id}/print`}
+                      stopPropagation
                     />
                   </TableCell>
                 </TableRow>
 
                 {open ? (
                   <TableRow className="border-border bg-muted/30">
-                    <TableCell colSpan={6} className="px-6 py-4">
+                    <TableCell colSpan={7} className="px-6 py-4">
                       <p className="mb-2 text-sm font-semibold text-foreground">Breakdown</p>
                       <div className="divide-y divide-border rounded-lg border border-border bg-card">
                         {invoice.lines.map((line) => (

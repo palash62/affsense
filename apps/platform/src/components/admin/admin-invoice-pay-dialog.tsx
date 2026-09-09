@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { AffiliateInvoiceStatusBadge, formatCurrency } from "@/components/admin/admin-ui";
+import { AffiliateInvoiceDownloadButton } from "@/components/invoices/affiliate-invoice-download-button";
 import { formatInvoicePeriod } from "@/lib/affiliate-invoice-period";
 import { formatPayoutMethodLabel } from "@/lib/payout-payment-details";
 import { formatUserDateTime } from "@/lib/user-timezone";
@@ -81,7 +82,9 @@ export function AdminInvoicePayDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <div className="inline-flex items-center justify-end gap-2">
+      <AffiliateInvoiceDownloadButton href={`/admin/invoices/${invoice.id}/print`} />
+      <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger
         render={
           <Button variant="outline" size="sm" className="h-8 gap-1">
@@ -94,7 +97,13 @@ export function AdminInvoicePayDialog({
       </DialogTrigger>
       <DialogContent className="sm:max-w-xl">
         <DialogHeader>
-          <DialogTitle>Invoice {invoice.number}</DialogTitle>
+          <div className="flex flex-wrap items-center justify-between gap-2 pr-8">
+            <DialogTitle>Invoice {invoice.number}</DialogTitle>
+            <AffiliateInvoiceDownloadButton
+              href={`/admin/invoices/${invoice.id}/print`}
+              variant="ghost"
+            />
+          </div>
         </DialogHeader>
 
         <div className="space-y-5">
@@ -284,5 +293,6 @@ export function AdminInvoicePayDialog({
         </div>
       </DialogContent>
     </Dialog>
+    </div>
   );
 }

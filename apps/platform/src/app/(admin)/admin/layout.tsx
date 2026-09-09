@@ -4,8 +4,8 @@ import { AppShell } from "@/components/layout/app-shell";
 import { getSession, isAuthorizedAppSession } from "@/lib/session";
 import { isAdminPortalRole, parseStaffMenuAccess } from "@/lib/admin-portal";
 
-const FULLSCREEN_ADMIN_FUNNEL =
-  /^\/admin\/funnel-templates\/[^/]+\/(edit|preview)(\/|$)/;
+const FULLSCREEN_ADMIN_PATH =
+  /^\/admin\/(funnel-templates\/[^/]+\/(edit|preview)|invoices\/[^/]+\/print)(\/|$)/;
 
 export default async function AdminLayout({
   children,
@@ -13,7 +13,7 @@ export default async function AdminLayout({
   children: React.ReactNode;
 }) {
   const pathname = (await headers()).get("x-pathname") ?? "";
-  if (FULLSCREEN_ADMIN_FUNNEL.test(pathname)) {
+  if (FULLSCREEN_ADMIN_PATH.test(pathname)) {
     return children;
   }
 

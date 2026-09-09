@@ -268,7 +268,7 @@ export async function createDigitalProduct(input: {
   price: number;
   vendor?: string;
   webhookSecret?: string;
-  imageUrl?: string;
+  imageUrl?: string | null;
   thumbTone?: string;
 }) {
   const category = await prisma.digitalProductCategory.upsert({
@@ -323,7 +323,7 @@ export async function updateDigitalProduct(
     price: number;
     vendor: string;
     webhookSecret: string;
-    imageUrl: string;
+    imageUrl: string | null;
     thumbTone: string;
   }>,
 ) {

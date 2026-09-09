@@ -3,7 +3,6 @@
 import { ExternalLink } from "lucide-react";
 import { CpaOfferGeoFlags } from "@/components/cpa/cpa-offer-geo-flags";
 import { formatCurrency } from "@/components/admin/admin-ui";
-import { formatOfferWallPoints, offerWallPayoutPoints } from "@/lib/offer-wall-points";
 import { cn } from "@/lib/utils";
 
 export type OfferWallItem = {
@@ -31,7 +30,6 @@ export function OfferWallEarnLink({
   layout = "stack",
   stopPropagation,
   className,
-  pointsRatio = 0,
 }: {
   href: string;
   payout: number;
@@ -39,10 +37,8 @@ export function OfferWallEarnLink({
   layout?: "stack" | "bar";
   stopPropagation?: boolean;
   className?: string;
-  pointsRatio?: number;
 }) {
-  const points = offerWallPayoutPoints(payout, pointsRatio);
-  const label = points != null ? formatOfferWallPoints(points) : formatCurrency(payout);
+  const label = formatCurrency(payout);
   return (
     <a
       href={href}
@@ -76,15 +72,12 @@ export function OfferWallRow({
   offer,
   featured,
   onSelect,
-  pointsRatio = 0,
 }: {
   offer: OfferWallItem;
   featured?: boolean;
   onSelect: () => void;
-  pointsRatio?: number;
 }) {
   const payout = Number(offer.payout) || 0;
-  const points = offerWallPayoutPoints(payout, pointsRatio);
   const letter = (offer.name.trim()[0] || "?").toUpperCase();
 
   return (
@@ -142,13 +135,12 @@ export function OfferWallRow({
             payout={payout}
             featured={featured}
             stopPropagation
-            pointsRatio={pointsRatio}
           />
         ) : (
           <span className="inline-flex min-h-11 w-full flex-col items-center justify-center rounded-md bg-muted px-3 py-2 text-center text-muted-foreground">
             <span className="text-[11px] font-medium leading-none">Earn</span>
             <span className="mt-0.5 text-sm font-bold tabular-nums leading-tight">
-              {points != null ? formatOfferWallPoints(points) : formatCurrency(payout)}
+              {formatCurrency(payout)}
             </span>
           </span>
         )}

@@ -291,8 +291,8 @@ export function OgadsOfferWallSettingsForm() {
             />
             <p className="text-xs text-muted-foreground">
               {settings.pointsRatio > 0
-                ? `$1.00 = ${settings.pointsRatio.toLocaleString()} points. Affiliates see points on the wall; wallets stay in USD.`
-                : "0 shows dollar payouts only. Set a ratio to display points instead."}
+                ? `$1.00 = ${settings.pointsRatio.toLocaleString()} points (stored for OGAds). The wall shows USD payouts.`
+                : "Optional OGAds points ratio. The wall always shows USD payouts."}
             </p>
           </div>
 
