@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Copy, Info, Send } from "lucide-react";
+import { Copy, Info, Plus, Send, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { AdminBreadcrumbs } from "./admin-breadcrumbs";
 import {
@@ -12,8 +12,11 @@ import {
   SHORT_DESCRIPTION_MAX,
   AFFILIATE_TRACKING_SAMPLE_VALUE,
   buildAffiliateTrackingPreviewUrl,
+  derivePageSlugFromUrl,
+  emptyUpsellFormValues,
   type DigitalProductFormValues,
   type DigitalProductStatus,
+  type DigitalProductUpsellFormValues,
 } from "./digital-product-types";
 import { OfferSummaryPanel } from "./offer-summary-panel";
 import { WebhookStatusPanel } from "./webhook-status-panel";
@@ -114,13 +117,27 @@ export function DigitalProductForm({ productId }: { productId?: string }) {
           affiliateTrackingParam: data.affiliateTrackingParam ?? "affsense_id",
           previewUrl: data.previewUrl ?? "",
           frontEndCommission: String(data.frontEndCommission ?? ""),
-          upsellCommission:
-            data.upsellCommission == null ? "" : String(data.upsellCommission),
           referralReward:
             data.referralReward == null ? "" : String(data.referralReward),
           price: String(data.price ?? ""),
           vendor: data.vendor ?? "",
           webhookSecret: "",
+          upsells: Array.isArray(data.upsells)
+            ? data.upsells.map(
+                (u: {
+                  name?: string;
+                  pageUrl?: string;
+                  price?: number;
+                  commissionPct?: number;
+                }): DigitalProductUpsellFormValues => ({
+                  name: u.name ?? "",
+                  pageUrl: u.pageUrl ?? "",
+                  price: u.price == null ? "" : String(u.price),
+                  commissionPct:
+                    u.commissionPct == null ? "50" : String(u.commissionPct),
+                }),
+              )
+            : [],
         });
         setImageUrl(typeof data.imageUrl === "string" ? data.imageUrl : "");
       })
@@ -160,6 +177,27 @@ export function DigitalProductForm({ productId }: { productId?: string }) {
     setValues((prev) => ({ ...prev, ...partial }));
   }
 
+  function patchUpsell(index: number, partial: Partial<DigitalProductUpsellFormValues>) {
+    setValues((prev) => ({
+      ...prev,
+      upsells: prev.upsells.map((row, i) => (i === index ? { ...row, ...partial } : row)),
+    }));
+  }
+
+  function addUpsell() {
+    setValues((prev) => ({
+      ...prev,
+      upsells: [...prev.upsells, emptyUpsellFormValues()],
+    }));
+  }
+
+  function removeUpsell(index: number) {
+    setValues((prev) => ({
+      ...prev,
+      upsells: prev.upsells.filter((_, i) => i !== index),
+    }));
+  }
+
   async function persistProduct(status: DigitalProductStatus, successMessage: string) {
     if (saving) return;
     setSaving(true);
@@ -177,11 +215,19 @@ export function DigitalProductForm({ productId }: { productId?: string }) {
         affiliateTrackingParam: values.affiliateTrackingParam,
         previewUrl: values.previewUrl,
         frontEndCommission: Number(values.frontEndCommission) || 0,
-        upsellCommission: Number(values.upsellCommission) || 0,
+        upsellCommission: null,
         referralReward: Number(values.referralReward) || 0,
         price: Number(values.price) || 0,
         vendor: values.vendor,
         imageUrl: imageUrl.trim() || null,
+        upsells: values.upsells
+          .filter((u) => u.name.trim() || u.pageUrl.trim())
+          .map((u) => ({
+            name: u.name.trim(),
+            pageUrl: u.pageUrl.trim(),
+            price: Number(u.price) || 0,
+            commissionPct: Number(u.commissionPct) || 0,
+          })),
       };
       const res = await fetch(
         productId
@@ -526,7 +572,7 @@ export function DigitalProductForm({ productId }: { productId?: string }) {
           {/* 3. Commission Settings */}
           <DashboardCard>
             <SectionHeader number={3} title="Commission Settings" />
-            <div className="grid gap-5 md:grid-cols-3">
+            <div className="grid gap-5 md:grid-cols-2">
               <div className="space-y-2">
                 <FieldLabel required>Front End Commission</FieldLabel>
                 <div className="relative">
@@ -544,25 +590,6 @@ export function DigitalProductForm({ productId }: { productId?: string }) {
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Members earn {values.frontEndCommission || "0"}% on front end sale
-                </p>
-              </div>
-              <div className="space-y-2">
-                <FieldLabel required>Upsell Commission</FieldLabel>
-                <div className="relative">
-                  <Input
-                    type="number"
-                    min="0"
-                    max="100"
-                    value={values.upsellCommission}
-                    onChange={(e) => patch({ upsellCommission: e.target.value })}
-                    className="h-10 rounded-lg pr-8"
-                  />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-                    %
-                  </span>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Members earn {values.upsellCommission || "0"}% on all upsells
                 </p>
               </div>
               <div className="space-y-2">
@@ -584,6 +611,115 @@ export function DigitalProductForm({ productId }: { productId?: string }) {
                   You earn {values.referralReward || "0"}% on referred members&apos; sales
                 </p>
               </div>
+            </div>
+          </DashboardCard>
+
+          {/* 4. Upsells */}
+          <DashboardCard>
+            <SectionHeader number={4} title="Upsells" />
+            <p className="mb-4 text-sm text-muted-foreground">
+              Add ClickFunnels upsell pages. The last path segment of each URL becomes the{" "}
+              <code className="rounded bg-muted px-1">page_slug</code> used to match webhook
+              events and apply that upsell&apos;s commission %.
+            </p>
+
+            <div className="space-y-4">
+              {values.upsells.length === 0 ? (
+                <p className="rounded-lg border border-dashed border-border bg-muted/40 px-4 py-6 text-center text-sm text-muted-foreground">
+                  No upsells yet. Add Upsell 1 to start matching OTO pages.
+                </p>
+              ) : null}
+
+              {values.upsells.map((upsell, index) => {
+                const slug = derivePageSlugFromUrl(upsell.pageUrl);
+                return (
+                  <div
+                    key={`upsell-${index}`}
+                    className="rounded-xl border border-border bg-muted/20 p-4"
+                  >
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <p className="text-sm font-semibold text-foreground">
+                        Upsell {index + 1}
+                      </p>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 gap-1.5 text-destructive hover:text-destructive"
+                        onClick={() => removeUpsell(index)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                        Remove
+                      </Button>
+                    </div>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="space-y-2 md:col-span-2">
+                        <FieldLabel required>Upsell page URL</FieldLabel>
+                        <Input
+                          value={upsell.pageUrl}
+                          onChange={(e) => patchUpsell(index, { pageUrl: e.target.value })}
+                          placeholder="https://yourfunnel.clickfunnels.com/upsell-oto-1"
+                          className="h-10 rounded-md"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Page slug:{" "}
+                          <code className="rounded bg-muted px-1">
+                            {slug ?? "—"}
+                          </code>
+                        </p>
+                      </div>
+                      <div className="space-y-2">
+                        <FieldLabel required>Name</FieldLabel>
+                        <Input
+                          value={upsell.name}
+                          onChange={(e) => patchUpsell(index, { name: e.target.value })}
+                          placeholder="OTO 1"
+                          className="h-10 rounded-md"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <FieldLabel required>Price</FieldLabel>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                            $
+                          </span>
+                          <Input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={upsell.price}
+                            onChange={(e) => patchUpsell(index, { price: e.target.value })}
+                            className="h-10 rounded-lg pl-7"
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <FieldLabel required>Commission %</FieldLabel>
+                        <div className="relative">
+                          <Input
+                            type="number"
+                            min="0"
+                            max="100"
+                            value={upsell.commissionPct}
+                            onChange={(e) =>
+                              patchUpsell(index, { commissionPct: e.target.value })
+                            }
+                            className="h-10 rounded-lg pr-8"
+                          />
+                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                            %
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+
+              <Button type="button" variant="outline" className="gap-1.5" onClick={addUpsell}>
+                <Plus className="h-4 w-4" />
+                Add upsell {values.upsells.length + 1}
+              </Button>
             </div>
           </DashboardCard>
         </div>

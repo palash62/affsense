@@ -26,6 +26,13 @@ export interface DigitalProductListItem {
   imageUrl?: string;
 }
 
+export interface DigitalProductUpsellFormValues {
+  name: string;
+  pageUrl: string;
+  price: string;
+  commissionPct: string;
+}
+
 export interface DigitalProductFormValues {
   name: string;
   category: string;
@@ -39,11 +46,11 @@ export interface DigitalProductFormValues {
   affiliateTrackingParam: string;
   previewUrl: string;
   frontEndCommission: string;
-  upsellCommission: string;
   referralReward: string;
   price: string;
   vendor: string;
   webhookSecret: string;
+  upsells: DigitalProductUpsellFormValues[];
 }
 
 export const DIGITAL_PRODUCT_TYPES = [
@@ -76,12 +83,48 @@ export const DEFAULT_FORM_VALUES: DigitalProductFormValues = {
   affiliateTrackingParam: "affsense_id",
   previewUrl: "",
   frontEndCommission: "50",
-  upsellCommission: "",
   referralReward: "",
   price: "",
   vendor: "",
   webhookSecret: "",
+  upsells: [],
 };
+
+export function emptyUpsellFormValues(): DigitalProductUpsellFormValues {
+  return {
+    name: "",
+    pageUrl: "",
+    price: "",
+    commissionPct: "50",
+  };
+}
+
+/**
+ * Derive a ClickFunnels-style page_slug from a full page URL
+ * (last non-empty path segment, lowercased).
+ */
+export function derivePageSlugFromUrl(urlLike: string): string | null {
+  const raw = urlLike.trim();
+  if (!raw) return null;
+  try {
+    const withProtocol = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+    const url = new URL(withProtocol);
+    const segments = url.pathname.split("/").filter(Boolean);
+    const last = segments[segments.length - 1];
+    if (!last) return null;
+    return decodeURIComponent(last).trim().toLowerCase() || null;
+  } catch {
+    const withoutQuery = raw.split(/[?#]/)[0] ?? raw;
+    const segments = withoutQuery.split("/").filter(Boolean);
+    const last = segments[segments.length - 1];
+    if (!last) return null;
+    try {
+      return decodeURIComponent(last).trim().toLowerCase() || null;
+    } catch {
+      return last.trim().toLowerCase() || null;
+    }
+  }
+}
 
 export function computeCommissionAmount(price: number, percent: number): string {
   const amount = (price * percent) / 100;

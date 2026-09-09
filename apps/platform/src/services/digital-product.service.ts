@@ -10,6 +10,25 @@ import {
   extractLeadFromClickFunnelsPayload,
   extractOrderFieldsFromClickFunnelsPayload,
 } from "@/lib/clickfunnels-webhook-payload";
+import { derivePageSlugFromUrl } from "@/lib/digital-product-page-slug";
+import { loadDigitalProductCommissionLookup } from "@/lib/digital-product-commission";
+
+export type SerializedDigitalProductUpsell = {
+  id: string;
+  name: string;
+  pageUrl: string;
+  pageSlug: string;
+  price: number;
+  commissionPct: number;
+  sortOrder: number;
+};
+
+export type DigitalProductUpsellInput = {
+  name: string;
+  pageUrl: string;
+  price: number;
+  commissionPct: number;
+};
 
 export type DigitalProductListFilters = {
   q?: string;
@@ -43,6 +62,7 @@ export type SerializedDigitalProduct = {
   affiliateTrackingParam: string | null;
   previewUrl: string | null;
   webhookSecret: string | null;
+  upsells: SerializedDigitalProductUpsell[];
   createdAt: string;
   updatedAt: string;
 };
@@ -73,6 +93,7 @@ export type SerializedPublisherDigitalProduct = {
   salesPageUrl: string | null;
   affiliateTrackingParam: string | null;
   previewUrl: string | null;
+  upsells: Array<{ name: string; price: number; commissionPct: number }>;
 };
 
 function mapProductStatus(status: DigitalProductStatus): "Active" | "Draft" {
@@ -85,6 +106,26 @@ function mapCategoryStatus(status: CatalogCategoryStatus): "Active" | "Inactive"
 
 function toInputStatus(status: string): DigitalProductStatus {
   return status.toLowerCase() === "draft" ? "DRAFT" : "ACTIVE";
+}
+
+function serializeUpsell(row: {
+  id: string;
+  name: string;
+  pageUrl: string;
+  pageSlug: string;
+  price: Prisma.Decimal;
+  commissionPct: Prisma.Decimal;
+  sortOrder: number;
+}): SerializedDigitalProductUpsell {
+  return {
+    id: row.id,
+    name: row.name,
+    pageUrl: row.pageUrl,
+    pageSlug: row.pageSlug,
+    price: Number(row.price),
+    commissionPct: Number(row.commissionPct),
+    sortOrder: row.sortOrder,
+  };
 }
 
 function serializeProduct(row: {
@@ -111,6 +152,15 @@ function serializeProduct(row: {
   createdAt: Date;
   updatedAt: Date;
   category: { name: string };
+  upsells?: Array<{
+    id: string;
+    name: string;
+    pageUrl: string;
+    pageSlug: string;
+    price: Prisma.Decimal;
+    commissionPct: Prisma.Decimal;
+    sortOrder: number;
+  }>;
 }): SerializedDigitalProduct {
   return {
     id: row.id,
@@ -134,6 +184,7 @@ function serializeProduct(row: {
     affiliateTrackingParam: row.affiliateTrackingParam,
     previewUrl: row.previewUrl,
     webhookSecret: row.webhookSecret,
+    upsells: (row.upsells ?? []).map(serializeUpsell),
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
@@ -161,6 +212,11 @@ function serializePublisherProduct(row: ProductRow): SerializedPublisherDigitalP
     salesPageUrl: full.salesPageUrl,
     affiliateTrackingParam: full.affiliateTrackingParam,
     previewUrl: full.previewUrl,
+    upsells: full.upsells.map((u) => ({
+      name: u.name,
+      price: u.price,
+      commissionPct: u.commissionPct,
+    })),
   };
 }
 
@@ -216,7 +272,10 @@ export async function listPublisherDigitalProducts(filters: DigitalProductListFi
   const [rows, total] = await Promise.all([
     prisma.digitalProduct.findMany({
       where,
-      include: { category: true },
+      include: {
+        category: true,
+        upsells: { orderBy: { sortOrder: "asc" } },
+      },
       orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
       skip: (page - 1) * limit,
       take: limit,
@@ -235,7 +294,10 @@ export async function listPublisherDigitalProducts(filters: DigitalProductListFi
 export async function getPublisherDigitalProduct(id: string) {
   const row = await prisma.digitalProduct.findFirst({
     where: { id, status: "ACTIVE" },
-    include: { category: true },
+    include: {
+      category: true,
+      upsells: { orderBy: { sortOrder: "asc" } },
+    },
   });
   if (!row) return null;
   return serializePublisherProduct(row);
@@ -244,10 +306,98 @@ export async function getPublisherDigitalProduct(id: string) {
 export async function getDigitalProductById(id: string) {
   const row = await prisma.digitalProduct.findUnique({
     where: { id },
-    include: { category: true },
+    include: {
+      category: true,
+      upsells: { orderBy: { sortOrder: "asc" } },
+    },
   });
   if (!row) throw Errors.notFound("Digital product");
   return serializeProduct(row);
+}
+
+function normalizeUpsellInputs(raw: DigitalProductUpsellInput[] | undefined): Array<{
+  name: string;
+  pageUrl: string;
+  pageSlug: string;
+  price: number;
+  commissionPct: number;
+  sortOrder: number;
+}> {
+  if (!raw?.length) return [];
+
+  const seen = new Set<string>();
+  const out: Array<{
+    name: string;
+    pageUrl: string;
+    pageSlug: string;
+    price: number;
+    commissionPct: number;
+    sortOrder: number;
+  }> = [];
+
+  raw.forEach((item, index) => {
+    const name = typeof item.name === "string" ? item.name.trim() : "";
+    const pageUrl = typeof item.pageUrl === "string" ? item.pageUrl.trim() : "";
+    if (!name && !pageUrl) return;
+    if (!name) throw Errors.validation("Upsell name is required", "upsells");
+    if (!pageUrl) throw Errors.validation("Upsell page URL is required", "upsells");
+
+    const pageSlug = derivePageSlugFromUrl(pageUrl);
+    if (!pageSlug) {
+      throw Errors.validation(
+        `Could not derive page slug from upsell URL: ${pageUrl}`,
+        "upsells",
+      );
+    }
+    if (seen.has(pageSlug)) {
+      throw Errors.validation(
+        `Duplicate upsell page slug "${pageSlug}" on this product`,
+        "upsells",
+      );
+    }
+    seen.add(pageSlug);
+
+    const price = Number(item.price);
+    const commissionPct = Number(item.commissionPct);
+    if (!Number.isFinite(price) || price < 0) {
+      throw Errors.validation("Upsell price must be zero or greater", "upsells");
+    }
+    if (!Number.isFinite(commissionPct) || commissionPct < 0 || commissionPct > 100) {
+      throw Errors.validation("Upsell commission must be between 0 and 100", "upsells");
+    }
+
+    out.push({
+      name,
+      pageUrl,
+      pageSlug,
+      price,
+      commissionPct,
+      sortOrder: index,
+    });
+  });
+
+  return out;
+}
+
+async function replaceProductUpsells(
+  productId: string,
+  upsells: ReturnType<typeof normalizeUpsellInputs>,
+) {
+  await prisma.$transaction(async (tx) => {
+    await tx.digitalProductUpsell.deleteMany({ where: { productId } });
+    if (upsells.length === 0) return;
+    await tx.digitalProductUpsell.createMany({
+      data: upsells.map((row) => ({
+        productId,
+        name: row.name,
+        pageUrl: row.pageUrl,
+        pageSlug: row.pageSlug,
+        price: row.price,
+        commissionPct: row.commissionPct,
+        sortOrder: row.sortOrder,
+      })),
+    });
+  });
 }
 
 export async function createDigitalProduct(input: {
@@ -263,14 +413,16 @@ export async function createDigitalProduct(input: {
   affiliateTrackingParam?: string;
   previewUrl?: string;
   frontEndCommission: number;
-  upsellCommission?: number;
+  upsellCommission?: number | null;
   referralReward?: number;
   price: number;
   vendor?: string;
   webhookSecret?: string;
   imageUrl?: string | null;
   thumbTone?: string;
+  upsells?: DigitalProductUpsellInput[];
 }) {
+  const upsells = normalizeUpsellInputs(input.upsells);
   const category = await prisma.digitalProductCategory.upsert({
     where: { name: input.category },
     create: { name: input.category, status: "ACTIVE" },
@@ -297,8 +449,24 @@ export async function createDigitalProduct(input: {
       webhookSecret: input.webhookSecret,
       imageUrl: input.imageUrl,
       thumbTone: input.thumbTone,
+      upsells:
+        upsells.length > 0
+          ? {
+              create: upsells.map((u) => ({
+                name: u.name,
+                pageUrl: u.pageUrl,
+                pageSlug: u.pageSlug,
+                price: u.price,
+                commissionPct: u.commissionPct,
+                sortOrder: u.sortOrder,
+              })),
+            }
+          : undefined,
     },
-    include: { category: true },
+    include: {
+      category: true,
+      upsells: { orderBy: { sortOrder: "asc" } },
+    },
   });
   return serializeProduct(row);
 }
@@ -318,13 +486,14 @@ export async function updateDigitalProduct(
     affiliateTrackingParam: string;
     previewUrl: string;
     frontEndCommission: number;
-    upsellCommission: number;
+    upsellCommission: number | null;
     referralReward: number;
     price: number;
     vendor: string;
     webhookSecret: string;
     imageUrl: string | null;
     thumbTone: string;
+    upsells: DigitalProductUpsellInput[];
   }>,
 ) {
   const existing = await prisma.digitalProduct.findUnique({ where: { id } });
@@ -338,6 +507,10 @@ export async function updateDigitalProduct(
       update: {},
     });
     categoryId = category.id;
+  }
+
+  if (Object.prototype.hasOwnProperty.call(input, "upsells")) {
+    await replaceProductUpsells(id, normalizeUpsellInputs(input.upsells));
   }
 
   const row = await prisma.digitalProduct.update({
@@ -363,7 +536,10 @@ export async function updateDigitalProduct(
       imageUrl: input.imageUrl,
       thumbTone: input.thumbTone,
     },
-    include: { category: true },
+    include: {
+      category: true,
+      upsells: { orderBy: { sortOrder: "asc" } },
+    },
   });
   return serializeProduct(row);
 }
@@ -465,6 +641,7 @@ function extractOrderFields(payload: unknown): {
   source: string | null;
   subId: string | null;
   paymentStatus: string | null;
+  pageSlug: string | null;
 } {
   return extractOrderFieldsFromClickFunnelsPayload(payload);
 }
@@ -515,6 +692,8 @@ export async function listDigitalProductOrders(opts: {
     createdAt: true,
   } as const;
 
+  const commissionLookup = await loadDigitalProductCommissionLookup();
+
   const mapRow = (row: {
     id: string;
     eventType: string;
@@ -530,16 +709,20 @@ export async function listDigitalProductOrders(opts: {
     const fields = extractOrderFields(row.payloadJson);
     const leadFallback = extractLeadFromClickFunnelsPayload(row.payloadJson);
     const amount = fields.amount;
-    const commission = amount != null && row.publisherId ? amount * 0.5 : null;
+    const resolved = commissionLookup.resolve(fields.pageSlug, amount);
+    const commission =
+      amount != null && row.publisherId ? resolved.commission : null;
     return {
       id: row.id,
       orderId: fields.orderId ?? `CF-${row.id.slice(-6).toUpperCase()}`,
       date: row.createdAt.toISOString(),
       customerEmail: row.leadEmail ?? leadFallback.leadEmail,
       customerName: row.leadName ?? leadFallback.leadName,
-      product: fields.product,
+      product: resolved.productName ?? fields.product,
       funnel: fields.funnel,
-      orderType: normalizeOrderType(fields.orderType ?? row.eventType),
+      orderType:
+        resolved.orderType ??
+        normalizeOrderType(fields.orderType ?? row.eventType),
       amount,
       commission,
       affiliateName: row.publisher?.name ?? null,
@@ -589,7 +772,8 @@ export async function listDigitalProductOrders(opts: {
       }
       if (ev.publisherId) {
         affiliateSales += 1;
-        totalCommissions += amount * 0.5;
+        const resolved = commissionLookup.resolve(fields.pageSlug, amount);
+        totalCommissions += resolved.commission ?? 0;
       }
     }
 
@@ -644,7 +828,8 @@ export async function listDigitalProductOrders(opts: {
     }
     if (ev.publisherId) {
       affiliateSales += 1;
-      totalCommissions += amount * 0.5;
+      const resolved = commissionLookup.resolve(fields.pageSlug, amount);
+      totalCommissions += resolved.commission ?? 0;
     }
   }
   const netRevenue = grossRevenue - totalCommissions - refunds;
@@ -661,8 +846,6 @@ export async function listDigitalProductOrders(opts: {
 
   return { items, total, page, limit, totalPages: Math.max(1, Math.ceil(total / limit)), summary };
 }
-
-const PUBLISHER_COMMISSION_RATE = 0.5;
 
 export type PublisherCommissionType = "Front End" | "Upsell" | "Downsell" | "Refund";
 
@@ -770,21 +953,31 @@ export async function getPublisherCommissionReport(opts: {
     },
   });
 
+  const commissionLookup = await loadDigitalProductCommissionLookup();
+
   const mapped: PublisherCommissionRow[] = events.map((row) => {
     const fields = extractOrderFields(row.payloadJson);
-    const orderType = classifyCommissionType(fields.orderType ?? row.eventType, row.eventType);
+    const resolved = commissionLookup.resolve(fields.pageSlug, fields.amount);
+    const orderType =
+      resolved.orderType ??
+      classifyCommissionType(fields.orderType ?? row.eventType, row.eventType);
     const amount = fields.amount;
     const isRefund = orderType === "Refund";
     return {
       id: row.id,
       orderId: fields.orderId ?? `CF-${row.id.slice(-6).toUpperCase()}`,
       date: row.createdAt.toISOString(),
-      product: fields.product,
+      product: resolved.productName ?? fields.product,
       funnel: fields.funnel,
       orderType,
       amount,
-      commission: amount != null && !isRefund ? amount * PUBLISHER_COMMISSION_RATE : isRefund ? 0 : null,
-      rate: PUBLISHER_COMMISSION_RATE,
+      commission:
+        amount != null && !isRefund
+          ? resolved.commission
+          : isRefund
+            ? 0
+            : null,
+      rate: isRefund ? 0 : resolved.rate,
       source: fields.source,
       subId: fields.subId,
       webhookStatus: row.status,
@@ -1231,6 +1424,7 @@ export async function listDigitalProductAffiliateProductReportForAdmin(
   const catalogProducts = await prisma.digitalProduct.findMany({
     select: { id: true, name: true },
   });
+  const commissionLookup = await loadDigitalProductCommissionLookup();
   const productById = new Map(catalogProducts.map((p) => [p.id, p]));
   const productIdByName = new Map<string, string>();
   for (const p of catalogProducts) {
@@ -1349,9 +1543,15 @@ export async function listDigitalProductAffiliateProductReportForAdmin(
     };
 
     const amount = fields.amount ?? 0;
+    const resolved = commissionLookup.resolve(fields.pageSlug, amount);
     acc.conversions += 1;
     acc.revenue += amount;
-    acc.commission += amount * PUBLISHER_COMMISSION_RATE;
+    acc.commission += resolved.commission ?? 0;
+    if (resolved.productId && !acc.productId) {
+      acc.productId = resolved.productId;
+      acc.productName = resolved.productName ?? acc.productName;
+      acc.nameKey = normalizeProductNameKey(acc.productName);
+    }
     byKey.set(key, acc);
   }
 

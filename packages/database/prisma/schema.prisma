@@ -1847,11 +1847,30 @@ model DigitalProduct {
   updatedAt             DateTime             @updatedAt @map("updated_at")
   category              DigitalProductCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   clicks                DigitalProductClick[]
+  upsells               DigitalProductUpsell[]
 
   @@index([status])
   @@index([categoryId])
   @@index([featured])
   @@map("digital_products")
+}
+
+model DigitalProductUpsell {
+  id            String         @id @default(cuid())
+  productId     String         @map("product_id")
+  name          String
+  pageUrl       String         @map("page_url") @db.Text
+  pageSlug      String         @map("page_slug")
+  price         Decimal        @db.Decimal(10, 2)
+  commissionPct Decimal        @map("commission_pct") @db.Decimal(5, 2)
+  sortOrder     Int            @default(0) @map("sort_order")
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+  product       DigitalProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, pageSlug])
+  @@index([pageSlug])
+  @@map("digital_product_upsells")
 }
 
 model DigitalProductClick {

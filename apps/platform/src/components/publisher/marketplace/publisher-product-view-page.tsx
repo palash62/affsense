@@ -60,11 +60,6 @@ export function PublisherProductViewPage({
 
   const funnelUrl = product.previewUrl?.trim() || product.salesPageUrl?.trim() || null;
   const letter = (product.name.trim()[0] || "?").toUpperCase();
-  const frontEndAmount = (product.price * product.frontEndCommission) / 100;
-  const upsellAmount =
-    product.upsellCommission != null
-      ? (product.price * product.upsellCommission) / 100
-      : null;
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
@@ -155,23 +150,37 @@ export function PublisherProductViewPage({
               <p className="text-xs text-muted-foreground">Front end</p>
               <p className="mt-0.5 text-lg font-bold text-foreground">
                 {product.frontEndCommission}%
-                <span className="ml-2 text-sm font-semibold text-muted-foreground">
-                  ${frontEndAmount.toFixed(2)}
-                </span>
               </p>
             </div>
-            {product.upsellCommission != null ? (
-              <div className="rounded-lg border border-border bg-muted/40 px-3 py-2.5">
-                <p className="text-xs text-muted-foreground">Upsell</p>
-                <p className="mt-0.5 text-lg font-bold text-foreground">
-                  {product.upsellCommission}%
-                  <span className="ml-2 text-sm font-semibold text-muted-foreground">
-                    ${upsellAmount?.toFixed(2)}
-                  </span>
-                </p>
+
+            {product.upsells.length > 0 ? (
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-muted-foreground">Upsells</p>
+                {product.upsells.map((upsell, index) => (
+                  <div
+                    key={`${upsell.name}-${index}`}
+                    className="rounded-lg border border-border bg-muted/40 px-3 py-2.5"
+                  >
+                    <p className="text-sm font-semibold text-foreground">{upsell.name}</p>
+                    <dl className="mt-1.5 grid grid-cols-2 gap-2 text-sm">
+                      <div>
+                        <dt className="text-xs text-muted-foreground">Price</dt>
+                        <dd className="font-medium text-foreground">
+                          ${upsell.price.toFixed(2)}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-xs text-muted-foreground">Commission</dt>
+                        <dd className="font-medium text-foreground">
+                          {upsell.commissionPct}%
+                        </dd>
+                      </div>
+                    </dl>
+                  </div>
+                ))}
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">No upsell commission configured.</p>
+              <p className="text-sm text-muted-foreground">No upsells configured.</p>
             )}
           </div>
         </section>

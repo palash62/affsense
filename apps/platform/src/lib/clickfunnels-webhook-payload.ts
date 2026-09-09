@@ -115,6 +115,7 @@ export function extractOrderFieldsFromClickFunnelsPayload(payload: unknown): {
   source: string | null;
   subId: string | null;
   paymentStatus: string | null;
+  pageSlug: string | null;
 } {
   if (!payload || typeof payload !== "object") {
     return {
@@ -126,6 +127,7 @@ export function extractOrderFieldsFromClickFunnelsPayload(payload: unknown): {
       source: null,
       subId: null,
       paymentStatus: null,
+      pageSlug: null,
     };
   }
 
@@ -186,6 +188,8 @@ export function extractOrderFieldsFromClickFunnelsPayload(payload: unknown): {
     pickString(root, ["payment_status", "charge_status", "payment_state"]) ??
     (purchase ? pickString(purchase, ["payment_status", "charge_status"]) : null);
 
+  const pageSlug = extractPageSlugFromClickFunnelsPayload(payload);
+
   return {
     orderId,
     product,
@@ -195,7 +199,52 @@ export function extractOrderFieldsFromClickFunnelsPayload(payload: unknown): {
     source,
     subId,
     paymentStatus,
+    pageSlug,
   };
+}
+
+/** Resolve CF page_slug from explicit fields or landing/page URLs. */
+export function extractPageSlugFromClickFunnelsPayload(payload: unknown): string | null {
+  const { root, data, order, lineItems } = unwrapClickFunnelsPayload(payload);
+  const productObj = asRecord(root.product) ?? asRecord(data?.product);
+
+  const direct =
+    pickString(data, ["page_slug", "pageSlug", "slug"]) ??
+    pickString(order, ["page_slug", "pageSlug", "slug"]) ??
+    pickString(root, ["page_slug", "pageSlug", "slug"]) ??
+    pickString(lineItems[0] ?? null, ["page_slug", "pageSlug", "slug"]) ??
+    (productObj ? pickString(productObj, ["page_slug", "pageSlug", "slug"]) : null);
+
+  if (direct) {
+    return direct.replace(/^\/+|\/+$/g, "").toLowerCase() || null;
+  }
+
+  for (const url of collectClickFunnelsUrlCandidates(payload)) {
+    const slug = pageSlugFromUrlCandidate(url);
+    if (slug) return slug;
+  }
+
+  return null;
+}
+
+function pageSlugFromUrlCandidate(urlLike: string): string | null {
+  try {
+    const url = new URL(urlLike);
+    const segments = url.pathname.split("/").filter(Boolean);
+    const last = segments[segments.length - 1];
+    if (!last) return null;
+    return decodeURIComponent(last).trim().toLowerCase() || null;
+  } catch {
+    const withoutQuery = urlLike.split(/[?#]/)[0] ?? urlLike;
+    const segments = withoutQuery.split("/").filter(Boolean);
+    const last = segments[segments.length - 1];
+    if (!last) return null;
+    try {
+      return decodeURIComponent(last).trim().toLowerCase() || null;
+    } catch {
+      return last.trim().toLowerCase() || null;
+    }
+  }
 }
 
 /** Pull tracking param value from a URL string if present. */

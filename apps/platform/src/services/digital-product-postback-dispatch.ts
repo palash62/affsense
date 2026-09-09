@@ -1,12 +1,15 @@
 import { substitutePostbackMacros, type PostbackMacroContext } from "@cpl/shared";
 import { assertSafeOutboundUrl } from "@cpl/tracking-core";
 import { extractOrderFieldsFromClickFunnelsPayload } from "@/lib/clickfunnels-webhook-payload";
+import {
+  DIGITAL_PRODUCT_FALLBACK_COMMISSION_RATE,
+  loadDigitalProductCommissionLookup,
+} from "@/lib/digital-product-commission";
 import { prisma } from "@/lib/prisma";
 
 const FETCH_TIMEOUT_MS = 4_000;
 const RESPONSE_TRUNCATE = 500;
 const URL_TRUNCATE = 4_000;
-const PUBLISHER_COMMISSION_RATE = 0.5;
 
 export type DigitalProductPostbackFireResult = {
   url: string;
@@ -179,12 +182,14 @@ export async function dispatchDigitalProductPublisherPostback(
   }
 
   const amount = fields.amount ?? 0;
-  const payout = Math.round(amount * PUBLISHER_COMMISSION_RATE * 100) / 100;
+  const lookup = await loadDigitalProductCommissionLookup();
+  const resolved = lookup.resolve(fields.pageSlug, amount);
+  const payout = resolved.commission ?? Math.round(amount * DIGITAL_PRODUCT_FALLBACK_COMMISSION_RATE * 100) / 100;
   const context = buildMacroContext({
     publisherId: event.publisherId,
     webhookEventId: event.id,
     orderId: fields.orderId,
-    productId: fields.product,
+    productId: resolved.productId ?? fields.product,
     payout,
     source: fields.source,
     subId: fields.subId,

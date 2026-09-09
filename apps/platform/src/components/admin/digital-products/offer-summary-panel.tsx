@@ -4,6 +4,17 @@ import { cn } from "@/lib/utils";
 import { DashboardCard, DashboardCardTitle } from "@/components/admin/affsense-dashboard/dashboard-card";
 import { computeCommissionAmount, type DigitalProductFormValues } from "./digital-product-types";
 
+function formatUpsellSummary(upsells: DigitalProductFormValues["upsells"]): string {
+  const rates = upsells
+    .map((u) => Number.parseFloat(u.commissionPct))
+    .filter((n) => Number.isFinite(n));
+  if (rates.length === 0) return "—";
+  const min = Math.min(...rates);
+  const max = Math.max(...rates);
+  if (min === max) return `${rates.length} · ${min}%`;
+  return `${rates.length} · ${min}–${max}%`;
+}
+
 export function OfferSummaryPanel({
   values,
   imagePreview,
@@ -13,8 +24,8 @@ export function OfferSummaryPanel({
 }) {
   const price = Number.parseFloat(values.price) || 0;
   const fePercent = Number.parseFloat(values.frontEndCommission) || 0;
-  const upsellPercent = Number.parseFloat(values.upsellCommission) || 0;
   const referralPercent = Number.parseFloat(values.referralReward) || 0;
+  const upsellSummary = formatUpsellSummary(values.upsells);
 
   return (
     <DashboardCard>
@@ -80,8 +91,8 @@ export function OfferSummaryPanel({
           </p>
         </div>
         <div>
-          <p className="text-xs text-muted-foreground">Upsell Commission</p>
-          <p className="font-semibold text-foreground">{upsellPercent}%</p>
+          <p className="text-xs text-muted-foreground">Upsells</p>
+          <p className="font-semibold text-foreground">{upsellSummary}</p>
         </div>
         <div>
           <p className="text-xs text-muted-foreground">Referral Reward</p>
