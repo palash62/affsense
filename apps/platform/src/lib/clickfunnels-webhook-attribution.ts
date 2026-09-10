@@ -118,13 +118,22 @@ export async function loadDigitalProductAffiliateParamNames(): Promise<string[]>
 /**
  * Resolve publisher from webhook payload; fall back to recent DigitalProductClick
  * for the matched product when the tracking param is missing from CF.
+ * Also attach clickId / subId / src from the matched click for reporting.
  */
+export type DigitalProductWebhookAttribution = {
+  publisherId: string | null;
+  affiliateRef: string | null;
+  clickId: string | null;
+  subId: string | null;
+  src: string | null;
+};
+
 export async function resolveDigitalProductWebhookAttribution(input: {
   body: unknown;
   platformParam?: string | null;
   requestUrl?: URL;
   at?: Date;
-}): Promise<{ publisherId: string | null; affiliateRef: string | null }> {
+}): Promise<DigitalProductWebhookAttribution> {
   const productParams = await loadDigitalProductAffiliateParamNames();
   const paramNames = buildAffiliateParamCandidates(input.platformParam, productParams);
   const affiliateRef = extractAffiliateRefFromWebhookPayload(
@@ -133,34 +142,77 @@ export async function resolveDigitalProductWebhookAttribution(input: {
     input.requestUrl,
   );
   const fromRef = await resolvePublisherFromAffiliateRef(affiliateRef);
-  if (fromRef.publisherId) {
-    return fromRef;
-  }
 
   const fields = extractOrderFieldsFromClickFunnelsPayload(input.body);
   const lookup = await loadDigitalProductCommissionLookup();
   const resolved = lookup.resolve(fields.pageSlug, fields.amount);
-  if (!resolved.productId) {
-    return { publisherId: null, affiliateRef: fromRef.affiliateRef };
-  }
-
   const at = input.at ?? new Date();
   const windowStart = new Date(at.getTime() - DIGITAL_PRODUCT_CLICK_ATTRIBUTION_WINDOW_MS);
+
+  if (fromRef.publisherId) {
+    if (!resolved.productId) {
+      return {
+        publisherId: fromRef.publisherId,
+        affiliateRef: fromRef.affiliateRef,
+        clickId: null,
+        subId: null,
+        src: null,
+      };
+    }
+
+    const click = await prisma.digitalProductClick.findFirst({
+      where: {
+        productId: resolved.productId,
+        publisherId: fromRef.publisherId,
+        createdAt: { gte: windowStart, lte: at },
+      },
+      orderBy: { createdAt: "desc" },
+      select: { id: true, subId: true, src: true },
+    });
+
+    return {
+      publisherId: fromRef.publisherId,
+      affiliateRef: fromRef.affiliateRef,
+      clickId: click?.id ?? null,
+      subId: click?.subId ?? null,
+      src: click?.src ?? null,
+    };
+  }
+
+  if (!resolved.productId) {
+    return {
+      publisherId: null,
+      affiliateRef: fromRef.affiliateRef,
+      clickId: null,
+      subId: null,
+      src: null,
+    };
+  }
+
   const click = await prisma.digitalProductClick.findFirst({
     where: {
       productId: resolved.productId,
       createdAt: { gte: windowStart, lte: at },
     },
     orderBy: { createdAt: "desc" },
-    select: { publisherId: true },
+    select: { id: true, publisherId: true, subId: true, src: true },
   });
 
   if (!click?.publisherId) {
-    return { publisherId: null, affiliateRef: fromRef.affiliateRef };
+    return {
+      publisherId: null,
+      affiliateRef: fromRef.affiliateRef,
+      clickId: null,
+      subId: null,
+      src: null,
+    };
   }
 
   return {
     publisherId: click.publisherId,
     affiliateRef: fromRef.affiliateRef ?? click.publisherId,
+    clickId: click.id,
+    subId: click.subId,
+    src: click.src,
   };
 }

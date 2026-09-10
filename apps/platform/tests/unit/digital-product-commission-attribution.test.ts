@@ -5,9 +5,16 @@ import {
 import {
   buildAffiliateParamCandidates,
   extractAffiliateRefFromWebhookPayload,
+  DIGITAL_PRODUCT_CLICK_ATTRIBUTION_WINDOW_MS,
 } from "@/lib/clickfunnels-webhook-attribution";
 import { extractPageSlugFromClickFunnelsPayload } from "@/lib/clickfunnels-webhook-payload";
-import { dedupeDigitalProductOrderRows, type DigitalProductOrderRow } from "@/services/digital-product.service";
+import {
+  dedupeDigitalProductOrderRows,
+  digitalProductAffiliateReportKeyOf,
+  pickDigitalProductClickForAttribution,
+  resolveDigitalProductOrderTrackingParams,
+  type DigitalProductOrderRow,
+} from "@/services/digital-product.service";
 
 const catalog = buildDigitalProductCommissionLookup({
   products: [
@@ -201,5 +208,84 @@ describe("dedupeDigitalProductOrderRows", () => {
     ]);
     expect(items).toHaveLength(2);
     expect(items.find((r) => r.orderId === "8278")?.id).toBe("b");
+  });
+});
+
+describe("digital product affiliate report tracking join", () => {
+  it("prefers click subId/src over CF payload channel/product names", () => {
+    const resolved = resolveDigitalProductOrderTrackingParams({
+      storedSubId: null,
+      storedSrc: null,
+      clickSubId: "profile",
+      clickSrc: "facebook",
+      payloadSubId: null,
+      payloadSrc: "Affiliate Marketing Mastery",
+    });
+    expect(resolved).toEqual({ subId: "profile", source: "facebook" });
+  });
+
+  it("prefers stored webhook attribution over historical click and payload", () => {
+    const resolved = resolveDigitalProductOrderTrackingParams({
+      storedSubId: "stored-sub",
+      storedSrc: "email",
+      clickSubId: "profile",
+      clickSrc: "facebook",
+      payloadSubId: "payload-sub",
+      payloadSrc: "utm",
+    });
+    expect(resolved).toEqual({ subId: "stored-sub", source: "email" });
+  });
+
+  it("joins click and conversion on publisher+product+subId without source", () => {
+    const clickKey = digitalProductAffiliateReportKeyOf(
+      "pub-1",
+      "prod-1",
+      "affiliate marketing mastery",
+      "profile",
+    );
+    const orderParams = resolveDigitalProductOrderTrackingParams({
+      clickSubId: "profile",
+      clickSrc: "facebook",
+      payloadSrc: "Affiliate Marketing Mastery",
+    });
+    const orderKey = digitalProductAffiliateReportKeyOf(
+      "pub-1",
+      "prod-1",
+      "affiliate marketing mastery",
+      orderParams.subId,
+    );
+    expect(orderKey).toBe(clickKey);
+    expect(orderParams.source).toBe("facebook");
+  });
+
+  it("picks latest in-window click for historical attribution", () => {
+    const at = new Date("2026-09-10T12:00:00.000Z");
+    const clicks = [
+      {
+        id: "newer",
+        publisherId: "pub-1",
+        productId: "prod-1",
+        subId: "profile",
+        src: "facebook",
+        createdAt: new Date("2026-09-10T11:00:00.000Z"),
+      },
+      {
+        id: "older",
+        publisherId: "pub-1",
+        productId: "prod-1",
+        subId: "old",
+        src: "twitter",
+        createdAt: new Date("2026-09-09T10:00:00.000Z"),
+      },
+    ];
+    const picked = pickDigitalProductClickForAttribution(
+      clicks,
+      "pub-1",
+      "prod-1",
+      at,
+      DIGITAL_PRODUCT_CLICK_ATTRIBUTION_WINDOW_MS,
+    );
+    expect(picked?.id).toBe("newer");
+    expect(picked?.subId).toBe("profile");
   });
 });

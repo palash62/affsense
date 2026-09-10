@@ -98,6 +98,9 @@ export async function handleClickFunnelsWebhookPost(request: Request): Promise<R
       errorMessage: input.errorMessage,
       publisherId: attribution.publisherId,
       affiliateRef: attribution.affiliateRef,
+      clickId: attribution.clickId,
+      subId: attribution.subId,
+      src: attribution.src,
       payloadJson: sanitized,
     });
 

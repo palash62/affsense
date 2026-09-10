@@ -134,6 +134,8 @@ export async function dispatchDigitalProductPublisherPostback(
       status: true,
       eventType: true,
       publisherId: true,
+      subId: true,
+      src: true,
       payloadJson: true,
     },
   });
@@ -191,8 +193,8 @@ export async function dispatchDigitalProductPublisherPostback(
     orderId: fields.orderId,
     productId: resolved.productId ?? fields.product,
     payout,
-    source: fields.source,
-    subId: fields.subId,
+    source: event.src?.trim() || fields.source,
+    subId: event.subId ?? fields.subId,
   });
 
   if (!isHttpTemplateUrl(postback.endpoint)) {

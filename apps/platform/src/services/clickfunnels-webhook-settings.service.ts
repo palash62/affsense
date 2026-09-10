@@ -225,6 +225,9 @@ export async function createWebhookEvent(input: {
   errorMessage?: string | null;
   publisherId?: string | null;
   affiliateRef?: string | null;
+  clickId?: string | null;
+  subId?: string | null;
+  src?: string | null;
   payloadJson: unknown;
 }) {
   return prisma.webhookEvent.create({
@@ -237,6 +240,9 @@ export async function createWebhookEvent(input: {
       errorMessage: input.errorMessage ?? null,
       publisherId: input.publisherId ?? null,
       affiliateRef: input.affiliateRef ?? null,
+      clickId: input.clickId ?? null,
+      subId: input.subId ?? null,
+      src: input.src ?? null,
       payloadJson: input.payloadJson as never,
     },
   });

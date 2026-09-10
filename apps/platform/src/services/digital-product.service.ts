@@ -10,6 +10,7 @@ import {
   extractLeadFromClickFunnelsPayload,
   extractOrderFieldsFromClickFunnelsPayload,
 } from "@/lib/clickfunnels-webhook-payload";
+import { DIGITAL_PRODUCT_CLICK_ATTRIBUTION_WINDOW_MS } from "@/lib/clickfunnels-webhook-attribution";
 import { derivePageSlugFromUrl } from "@/lib/digital-product-page-slug";
 import { loadDigitalProductCommissionLookup } from "@/lib/digital-product-commission";
 
@@ -1398,6 +1399,74 @@ function normalizeProductNameKey(name: string | null | undefined) {
   return (name ?? "").trim().toLowerCase();
 }
 
+/** Affiliate report join key: publisher + product + subId (source is display-only). */
+export function digitalProductAffiliateReportKeyOf(
+  publisherId: string,
+  productId: string | null,
+  nameKey: string,
+  subId: string | null,
+) {
+  const productPart = productId
+    ? `id::${productId}`
+    : `name::${nameKey || "_"}`;
+  return `${publisherId}::${productPart}::${subId ?? ""}`;
+}
+
+/**
+ * Prefer stored click attribution, then a historical click match, then CF payload.
+ * Avoids CF channel/product names splitting click vs conversion rows.
+ */
+export function resolveDigitalProductOrderTrackingParams(input: {
+  storedSubId?: string | null;
+  storedSrc?: string | null;
+  clickSubId?: string | null;
+  clickSrc?: string | null;
+  payloadSubId?: string | null;
+  payloadSrc?: string | null;
+}): { subId: string | null; source: string | null } {
+  const subId =
+    input.storedSubId ??
+    input.clickSubId ??
+    input.payloadSubId ??
+    null;
+  const source =
+    (input.storedSrc?.trim() || null) ??
+    (input.clickSrc?.trim() || null) ??
+    (input.payloadSrc?.trim() || null);
+  return { subId, source };
+}
+
+export type DigitalProductClickTrackingRow = {
+  id: string;
+  publisherId: string;
+  productId: string;
+  subId: string | null;
+  src: string | null;
+  createdAt: Date;
+};
+
+/** Latest in-window click for publisher + product (clicks must be newest-first). */
+export function pickDigitalProductClickForAttribution(
+  clicks: DigitalProductClickTrackingRow[],
+  publisherId: string,
+  productId: string | null,
+  at: Date,
+  windowMs: number,
+): DigitalProductClickTrackingRow | null {
+  if (!productId) return null;
+  const windowStart = at.getTime() - windowMs;
+  const atMs = at.getTime();
+  for (const click of clicks) {
+    if (click.publisherId !== publisherId || click.productId !== productId) {
+      continue;
+    }
+    const t = click.createdAt.getTime();
+    if (t > atMs || t < windowStart) continue;
+    return click;
+  }
+  return null;
+}
+
 export type SerializedDigitalProductAffiliateReportRow = {
   publisherId: string;
   publisherName: string;
@@ -1482,7 +1551,7 @@ export async function listDigitalProductAffiliateProductReportForAdmin(
 
   const q = filters.q?.trim().toLowerCase();
 
-  const [clickGroups, orderEvents] = await Promise.all([
+  const [clickGroups, orderEvents, attributionClicks] = await Promise.all([
     prisma.digitalProductClick.groupBy({
       by: ["publisherId", "productId", "subId", "src"],
       where: clickWhere,
@@ -1494,8 +1563,24 @@ export async function listDigitalProductAffiliateProductReportForAdmin(
         publisherId: true,
         eventType: true,
         payloadJson: true,
+        subId: true,
+        src: true,
+        createdAt: true,
       },
       take: 10000,
+    }),
+    prisma.digitalProductClick.findMany({
+      where: clickWhere,
+      select: {
+        id: true,
+        publisherId: true,
+        productId: true,
+        subId: true,
+        src: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: "desc" },
+      take: 20000,
     }),
   ]);
 
@@ -1513,25 +1598,20 @@ export async function listDigitalProductAffiliateProductReportForAdmin(
   };
 
   const byKey = new Map<string, Acc>();
-  const keyOf = (
-    publisherId: string,
-    productId: string | null,
-    nameKey: string,
-    subId: string | null,
-    source: string | null,
-  ) => {
-    const productPart = productId
-      ? `id::${productId}`
-      : `name::${nameKey || "_"}`;
-    return `${publisherId}::${productPart}::${subId ?? ""}::${source ?? ""}`;
-  };
+  const keyOf = digitalProductAffiliateReportKeyOf;
 
   for (const g of clickGroups) {
     const product = productById.get(g.productId);
     const productName = product?.name ?? g.productId;
     const nameKey = normalizeProductNameKey(productName);
     const source = g.src?.trim() || null;
-    const key = keyOf(g.publisherId, g.productId, nameKey, g.subId, source);
+    const key = keyOf(g.publisherId, g.productId, nameKey, g.subId);
+    const existing = byKey.get(key);
+    if (existing) {
+      existing.clicks += g._count._all;
+      if (!existing.source && source) existing.source = source;
+      continue;
+    }
     byKey.set(key, {
       publisherId: g.publisherId,
       productId: g.productId,
@@ -1552,12 +1632,6 @@ export async function listDigitalProductAffiliateProductReportForAdmin(
     const type = (fields.orderType ?? ev.eventType ?? "").toLowerCase();
     if (type.includes("refund")) continue;
 
-    const orderSubId = fields.subId ?? null;
-    if (filterSubId && orderSubId !== filterSubId) continue;
-
-    const orderSource = fields.source?.trim() || null;
-    if (filterSrc && orderSource !== filterSrc) continue;
-
     const amount = fields.amount ?? 0;
     const resolved = commissionLookup.resolve(fields.pageSlug, amount);
     const productName =
@@ -1566,6 +1640,26 @@ export async function listDigitalProductAffiliateProductReportForAdmin(
     const matchedProductId =
       resolved.productId ??
       (nameKey ? productIdByName.get(nameKey) ?? null : null);
+
+    const historicalClick = pickDigitalProductClickForAttribution(
+      attributionClicks,
+      ev.publisherId,
+      matchedProductId,
+      ev.createdAt,
+      DIGITAL_PRODUCT_CLICK_ATTRIBUTION_WINDOW_MS,
+    );
+    const { subId: orderSubId, source: orderSource } =
+      resolveDigitalProductOrderTrackingParams({
+        storedSubId: ev.subId,
+        storedSrc: ev.src,
+        clickSubId: historicalClick?.subId,
+        clickSrc: historicalClick?.src,
+        payloadSubId: fields.subId,
+        payloadSrc: fields.source,
+      });
+
+    if (filterSubId && orderSubId !== filterSubId) continue;
+    if (filterSrc && orderSource !== filterSrc) continue;
 
     if (filterProductId) {
       if (matchedProductId) {
@@ -1580,7 +1674,7 @@ export async function listDigitalProductAffiliateProductReportForAdmin(
       if (!hay.includes(q)) continue;
     }
 
-    const key = keyOf(ev.publisherId, matchedProductId, nameKey, orderSubId, orderSource);
+    const key = keyOf(ev.publisherId, matchedProductId, nameKey, orderSubId);
     const acc = byKey.get(key) ?? {
       publisherId: ev.publisherId,
       productId: matchedProductId,
@@ -1595,6 +1689,9 @@ export async function listDigitalProductAffiliateProductReportForAdmin(
       commission: 0,
       revenue: 0,
     };
+
+    if (!acc.source && orderSource) acc.source = orderSource;
+    if (acc.subId == null && orderSubId != null) acc.subId = orderSubId;
 
     acc.conversions += 1;
     acc.revenue += amount;
