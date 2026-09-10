@@ -3,6 +3,11 @@
 import { useMemo, useState } from "react";
 import { buildCpaOfferTrackingUrl, getTrackingUrl } from "@cpl/shared";
 import { Check, Copy, Link2, Settings2 } from "lucide-react";
+import {
+  CpaOfferTrackingInstructions,
+  cpaOfferStatusBadgeClass,
+  cpaOfferStatusLabel,
+} from "@/components/cpa/cpa-offer-tracking-instructions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -70,12 +75,16 @@ export function CpaOfferTrackingLinkDialog({
           </DialogTitle>
           <div className="flex flex-wrap items-center gap-2 pt-1 text-sm text-muted-foreground">
             <span className="font-medium">Tracking Link</span>
-            <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100">Active</Badge>
+            <Badge className={cpaOfferStatusBadgeClass(offer.status)}>
+              {cpaOfferStatusLabel(offer.status)}
+            </Badge>
             <span className="font-mono text-xs text-muted-foreground">OFFER #{offer.id}</span>
           </div>
         </DialogHeader>
 
         <div className="space-y-5">
+          <CpaOfferTrackingInstructions offer={offer} />
+
           <section className="space-y-3 rounded-xl border border-border p-4">
             <div className="flex items-start gap-2">
               <Settings2 className="mt-0.5 h-4 w-4 text-muted-foreground" />
