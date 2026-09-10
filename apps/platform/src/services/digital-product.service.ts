@@ -681,6 +681,53 @@ export function dedupeDigitalProductOrderRows(
   return [...best.values()].sort((a, b) => b.date.localeCompare(a.date));
 }
 
+export type DigitalProductWebhookEventForDedupe = {
+  id: string;
+  publisherId: string | null;
+  eventType: string;
+  payloadJson: unknown;
+  subId?: string | null;
+  src?: string | null;
+  createdAt: Date;
+  status?: string | null;
+};
+
+/** Prefer PROCESSED + attributed + tracking params + newest when collapsing CF retries. */
+function preferWebhookEventForOrderIdDedupe(
+  a: DigitalProductWebhookEventForDedupe,
+  b: DigitalProductWebhookEventForDedupe,
+): boolean {
+  const aProcessed = a.status === "PROCESSED" ? 1 : 0;
+  const bProcessed = b.status === "PROCESSED" ? 1 : 0;
+  if (aProcessed !== bProcessed) return aProcessed > bProcessed;
+  const aPub = a.publisherId ? 1 : 0;
+  const bPub = b.publisherId ? 1 : 0;
+  if (aPub !== bPub) return aPub > bPub;
+  const aTrack = a.subId || a.src ? 1 : 0;
+  const bTrack = b.subId || b.src ? 1 : 0;
+  if (aTrack !== bTrack) return aTrack > bTrack;
+  return a.createdAt.getTime() > b.createdAt.getTime();
+}
+
+/**
+ * Collapse duplicate ClickFunnels webhook deliveries by orderId so affiliate
+ * conversions / revenue match Report Log unique-order counts.
+ */
+export function dedupeDigitalProductWebhookEventsByOrderId<
+  T extends DigitalProductWebhookEventForDedupe,
+>(events: T[]): T[] {
+  const best = new Map<string, T>();
+  for (const [idx, ev] of events.entries()) {
+    const fields = extractOrderFields(ev.payloadJson);
+    const key = fields.orderId?.trim() || ev.id || `idx-${idx}`;
+    const existing = best.get(key);
+    if (!existing || preferWebhookEventForOrderIdDedupe(ev, existing)) {
+      best.set(key, ev);
+    }
+  }
+  return [...best.values()];
+}
+
 function summarizeDigitalProductOrders(
   rows: Array<{
     publisherId: string | null;
@@ -1560,6 +1607,8 @@ export async function listDigitalProductAffiliateProductReportForAdmin(
     prisma.webhookEvent.findMany({
       where: webhookWhere,
       select: {
+        id: true,
+        status: true,
         publisherId: true,
         eventType: true,
         payloadJson: true,
@@ -1583,6 +1632,9 @@ export async function listDigitalProductAffiliateProductReportForAdmin(
       take: 20000,
     }),
   ]);
+
+  // CF retries create multiple PROCESSED rows per purchase — align with Report Log.
+  const dedupedOrderEvents = dedupeDigitalProductWebhookEventsByOrderId(orderEvents);
 
   type Acc = {
     publisherId: string;
@@ -1626,7 +1678,7 @@ export async function listDigitalProductAffiliateProductReportForAdmin(
     });
   }
 
-  for (const ev of orderEvents) {
+  for (const ev of dedupedOrderEvents) {
     if (!ev.publisherId) continue;
     const fields = extractOrderFields(ev.payloadJson);
     const type = (fields.orderType ?? ev.eventType ?? "").toLowerCase();

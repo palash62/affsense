@@ -11,6 +11,7 @@ import { extractPageSlugFromClickFunnelsPayload } from "@/lib/clickfunnels-webho
 import {
   dedupeDigitalProductOrderRows,
   digitalProductAffiliateReportKeyOf,
+  dedupeDigitalProductWebhookEventsByOrderId,
   pickDigitalProductClickForAttribution,
   resolveDigitalProductOrderTrackingParams,
   type DigitalProductOrderRow,
@@ -287,5 +288,66 @@ describe("digital product affiliate report tracking join", () => {
     );
     expect(picked?.id).toBe("newer");
     expect(picked?.subId).toBe("profile");
+  });
+});
+
+describe("dedupeDigitalProductWebhookEventsByOrderId", () => {
+  function webhookEvent(partial: {
+    id: string;
+    orderId: string;
+    publisherId?: string | null;
+    status?: string;
+    createdAt?: string;
+    subId?: string | null;
+    src?: string | null;
+  }) {
+    return {
+      id: partial.id,
+      publisherId: partial.publisherId ?? "pub-1",
+      eventType: "purchase",
+      status: partial.status ?? "PROCESSED",
+      subId: partial.subId ?? null,
+      src: partial.src ?? null,
+      createdAt: new Date(partial.createdAt ?? "2026-09-10T12:00:00.000Z"),
+      payloadJson: {
+        order: { order_number: partial.orderId, id: partial.orderId },
+        purchase: { products: [{ amount_cents: 999 }], status: "paid" },
+      },
+    };
+  }
+
+  it("collapses duplicate orderId webhooks to one conversion row", () => {
+    const deduped = dedupeDigitalProductWebhookEventsByOrderId([
+      webhookEvent({
+        id: "ev-1",
+        orderId: "1001",
+        createdAt: "2026-09-10T10:00:00.000Z",
+      }),
+      webhookEvent({
+        id: "ev-2",
+        orderId: "1001",
+        createdAt: "2026-09-10T11:00:00.000Z",
+        subId: "profile",
+        src: "facebook",
+      }),
+    ]);
+    expect(deduped).toHaveLength(1);
+    expect(deduped[0]?.id).toBe("ev-2");
+  });
+
+  it("keeps distinct orderIds as separate conversions", () => {
+    const deduped = dedupeDigitalProductWebhookEventsByOrderId([
+      webhookEvent({ id: "ev-a", orderId: "2001" }),
+      webhookEvent({ id: "ev-b", orderId: "2002" }),
+      webhookEvent({
+        id: "ev-a-retry",
+        orderId: "2001",
+        createdAt: "2026-09-10T13:00:00.000Z",
+      }),
+    ]);
+    expect(deduped).toHaveLength(2);
+    const ids = new Set(deduped.map((e) => e.id));
+    expect(ids.has("ev-a-retry")).toBe(true);
+    expect(ids.has("ev-b")).toBe(true);
   });
 });
