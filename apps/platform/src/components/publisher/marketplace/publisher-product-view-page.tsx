@@ -87,123 +87,71 @@ export function PublisherProductViewPage({
         ) : null}
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
-        <section className="rounded-[var(--radius-card,0.875rem)] border border-border bg-card p-5 shadow-[var(--shadow-card)]">
-          <div className="flex flex-col gap-4 sm:flex-row">
-            <div className="h-28 w-full shrink-0 overflow-hidden rounded-lg bg-muted sm:h-28 sm:w-36">
-              {product.imageUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={product.imageUrl} alt="" className="h-full w-full object-cover" />
-              ) : (
-                <div
-                  className={cn(
-                    "flex h-full w-full items-center justify-center bg-gradient-to-br from-[var(--theme-primary)] to-[var(--theme-accent-purple,#713BFF)] text-3xl font-bold text-white",
-                    product.thumbTone,
-                  )}
-                >
-                  {letter}
-                </div>
-              )}
-            </div>
-            <div className="min-w-0 flex-1">
-              <h2 className="text-sm font-semibold text-foreground">Product overview</h2>
-              <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+      <section className="rounded-[var(--radius-card,0.875rem)] border border-border bg-card p-5 shadow-[var(--shadow-card)]">
+        <div className="flex flex-col gap-4 sm:flex-row">
+          <div className="h-28 w-full shrink-0 overflow-hidden rounded-lg bg-muted sm:h-28 sm:w-36">
+            {product.imageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={product.imageUrl} alt="" className="h-full w-full object-cover" />
+            ) : (
+              <div
+                className={cn(
+                  "flex h-full w-full items-center justify-center bg-gradient-to-br from-[var(--theme-primary)] to-[var(--theme-accent-purple,#713BFF)] text-3xl font-bold text-white",
+                  product.thumbTone,
+                )}
+              >
+                {letter}
+              </div>
+            )}
+          </div>
+          <div className="min-w-0 flex-1">
+            <h2 className="text-sm font-semibold text-foreground">Product overview</h2>
+            <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm sm:grid-cols-3">
+              <div>
+                <dt className="text-xs text-muted-foreground">Type</dt>
+                <dd className="font-medium text-foreground">{product.productType}</dd>
+              </div>
+              <div>
+                <dt className="text-xs text-muted-foreground">Price</dt>
+                <dd className="font-medium text-foreground">${product.price.toFixed(2)}</dd>
+              </div>
+              <div>
+                <dt className="text-xs text-muted-foreground">Front end commission</dt>
+                <dd className="font-medium text-[var(--theme-success)]">
+                  {product.frontEndCommission}%
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs text-muted-foreground">Category</dt>
+                <dd className="truncate font-medium text-foreground">{product.category}</dd>
+              </div>
+              <div>
+                <dt className="text-xs text-muted-foreground">Niche</dt>
+                <dd className="truncate font-medium text-foreground">{product.niche}</dd>
+              </div>
+              {product.vendor ? (
                 <div>
-                  <dt className="text-xs text-muted-foreground">Type</dt>
-                  <dd className="font-medium text-foreground">{product.productType}</dd>
+                  <dt className="text-xs text-muted-foreground">Vendor</dt>
+                  <dd className="truncate font-medium text-foreground">{product.vendor}</dd>
                 </div>
-                <div>
-                  <dt className="text-xs text-muted-foreground">Price</dt>
-                  <dd className="font-medium text-foreground">${product.price.toFixed(2)}</dd>
-                </div>
-                <div>
-                  <dt className="text-xs text-muted-foreground">Category</dt>
-                  <dd className="truncate font-medium text-foreground">{product.category}</dd>
-                </div>
-                <div>
-                  <dt className="text-xs text-muted-foreground">Niche</dt>
-                  <dd className="truncate font-medium text-foreground">{product.niche}</dd>
-                </div>
-                {product.vendor ? (
-                  <div className="col-span-2">
-                    <dt className="text-xs text-muted-foreground">Vendor</dt>
-                    <dd className="truncate font-medium text-foreground">{product.vendor}</dd>
-                  </div>
-                ) : null}
-              </dl>
-              {funnelUrl ? (
-                <ButtonLink
-                  href={funnelUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  variant="outline"
-                  size="sm"
-                  className="mt-4 h-8 gap-1.5"
-                >
-                  View funnel
-                  <ExternalLink className="h-3.5 w-3.5" />
-                </ButtonLink>
               ) : null}
-            </div>
+            </dl>
+            {funnelUrl ? (
+              <ButtonLink
+                href={funnelUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                variant="outline"
+                size="sm"
+                className="mt-4 h-8 gap-1.5"
+              >
+                View funnel
+                <ExternalLink className="h-3.5 w-3.5" />
+              </ButtonLink>
+            ) : null}
           </div>
-        </section>
-
-        <section className="rounded-[var(--radius-card,0.875rem)] border border-border bg-card p-5 shadow-[var(--shadow-card)]">
-          <div className="flex items-center gap-2">
-            <h2 className="text-sm font-semibold text-foreground">Products</h2>
-            <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--sidebar,#07162D)] px-1.5 text-[11px] font-semibold text-white">
-              {1 + product.upsells.length}
-            </span>
-          </div>
-
-          <div className="mt-4 overflow-hidden rounded-lg border border-border">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-[var(--sidebar,#07162D)] text-left text-xs font-semibold uppercase tracking-wide text-white">
-                  <th className="px-3 py-2.5 font-semibold">Product</th>
-                  <th className="px-3 py-2.5 text-right font-semibold">Price</th>
-                  <th className="px-3 py-2.5 text-right font-semibold">Commission</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr className="border-t border-border bg-card">
-                  <td className="px-3 py-2.5">
-                    <div className="flex items-center gap-2">
-                      <Package className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                      <span className="font-medium text-foreground">{product.name}</span>
-                    </div>
-                  </td>
-                  <td className="px-3 py-2.5 text-right tabular-nums text-foreground">
-                    ${product.price.toFixed(2)}
-                  </td>
-                  <td className="px-3 py-2.5 text-right tabular-nums text-foreground">
-                    {formatCommissionCell(product.price, product.frontEndCommission)}
-                  </td>
-                </tr>
-                {product.upsells.map((upsell, index) => (
-                  <tr
-                    key={`${upsell.name}-${index}`}
-                    className="border-t border-border bg-card"
-                  >
-                    <td className="px-3 py-2.5">
-                      <div className="flex items-center gap-2">
-                        <Package className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                        <span className="font-medium text-foreground">{upsell.name}</span>
-                      </div>
-                    </td>
-                    <td className="px-3 py-2.5 text-right tabular-nums text-foreground">
-                      ${upsell.price.toFixed(2)}
-                    </td>
-                    <td className="px-3 py-2.5 text-right tabular-nums text-foreground">
-                      {formatCommissionCell(upsell.price, upsell.commissionPct)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      </div>
+        </div>
+      </section>
 
       <section className="rounded-[var(--radius-card,0.875rem)] border border-border bg-card p-5 shadow-[var(--shadow-card)]">
         <h2 className="text-sm font-semibold text-foreground">Your affiliate link</h2>
@@ -328,6 +276,82 @@ export function PublisherProductViewPage({
             can promote it.
           </p>
         )}
+      </section>
+
+      <section className="rounded-[var(--radius-card,0.875rem)] border border-border bg-card p-5 shadow-[var(--shadow-card)]">
+        <div className="flex flex-wrap items-end justify-between gap-2">
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-sm font-semibold text-foreground">Products</h2>
+              <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--sidebar,#07162D)] px-1.5 text-[11px] font-semibold text-white">
+                {1 + product.upsells.length}
+              </span>
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Front-end offer and every upsell with price and your commission.
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-4 overflow-x-auto rounded-lg border border-border">
+          <table className="w-full min-w-[28rem] text-sm">
+            <thead>
+              <tr className="bg-[var(--sidebar,#07162D)] text-left text-xs font-semibold uppercase tracking-wide text-white">
+                <th className="px-4 py-3 font-semibold">Name</th>
+                <th className="px-4 py-3 text-right font-semibold">Price</th>
+                <th className="px-4 py-3 text-right font-semibold">Commission</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr className="border-t border-border bg-card transition-colors hover:bg-muted/40">
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-2.5">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+                      <Package className="h-3.5 w-3.5" />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="truncate font-semibold text-foreground">{product.name}</p>
+                      <p className="text-[11px] text-muted-foreground">Front end</p>
+                    </div>
+                  </div>
+                </td>
+                <td className="px-4 py-3 text-right font-medium tabular-nums text-foreground">
+                  ${product.price.toFixed(2)}
+                </td>
+                <td className="px-4 py-3 text-right font-medium tabular-nums text-[var(--theme-success)]">
+                  {formatCommissionCell(product.price, product.frontEndCommission)}
+                </td>
+              </tr>
+              {product.upsells.map((upsell, index) => (
+                <tr
+                  key={`${upsell.name}-${index}`}
+                  className={cn(
+                    "border-t border-border transition-colors hover:bg-muted/40",
+                    index % 2 === 0 ? "bg-muted/20" : "bg-card",
+                  )}
+                >
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2.5">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+                        <Package className="h-3.5 w-3.5" />
+                      </span>
+                      <div className="min-w-0">
+                        <p className="truncate font-semibold text-foreground">{upsell.name}</p>
+                        <p className="text-[11px] text-muted-foreground">Upsell {index + 1}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-right font-medium tabular-nums text-foreground">
+                    ${upsell.price.toFixed(2)}
+                  </td>
+                  <td className="px-4 py-3 text-right font-medium tabular-nums text-[var(--theme-success)]">
+                    {formatCommissionCell(upsell.price, upsell.commissionPct)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </section>
     </div>
   );
