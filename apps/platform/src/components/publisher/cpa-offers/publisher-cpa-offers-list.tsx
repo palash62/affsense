@@ -229,6 +229,7 @@ export function PublisherCpaOffersList() {
             <CpaOfferCard
               key={offer.id}
               offer={offer}
+              href={`/publisher/cpa-offers/${offer.id}`}
               showVisibility
               footer={
                 <div className="flex w-full justify-center">

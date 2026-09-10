@@ -302,6 +302,27 @@ export async function listPublisherCpaOffers(
   };
 }
 
+/** Single ACTIVE CPA offer for publisher detail page, with access flags. */
+export async function getPublisherCpaOfferById(
+  publisherId: string,
+  offerId: string,
+): Promise<SerializedPublisherCpaOffer | null> {
+  const id = offerId.trim();
+  if (!id) return null;
+
+  const row = await prisma.cpaOffer.findFirst({
+    where: { id, status: "ACTIVE" },
+  });
+  if (!row) return null;
+
+  const access = await prisma.publisherCpaOfferAccess.findUnique({
+    where: { publisherId_offerId: { publisherId, offerId: row.id } },
+    select: { status: true, adminNote: true },
+  });
+
+  return serializePublisherCpaOffer(row, access);
+}
+
 export async function publisherCanPromoteCpaOffer(
   publisherId: string,
   offerId: string,

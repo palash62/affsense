@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import Link from "next/link";
 import { ExternalLink } from "lucide-react";
 import { CpaOfferGeoFlags } from "@/components/cpa/cpa-offer-geo-flags";
 import { cn } from "@/lib/utils";
@@ -32,6 +33,8 @@ function StatusPill({ status }: { status: SerializedCpaOffer["status"] }) {
 
 type CpaOfferCardProps = {
   offer: SerializedCpaOffer;
+  /** When set, thumbnail + name navigate to this detail URL. Preview / footer stay separate. */
+  href?: string;
   /** Show revenue amount (admin). */
   showRevenue?: boolean;
   /** Show advertiser label (admin). */
@@ -44,6 +47,7 @@ type CpaOfferCardProps = {
 
 export function CpaOfferCard({
   offer,
+  href,
   showRevenue = false,
   showAdvertiser = false,
   showVisibility = false,
@@ -51,6 +55,108 @@ export function CpaOfferCard({
   className,
 }: CpaOfferCardProps) {
   const letter = (offer.name.trim()[0] || "?").toUpperCase();
+
+  const media = (
+    <div className="relative aspect-[16/10] w-full overflow-hidden bg-muted">
+      {offer.thumbnailUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={offer.thumbnailUrl}
+          alt=""
+          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+        />
+      ) : (
+        <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[var(--theme-primary)] to-[var(--theme-accent-purple,#713BFF)] text-3xl font-bold text-white">
+          {letter}
+        </div>
+      )}
+
+      <div className="absolute inset-x-0 top-0 flex items-start justify-between gap-2 p-3">
+        <span className="rounded-md bg-black/45 px-2 py-0.5 font-mono text-[11px] font-medium text-white backdrop-blur-sm">
+          #{offer.id.slice(-6)}
+        </span>
+        <StatusPill status={offer.status} />
+      </div>
+    </div>
+  );
+
+  const title = (
+    <h3
+      className={cn(
+        "line-clamp-2 text-sm font-semibold leading-snug text-foreground",
+        href && "group-hover/link:text-[var(--theme-primary)]",
+      )}
+    >
+      {offer.name}
+    </h3>
+  );
+
+  const preview =
+    hasPreviewUrl(offer.previewUrl) ? (
+      <a
+        href={offer.previewUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={(e) => e.stopPropagation()}
+        className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-[var(--theme-primary)] hover:underline"
+      >
+        Preview <ExternalLink className="h-3 w-3" />
+      </a>
+    ) : null;
+
+  const meta = (
+    <>
+      <div className="flex flex-wrap gap-1.5">
+        <span className="rounded-md bg-[var(--theme-primary-soft)] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--theme-primary)]">
+          {offer.payoutModel}
+        </span>
+        <span className="rounded-md bg-[color-mix(in_srgb,var(--theme-accent-purple,#713BFF)_14%,white)] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--theme-accent-purple,#713BFF)]">
+          {offer.category}
+        </span>
+        {showVisibility ? (
+          <span
+            className={cn(
+              "rounded-md px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+              offer.visibility === "PRIVATE"
+                ? "bg-[color-mix(in_srgb,var(--warning)_16%,white)] text-[var(--warning)]"
+                : "bg-muted text-muted-foreground",
+            )}
+          >
+            {offer.visibility === "PRIVATE" ? "Private" : "Public"}
+          </span>
+        ) : null}
+      </div>
+
+      <CpaOfferGeoFlags country={offer.country} />
+
+      <div className="mt-auto grid grid-cols-2 gap-2 border-t border-border pt-3">
+        {showRevenue ? (
+          <div>
+            <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+              Revenue
+            </p>
+            <p className="font-mono text-sm font-semibold tabular-nums text-foreground">
+              ${offer.revenue}
+            </p>
+          </div>
+        ) : null}
+        <div className={showRevenue ? undefined : "col-span-2"}>
+          <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+            Payout
+          </p>
+          <p className="font-mono text-sm font-semibold tabular-nums text-[var(--theme-success)]">
+            ${offer.payout}
+          </p>
+        </div>
+      </div>
+
+      {showAdvertiser ? (
+        <p className="truncate text-xs text-muted-foreground">
+          Advertiser · <span className="text-foreground">{offer.advertiserLabel}</span>
+        </p>
+      ) : null}
+    </>
+  );
 
   return (
     <article
@@ -60,95 +166,35 @@ export function CpaOfferCard({
         className,
       )}
     >
-      <div className="relative aspect-[16/10] w-full overflow-hidden bg-muted">
-        {offer.thumbnailUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={offer.thumbnailUrl}
-            alt=""
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[var(--theme-primary)] to-[var(--theme-accent-purple,#713BFF)] text-3xl font-bold text-white">
-            {letter}
-          </div>
-        )}
-
-        <div className="absolute inset-x-0 top-0 flex items-start justify-between gap-2 p-3">
-          <span className="rounded-md bg-black/45 px-2 py-0.5 font-mono text-[11px] font-medium text-white backdrop-blur-sm">
-            #{offer.id.slice(-6)}
-          </span>
-          <StatusPill status={offer.status} />
-        </div>
-      </div>
-
-      <div className="flex flex-1 flex-col gap-3 p-4">
-        <div className="min-w-0">
-          <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-foreground">
-            {offer.name}
-          </h3>
-          {hasPreviewUrl(offer.previewUrl) ? (
-            <a
-              href={offer.previewUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-[var(--theme-primary)] hover:underline"
-            >
-              Preview <ExternalLink className="h-3 w-3" />
-            </a>
-          ) : null}
-        </div>
-
-        <div className="flex flex-wrap gap-1.5">
-          <span className="rounded-md bg-[var(--theme-primary-soft)] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--theme-primary)]">
-            {offer.payoutModel}
-          </span>
-          <span className="rounded-md bg-[color-mix(in_srgb,var(--theme-accent-purple,#713BFF)_14%,white)] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--theme-accent-purple,#713BFF)]">
-            {offer.category}
-          </span>
-          {showVisibility ? (
-            <span
-              className={cn(
-                "rounded-md px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
-                offer.visibility === "PRIVATE"
-                  ? "bg-[color-mix(in_srgb,var(--warning)_16%,white)] text-[var(--warning)]"
-                  : "bg-muted text-muted-foreground",
-              )}
-            >
-              {offer.visibility === "PRIVATE" ? "Private" : "Public"}
-            </span>
-          ) : null}
-        </div>
-
-        <CpaOfferGeoFlags country={offer.country} />
-
-        <div className="mt-auto grid grid-cols-2 gap-2 border-t border-border pt-3">
-          {showRevenue ? (
-            <div>
-              <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-                Revenue
-              </p>
-              <p className="font-mono text-sm font-semibold tabular-nums text-foreground">
-                ${offer.revenue}
-              </p>
+      {href ? (
+        <>
+          <Link href={href} className="group/link block focus:outline-none">
+            {media}
+          </Link>
+          <div className="flex flex-1 flex-col gap-3 p-4">
+            <div className="min-w-0">
+              <Link href={href} className="group/link focus:outline-none">
+                {title}
+              </Link>
+              {preview}
             </div>
-          ) : null}
-          <div className={showRevenue ? undefined : "col-span-2"}>
-            <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-              Payout
-            </p>
-            <p className="font-mono text-sm font-semibold tabular-nums text-[var(--theme-success)]">
-              ${offer.payout}
-            </p>
+            <Link href={href} className="group/link flex flex-1 flex-col gap-3 focus:outline-none">
+              {meta}
+            </Link>
           </div>
-        </div>
-
-        {showAdvertiser ? (
-          <p className="truncate text-xs text-muted-foreground">
-            Advertiser · <span className="text-foreground">{offer.advertiserLabel}</span>
-          </p>
-        ) : null}
-      </div>
+        </>
+      ) : (
+        <>
+          {media}
+          <div className="flex flex-1 flex-col gap-3 p-4">
+            <div className="min-w-0">
+              {title}
+              {preview}
+            </div>
+            {meta}
+          </div>
+        </>
+      )}
 
       {footer ? (
         <div className="flex items-center gap-2 border-t border-border bg-muted/50 px-4 py-3">

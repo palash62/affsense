@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Copy, ExternalLink } from "lucide-react";
+import { ArrowLeft, Copy, ExternalLink, Package } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { ButtonLink } from "@/components/ui/button-link";
@@ -27,6 +27,11 @@ async function copyText(text: string, label: string) {
   } catch {
     toast.error("Could not copy to clipboard");
   }
+}
+
+function formatCommissionCell(price: number, percent: number) {
+  const amount = (price * percent) / 100;
+  return `$${amount.toFixed(2)} (${percent}%)`;
 }
 
 export function PublisherProductViewPage({
@@ -144,44 +149,58 @@ export function PublisherProductViewPage({
         </section>
 
         <section className="rounded-[var(--radius-card,0.875rem)] border border-border bg-card p-5 shadow-[var(--shadow-card)]">
-          <h2 className="text-sm font-semibold text-foreground">Commission structure</h2>
-          <div className="mt-4 space-y-3">
-            <div className="rounded-lg border border-border bg-muted/40 px-3 py-2.5">
-              <p className="text-xs text-muted-foreground">Front end</p>
-              <p className="mt-0.5 text-lg font-bold text-foreground">
-                {product.frontEndCommission}%
-              </p>
-            </div>
+          <div className="flex items-center gap-2">
+            <h2 className="text-sm font-semibold text-foreground">Products</h2>
+            <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--sidebar,#07162D)] px-1.5 text-[11px] font-semibold text-white">
+              {1 + product.upsells.length}
+            </span>
+          </div>
 
-            {product.upsells.length > 0 ? (
-              <div className="space-y-2">
-                <p className="text-xs font-medium text-muted-foreground">Upsells</p>
+          <div className="mt-4 overflow-hidden rounded-lg border border-border">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-[var(--sidebar,#07162D)] text-left text-xs font-semibold uppercase tracking-wide text-white">
+                  <th className="px-3 py-2.5 font-semibold">Product</th>
+                  <th className="px-3 py-2.5 text-right font-semibold">Price</th>
+                  <th className="px-3 py-2.5 text-right font-semibold">Commission</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="border-t border-border bg-card">
+                  <td className="px-3 py-2.5">
+                    <div className="flex items-center gap-2">
+                      <Package className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                      <span className="font-medium text-foreground">{product.name}</span>
+                    </div>
+                  </td>
+                  <td className="px-3 py-2.5 text-right tabular-nums text-foreground">
+                    ${product.price.toFixed(2)}
+                  </td>
+                  <td className="px-3 py-2.5 text-right tabular-nums text-foreground">
+                    {formatCommissionCell(product.price, product.frontEndCommission)}
+                  </td>
+                </tr>
                 {product.upsells.map((upsell, index) => (
-                  <div
+                  <tr
                     key={`${upsell.name}-${index}`}
-                    className="rounded-lg border border-border bg-muted/40 px-3 py-2.5"
+                    className="border-t border-border bg-card"
                   >
-                    <p className="text-sm font-semibold text-foreground">{upsell.name}</p>
-                    <dl className="mt-1.5 grid grid-cols-2 gap-2 text-sm">
-                      <div>
-                        <dt className="text-xs text-muted-foreground">Price</dt>
-                        <dd className="font-medium text-foreground">
-                          ${upsell.price.toFixed(2)}
-                        </dd>
+                    <td className="px-3 py-2.5">
+                      <div className="flex items-center gap-2">
+                        <Package className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                        <span className="font-medium text-foreground">{upsell.name}</span>
                       </div>
-                      <div>
-                        <dt className="text-xs text-muted-foreground">Commission</dt>
-                        <dd className="font-medium text-foreground">
-                          {upsell.commissionPct}%
-                        </dd>
-                      </div>
-                    </dl>
-                  </div>
+                    </td>
+                    <td className="px-3 py-2.5 text-right tabular-nums text-foreground">
+                      ${upsell.price.toFixed(2)}
+                    </td>
+                    <td className="px-3 py-2.5 text-right tabular-nums text-foreground">
+                      {formatCommissionCell(upsell.price, upsell.commissionPct)}
+                    </td>
+                  </tr>
                 ))}
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">No upsells configured.</p>
-            )}
+              </tbody>
+            </table>
           </div>
         </section>
       </div>
