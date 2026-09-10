@@ -271,7 +271,11 @@ export function extractParamFromUrl(urlLike: string, paramName: string): string 
   return null;
 }
 
-/** Collect URL-like strings from CF visits / common referral fields. */
+/**
+ * Collect URL-like strings from CF visits / common referral fields.
+ * Prefer first_visit before last_visit so FE sales pages win over OTO last_visit
+ * for page-slug + affiliate param extraction.
+ */
 export function collectClickFunnelsUrlCandidates(body: unknown): string[] {
   const { root, data, order, visits, contact } = unwrapClickFunnelsPayload(body);
   const out: string[] = [];
@@ -282,12 +286,14 @@ export function collectClickFunnelsUrlCandidates(body: unknown): string[] {
     }
   };
 
+  // first_visit first — last_visit is often the OTO page after FE checkout
   const visitNodes = [
-    asRecord(visits?.last_visit),
-    asRecord(visits?.last_visit_with_utm),
     asRecord(visits?.first_visit),
+    asRecord(visits?.last_visit_with_utm),
+    asRecord(visits?.last_visit),
     asRecord(data?.last_visit),
     asRecord(root.last_visit),
+    asRecord(root.first_visit),
   ];
 
   for (const node of visitNodes) {

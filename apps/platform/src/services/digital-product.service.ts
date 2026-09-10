@@ -655,6 +655,102 @@ function normalizeOrderType(raw: string | null): string | null {
   return raw;
 }
 
+/** Prefer PROCESSED + attributed + newest when collapsing duplicate CF webhook events. */
+function preferOrderRow(a: DigitalProductOrderRow, b: DigitalProductOrderRow): boolean {
+  const aProcessed = a.webhookStatus === "PROCESSED" ? 1 : 0;
+  const bProcessed = b.webhookStatus === "PROCESSED" ? 1 : 0;
+  if (aProcessed !== bProcessed) return aProcessed > bProcessed;
+  const aPub = a.affiliateName || a.affiliateRef ? 1 : 0;
+  const bPub = b.affiliateName || b.affiliateRef ? 1 : 0;
+  if (aPub !== bPub) return aPub > bPub;
+  return a.date > b.date;
+}
+
+export function dedupeDigitalProductOrderRows(
+  rows: DigitalProductOrderRow[],
+): DigitalProductOrderRow[] {
+  const best = new Map<string, DigitalProductOrderRow>();
+  for (const row of rows) {
+    const key = row.orderId?.trim() || row.id;
+    const existing = best.get(key);
+    if (!existing || preferOrderRow(row, existing)) {
+      best.set(key, row);
+    }
+  }
+  return [...best.values()].sort((a, b) => b.date.localeCompare(a.date));
+}
+
+function summarizeDigitalProductOrders(
+  rows: Array<{
+    publisherId: string | null;
+    eventType: string;
+    payloadJson: unknown;
+    orderId: string | null;
+  }>,
+  commissionLookup: Awaited<ReturnType<typeof loadDigitalProductCommissionLookup>>,
+): DigitalProductOrderSummary {
+  // Collapse by order id so retries don't inflate revenue / affiliate sales.
+  // Caller should pass newest-first; first attributed row wins, else first seen.
+  const best = new Map<
+    string,
+    {
+      publisherId: string | null;
+      eventType: string;
+      payloadJson: unknown;
+    }
+  >();
+  for (const [idx, ev] of rows.entries()) {
+    const fields = extractOrderFields(ev.payloadJson);
+    const orderId = fields.orderId ?? `idx-${idx}`;
+    const existing = best.get(orderId);
+    if (!existing) {
+      best.set(orderId, {
+        publisherId: ev.publisherId,
+        eventType: ev.eventType,
+        payloadJson: ev.payloadJson,
+      });
+      continue;
+    }
+    if (!existing.publisherId && ev.publisherId) {
+      best.set(orderId, {
+        publisherId: ev.publisherId,
+        eventType: ev.eventType,
+        payloadJson: ev.payloadJson,
+      });
+    }
+  }
+
+  let grossRevenue = 0;
+  let affiliateSales = 0;
+  let totalCommissions = 0;
+  let refunds = 0;
+
+  for (const ev of best.values()) {
+    const fields = extractOrderFields(ev.payloadJson);
+    const amount = fields.amount ?? 0;
+    const type = (fields.orderType ?? ev.eventType ?? "").toLowerCase();
+    if (type.includes("refund")) {
+      refunds += amount;
+    } else {
+      grossRevenue += amount;
+    }
+    if (ev.publisherId) {
+      affiliateSales += 1;
+      const resolved = commissionLookup.resolve(fields.pageSlug, amount);
+      totalCommissions += resolved.commission ?? 0;
+    }
+  }
+
+  return {
+    totalOrders: best.size,
+    grossRevenue,
+    affiliateSales,
+    totalCommissions,
+    netRevenue: grossRevenue - totalCommissions - refunds,
+    refunds,
+  };
+}
+
 export async function listDigitalProductOrders(opts: {
   from?: Date;
   to?: Date;
@@ -736,115 +832,54 @@ export async function listDigitalProductOrders(opts: {
     };
   };
 
-  // Sub ID lives in payload — load a wider window then filter/paginate in memory.
-  if (subIdFilter) {
-    const [allRows, allForSummary] = await Promise.all([
-      prisma.webhookEvent.findMany({
-        where,
-        orderBy: { createdAt: "desc" },
-        take: 5000,
-        select,
-      }),
-      prisma.webhookEvent.findMany({
-        where: { ...where, status: "PROCESSED" },
-        select: { publisherId: true, eventType: true, payloadJson: true },
-        take: 5000,
-      }),
-    ]);
-
-    const filteredItems = allRows.map(mapRow).filter((row) => row.subId === subIdFilter);
-    const filteredSummaryRows = allForSummary.filter(
-      (ev) => extractOrderFields(ev.payloadJson).subId === subIdFilter,
-    );
-
-    let grossRevenue = 0;
-    let affiliateSales = 0;
-    let totalCommissions = 0;
-    let refunds = 0;
-    for (const ev of filteredSummaryRows) {
-      const fields = extractOrderFields(ev.payloadJson);
-      const amount = fields.amount ?? 0;
-      const type = (fields.orderType ?? ev.eventType ?? "").toLowerCase();
-      if (type.includes("refund")) {
-        refunds += amount;
-      } else {
-        grossRevenue += amount;
-      }
-      if (ev.publisherId) {
-        affiliateSales += 1;
-        const resolved = commissionLookup.resolve(fields.pageSlug, amount);
-        totalCommissions += resolved.commission ?? 0;
-      }
-    }
-
-    const total = filteredItems.length;
-    const items = filteredItems.slice(skip, skip + limit);
-    return {
-      items,
-      total,
-      page,
-      limit,
-      totalPages: Math.max(1, Math.ceil(total / limit)),
-      summary: {
-        totalOrders: filteredSummaryRows.length,
-        grossRevenue,
-        affiliateSales,
-        totalCommissions,
-        netRevenue: grossRevenue - totalCommissions - refunds,
-        refunds,
-      },
-    };
-  }
-
-  const [rows, total, allForSummary] = await Promise.all([
+  // Load a window, map, dedupe by orderId, then paginate in memory
+  // (CF retries create multiple webhook_events per purchase).
+  const [allRows, allForSummary] = await Promise.all([
     prisma.webhookEvent.findMany({
       where,
       orderBy: { createdAt: "desc" },
-      skip,
-      take: limit,
+      take: 5000,
       select,
     }),
-    prisma.webhookEvent.count({ where }),
     prisma.webhookEvent.findMany({
       where: { ...where, status: "PROCESSED" },
       select: { publisherId: true, eventType: true, payloadJson: true },
+      orderBy: { createdAt: "desc" },
       take: 5000,
     }),
   ]);
 
-  let grossRevenue = 0;
-  let affiliateSales = 0;
-  let totalCommissions = 0;
-  let refunds = 0;
-
-  for (const ev of allForSummary) {
-    const fields = extractOrderFields(ev.payloadJson);
-    const amount = fields.amount ?? 0;
-    const type = (fields.orderType ?? ev.eventType ?? "").toLowerCase();
-    if (type.includes("refund")) {
-      refunds += amount;
-    } else {
-      grossRevenue += amount;
-    }
-    if (ev.publisherId) {
-      affiliateSales += 1;
-      const resolved = commissionLookup.resolve(fields.pageSlug, amount);
-      totalCommissions += resolved.commission ?? 0;
-    }
+  let mapped = allRows.map(mapRow);
+  if (subIdFilter) {
+    mapped = mapped.filter((row) => row.subId === subIdFilter);
   }
-  const netRevenue = grossRevenue - totalCommissions - refunds;
-  const summary: DigitalProductOrderSummary = {
-    totalOrders: allForSummary.length,
-    grossRevenue,
-    affiliateSales,
-    totalCommissions,
-    netRevenue,
-    refunds,
+  const dedupedItems = dedupeDigitalProductOrderRows(mapped);
+
+  const summarySource = subIdFilter
+    ? allForSummary.filter(
+        (ev) => extractOrderFields(ev.payloadJson).subId === subIdFilter,
+      )
+    : allForSummary;
+  const summary = summarizeDigitalProductOrders(
+    summarySource.map((ev) => ({
+      publisherId: ev.publisherId,
+      eventType: ev.eventType,
+      payloadJson: ev.payloadJson,
+      orderId: extractOrderFields(ev.payloadJson).orderId,
+    })),
+    commissionLookup,
+  );
+
+  const total = dedupedItems.length;
+  const items = dedupedItems.slice(skip, skip + limit);
+  return {
+    items,
+    total,
+    page,
+    limit,
+    totalPages: Math.max(1, Math.ceil(total / limit)),
+    summary,
   };
-
-  const items = rows.map(mapRow);
-
-  return { items, total, page, limit, totalPages: Math.max(1, Math.ceil(total / limit)), summary };
 }
 
 export type PublisherCommissionType = "Front End" | "Upsell" | "Downsell" | "Refund";
@@ -1510,9 +1545,14 @@ export async function listDigitalProductAffiliateProductReportForAdmin(
     const orderSubId = fields.subId ?? null;
     if (filterSubId && orderSubId !== filterSubId) continue;
 
-    const productName = fields.product?.trim() || "Unknown product";
+    const amount = fields.amount ?? 0;
+    const resolved = commissionLookup.resolve(fields.pageSlug, amount);
+    const productName =
+      (resolved.productName ?? fields.product?.trim()) || "Unknown product";
     const nameKey = normalizeProductNameKey(productName);
-    const matchedProductId = nameKey ? productIdByName.get(nameKey) ?? null : null;
+    const matchedProductId =
+      resolved.productId ??
+      (nameKey ? productIdByName.get(nameKey) ?? null : null);
 
     if (filterProductId) {
       if (matchedProductId) {
@@ -1542,8 +1582,6 @@ export async function listDigitalProductAffiliateProductReportForAdmin(
       revenue: 0,
     };
 
-    const amount = fields.amount ?? 0;
-    const resolved = commissionLookup.resolve(fields.pageSlug, amount);
     acc.conversions += 1;
     acc.revenue += amount;
     acc.commission += resolved.commission ?? 0;

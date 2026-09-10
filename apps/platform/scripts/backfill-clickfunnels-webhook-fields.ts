@@ -1,23 +1,16 @@
 /**
  * Backfill lead + affiliate fields on existing ClickFunnels webhook_events
- * by re-parsing stored payloadJson (Classic CF nesting + landing_page ?affsense_id=).
+ * by re-parsing stored payloadJson and falling back to recent DigitalProductClick.
  *
  * Usage (from apps/platform, with .env loaded):
  *   set -a && source .env && set +a
  *   npx tsx scripts/backfill-clickfunnels-webhook-fields.ts
  *   npx tsx scripts/backfill-clickfunnels-webhook-fields.ts --dry-run
- *
- * Or from repo root:
- *   set -a && source apps/platform/.env && set +a
- *   cd apps/platform && npx tsx scripts/backfill-clickfunnels-webhook-fields.ts
  */
 import { prisma } from "../src/lib/prisma";
-import { extractAffiliateRefFromWebhookPayload } from "../src/lib/clickfunnels-webhook-attribution";
+import { resolveDigitalProductWebhookAttribution } from "../src/lib/clickfunnels-webhook-attribution";
 import { extractLeadFromClickFunnelsPayload } from "../src/lib/clickfunnels-webhook-payload";
-import {
-  loadClickFunnelsWebhookConfig,
-  resolvePublisherFromAffiliateRef,
-} from "../src/services/clickfunnels-webhook-settings.service";
+import { loadClickFunnelsWebhookConfig } from "../src/services/clickfunnels-webhook-settings.service";
 
 function parseArgs(argv: string[]) {
   let dryRun = process.env.DRY_RUN === "1";
@@ -48,6 +41,7 @@ async function main() {
       affiliateRef: true,
       publisherId: true,
       payloadJson: true,
+      createdAt: true,
     },
     orderBy: { createdAt: "desc" },
     take: 5000,
@@ -62,11 +56,11 @@ async function main() {
 
   for (const row of rows) {
     const lead = extractLeadFromClickFunnelsPayload(row.payloadJson);
-    const affiliateRef =
-      row.affiliateRef ??
-      extractAffiliateRefFromWebhookPayload(row.payloadJson, param) ??
-      null;
-    const attribution = await resolvePublisherFromAffiliateRef(affiliateRef);
+    const attribution = await resolveDigitalProductWebhookAttribution({
+      body: row.payloadJson,
+      platformParam: param,
+      at: row.createdAt,
+    });
 
     const nextLeadEmail = row.leadEmail ?? lead.leadEmail;
     const nextLeadName = row.leadName ?? lead.leadName;

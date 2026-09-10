@@ -1,10 +1,9 @@
 import {
   loadClickFunnelsWebhookConfig,
   createWebhookEvent,
-  resolvePublisherFromAffiliateRef,
 } from "@/services/clickfunnels-webhook-settings.service";
 import { sanitizeWebhookPayload } from "@/lib/clickfunnels-webhook-settings";
-import { extractAffiliateRefFromWebhookPayload } from "@/lib/clickfunnels-webhook-attribution";
+import { resolveDigitalProductWebhookAttribution } from "@/lib/clickfunnels-webhook-attribution";
 import { extractLeadFromClickFunnelsPayload } from "@/lib/clickfunnels-webhook-payload";
 
 function extractSecret(
@@ -86,12 +85,11 @@ export async function handleClickFunnelsWebhookPost(request: Request): Promise<R
     errorMessage?: string | null;
     config?: Awaited<ReturnType<typeof loadClickFunnelsWebhookConfig>>;
   }) {
-    const affiliateRef = extractAffiliateRefFromWebhookPayload(
+    const attribution = await resolveDigitalProductWebhookAttribution({
       body,
-      input.config?.affiliateTrackingParam ?? "affsense_id",
+      platformParam: input.config?.affiliateTrackingParam ?? "affsense_id",
       requestUrl,
-    );
-    const attribution = await resolvePublisherFromAffiliateRef(affiliateRef);
+    });
     const created = await createWebhookEvent({
       eventType: input.eventType,
       status: input.status,
