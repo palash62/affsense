@@ -38,6 +38,7 @@ type AppliedFilters = {
   q: string;
   productId: string;
   subId: string;
+  src: string;
   from: string;
   to: string;
 };
@@ -54,6 +55,7 @@ export function PublisherMarketplaceAffiliateReport({
       q: "",
       productId: "",
       subId: "",
+      src: "",
       from: defaultFrom,
       to: defaultTo,
     }),
@@ -74,6 +76,7 @@ export function PublisherMarketplaceAffiliateReport({
     if (applied.q.trim()) params.set("q", applied.q.trim());
     if (applied.productId.trim()) params.set("productId", applied.productId.trim());
     if (applied.subId.trim()) params.set("subId", applied.subId.trim());
+    if (applied.src.trim()) params.set("src", applied.src.trim());
     if (applied.from.trim()) params.set("from", new Date(applied.from).toISOString());
     if (applied.to.trim()) {
       const end = new Date(applied.to);
@@ -210,7 +213,7 @@ export function PublisherMarketplaceAffiliateReport({
                 onChange={(e) => setDraft((prev) => ({ ...prev, to: e.target.value }))}
               />
             </div>
-            <div className="space-y-1 xl:col-span-3">
+            <div className="space-y-1 xl:col-span-2">
               <label className="text-xs font-medium text-muted-foreground">Product ID</label>
               <Input
                 className="h-9 bg-white font-mono text-xs"
@@ -228,7 +231,16 @@ export function PublisherMarketplaceAffiliateReport({
                 onChange={(e) => setDraft((prev) => ({ ...prev, subId: e.target.value }))}
               />
             </div>
-            <div className="space-y-1 sm:col-span-2 xl:col-span-3">
+            <div className="space-y-1 xl:col-span-2">
+              <label className="text-xs font-medium text-muted-foreground">Source</label>
+              <Input
+                className="h-9 bg-white font-mono text-xs"
+                placeholder="Optional"
+                value={draft.src}
+                onChange={(e) => setDraft((prev) => ({ ...prev, src: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-1 sm:col-span-2 xl:col-span-2">
               <label className="text-xs font-medium text-muted-foreground">Search</label>
               <div className="relative">
                 <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
@@ -262,6 +274,7 @@ export function PublisherMarketplaceAffiliateReport({
             <TableRow className="bg-muted/40 hover:bg-muted/40">
               <TableHead>Product</TableHead>
               <TableHead>Sub ID</TableHead>
+              <TableHead>Source</TableHead>
               <TableHead className="text-right">Clicks</TableHead>
               <TableHead className="text-right">Conversions</TableHead>
               <TableHead className="text-right">CR%</TableHead>
@@ -273,13 +286,13 @@ export function PublisherMarketplaceAffiliateReport({
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={8} className="py-10 text-center text-muted-foreground">
+                <TableCell colSpan={9} className="py-10 text-center text-muted-foreground">
                   Loading…
                 </TableCell>
               </TableRow>
             ) : items.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="py-10 text-center text-muted-foreground">
+                <TableCell colSpan={9} className="py-10 text-center text-muted-foreground">
                   <div className="mx-auto flex max-w-sm flex-col items-center gap-2">
                     <Activity className="h-8 w-8 text-muted-foreground/50" />
                     <p>No product rows for these filters.</p>
@@ -288,7 +301,9 @@ export function PublisherMarketplaceAffiliateReport({
               </TableRow>
             ) : (
               items.map((row) => (
-                <TableRow key={`${row.publisherId}:${row.productId ?? row.productName}:${row.subId ?? ""}`}>
+                <TableRow
+                  key={`${row.publisherId}:${row.productId ?? row.productName}:${row.subId ?? ""}:${row.source ?? ""}`}
+                >
                   <TableCell>
                     <div>
                       <p className="font-medium text-foreground">{row.productName}</p>
@@ -303,6 +318,9 @@ export function PublisherMarketplaceAffiliateReport({
                   </TableCell>
                   <TableCell className="font-mono text-xs text-muted-foreground">
                     {row.subId ?? "—"}
+                  </TableCell>
+                  <TableCell className="font-mono text-xs text-muted-foreground">
+                    {row.source ?? "—"}
                   </TableCell>
                   <TableCell className="text-right tabular-nums">{row.clicks}</TableCell>
                   <TableCell className="text-right tabular-nums">{row.conversions}</TableCell>

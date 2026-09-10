@@ -1302,6 +1302,7 @@ export const digitalProductClickListQuerySchema = z.object({
   q: z.string().trim().optional(),
   productId: z.string().trim().optional(),
   subId: z.string().trim().optional(),
+  src: z.string().trim().optional(),
   publisherId: z.string().trim().optional(),
   from: z.string().trim().optional(),
   to: z.string().trim().optional(),

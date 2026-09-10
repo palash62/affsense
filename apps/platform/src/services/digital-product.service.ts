@@ -1161,6 +1161,7 @@ export type DigitalProductClickListFilters = {
   q?: string;
   productId?: string;
   subId?: string;
+  src?: string;
   publisherId?: string;
   from?: string;
   to?: string;
@@ -1226,6 +1227,9 @@ function buildDigitalProductClickWhere(
 
   const subId = filters.subId?.trim();
   if (subId) where.subId = subId;
+
+  const src = filters.src?.trim();
+  if (src) where.src = src;
 
   const publisherId = filters.publisherId?.trim();
   if (publisherId && !forcedPublisherId) where.publisherId = publisherId;
@@ -1400,6 +1404,7 @@ export type SerializedDigitalProductAffiliateReportRow = {
   productId: string | null;
   productName: string;
   subId: string | null;
+  source: string | null;
   clicks: number;
   conversions: number;
   conversionRate: number;
@@ -1473,12 +1478,13 @@ export async function listDigitalProductAffiliateProductReportForAdmin(
     : null;
   const filterProductNameKey = normalizeProductNameKey(filterProductName);
   const filterSubId = filters.subId?.trim() || undefined;
+  const filterSrc = filters.src?.trim() || undefined;
 
   const q = filters.q?.trim().toLowerCase();
 
   const [clickGroups, orderEvents] = await Promise.all([
     prisma.digitalProductClick.groupBy({
-      by: ["publisherId", "productId", "subId"],
+      by: ["publisherId", "productId", "subId", "src"],
       where: clickWhere,
       _count: { _all: true },
     }),
@@ -1499,6 +1505,7 @@ export async function listDigitalProductAffiliateProductReportForAdmin(
     productName: string;
     nameKey: string;
     subId: string | null;
+    source: string | null;
     clicks: number;
     conversions: number;
     commission: number;
@@ -1511,24 +1518,27 @@ export async function listDigitalProductAffiliateProductReportForAdmin(
     productId: string | null,
     nameKey: string,
     subId: string | null,
+    source: string | null,
   ) => {
     const productPart = productId
       ? `id::${productId}`
       : `name::${nameKey || "_"}`;
-    return `${publisherId}::${productPart}::${subId ?? ""}`;
+    return `${publisherId}::${productPart}::${subId ?? ""}::${source ?? ""}`;
   };
 
   for (const g of clickGroups) {
     const product = productById.get(g.productId);
     const productName = product?.name ?? g.productId;
     const nameKey = normalizeProductNameKey(productName);
-    const key = keyOf(g.publisherId, g.productId, nameKey, g.subId);
+    const source = g.src?.trim() || null;
+    const key = keyOf(g.publisherId, g.productId, nameKey, g.subId, source);
     byKey.set(key, {
       publisherId: g.publisherId,
       productId: g.productId,
       productName,
       nameKey,
       subId: g.subId,
+      source,
       clicks: g._count._all,
       conversions: 0,
       commission: 0,
@@ -1544,6 +1554,9 @@ export async function listDigitalProductAffiliateProductReportForAdmin(
 
     const orderSubId = fields.subId ?? null;
     if (filterSubId && orderSubId !== filterSubId) continue;
+
+    const orderSource = fields.source?.trim() || null;
+    if (filterSrc && orderSource !== filterSrc) continue;
 
     const amount = fields.amount ?? 0;
     const resolved = commissionLookup.resolve(fields.pageSlug, amount);
@@ -1563,11 +1576,11 @@ export async function listDigitalProductAffiliateProductReportForAdmin(
     }
 
     if (q) {
-      const hay = `${productName} ${matchedProductId ?? ""} ${ev.publisherId} ${orderSubId ?? ""}`.toLowerCase();
+      const hay = `${productName} ${matchedProductId ?? ""} ${ev.publisherId} ${orderSubId ?? ""} ${orderSource ?? ""}`.toLowerCase();
       if (!hay.includes(q)) continue;
     }
 
-    const key = keyOf(ev.publisherId, matchedProductId, nameKey, orderSubId);
+    const key = keyOf(ev.publisherId, matchedProductId, nameKey, orderSubId, orderSource);
     const acc = byKey.get(key) ?? {
       publisherId: ev.publisherId,
       productId: matchedProductId,
@@ -1576,6 +1589,7 @@ export async function listDigitalProductAffiliateProductReportForAdmin(
         : productName,
       nameKey,
       subId: orderSubId,
+      source: orderSource,
       clicks: 0,
       conversions: 0,
       commission: 0,
@@ -1597,7 +1611,7 @@ export async function listDigitalProductAffiliateProductReportForAdmin(
   if (q) {
     for (const [key, acc] of [...byKey.entries()]) {
       if (acc.conversions > 0) continue;
-      const hay = `${acc.productName} ${acc.productId ?? ""} ${acc.publisherId} ${acc.subId ?? ""}`.toLowerCase();
+      const hay = `${acc.productName} ${acc.productId ?? ""} ${acc.publisherId} ${acc.subId ?? ""} ${acc.source ?? ""}`.toLowerCase();
       if (!hay.includes(q)) byKey.delete(key);
     }
   }
@@ -1628,6 +1642,7 @@ export async function listDigitalProductAffiliateProductReportForAdmin(
         productId: acc.productId,
         productName: acc.productName,
         subId: acc.subId,
+        source: acc.source,
         clicks,
         conversions,
         conversionRate,
@@ -1642,7 +1657,9 @@ export async function listDigitalProductAffiliateProductReportForAdmin(
       if (byPub !== 0) return byPub;
       const byProduct = a.productName.localeCompare(b.productName);
       if (byProduct !== 0) return byProduct;
-      return (a.subId ?? "").localeCompare(b.subId ?? "");
+      const bySub = (a.subId ?? "").localeCompare(b.subId ?? "");
+      if (bySub !== 0) return bySub;
+      return (a.source ?? "").localeCompare(b.source ?? "");
     });
 
   const totals = allRows.reduce(
