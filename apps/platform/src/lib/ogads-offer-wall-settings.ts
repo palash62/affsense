@@ -30,6 +30,8 @@ export type OgadsOfferWallSettingsApi = {
   affiliateId: string;
   wallId: string;
   pointsRatio: number;
+  /** Ready for affiliate attribution when enabled + API key + postback secret. */
+  trackingReady: boolean;
 };
 
 export const DEFAULT_OGADS_OFFER_WALL_CONFIG: OgadsOfferWallConfig = {
@@ -98,21 +100,24 @@ export function toOgadsOfferWallSettingsApi(
   postbackUrl: string,
   postbackUrlWithMacros: string,
 ): OgadsOfferWallSettingsApi {
+  const apiKeyConfigured = Boolean(config.apiKey.trim());
+  const postbackSecretConfigured = Boolean(config.postbackSecret.trim());
   return {
     enabled: config.enabled,
     // Never return the stored API key to the browser — only a configured flag.
     apiKey: "",
-    apiKeyConfigured: Boolean(config.apiKey.trim()),
+    apiKeyConfigured,
     endpoint: config.endpoint,
     max: config.max,
     affiliatePercent: config.affiliatePercent,
     postbackSecret: "",
-    postbackSecretConfigured: Boolean(config.postbackSecret.trim()),
+    postbackSecretConfigured,
     postbackUrl,
     postbackUrlWithMacros,
     affiliateId: config.affiliateId,
     wallId: config.wallId,
     pointsRatio: config.pointsRatio,
+    trackingReady: Boolean(config.enabled && apiKeyConfigured && postbackSecretConfigured),
   };
 }
 

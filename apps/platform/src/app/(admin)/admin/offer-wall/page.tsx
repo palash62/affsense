@@ -6,6 +6,7 @@ export default function Page() {
       apiPath="/api/v1/admin/offer-wall"
       unconfiguredHint="Add the OGAds Offer API key under Platform Settings → Offer Wall."
       settingsHref="/admin/settings?section=offer-wall"
+      trackClicks={false}
     />
   );
 }

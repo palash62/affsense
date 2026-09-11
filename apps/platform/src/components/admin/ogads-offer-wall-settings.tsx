@@ -33,6 +33,7 @@ type SettingsState = {
   affiliateId: string;
   wallId: string;
   pointsRatio: number;
+  trackingReady: boolean;
 };
 
 async function copyText(text: string, label: string) {
@@ -58,7 +59,13 @@ export function OgadsOfferWallSettingsForm() {
       return;
     }
     const data = json.data as SettingsState;
-    setSettings(data);
+    setSettings({
+      ...data,
+      trackingReady: Boolean(
+        data.trackingReady ??
+          (data.enabled && data.apiKeyConfigured && data.postbackSecretConfigured),
+      ),
+    });
     setDraftApiKey("");
   }, []);
 
@@ -126,6 +133,70 @@ export function OgadsOfferWallSettingsForm() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
+      <DashboardCard>
+        <DashboardCardTitle>Affiliate tracking checklist</DashboardCardTitle>
+        <DashboardCardDescription>
+          OGAds needs your postback URL (with macros) under Tools → Postback URL. Publishers are
+          attributed via <code className="rounded bg-muted px-1">aff_sub4</code>.
+        </DashboardCardDescription>
+        <ul className="mt-4 space-y-2 text-sm">
+          <li className="flex items-center gap-2">
+            <span
+              className={
+                settings.enabled
+                  ? "font-semibold text-[var(--theme-success)]"
+                  : "font-semibold text-amber-700"
+              }
+            >
+              {settings.enabled ? "Ready" : "Missing"}
+            </span>
+            Offer Wall enabled
+          </li>
+          <li className="flex items-center gap-2">
+            <span
+              className={
+                settings.apiKeyConfigured
+                  ? "font-semibold text-[var(--theme-success)]"
+                  : "font-semibold text-amber-700"
+              }
+            >
+              {settings.apiKeyConfigured ? "Ready" : "Missing"}
+            </span>
+            Offer API key saved
+          </li>
+          <li className="flex items-center gap-2">
+            <span
+              className={
+                settings.postbackSecretConfigured
+                  ? "font-semibold text-[var(--theme-success)]"
+                  : "font-semibold text-amber-700"
+              }
+            >
+              {settings.postbackSecretConfigured ? "Ready" : "Missing"}
+            </span>
+            Postback secret generated — copy the macro URL into OGAds
+          </li>
+          <li className="flex items-center gap-2">
+            <span
+              className={
+                settings.trackingReady
+                  ? "font-semibold text-[var(--theme-success)]"
+                  : "font-semibold text-amber-700"
+              }
+            >
+              {settings.trackingReady ? "Ready" : "Blocked"}
+            </span>
+            End-to-end tracking (enable + API key + secret)
+          </li>
+        </ul>
+        {!settings.postbackSecretConfigured ? (
+          <p className="mt-3 text-xs text-amber-800">
+            Production currently has an API key but no postback secret — conversions cannot be
+            verified until you regenerate/save a secret and paste the macro URL into OGAds.
+          </p>
+        ) : null}
+      </DashboardCard>
+
       <DashboardCard>
         <DashboardCardTitle>OGAds Offer API</DashboardCardTitle>
         <DashboardCardDescription>

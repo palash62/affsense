@@ -131,7 +131,18 @@ export const ADMIN_NAV: AdminNavEntry[] = [
       ],
     },
   },
-  { kind: "item", item: { label: "Offer Wall", href: "/admin/offer-wall", icon: LayoutGrid } },
+  {
+    kind: "item",
+    item: {
+      label: "Offer Wall",
+      href: "/admin/offer-wall",
+      icon: LayoutGrid,
+      children: [
+        { label: "Browse Offers", href: "/admin/offer-wall", icon: LayoutGrid },
+        { label: "Report", href: "/admin/offer-wall/report", icon: BarChart3 },
+      ],
+    },
+  },
   { kind: "item", item: { label: "CPA Offers", href: "/admin/offer-network", icon: Store,
       children: [
         { label: "All Offers", href: "/admin/offer-network", icon: Store },
@@ -264,7 +275,18 @@ export const PUBLISHER_NAV: AdminNavEntry[] = [
       ],
     },
   },
-  { kind: "item", item: { label: "Offer Wall", href: "/publisher/offer-wall", icon: LayoutGrid } },
+  {
+    kind: "item",
+    item: {
+      label: "Offer Wall",
+      href: "/publisher/offer-wall",
+      icon: LayoutGrid,
+      children: [
+        { label: "Browse Offers", href: "/publisher/offer-wall", icon: LayoutGrid },
+        { label: "Report", href: "/publisher/offer-wall/report", icon: BarChart3 },
+      ],
+    },
+  },
   {
     kind: "item",
     item: {

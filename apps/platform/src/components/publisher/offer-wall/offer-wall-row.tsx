@@ -1,81 +1,26 @@
 "use client";
 
-import { ExternalLink } from "lucide-react";
 import { CpaOfferGeoFlags } from "@/components/cpa/cpa-offer-geo-flags";
 import { formatCurrency } from "@/components/admin/admin-ui";
+import {
+  OfferWallEarnLink,
+  type OfferWallItem,
+} from "@/components/publisher/offer-wall/offer-wall-earn-link";
 import { cn } from "@/lib/utils";
 
-export type OfferWallItem = {
-  id: string;
-  name: string;
-  payout: string;
-  type: string | null;
-  country: string | null;
-  thumbnailUrl: string | null;
-  description: string | null;
-  trackingUrl: string;
-};
-
-export function offerWallEarnClassName(featured?: boolean) {
-  return cn(
-    "inline-flex items-center justify-center rounded-md text-white transition hover:brightness-110",
-    featured ? "bg-[var(--theme-primary)]" : "bg-[var(--theme-success)]",
-  );
-}
-
-export function OfferWallEarnLink({
-  href,
-  payout,
-  featured,
-  layout = "stack",
-  stopPropagation,
-  className,
-}: {
-  href: string;
-  payout: number;
-  featured?: boolean;
-  layout?: "stack" | "bar";
-  stopPropagation?: boolean;
-  className?: string;
-}) {
-  const label = formatCurrency(payout);
-  return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      onClick={stopPropagation ? (e) => e.stopPropagation() : undefined}
-      className={cn(
-        offerWallEarnClassName(featured),
-        layout === "stack"
-          ? "min-h-11 w-full flex-col px-3 py-2 text-center"
-          : "h-11 w-full gap-2 px-4 text-sm font-semibold",
-        className,
-      )}
-    >
-      {layout === "stack" ? (
-        <>
-          <span className="text-[11px] font-medium leading-none opacity-90">Earn</span>
-          <span className="mt-0.5 text-sm font-bold tabular-nums leading-tight">{label}</span>
-        </>
-      ) : (
-        <>
-          Earn {label}
-          <ExternalLink className="h-4 w-4" />
-        </>
-      )}
-    </a>
-  );
-}
+export type { OfferWallItem };
+export { OfferWallEarnLink, offerWallEarnClassName } from "@/components/publisher/offer-wall/offer-wall-earn-link";
 
 export function OfferWallRow({
   offer,
   featured,
   onSelect,
+  trackClicks = true,
 }: {
   offer: OfferWallItem;
   featured?: boolean;
   onSelect: () => void;
+  trackClicks?: boolean;
 }) {
   const payout = Number(offer.payout) || 0;
   const letter = (offer.name.trim()[0] || "?").toUpperCase();
@@ -131,10 +76,11 @@ export function OfferWallRow({
       <div className="flex shrink-0 flex-col items-stretch sm:w-[132px] sm:items-center">
         {offer.trackingUrl ? (
           <OfferWallEarnLink
-            href={offer.trackingUrl}
+            offer={offer}
             payout={payout}
             featured={featured}
             stopPropagation
+            trackClicks={trackClicks}
           />
         ) : (
           <span className="inline-flex min-h-11 w-full flex-col items-center justify-center rounded-md bg-muted px-3 py-2 text-center text-muted-foreground">

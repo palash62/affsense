@@ -338,6 +338,7 @@ model User {
   reviewedCpaOfferAccessRequests PublisherCpaOfferAccess[] @relation("ReviewedCpaOfferAccess")
   webhookEvents            WebhookEvent[] @relation("WebhookEventPublisher")
   offerwallConversions     OfferwallConversion[]
+  offerwallClicks          OfferwallClick[]
   digitalProductPostbackDeliveries DigitalProductPostbackDelivery[]
   publisherDigitalProductClicks DigitalProductClick[] @relation("PublisherDigitalProductClicks")
   promotion              Promotion? @relation(fields: [promotionId], references: [id], onDelete: SetNull)
@@ -2130,12 +2131,33 @@ model DigitalProductPostbackDelivery {
   @@map("digital_product_postback_deliveries")
 }
 
+model OfferwallClick {
+  id          String   @id @default(cuid())
+  publisherId String   @map("publisher_id")
+  offerId     String   @map("offer_id")
+  offerName   String?  @map("offer_name")
+  subId       String?  @map("sub_id")
+  src         String?
+  ip          String?
+  userAgent   String?  @map("user_agent") @db.Text
+  createdAt   DateTime @default(now()) @map("created_at")
+  publisher   User     @relation(fields: [publisherId], references: [id], onDelete: Cascade)
+
+  @@index([publisherId, createdAt])
+  @@index([offerId, createdAt])
+  @@index([subId])
+  @@map("offerwall_clicks")
+}
+
 model OfferwallConversion {
   id            String   @id @default(cuid())
   publisherId   String   @map("publisher_id")
   offerId       String   @map("offer_id")
   externalKey   String   @unique @map("external_key")
   payout        Decimal  @db.Decimal(12, 4)
+  networkPayout Decimal? @map("network_payout") @db.Decimal(12, 4)
+  subId         String?  @map("sub_id")
+  clickId       String?  @map("click_id")
   ip            String?
   rawQuery      Json?    @map("raw_query")
   createdAt     DateTime @default(now()) @map("created_at")
@@ -2143,5 +2165,6 @@ model OfferwallConversion {
 
   @@index([publisherId, createdAt])
   @@index([offerId])
+  @@index([subId])
   @@map("offerwall_conversions")
 }

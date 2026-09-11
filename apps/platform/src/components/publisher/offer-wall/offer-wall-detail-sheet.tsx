@@ -18,11 +18,13 @@ export function OfferWallDetailSheet({
   featured,
   open,
   onOpenChange,
+  trackClicks = true,
 }: {
   offer: OfferWallItem | null;
   featured?: boolean;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  trackClicks?: boolean;
 }) {
   const payout = Number(offer?.payout) || 0;
   const letter = (offer?.name.trim()[0] || "?").toUpperCase();
@@ -99,10 +101,11 @@ export function OfferWallDetailSheet({
         <SheetFooter className="sticky bottom-0 border-t border-border bg-popover">
           {offer?.trackingUrl ? (
             <OfferWallEarnLink
-              href={offer.trackingUrl}
+              offer={offer}
               payout={payout}
               featured={featured}
               layout="bar"
+              trackClicks={trackClicks}
             />
           ) : (
             <span className="inline-flex h-11 w-full items-center justify-center rounded-md bg-muted text-sm font-semibold text-muted-foreground">

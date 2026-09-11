@@ -37,6 +37,8 @@ export function buildOgadsPostbackUrlWithMacros(secret?: string) {
     "offer_id={offer_id}",
     "payout={payout}",
     "aff_sub4={aff_sub4}",
+    "aff_sub={aff_sub}",
+    "aff_sub2={aff_sub2}",
     "ip={session_ip}",
     "transaction_id={transaction_id}",
   ].join("&");

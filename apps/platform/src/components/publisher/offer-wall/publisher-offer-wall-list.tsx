@@ -35,10 +35,12 @@ export function PublisherOfferWallList({
   apiPath = "/api/v1/publisher/offer-wall",
   unconfiguredHint = PUBLISHER_UNCONFIGURED_HINT,
   settingsHref,
+  trackClicks = true,
 }: {
   apiPath?: string;
   unconfiguredHint?: string;
   settingsHref?: string;
+  trackClicks?: boolean;
 }) {
   const [items, setItems] = useState<OfferWallItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -233,6 +235,7 @@ export function PublisherOfferWallList({
               offer={offer}
               featured={offer.id === featuredId}
               onSelect={() => setSelected(offer)}
+              trackClicks={trackClicks}
             />
           ))}
         </div>
@@ -245,6 +248,7 @@ export function PublisherOfferWallList({
       onOpenChange={(open) => {
         if (!open) setSelected(null);
       }}
+      trackClicks={trackClicks}
     />
     </>
   );

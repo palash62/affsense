@@ -40,7 +40,7 @@ export async function handleOgadsOfferWallPostback(request: Request) {
     throw new AppError("UNAUTHORIZED", "Invalid postback secret", 401);
   }
 
-  const publisherId = pickParam(searchParams, "aff_sub4", "aff_sub", "user_id", "userid");
+  const publisherId = pickParam(searchParams, "aff_sub4", "user_id", "userid");
   const offerId = pickParam(searchParams, "offer_id", "offerid", "oid") ?? "unknown";
   const payoutRaw = pickParam(searchParams, "payout", "amount", "revenue") ?? "0";
   const ip = pickParam(searchParams, "ip", "session_ip");
@@ -52,6 +52,9 @@ export async function handleOgadsOfferWallPostback(request: Request) {
     "conversion_id",
     "event_id",
   );
+  // aff_sub is reserved for Affsense click id; aff_sub2 / sub_id for publisher sub IDs.
+  const clickId = pickParam(searchParams, "aff_sub");
+  const subId = pickParam(searchParams, "aff_sub2", "sub_id", "subid", "sid");
 
   if (!publisherId) {
     throw Errors.validation("aff_sub4 (publisher id) is required");
@@ -72,9 +75,10 @@ export async function handleOgadsOfferWallPostback(request: Request) {
 
   const payout = applyOfferWallAffiliatePayout(networkPayout, config.affiliatePercent);
 
+  // Prefer network txn id. Fallback includes IP so same-day multi-converts are less likely to collide.
   const externalKey =
     txnId ??
-    `${publisherId}:${offerId}:${dayBucket()}:${networkPayout.toFixed(4)}`;
+    `${publisherId}:${offerId}:${dayBucket()}:${networkPayout.toFixed(4)}:${ip ?? "noip"}`;
 
   const existing = await prisma.offerwallConversion.findUnique({
     where: { externalKey },
@@ -100,6 +104,9 @@ export async function handleOgadsOfferWallPostback(request: Request) {
           offerId,
           externalKey,
           payout,
+          networkPayout,
+          subId,
+          clickId,
           ip,
           rawQuery,
         },
