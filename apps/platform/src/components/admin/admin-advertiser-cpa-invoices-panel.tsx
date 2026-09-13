@@ -114,7 +114,7 @@ export function AdminAdvertiserCpaInvoicesPanel() {
                   <TableCell className="px-4 font-mono text-xs">{invoice.number}</TableCell>
                   <TableCell className="px-4 text-sm">{invoice.advertiserName}</TableCell>
                   <TableCell className="px-4 text-right tabular-nums">
-                    {formatCurrency(invoice.total)}
+                    {formatCurrency(Number(invoice.total))}
                   </TableCell>
                   <TableCell className="px-4">
                     <AffiliateInvoiceStatusBadge status={invoice.status} />

@@ -106,7 +106,7 @@ export function AdvertiserCpaInvoicesList({ timezone = "UTC" }: { timezone?: str
                           {formatUserDateTime(invoice.dueAt, timezone, "MMM d, yyyy")}
                         </TableCell>
                         <TableCell className="px-4 py-4 text-right font-semibold tabular-nums text-foreground">
-                          {formatCurrency(invoice.total)}
+                          {formatCurrency(Number(invoice.total))}
                         </TableCell>
                         <TableCell className="px-4 py-4">
                           <AffiliateInvoiceStatusBadge status={invoice.status} />
@@ -125,7 +125,7 @@ export function AdvertiserCpaInvoicesList({ timezone = "UTC" }: { timezone?: str
                                     {line.description} ({line.conversionCount} conv.)
                                   </span>
                                   <span className="font-medium tabular-nums">
-                                    {formatCurrency(line.amount)}
+                                    {formatCurrency(Number(line.amount))}
                                   </span>
                                 </li>
                               ))}
