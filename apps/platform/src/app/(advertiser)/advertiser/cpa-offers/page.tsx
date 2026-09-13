@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
-import { AdvertiserCpaOffersMarketplace } from "@/components/advertiser/advertiser-cpa-offers-marketplace";
+import { canAdvertiserAccessCpaOffers } from "@/lib/cpa-offers-access";
+import { AdvertiserCpaOffersList } from "@/components/advertiser/advertiser-cpa-offers-list";
 
 export const dynamic = "force-dynamic";
 
@@ -9,6 +10,9 @@ export default async function AdvertiserCpaOffersPage() {
   if (!session?.user?.id || session.user.role !== "ADVERTISER") {
     redirect("/login");
   }
+  if (!canAdvertiserAccessCpaOffers(session.user.email)) {
+    redirect("/advertiser");
+  }
 
-  return <AdvertiserCpaOffersMarketplace />;
+  return <AdvertiserCpaOffersList />;
 }

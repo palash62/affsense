@@ -25,6 +25,7 @@ export async function GET(request: Request) {
     const parsed = cpaOfferListQuerySchema.safeParse({
       q: searchParams.get("q") ?? undefined,
       id: searchParams.get("id") ?? undefined,
+      status: searchParams.get("status") ?? undefined,
       network: searchParams.get("network") ?? undefined,
       category: searchParams.get("category") ?? undefined,
       country: searchParams.get("country") ?? undefined,
@@ -94,8 +95,9 @@ export async function POST(request: Request) {
       advertiserLabel: user?.advertiserProfile?.company || user?.name || "Advertiser",
       createdByUserId: session.user.id,
       ownerAdvertiserId: session.user.id,
-      details: { ...details, publishRequested: details.publishRequested === true },
-      status: "PAUSED",
+      details: { ...details, publishRequested: false },
+      status: parsed.data.status ?? "ACTIVE",
+      visibility: parsed.data.visibility ?? "PUBLIC",
     });
 
     return Response.json({ data }, { status: 201 });

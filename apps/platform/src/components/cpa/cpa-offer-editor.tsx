@@ -147,15 +147,6 @@ const AVAILABLE_MACROS = [
   { token: "{source}", description: "Traffic source" },
 ];
 
-const REVENUE_FROM_PAYOUT: Record<CpaPayoutModel, "RPA" | "RPS" | "RPC" | "RPI" | "RPL" | "RPM"> = {
-  CPA: "RPA",
-  CPS: "RPS",
-  CPC: "RPC",
-  CPI: "RPI",
-  CPL: "RPL",
-  CPM: "RPM",
-};
-
 function conversionLabel(model: CpaPayoutModel) {
   return CONVERSION_TYPE_OPTIONS.find((opt) => opt.value === model)?.label ?? model;
 }
@@ -381,9 +372,10 @@ export function CpaOfferEditor({
       values.trackingUrl.trim().length >= 1 &&
       Number.isFinite(payoutAmount) &&
       payoutAmount > 0 &&
+      Number.isFinite(revenueAmount) &&
+      revenueAmount > 0 &&
       (role === "ADVERTISER" || values.ownerAdvertiserId.trim().length >= 1);
-    if (role !== "ADMIN") return baseOk;
-    return baseOk && Number.isFinite(revenueAmount) && revenueAmount > 0;
+    return baseOk;
   }, [values, payoutAmount, revenueAmount, role]);
 
   const trackingPreview = useMemo(() => {
@@ -396,14 +388,7 @@ export function CpaOfferEditor({
     return `${base}${base.includes("?") ? "&" : "?"}${query}`;
   }, [values.trackingUrl, values.urlParams]);
 
-  const statusLabel =
-    role === "ADVERTISER"
-      ? values.statusActive
-        ? "Pending review"
-        : "Draft"
-      : values.statusActive
-        ? "Active"
-        : "Draft";
+  const statusLabel = values.statusActive ? "Active" : "Draft";
 
   function patch(next: Partial<EditorValues>) {
     setValues((prev) => ({ ...prev, ...next }));
@@ -412,9 +397,7 @@ export function CpaOfferEditor({
   function buildPayload(publish: boolean) {
     const payout = Number(values.payout);
     const revenue = Number(values.revenue);
-    const publishRequested = role === "ADVERTISER" && publish;
-    const status =
-      role === "ADMIN" ? (publish ? "ACTIVE" : "PAUSED") : "PAUSED";
+    const status = publish ? "ACTIVE" : "PAUSED";
     if (role === "ADMIN") {
       const selected = advertisers.find((a) => a.id === values.ownerAdvertiserId);
       return {
@@ -429,7 +412,7 @@ export function CpaOfferEditor({
         previewUrl: values.trackingUrl.trim() || "#",
         thumbnailUrl: values.thumbnailUrl.trim() || null,
         description: values.description.trim() || null,
-        details: buildDetails(values, publishRequested),
+        details: buildDetails(values, false),
         payoutModel: values.payoutModel,
         revenueModel: values.revenueModel,
         payoutType: values.payoutType,
@@ -448,13 +431,14 @@ export function CpaOfferEditor({
       previewUrl: values.trackingUrl.trim() || "#",
       thumbnailUrl: values.thumbnailUrl.trim() || null,
       description: values.description.trim() || null,
-      details: buildDetails(values, publishRequested),
+      details: buildDetails(values, false),
       payoutModel: values.payoutModel,
-      revenueModel: REVENUE_FROM_PAYOUT[values.payoutModel],
-      payoutType: "FLAT" as const,
-      revenue: payout,
+      revenueModel: values.revenueModel,
+      payoutType: values.payoutType,
+      revenue,
       payout,
       status,
+      visibility: values.visibility,
     };
   }
 
@@ -487,9 +471,7 @@ export function CpaOfferEditor({
       if (!res.ok) {
         throw new Error(readApiErrorMessage(body, "Unable to save offer", res.status));
       }
-      if (role === "ADVERTISER" && publish) {
-        toast.success("Offer submitted for admin review");
-      } else if (publish) {
+      if (publish) {
         toast.success(mode === "edit" ? "Offer published" : "Offer created and published");
       } else {
         toast.success(mode === "edit" ? "Draft saved" : "Draft created");
@@ -626,12 +608,13 @@ export function CpaOfferEditor({
           </SectionCard>
 
           <SectionCard step={2} title="Offer Details">
-            {role === "ADMIN" ? (
-              <div className="space-y-4 rounded-xl border border-border bg-muted/20 p-4">
+            <div className="space-y-4 rounded-xl border border-border bg-muted/20 p-4">
                 <div>
                   <h3 className="text-sm font-semibold text-foreground">Payout</h3>
                   <p className="text-xs text-muted-foreground">
-                    Revenue from advertiser and payout to affiliates.
+                    {role === "ADMIN"
+                      ? "Revenue from advertiser and payout to affiliates."
+                      : "Your cost (revenue) and affiliate payout for this offer."}
                   </p>
                 </div>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -745,42 +728,7 @@ export function CpaOfferEditor({
                   </Field>
                 </div>
               </div>
-            ) : null}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {role === "ADVERTISER" ? (
-                <>
-                  <Field label="Payout Amount (USD)" required>
-                    <Input
-                      className="h-10 w-full"
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={values.payout}
-                      onChange={(e) => patch({ payout: e.target.value })}
-                      placeholder="25.00"
-                    />
-                  </Field>
-                  <Field label="Conversion Type">
-                    <Select
-                      value={values.payoutModel}
-                      onValueChange={(value) =>
-                        value && patch({ payoutModel: value as CpaPayoutModel })
-                      }
-                    >
-                      <SelectTrigger className="h-10 w-full bg-card">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {CONVERSION_TYPE_OPTIONS.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </Field>
-                </>
-              ) : null}
               <Field label="Approval Time">
                 <Select
                   value={values.approvalTime}
@@ -851,8 +799,7 @@ export function CpaOfferEditor({
                 />
               </button>
             </div>
-            {role === "ADMIN" ? (
-              <Field label="Affiliate Visibility" hint="Private offers require affiliate approval before they can promote.">
+            <Field label="Affiliate Visibility" hint="Private offers require affiliate approval before they can promote.">
                 <Select
                   value={values.visibility}
                   onValueChange={(value) =>
@@ -868,7 +815,6 @@ export function CpaOfferEditor({
                   </SelectContent>
                 </Select>
               </Field>
-            ) : null}
           </SectionCard>
 
           <SectionCard step={3} title="Targeting & Restrictions">
@@ -1223,9 +1169,7 @@ export function CpaOfferEditor({
             <Send className="h-4 w-4" />
             {saving === "publish"
               ? "Publishing…"
-              : role === "ADVERTISER"
-                ? "Submit for Review"
-                : "Save & Publish Offer"}
+              : "Save & Publish Offer"}
           </Button>
         </div>
       </div>

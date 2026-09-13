@@ -2,7 +2,7 @@ import { withAuth, parsePagination } from "@/lib/api-handler";
 import { canAdvertiserAccessCpaOffers } from "@/lib/cpa-offers-access";
 import { errorResponse } from "@/lib/errors";
 import { cpaConversionListQuerySchema } from "@/lib/validations";
-import { listCpaConversionsForAdvertiserOwner } from "@/services/cpa-offer.service";
+import { listCpaClicksForAdvertiserOwner } from "@/services/cpa-offer.service";
 
 export async function GET(request: Request) {
   return withAuth(async (session) => {
@@ -45,11 +45,10 @@ export async function GET(request: Request) {
         );
       }
 
-      const data = await listCpaConversionsForAdvertiserOwner(session.user.id, parsed.data);
+      const data = await listCpaClicksForAdvertiserOwner(session.user.id, parsed.data);
       return Response.json({ data });
     } catch (error) {
       return errorResponse(error);
     }
   }, ["ADVERTISER"]);
 }
-

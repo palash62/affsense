@@ -1,11 +1,11 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { canAdvertiserAccessCpaOffers } from "@/lib/cpa-offers-access";
-import { AdvertiserCpaAffiliateOfferReport } from "@/components/advertiser/advertiser-cpa-affiliate-offer-report";
+import { AdvertiserCpaOffersReportLog } from "@/components/advertiser/advertiser-cpa-offers-report-log";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdvertiserCpaOffersReportPage() {
+export default async function AdvertiserCpaOffersReportLogPage() {
   const session = await getSession();
   if (!session?.user?.id || session.user.role !== "ADVERTISER") {
     redirect("/login");
@@ -15,5 +15,5 @@ export default async function AdvertiserCpaOffersReportPage() {
     redirect("/advertiser/cpa-offers");
   }
 
-  return <AdvertiserCpaAffiliateOfferReport />;
+  return <AdvertiserCpaOffersReportLog />;
 }

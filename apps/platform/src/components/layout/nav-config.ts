@@ -72,9 +72,10 @@ export const ADMIN_LEGACY_NAV: NavItem[] = [
     children: [
       { label: "Dashboard", href: "/admin/cpa-offers", icon: LayoutDashboard },
       { label: "All Offers", href: "/admin/cpa-offers/offers", icon: Store },
-      { label: "Report", href: "/admin/cpa-offers/report", icon: BarChart3 },
-      { label: "Report Log", href: "/admin/cpa-offers/report-log", icon: ScrollText },
-      { label: "CPA Payouts", href: "/admin/cpa-offers/payouts", icon: Banknote },
+        { label: "Report", href: "/admin/cpa-offers/report", icon: BarChart3 },
+        { label: "Report Log", href: "/admin/cpa-offers/report-log", icon: ScrollText },
+        { label: "Advertiser Invoices", href: "/admin/cpa-offers/advertiser-invoices", icon: Receipt },
+        { label: "CPA Payouts", href: "/admin/cpa-offers/payouts", icon: Banknote },
       { label: "CPA Postback", href: "/admin/settings?section=cpa-postback", icon: Webhook },
     ],
   },
@@ -151,6 +152,7 @@ export const ADMIN_NAV: AdminNavEntry[] = [
         { label: "Offer Requests", href: "/admin/offer-network/requests", icon: ClipboardList },
         { label: "Report", href: "/admin/cpa-offers/report", icon: BarChart3 },
         { label: "Report Log", href: "/admin/cpa-offers/report-log", icon: ScrollText },
+        { label: "Advertiser Invoices", href: "/admin/cpa-offers/advertiser-invoices", icon: Receipt },
       ],
     },
   },
@@ -218,19 +220,18 @@ export const ADVERTISER_NAV: NavItem[] = [
     label: "CPA Offers",
     href: "/advertiser/cpa-offers",
     icon: Store,
-      children: [
-        { label: "Offer Marketplace", href: "/advertiser/cpa-offers", icon: Store },
-        { label: "Add New Offer", href: "/advertiser/cpa-offers/new", icon: Plus },
-        { label: "Dashboard", href: "/advertiser/cpa-offers/dashboard", icon: LayoutDashboard },
+    children: [
+      { label: "My Offers", href: "/advertiser/cpa-offers", icon: Store },
+      { label: "Add New Offer", href: "/advertiser/cpa-offers/new", icon: Plus },
       { label: "Report", href: "/advertiser/cpa-offers/report", icon: BarChart3 },
-      { label: "Wallet", href: "/advertiser/cpa-offers/wallet", icon: Wallet },
-      { label: "Global Postback", href: "/advertiser/global-postback", icon: Webhook },
+      { label: "Report Log", href: "/advertiser/cpa-offers/report-log", icon: ScrollText },
     ],
   },
   { label: "Integrations", href: "/advertiser/integrations", icon: Plug },
   { label: "Lead Report", href: "/advertiser/lead-report", icon: BarChart3 },
   { label: "Lead Details", href: "/advertiser/lead-details", icon: FileText },
   { label: "Wallet", href: "/advertiser/wallet", icon: Wallet },
+  { label: "Invoices", href: "/advertiser/invoices", icon: Receipt },
   { label: "Referrals", href: "/advertiser/referal_link", icon: Gift },
   { label: "Reports", href: "/advertiser/reports", icon: BarChart3 },
   { label: "Support", href: "/advertiser/support", icon: LifeBuoy },
@@ -387,7 +388,10 @@ export function getNavForRole(
     case "ADVERTISER": {
       let items = ADVERTISER_NAV;
       if (options?.canAccessCpaOffers === false) {
-        items = items.filter((item) => item.href !== "/advertiser/cpa-offers");
+        items = items.filter(
+          (item) =>
+            item.href !== "/advertiser/cpa-offers" && item.href !== "/advertiser/invoices",
+        );
       }
       if (options?.canAccessAutoresponder === false) {
         items = items.filter((item) => item.href !== "/advertiser/email");

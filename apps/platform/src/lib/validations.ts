@@ -1261,7 +1261,6 @@ export const adminCpaOfferUpdateSchema = z.object({
 export const advertiserCpaOfferCreateSchema = adminCpaOfferCreateSchema.omit({
   advertiserLabel: true,
   ownerAdvertiserId: true,
-  status: true,
 });
 
 export const cpaOfferListQuerySchema = z.object({

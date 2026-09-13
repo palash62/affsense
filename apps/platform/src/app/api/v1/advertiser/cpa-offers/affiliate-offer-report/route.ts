@@ -2,7 +2,7 @@ import { withAuth, parsePagination } from "@/lib/api-handler";
 import { canAdvertiserAccessCpaOffers } from "@/lib/cpa-offers-access";
 import { errorResponse } from "@/lib/errors";
 import { cpaConversionListQuerySchema } from "@/lib/validations";
-import { listCpaConversionsForAdvertiserOwner } from "@/services/cpa-offer.service";
+import { listCpaAffiliateOfferReportForAdvertiserOwner } from "@/services/cpa-offer.service";
 
 export async function GET(request: Request) {
   return withAuth(async (session) => {
@@ -15,13 +15,21 @@ export async function GET(request: Request) {
             page: 1,
             limit: 20,
             totalPages: 1,
+            stats: {
+              clicks: 0,
+              conversions: 0,
+              conversionRate: 0,
+              epc: "0.00",
+              payout: "0.00",
+              revenue: "0.00",
+              profit: "0.00",
+            },
           },
         });
       }
 
       const { searchParams } = new URL(request.url);
       const { page, limit } = parsePagination(searchParams);
-
       const parsed = cpaConversionListQuerySchema.safeParse({
         q: searchParams.get("q") ?? undefined,
         offerId: searchParams.get("offerId") ?? undefined,
@@ -45,11 +53,18 @@ export async function GET(request: Request) {
         );
       }
 
-      const data = await listCpaConversionsForAdvertiserOwner(session.user.id, parsed.data);
+      const data = await listCpaAffiliateOfferReportForAdvertiserOwner(session.user.id, {
+        q: parsed.data.q,
+        offerId: parsed.data.offerId,
+        subId: parsed.data.subId,
+        from: parsed.data.from,
+        to: parsed.data.to,
+        page: parsed.data.page,
+        limit: parsed.data.limit,
+      });
       return Response.json({ data });
     } catch (error) {
       return errorResponse(error);
     }
   }, ["ADVERTISER"]);
 }
-

@@ -327,6 +327,7 @@ model User {
   cpaOfferConversions      CpaOfferConversion[]
   createdCpaOffers         CpaOffer[]           @relation("CpaOfferCreatedBy")
   ownedCpaOffers           CpaOffer[]           @relation("AdvertiserOwnedCpaOffers")
+  advertiserCpaInvoices    AdvertiserCpaInvoice[] @relation("AdvertiserCpaInvoices")
   advertiserGlobalPostback AdvertiserGlobalPostback?
   publisherPostbacks       PublisherPostback[]
   publisherPostbackDeliveries PublisherPostbackDelivery[]
@@ -743,6 +744,53 @@ model AffiliateInvoiceLine {
 
   @@index([invoiceId])
   @@map("affiliate_invoice_lines")
+}
+
+/// AR invoice: amounts an offer-owner advertiser owes for CPA conversions on their offers.
+model AdvertiserCpaInvoice {
+  id               String                 @id @default(cuid())
+  number           String                 @unique
+  advertiserId     String                 @map("advertiser_id")
+  periodStart      DateTime               @map("period_start")
+  periodEnd        DateTime               @map("period_end")
+  periodKey        String?                @map("period_key")
+  issuedAt         DateTime               @map("issued_at")
+  dueAt            DateTime               @map("due_at")
+  subtotal         Decimal                @db.Decimal(12, 4)
+  total            Decimal                @db.Decimal(12, 4)
+  currency         String                 @default("USD")
+  status           AffiliateInvoiceStatus @default(UNPAID)
+  paidAt           DateTime?              @map("paid_at")
+  paymentMethod    PayoutMethod?          @map("payment_method")
+  paymentReference String?                @map("payment_reference")
+  adminNote        String?                @db.Text @map("admin_note")
+  cancelReason     String?                @db.Text @map("cancel_reason")
+  createdAt        DateTime               @default(now()) @map("created_at")
+  updatedAt        DateTime               @updatedAt @map("updated_at")
+
+  advertiser   User                      @relation("AdvertiserCpaInvoices", fields: [advertiserId], references: [id], onDelete: Cascade)
+  lines        AdvertiserCpaInvoiceLine[]
+  conversions  CpaOfferConversion[]
+
+  @@unique([advertiserId, periodKey])
+  @@index([status, dueAt])
+  @@index([advertiserId, issuedAt])
+  @@index([issuedAt])
+  @@map("advertiser_cpa_invoices")
+}
+
+model AdvertiserCpaInvoiceLine {
+  id               String  @id @default(cuid())
+  invoiceId        String  @map("invoice_id")
+  offerId          String? @map("offer_id")
+  description      String
+  conversionCount  Int     @map("conversion_count")
+  amount           Decimal @db.Decimal(12, 4)
+
+  invoice AdvertiserCpaInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
+  @@map("advertiser_cpa_invoice_lines")
 }
 
 model Deposit {
@@ -1662,16 +1710,19 @@ model CpaOfferConversion {
   clickRecordId String?  @map("click_record_id")
   payout        Decimal? @db.Decimal(10, 2)
   rawQuery      Json?    @map("raw_query")
+  advertiserInvoiceId String? @map("advertiser_invoice_id")
   createdAt     DateTime @default(now()) @map("created_at")
   offer         CpaOffer @relation(fields: [offerId], references: [id], onDelete: Cascade)
   advertiser    User?    @relation(fields: [advertiserId], references: [id], onDelete: SetNull)
   clickRecord   CpaOfferClick? @relation(fields: [clickRecordId], references: [id], onDelete: SetNull)
+  advertiserInvoice AdvertiserCpaInvoice? @relation(fields: [advertiserInvoiceId], references: [id], onDelete: SetNull)
   deliveries    CpaPostbackDelivery[]
   cpaEarning    CpaEarning?
 
   @@index([offerId, createdAt])
   @@index([advertiserId, createdAt])
   @@index([clickRecordId])
+  @@index([advertiserInvoiceId])
   @@map("cpa_offer_conversions")
 }
 
