@@ -3,7 +3,6 @@ export const dynamic = "force-dynamic";
 import { Suspense } from "react";
 import { DollarSign, FileText, LineChart, Megaphone, Wallet } from "lucide-react";
 import { getSession } from "@/lib/session";
-import { canAdvertiserAccessAutoresponder } from "@/lib/autoresponder-access";
 import { ADVERTISER_PERIODS, parseAdvertiserPeriod } from "@/lib/advertiser-periods";
 import { ensureReferralCode } from "@/services/referral.service";
 import { getAdvertiserDashboardData } from "@/services/report.service";
@@ -21,13 +20,11 @@ import {
 } from "@/components/admin/affsense-dashboard/dashboard-card";
 import { AnnouncementsFeed } from "@/components/announcements/announcements-feed";
 import { AdvertiserDashboardAlerts } from "@/components/advertiser/advertiser-dashboard-alerts";
-import { AutoresponderAnnouncementBanner } from "@/components/advertiser/autoresponder-announcement-banner";
 import {
   AdvertiserPendingQueue,
   AdvertiserSummaryTable,
 } from "@/components/advertiser/advertiser-dashboard-panels";
 import { LeadsTrendChart } from "@/components/dashboard/dashboard-charts";
-import { ButtonLink } from "@/components/ui/button-link";
 
 interface PageProps {
   searchParams: Promise<{ period?: string }>;
@@ -46,7 +43,6 @@ export default async function AdvertiserDashboardPage({ searchParams }: PageProp
     listPublishedAnnouncements("ADVERTISER", 6),
   ]);
   const firstName = session?.user?.name?.split(" ")[0] ?? "Advertiser";
-  const showAutoresponderAnnouncement = canAdvertiserAccessAutoresponder(session?.user?.email);
 
   return (
     <div className="space-y-5">
@@ -57,28 +53,17 @@ export default async function AdvertiserDashboardPage({ searchParams }: PageProp
         action={{ label: "Create Campaign", href: "/advertiser/campaigns/new", icon: Megaphone }}
       />
 
-      {showAutoresponderAnnouncement ? <AutoresponderAnnouncementBanner /> : null}
-
       <AdvertiserDashboardAlerts alerts={alerts} />
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Suspense fallback={<div className="h-9 w-36 animate-pulse rounded-lg bg-muted" />}>
           <AdvertiserPeriodFilter current={period} />
         </Suspense>
-        <div className="flex items-center gap-3">
-          <div className="rounded-[18px] border border-border border-t-[3px] border-t-emerald-500 bg-card px-5 py-3 shadow-sm">
-            <p className="text-xs font-medium text-muted-foreground">Wallet Balance</p>
-            <p className="text-xl font-bold tracking-tight text-[var(--theme-primary)]">
-              {formatCurrency(data.walletBalance)}
-            </p>
-          </div>
-          <ButtonLink
-            href="/advertiser/wallet"
-            className="h-9 rounded-lg bg-[var(--theme-primary)] px-4 text-sm hover:opacity-90"
-          >
-            <Wallet className="mr-1.5 h-4 w-4" />
-            Add Funds
-          </ButtonLink>
+        <div className="rounded-[18px] border border-border border-t-[3px] border-t-emerald-500 bg-card px-5 py-3 shadow-sm">
+          <p className="text-xs font-medium text-muted-foreground">Wallet Balance</p>
+          <p className="text-xl font-bold tracking-tight text-[var(--theme-primary)]">
+            {formatCurrency(data.walletBalance)}
+          </p>
         </div>
       </div>
 

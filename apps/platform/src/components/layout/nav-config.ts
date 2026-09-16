@@ -16,14 +16,11 @@ import {
   Link2,
   TrendingUp,
   Gift,
-  LayoutTemplate,
   FileStack,
   Palette,
   ShieldAlert,
-  Plug,
   Mail,
   PlayCircle,
-  Globe,
   Store,
   Webhook,
   UserCog,
@@ -213,9 +210,6 @@ export const ADMIN_NAV: AdminNavEntry[] = [
 
 export const ADVERTISER_NAV: NavItem[] = [
   { label: "Dashboard", href: "/advertiser", icon: LayoutDashboard },
-  { label: "Domains", href: "/advertiser/domains", icon: Globe },
-  { label: "Funnels", href: "/advertiser/optin-funnels", icon: LayoutTemplate },
-  { label: "Campaigns", href: "/advertiser/campaigns", icon: Megaphone },
   {
     label: "CPA Offers",
     href: "/advertiser/cpa-offers",
@@ -227,17 +221,12 @@ export const ADVERTISER_NAV: NavItem[] = [
       { label: "Report Log", href: "/advertiser/cpa-offers/report-log", icon: ScrollText },
     ],
   },
-  { label: "Integrations", href: "/advertiser/integrations", icon: Plug },
-  { label: "Lead Report", href: "/advertiser/lead-report", icon: BarChart3 },
-  { label: "Lead Details", href: "/advertiser/lead-details", icon: FileText },
   { label: "Wallet", href: "/advertiser/wallet", icon: Wallet },
   { label: "Invoices", href: "/advertiser/invoices", icon: Receipt },
   { label: "Referrals", href: "/advertiser/referal_link", icon: Gift },
-  { label: "Reports", href: "/advertiser/reports", icon: BarChart3 },
   { label: "Support", href: "/advertiser/support", icon: LifeBuoy },
   { label: "Tutorials", href: "/advertiser/tutorials", icon: PlayCircle },
   { label: "Settings", href: "/advertiser/settings", icon: Settings },
-  { label: "Autoresponder", href: "/advertiser/email", icon: Mail },
 ];
 
 export const PUBLISHER_LEGACY_NAV: NavItem[] = [

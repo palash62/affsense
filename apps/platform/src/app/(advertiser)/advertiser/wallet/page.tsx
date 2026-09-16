@@ -1,13 +1,11 @@
 export const dynamic = "force-dynamic";
 
 import { Suspense } from "react";
-import Link from "next/link";
 import { formatUserDateTime } from "@/lib/user-timezone";
-import { History, Mail, Plus, Wallet } from "lucide-react";
+import { History, Plus, Wallet } from "lucide-react";
 import { getSession } from "@/lib/session";
 import { getWalletBalance, listUserDeposits } from "@/services/wallet.service";
-import { getEmailWalletSnapshot } from "@/modules/email-marketing";
-import { GradientStatCard, NeutralStatCard } from "@/components/admin/gradient-stat-card";
+import { GradientStatCard } from "@/components/admin/gradient-stat-card";
 import { PageSection } from "@/components/admin/page-section";
 import { DepositStatusBadge, formatCurrency } from "@/components/admin/admin-ui";
 import { WalletRechargePanel } from "@/components/advertiser/wallet-recharge-panel";
@@ -38,10 +36,9 @@ export default async function WalletPage({ searchParams }: PageProps) {
   const page = Math.max(1, parseInt(params.page ?? "1", 10));
   const limit = 10;
 
-  const [balance, deposits, emailWallet] = await Promise.all([
+  const [balance, deposits] = await Promise.all([
     getWalletBalance(session!.user.id),
     listUserDeposits(session!.user.id, { page, limit }),
-    getEmailWalletSnapshot(session!.user.id),
   ]);
 
   const wallet = balance ?? {
@@ -60,27 +57,13 @@ export default async function WalletPage({ searchParams }: PageProps) {
         action={{ label: "Add Funds", href: "#add-funds", icon: Plus }}
       />
 
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-2">
         <GradientStatCard
           variant="revenue"
           label="Available Balance"
           value={formatCurrency(wallet.availableBalance)}
           icon={Wallet}
         />
-        <Link
-          href="/advertiser/email/wallet"
-          className="block rounded-2xl outline-none ring-offset-2 transition hover:opacity-95 focus-visible:ring-2 focus-visible:ring-[var(--theme-primary)]"
-        >
-          <NeutralStatCard
-            label="Autoresponder wallet"
-            value={formatCurrency(emailWallet.balance)}
-            icon={Mail}
-            accent="purple"
-          />
-          <p className="-mt-1 px-1 pb-1 text-center text-xs text-muted-foreground">
-            {emailWallet.emailsRemaining.toLocaleString()} emails you can send · Top up
-          </p>
-        </Link>
       </div>
 
       <PageSection
