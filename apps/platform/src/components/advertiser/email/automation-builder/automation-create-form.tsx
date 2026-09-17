@@ -33,9 +33,9 @@ export function AutomationCreateForm({ onContinue }: Props) {
           <div className="mb-3 flex size-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700">
             <Zap className="size-5" />
           </div>
-          <h1 className="text-xl font-semibold tracking-tight text-foreground">
+          <h2 className="text-xl font-semibold tracking-tight text-foreground">
             Create automation
-          </h1>
+          </h2>
           <p className="mt-1 text-sm text-muted-foreground">
             Name it, then build your email sequence on the canvas. Leads enter from the
             audience list’s campaign.

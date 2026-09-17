@@ -168,10 +168,13 @@ export default async function AdminLeadsPage({ searchParams }: PageProps) {
   return (
     <div className="space-y-7">
       <PageHero
-        eyebrow="Lead Management"
         title="All Leads"
         description="Review lead submissions with full data across all campaigns and advertisers"
         badge={`${meta.total} lead${meta.total === 1 ? "" : "s"} in range`}
+        breadcrumbs={[
+          { label: "Admin", href: "/admin" },
+          { label: "Leads" },
+        ]}
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

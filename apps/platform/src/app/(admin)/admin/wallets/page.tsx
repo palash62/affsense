@@ -14,6 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { PageHeader } from "@/components/layout/page-header";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -58,6 +59,15 @@ export default async function AdminWalletsPage({ searchParams }: PageProps) {
 
   return (
     <div className="space-y-5">
+      <PageHeader
+        title="Wallets"
+        description="View wallet balances across advertiser and publisher accounts."
+        breadcrumbs={[
+          { label: "Admin", href: "/admin" },
+          { label: "Wallets" },
+        ]}
+      />
+
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <GradientStatCard
           variant="revenue"

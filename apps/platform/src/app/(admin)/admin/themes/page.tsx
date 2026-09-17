@@ -1,42 +1,29 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 import { THEMES } from "@/lib/themes";
 import { useTheme } from "@/components/providers/theme-provider";
 import { ThemePreviewCard } from "@/components/theme/theme-preview-card";
 import { ThemeSwitcher } from "@/components/theme/theme-switcher";
-import { ButtonLink } from "@/components/ui/button-link";
+import { PageHeader } from "@/components/layout/page-header";
 
 export default function ThemePreviewPage() {
   const { theme, setTheme } = useTheme();
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <ButtonLink
-            href="/admin"
-            variant="ghost"
-            size="sm"
-            className="mb-3 -ml-2 gap-1.5 text-muted-foreground"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Dashboard
-          </ButtonLink>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">
-            Compare Color Themes
-          </h1>
-          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-            Pick a theme below to apply it across the entire site — including the new
-            Marketing SaaS black + orange pack. Each preview shows sidebar, hero, KPI cards,
-            and chart colors. Your choice is saved automatically in localStorage.
-          </p>
-        </div>
+      <PageHeader
+        title="Compare Color Themes"
+        description="Pick a theme below to apply it across the entire site. Each preview shows sidebar, hero, KPI cards, and chart colors. Your choice is saved automatically."
+        breadcrumbs={[
+          { label: "Admin", href: "/admin" },
+          { label: "Themes" },
+        ]}
+      >
         <ThemeSwitcher variant="bar" className="max-w-full" />
-      </div>
+      </PageHeader>
 
-      <div className="rounded-[18px] border border-border bg-card p-4 shadow-sm">
+      <div className="rounded-[var(--radius-card,0.875rem)] border border-border bg-card p-4 shadow-[var(--shadow-card)]">
         <p className="mb-3 text-sm font-medium text-foreground">
           Live site theme:{" "}
           <span className="text-[var(--theme-primary)]">

@@ -7,6 +7,7 @@ import {
   DashboardCard,
   DashboardCardTitle,
 } from "@/components/admin/affsense-dashboard/dashboard-card";
+import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -71,6 +72,16 @@ export function ProductCategoriesPanel() {
 
   return (
     <div className="space-y-5">
+      <PageHeader
+        title="Categories"
+        description="Organize digital products by category."
+        breadcrumbs={[
+          { label: "Admin", href: "/admin" },
+          { label: "Digital Products", href: "/admin/digital-products" },
+          { label: "Categories" },
+        ]}
+      />
+
       <DashboardCard>
         <DashboardCardTitle>Add Category</DashboardCardTitle>
         <div className="mt-4 flex flex-wrap gap-2">

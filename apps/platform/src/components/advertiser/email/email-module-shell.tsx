@@ -1,16 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
-import { RoleHero } from "@/components/layout/role-hero";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
+import { PageHeader } from "@/components/layout/page-header";
+import { ButtonLink } from "@/components/ui/button-link";
 import { EmailModuleFilterProvider, useEmailModuleFilters } from "./email-module-filter-context";
 import { EmailModuleStats, type EmailStatItem } from "./email-module-stats";
 import {
@@ -50,42 +42,28 @@ function EmailModuleShellInner({
   children,
 }: Omit<EmailModuleShellProps, "initialFilterValues">) {
   const { search, filterValues, setSearch, setFilterValue } = useEmailModuleFilters();
+  const ActionIcon = primaryAction?.icon;
 
   return (
     <div className="space-y-6">
-      <Breadcrumb>
-        <BreadcrumbList>
-          {breadcrumbs.map((crumb, i) => (
-            <span key={crumb.label} className="contents">
-              {i > 0 && <BreadcrumbSeparator />}
-              <BreadcrumbItem>
-                {crumb.href && i < breadcrumbs.length - 1 ? (
-                  <BreadcrumbLink render={<Link href={crumb.href} />}>{crumb.label}</BreadcrumbLink>
-                ) : (
-                  <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
-                )}
-              </BreadcrumbItem>
-            </span>
-          ))}
-        </BreadcrumbList>
-      </Breadcrumb>
-
-      {showHero && (
-        <RoleHero
-          eyebrow="Autoresponder"
-          title={title}
-          description={description}
-          action={
-            primaryAction?.href && primaryAction.icon
-              ? { label: primaryAction.label, href: primaryAction.href, icon: primaryAction.icon }
-              : undefined
-          }
-        />
-      )}
+      {showHero ? (
+        <PageHeader title={title} description={description} breadcrumbs={breadcrumbs}>
+          {primaryAction?.href && ActionIcon ? (
+            <ButtonLink
+              href={primaryAction.href}
+              className="h-9 rounded-lg bg-[var(--theme-primary)] px-4 text-sm text-white hover:opacity-90"
+            >
+              <ActionIcon className="mr-2 h-4 w-4" />
+              {primaryAction.label}
+            </ButtonLink>
+          ) : null}
+        </PageHeader>
+      ) : null}
 
       {stats && stats.length > 0 && <EmailModuleStats stats={stats} />}
 
-      {showToolbar && (searchPlaceholder || filters?.length || primaryAction || secondaryActions?.length) && (
+      {showToolbar &&
+      (searchPlaceholder || filters?.length || primaryAction || secondaryActions?.length) ? (
         <EmailModuleToolbar
           searchPlaceholder={searchPlaceholder}
           filters={filters}
@@ -96,7 +74,7 @@ function EmailModuleShellInner({
           filterValues={filterValues}
           onFilterChange={setFilterValue}
         />
-      )}
+      ) : null}
 
       {children}
     </div>

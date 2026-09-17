@@ -17,13 +17,13 @@ export function AdminCreatePublisherDialog() {
     <Dialog>
       <DialogTrigger render={<Button className="h-10 gap-2 rounded-xl bg-[var(--theme-primary)] hover:opacity-90" />}>
         <UserPlus className="h-4 w-4" />
-        Add Publisher
+        Add Affiliate
       </DialogTrigger>
       <DialogContent className="sm:max-w-3xl">
         <DialogHeader>
-          <DialogTitle>Create Publisher Account</DialogTitle>
+          <DialogTitle>Create Affiliate Account</DialogTitle>
           <DialogDescription>
-            Add a new publisher, set their status, and share the temporary password after creation.
+            Add a new affiliate, set their status, and share the temporary password after creation.
           </DialogDescription>
         </DialogHeader>
         <AdminCreatePublisherForm />

@@ -1,9 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ExternalLink, Link2, Lock } from "lucide-react";
+import { ExternalLink, Link2, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { CpaOfferGeoFlags } from "@/components/cpa/cpa-offer-geo-flags";
 import {
@@ -66,26 +65,15 @@ export function PublisherCpaOfferDetailPage({
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
-      <div>
-        <Link
-          href="/publisher/cpa-offers"
-          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" />
-          CPA Offers
-        </Link>
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">{localOffer.name}</h1>
-          <Badge className={cpaOfferStatusBadgeClass(localOffer.status)}>
-            {cpaOfferStatusLabel(localOffer.status)}
+      <div className="flex flex-wrap items-center gap-2">
+        <Badge className={cpaOfferStatusBadgeClass(localOffer.status)}>
+          {cpaOfferStatusLabel(localOffer.status)}
+        </Badge>
+        {localOffer.visibility === "PRIVATE" ? (
+          <Badge variant="secondary" className="bg-amber-50 text-amber-900 hover:bg-amber-50">
+            Private
           </Badge>
-          {localOffer.visibility === "PRIVATE" ? (
-            <Badge variant="secondary" className="bg-amber-50 text-amber-900 hover:bg-amber-50">
-              Private
-            </Badge>
-          ) : null}
-        </div>
-        <p className="mt-1 font-mono text-xs text-muted-foreground">OFFER #{localOffer.id}</p>
+        ) : null}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[280px_1fr]">

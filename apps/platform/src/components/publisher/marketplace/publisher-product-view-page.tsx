@@ -1,8 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
-import { ArrowLeft, Copy, ExternalLink, Package } from "lucide-react";
+import { Copy, ExternalLink, Package } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { ButtonLink } from "@/components/ui/button-link";
@@ -68,25 +67,6 @@ export function PublisherProductViewPage({
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
-      <div>
-        <Link
-          href="/publisher/marketplace"
-          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" />
-          Marketplace
-        </Link>
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">{product.name}</h1>
-          <span className="inline-flex rounded-full bg-[color-mix(in_srgb,var(--theme-success)_14%,white)] px-2.5 py-0.5 text-xs font-semibold text-[var(--theme-success)]">
-            Active
-          </span>
-        </div>
-        {product.shortDescription ? (
-          <p className="mt-2 max-w-2xl text-sm text-muted-foreground">{product.shortDescription}</p>
-        ) : null}
-      </div>
-
       <section className="rounded-[var(--radius-card,0.875rem)] border border-border bg-card p-5 shadow-[var(--shadow-card)]">
         <div className="flex flex-col gap-4 sm:flex-row">
           <div className="h-28 w-full shrink-0 overflow-hidden rounded-lg bg-muted sm:h-28 sm:w-36">

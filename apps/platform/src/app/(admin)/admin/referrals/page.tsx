@@ -2,12 +2,12 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { formatUserDateTime } from "@/lib/user-timezone";
 import { getSession } from "@/lib/session";
-import { Gift, Users, Wallet, Clock, DollarSign } from "lucide-react";
-import { PageSection } from "@/components/admin/page-section";
+import { Gift, Users, Clock, DollarSign } from "lucide-react";
 import { GradientStatCard, NeutralStatCard } from "@/components/admin/gradient-stat-card";
 import { formatCurrency, UserStatusBadge } from "@/components/admin/admin-ui";
 import { AdminReferralsFilters } from "@/components/admin/admin-referrals-filters";
 import { getAdminReferralReport } from "@/services/referral.service";
+import { PageHeader } from "@/components/layout/page-header";
 import {
   Table,
   TableBody,
@@ -31,6 +31,15 @@ export default async function AdminReferralsPage({ searchParams }: PageProps) {
 
   return (
     <div className="space-y-7">
+      <PageHeader
+        title="Referrals"
+        description="Track referral relationships, ad spend, and commissions."
+        breadcrumbs={[
+          { label: "Admin", href: "/admin" },
+          { label: "Referrals" },
+        ]}
+      />
+
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <GradientStatCard
           variant="leads"
@@ -58,13 +67,7 @@ export default async function AdminReferralsPage({ searchParams }: PageProps) {
         />
       </div>
 
-      <PageSection
-        title="Referral Report"
-        description="Who referred whom, ad spend by referred advertisers, and commissions paid to referrers"
-        icon={Wallet}
-        gradient="revenue"
-        contentClassName="space-y-4 p-6"
-      >
+      <div className="space-y-4 overflow-hidden rounded-[var(--radius-card,0.875rem)] border border-border bg-card p-6 shadow-[var(--shadow-card)]">
         <Suspense fallback={null}>
           <AdminReferralsFilters />
         </Suspense>
@@ -151,7 +154,7 @@ export default async function AdminReferralsPage({ searchParams }: PageProps) {
             {formatCurrency(report.stats.filteredCommission)} commission
           </p>
         )}
-      </PageSection>
+      </div>
     </div>
   );
 }

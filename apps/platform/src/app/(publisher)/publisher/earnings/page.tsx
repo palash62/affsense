@@ -12,6 +12,7 @@ import { prisma } from "@/lib/prisma";
 import { PENDING_PAYOUT_STATUSES } from "@/lib/payout-status";
 import { GradientStatCard, NeutralStatCard } from "@/components/admin/gradient-stat-card";
 import { PageSection } from "@/components/admin/page-section";
+import { PageHeader } from "@/components/layout/page-header";
 import { formatCurrency, PayoutStatusBadge } from "@/components/admin/admin-ui";
 import { UsersTablePagination } from "@/components/admin/users-table-pagination";
 import { AdvertiserLeadsTableFooter } from "@/components/advertiser/advertiser-leads-table-footer";
@@ -124,6 +125,15 @@ export default async function PublisherEarningsPage({ searchParams }: PageProps)
 
   return (
     <div className="space-y-5">
+      <PageHeader
+        title="Earnings"
+        description="Track wallet balance, ledger credits, and payout requests."
+        breadcrumbs={[
+          { label: "Publisher", href: "/publisher" },
+          { label: "Earnings" },
+        ]}
+      />
+
       <PublisherInfoBanner>
         Earnings are credited to your wallet when leads are paid. Approved leads show an estimated
         payout until payment completes. Request a payout once your available balance meets the

@@ -14,9 +14,11 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { BarChart3, Store } from "lucide-react";
+import { BarChart3, CalendarDays, Store } from "lucide-react";
 import { PageHero } from "@/components/admin/page-hero";
 import { formatCurrency } from "@/components/admin/admin-ui";
+import { DashboardCard } from "@/components/admin/affsense-dashboard/dashboard-card";
+import { AffsenseStatCard } from "@/components/dashboard/affsense-stat-card";
 import { CpaOfferStatusDot, CpaOfferThumb } from "@/components/cpa/cpa-offer-thumb";
 import { ButtonLink } from "@/components/ui/button-link";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -73,45 +75,58 @@ function MetricCard({
   sparkValues: number[];
   accent: "emerald" | "sky" | "violet" | "orange";
 }) {
-  const accentBar = {
-    emerald: "from-emerald-400 to-teal-500",
-    sky: "from-sky-400 to-blue-500",
-    violet: "from-violet-400 to-fuchsia-500",
-    orange: "from-orange-400 to-amber-500",
+  const stripe = {
+    emerald: "border-t-[var(--theme-success)]",
+    sky: "border-t-[var(--theme-primary)]",
+    violet: "border-t-[var(--secondary)]",
+    orange: "border-t-[var(--warning)]",
+  }[accent];
+
+  const sparkBar = {
+    emerald: "bg-[var(--theme-success)]",
+    sky: "bg-[var(--theme-primary)]",
+    violet: "bg-[var(--secondary)]",
+    orange: "bg-[var(--warning)]",
   }[accent];
 
   const hasSpark = sparkValues.some((v) => v > 0);
   const max = Math.max(...sparkValues, 1);
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-border bg-card p-4 shadow-sm">
-      <div className={cn("absolute inset-x-0 top-0 h-1 bg-gradient-to-r", accentBar)} />
+    <DashboardCard
+      className={cn(
+        "flex flex-col border-t-[3px] bg-gradient-to-br from-card to-muted/40 p-4 transition-all duration-200 hover:shadow-[var(--shadow-card-hover)]",
+        stripe,
+      )}
+    >
       <div className="flex items-start justify-between gap-2">
-        <p className="text-sm font-medium text-muted-foreground">{title}</p>
+        <p className="pt-0.5 text-xs font-medium tracking-normal text-muted-foreground">{title}</p>
         <span
           className={cn(
             "text-xs font-semibold tabular-nums",
             changePct > 0
-              ? "text-emerald-600"
+              ? "text-[var(--theme-success)]"
               : changePct < 0
-                ? "text-red-500"
+                ? "text-destructive"
                 : "text-muted-foreground",
           )}
         >
           {formatChange(changePct)}
         </span>
       </div>
-      <div className="mt-2">{children}</div>
+      <div
+        className="mt-3 font-bold tracking-normal text-foreground [&_p]:font-bold [&_p]:tracking-normal"
+        style={{ fontSize: "var(--type-metric)" }}
+      >
+        {children}
+      </div>
       <div className="mt-3 h-10">
         {hasSpark ? (
           <div className="flex h-full items-end gap-0.5">
             {sparkValues.map((v, i) => (
               <div
                 key={i}
-                className={cn(
-                  "min-w-0 flex-1 rounded-t bg-gradient-to-t opacity-80",
-                  accentBar,
-                )}
+                className={cn("min-w-0 flex-1 rounded-t opacity-80", sparkBar)}
                 style={{ height: `${Math.max(8, (v / max) * 100)}%` }}
               />
             ))}
@@ -122,7 +137,7 @@ function MetricCard({
           </div>
         )}
       </div>
-    </div>
+    </DashboardCard>
   );
 }
 
@@ -185,19 +200,23 @@ export function AdvertiserCpaOffersDashboard() {
           <p className="text-xs text-muted-foreground">Earnings by period</p>
         </div>
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          {EARNINGS_PERIODS.map((period) => (
-            <div
-              key={period.key}
-              className="rounded-xl border border-border bg-card px-4 py-5 text-center shadow-sm"
-            >
-              <p className="text-sm font-semibold text-foreground">{period.label}</p>
-              <p className="mt-3 text-2xl font-bold tabular-nums text-emerald-600 underline decoration-dotted decoration-slate-300 underline-offset-4">
-                {loading
-                  ? "…"
-                  : formatCurrency(Number(data?.earningsByPeriod?.[period.key] ?? 0))}
-              </p>
-            </div>
-          ))}
+          {EARNINGS_PERIODS.map((period, index) => {
+            const accents = ["coral", "emerald", "amber", "navy"] as const;
+            return (
+              <AffsenseStatCard
+                key={period.key}
+                label={period.label}
+                value={
+                  loading
+                    ? "…"
+                    : formatCurrency(Number(data?.earningsByPeriod?.[period.key] ?? 0))
+                }
+                icon={CalendarDays}
+                accent={accents[index % accents.length]}
+                valueClassName="text-[var(--theme-success)]"
+              />
+            );
+          })}
         </div>
       </section>
 

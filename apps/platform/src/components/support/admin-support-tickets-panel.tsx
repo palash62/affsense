@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { GradientStatCard, NeutralStatCard } from "@/components/admin/gradient-stat-card";
 import { avatarColors, getInitials } from "@/components/admin/admin-ui";
+import { PageHeader } from "@/components/layout/page-header";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -143,12 +144,21 @@ export function AdminSupportTicketsPanel() {
     setCloseError(null);
   }
 
-  if (loading) {
-    return <p className="text-muted-foreground">Loading tickets...</p>;
-  }
-
   return (
     <div className="space-y-5">
+      <PageHeader
+        title="Support Tickets"
+        description="Review and reply to user support tickets."
+        breadcrumbs={[
+          { label: "Admin", href: "/admin" },
+          { label: "Support Tickets" },
+        ]}
+      />
+
+      {loading ? (
+        <p className="text-muted-foreground">Loading tickets...</p>
+      ) : (
+        <>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <GradientStatCard variant="leads" label="All Tickets" value={stats.total} icon={Ticket} />
         <NeutralStatCard label="Open" value={stats.open} icon={MessageSquare} accent="orange" />
@@ -317,6 +327,8 @@ export function AdminSupportTicketsPanel() {
           </Table>
         </div>
       </div>
+        </>
+      )}
     </div>
   );
 }

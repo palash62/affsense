@@ -7,6 +7,7 @@ import {
   DashboardCard,
   DashboardCardTitle,
 } from "@/components/admin/affsense-dashboard/dashboard-card";
+import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -65,6 +66,16 @@ export function TaskCategoriesPanel() {
 
   return (
     <div className="space-y-5">
+      <PageHeader
+        title="Categories"
+        description="Organize get paid tasks by category."
+        breadcrumbs={[
+          { label: "Admin", href: "/admin" },
+          { label: "Get Paid Tasks", href: "/admin/get-paid-tasks" },
+          { label: "Categories" },
+        ]}
+      />
+
       <DashboardCard>
         <DashboardCardTitle>Add Category</DashboardCardTitle>
         <div className="mt-4 flex flex-wrap gap-2">

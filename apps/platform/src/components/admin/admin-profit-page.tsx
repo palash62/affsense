@@ -1,8 +1,13 @@
 "use client";
 
 import { Suspense } from "react";
+import { Banknote, HandCoins, Landmark, PiggyBank, Scale, Wallet } from "lucide-react";
 import { formatCurrency } from "@/components/admin/admin-ui";
 import { UsersTablePagination } from "@/components/admin/users-table-pagination";
+import {
+  AffsenseStatCard,
+  type AffsenseStatAccent,
+} from "@/components/dashboard/affsense-stat-card";
 import { ExportCsvButton } from "@/components/reports/export-csv-button";
 import {
   formatProfitDateDisplay,
@@ -21,7 +26,7 @@ import {
 import { cn } from "@/lib/utils";
 
 function moneyClass(value: number) {
-  return value >= 0 ? "text-emerald-700" : "text-rose-700";
+  return value >= 0 ? "text-[var(--theme-success)]" : "text-destructive";
 }
 
 function settlementStatusLabel(status: PartnerSettlementStatus) {
@@ -55,43 +60,48 @@ export function AdminPartnerSettlementSummary({
 }: {
   summary: PartnerSettlementSummary;
 }) {
-  const cards = [
+  const cards: Array<{
+    title: string;
+    value: number;
+    description: string;
+    accent: AffsenseStatAccent;
+    icon: typeof Wallet;
+  }> = [
     {
       title: "Partner owed",
       value: summary.owed,
       description: "20% partner profit for months in range",
-      accent: "border-t-violet-500",
+      accent: "navy",
+      icon: Scale,
     },
     {
       title: "Partner paid",
       value: summary.paid,
       description: "Manual payments recorded",
-      accent: "border-t-sky-500",
+      accent: "coral",
+      icon: HandCoins,
     },
     {
       title: "Partner remaining",
       value: summary.remaining,
       description: "Owed − paid (negative = overpaid)",
-      accent: "border-t-amber-500",
+      accent: "amber",
+      icon: Wallet,
     },
   ];
 
   return (
     <div className="grid gap-4 lg:grid-cols-3">
       {cards.map((card) => (
-        <div
+        <AffsenseStatCard
           key={card.title}
-          className={cn(
-            "rounded-[18px] border border-border border-t-[3px] bg-white p-5 shadow-sm",
-            card.accent,
-          )}
-        >
-          <p className="text-sm font-medium text-muted-foreground">{card.title}</p>
-          <p className={cn("mt-2 text-2xl font-bold", moneyClass(card.value))}>
-            {formatCurrency(card.value)}
-          </p>
-          <p className="mt-2 text-xs text-muted-foreground">{card.description}</p>
-        </div>
+          label={card.title}
+          value={formatCurrency(card.value)}
+          icon={card.icon}
+          accent={card.accent}
+          valueClassName={moneyClass(card.value)}
+          footer={{ sub: card.description }}
+        />
       ))}
     </div>
   );
@@ -207,47 +217,52 @@ export function AdminProfitSummaryCards({
 }: {
   summary: AdminProfitPageData["summary"];
 }) {
-  const cards = [
+  const cards: Array<{
+    title: string;
+    value: number;
+    description: string;
+    detail: string;
+    accent: AffsenseStatAccent;
+    icon: typeof Landmark;
+  }> = [
     {
       title: "Platform profit",
       value: summary.platformProfit,
       description: "Advertiser payments − publisher payouts − referral pay",
       detail: `${formatCurrency(summary.advertiserPayment)} − ${formatCurrency(summary.publisherPayout)} − ${formatCurrency(summary.referralPay)}`,
-      accent: "border-t-emerald-500",
+      accent: "emerald",
+      icon: Landmark,
     },
     {
       title: "Admin profit",
       value: summary.adminProfit,
       description: "Platform profit × 80%",
       detail: `${formatCurrency(summary.platformProfit)} × 80%`,
-      accent: "border-t-sky-500",
+      accent: "coral",
+      icon: Banknote,
     },
     {
       title: "Partner profit",
       value: summary.partnerProfit,
       description: "Remaining share · Platform profit × 20%",
       detail: `${formatCurrency(summary.platformProfit)} × 20%`,
-      accent: "border-t-violet-500",
+      accent: "navy",
+      icon: PiggyBank,
     },
   ];
 
   return (
     <div className="grid gap-4 lg:grid-cols-3">
       {cards.map((card) => (
-        <div
+        <AffsenseStatCard
           key={card.title}
-          className={cn(
-            "rounded-[18px] border border-border border-t-[3px] bg-white p-5 shadow-sm",
-            card.accent,
-          )}
-        >
-          <p className="text-sm font-medium text-muted-foreground">{card.title}</p>
-          <p className={cn("mt-2 text-2xl font-bold", moneyClass(card.value))}>
-            {formatCurrency(card.value)}
-          </p>
-          <p className="mt-2 text-xs text-muted-foreground">{card.description}</p>
-          <p className="mt-1 text-xs font-medium text-muted-foreground">{card.detail}</p>
-        </div>
+          label={card.title}
+          value={formatCurrency(card.value)}
+          icon={card.icon}
+          accent={card.accent}
+          valueClassName={moneyClass(card.value)}
+          footer={{ sub: `${card.description} · ${card.detail}` }}
+        />
       ))}
     </div>
   );

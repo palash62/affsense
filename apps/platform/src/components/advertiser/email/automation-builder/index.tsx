@@ -13,11 +13,7 @@ export function NewAutomationExperience({ lists }: Props) {
   const [seed, setSeed] = useState<{ name: string; trigger: Trigger } | null>(null);
 
   if (!seed) {
-    return (
-      <div className="py-6">
-        <AutomationCreateForm onContinue={setSeed} />
-      </div>
-    );
+    return <AutomationCreateForm onContinue={setSeed} />;
   }
 
   return <AutomationBuilderShell lists={lists} initialCreate={seed} />;

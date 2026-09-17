@@ -100,9 +100,9 @@ export function AdminWelcomeSummary({
           <p className="text-xs font-medium uppercase tracking-wider text-white/70">
             Platform Control Center
           </p>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight text-white">
+          <h2 className="mt-1 text-2xl font-bold tracking-tight text-white">
             {greeting}, {userName} 👋
-          </h1>
+          </h2>
           <p className="mt-2 text-sm text-white/85">
             {todayLabel ? `${todayLabel} · ` : null}Platform is{" "}
             <span

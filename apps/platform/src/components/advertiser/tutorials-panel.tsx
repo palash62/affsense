@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { PlayCircle, Search, X } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { TutorialCard } from "@/components/advertiser/tutorial-card";
 import { TutorialVideoPlayer } from "@/components/advertiser/tutorial-video-player";
 import {
@@ -37,56 +37,30 @@ export function TutorialsPanel({ tutorials }: TutorialsPanelProps) {
 
   return (
     <div className="space-y-6">
-      <div
-        className="relative overflow-hidden rounded-[18px] px-6 py-6 shadow-md"
-        style={{
-          backgroundImage: "linear-gradient(to right, var(--theme-hero-from), var(--theme-hero-to))",
-        }}
-      >
-        <div className="pointer-events-none absolute inset-0 opacity-[0.08]">
-          <div className="absolute -right-8 -top-8 h-36 w-36 rounded-full bg-white" />
-          <div className="absolute bottom-0 left-1/4 h-24 w-24 rounded-full bg-white" />
-        </div>
-        <div className="relative z-10 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <div className="mb-2 flex items-center gap-2 text-white/80">
-              <PlayCircle className="h-4 w-4" />
-              <span className="text-xs font-medium uppercase tracking-wider">Learning center</span>
-            </div>
-            <h1 className="text-2xl font-bold tracking-tight text-white">Tutorials</h1>
-            <p className="mt-1 max-w-xl text-sm text-white/80">
-              Watch step-by-step guides to set up campaigns, funnels, and grow your results faster.
-            </p>
-          </div>
-          <div className="w-full max-w-md">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search tutorials..."
-                className="h-10 border-white/20 bg-white/95 pl-9 pr-9 text-foreground shadow-sm placeholder:text-muted-foreground"
-              />
-              {search ? (
-                <button
-                  type="button"
-                  onClick={() => setSearch("")}
-                  className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-muted-foreground"
-                  aria-label="Clear search"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              ) : null}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="flex items-center justify-between gap-3 px-1">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-muted-foreground">
           {filtered.length} tutorial{filtered.length === 1 ? "" : "s"}
           {search.trim() ? ` matching "${search.trim()}"` : " available"}
         </p>
+        <div className="relative w-full max-w-md">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search tutorials..."
+            className="h-10 pl-9 pr-9"
+          />
+          {search ? (
+            <button
+              type="button"
+              onClick={() => setSearch("")}
+              className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-muted-foreground"
+              aria-label="Clear search"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          ) : null}
+        </div>
       </div>
 
       {tutorials.length === 0 ? (

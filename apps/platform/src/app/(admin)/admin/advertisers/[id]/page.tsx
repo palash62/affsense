@@ -2,7 +2,6 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { formatUserDateTime } from "@/lib/user-timezone";
 import {
-  ArrowLeft,
   Building2,
   Calendar,
   Gift,
@@ -89,18 +88,15 @@ export default async function AdminAdvertiserDetailPage({ params }: PageProps) {
 
   return (
     <div className="space-y-7">
-      <div className="flex flex-wrap items-center gap-3">
-        <ButtonLink href="/admin/advertisers" variant="outline" size="sm" className="h-9 gap-1">
-          <ArrowLeft className="h-4 w-4" />
-          Back
-        </ButtonLink>
-      </div>
-
       <PageHero
-        eyebrow="Advertiser Account"
         title={advertiser.name}
         description={advertiser.email}
         badge={company}
+        breadcrumbs={[
+          { label: "Admin", href: "/admin" },
+          { label: "Advertisers", href: "/admin/advertisers" },
+          { label: advertiser.name },
+        ]}
       />
 
       <div className="flex flex-wrap items-center justify-end gap-2">

@@ -1,6 +1,7 @@
 import { getSession } from "@/lib/session";
 import { listEmailLists } from "@/modules/email-marketing";
 import { AutomationBuilderShell } from "@/components/advertiser/email/automation-builder/automation-builder-shell";
+import { PageHeader } from "@/components/layout/page-header";
 
 export const dynamic = "force-dynamic";
 
@@ -21,5 +22,19 @@ export default async function EditEmailAutomationPage({ params }: Props) {
       campaignName: l.campaignName,
     }));
 
-  return <AutomationBuilderShell automationId={id} lists={lists} />;
+  return (
+    <div className="space-y-4">
+      <PageHeader
+        title="Edit automation"
+        description="Update the trigger, waits, and emails on the canvas."
+        breadcrumbs={[
+          { label: "Advertiser", href: "/advertiser" },
+          { label: "Email", href: "/advertiser/email" },
+          { label: "Automations", href: "/advertiser/email/automations" },
+          { label: "Edit" },
+        ]}
+      />
+      <AutomationBuilderShell automationId={id} lists={lists} />
+    </div>
+  );
 }

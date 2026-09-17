@@ -20,6 +20,9 @@ const swatches: Record<ThemeId, string[]> = {
   "performance-green": ["#0F3D2E", "#166534", "#059669", "#2563EB"],
   "marketplace-purple": ["#4C1D95", "#7C3AED", "#A855F7", "#10B981"],
   "slate-pro": ["#07162D", "#4F46F5", "#713BFF", "#12A150"],
+  "coral-navy": ["#0B1F3A", "#FF6B6B", "#FFF5F2", "#F1D9D5"],
+  "deep-teal-peach": ["#006D77", "#FFB4A2", "#F6FFF8", "#D9EAE6"],
+  "ocean-blue-mist": ["#16324F", "#0077B6", "#F8FBFF", "#CAF0F8"],
 };
 
 interface ThemeSwitcherProps {

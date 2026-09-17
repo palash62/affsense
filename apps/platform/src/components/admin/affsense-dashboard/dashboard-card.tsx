@@ -22,7 +22,9 @@ export function DashboardCardTitle({
   children: ReactNode;
 }) {
   return (
-    <h3 className={cn("text-base font-semibold text-foreground", className)}>{children}</h3>
+    <h3 className={cn("text-base font-semibold tracking-normal text-foreground", className)}>
+      {children}
+    </h3>
   );
 }
 

@@ -15,49 +15,49 @@ export type AnnouncementFeedItem = {
 export const ANNOUNCEMENT_TONE_STYLES: Record<
   AnnouncementTone,
   {
-    gradient: string;
+    accent: string;
+    chip: string;
+    icon: string;
     badge: string;
     badgeText: string;
-    iconRing: string;
-    datePill: string;
     label: string;
     /** admin table / form color swatch */
     swatchBg: string;
   }
 > = {
   VIOLET: {
-    gradient: "from-violet-600 via-purple-600 to-indigo-600",
-    badge: "bg-white/20 text-white",
+    accent: "border-l-violet-500",
+    chip: "bg-violet-50",
+    icon: "text-violet-600",
+    badge: "bg-violet-50 text-violet-700",
     badgeText: "Update",
-    iconRing: "bg-white/20",
-    datePill: "bg-white/15 text-white/90",
     label: "Violet",
     swatchBg: "bg-violet-500",
   },
   EMERALD: {
-    gradient: "from-emerald-500 via-teal-500 to-cyan-500",
-    badge: "bg-white/20 text-white",
+    accent: "border-l-[var(--theme-success)]",
+    chip: "bg-[color-mix(in_srgb,var(--theme-success)_12%,white)]",
+    icon: "text-[var(--theme-success)]",
+    badge: "bg-[color-mix(in_srgb,var(--theme-success)_12%,white)] text-[var(--theme-success)]",
     badgeText: "New",
-    iconRing: "bg-white/20",
-    datePill: "bg-white/15 text-white/90",
     label: "Emerald",
     swatchBg: "bg-emerald-500",
   },
   BLUE: {
-    gradient: "from-[var(--theme-primary)] via-blue-600 to-indigo-600",
-    badge: "bg-white/20 text-white",
+    accent: "border-l-[var(--theme-primary)]",
+    chip: "bg-[var(--theme-primary-soft)]",
+    icon: "text-[var(--theme-primary)]",
+    badge: "bg-[var(--theme-primary-soft)] text-[var(--theme-primary)]",
     badgeText: "Info",
-    iconRing: "bg-white/20",
-    datePill: "bg-white/15 text-white/90",
     label: "Blue",
     swatchBg: "bg-[var(--theme-primary)]",
   },
   AMBER: {
-    gradient: "from-amber-500 via-orange-500 to-rose-500",
-    badge: "bg-white/20 text-white",
+    accent: "border-l-[var(--warning)]",
+    chip: "bg-[color-mix(in_srgb,var(--warning)_14%,white)]",
+    icon: "text-[var(--warning)]",
+    badge: "bg-[color-mix(in_srgb,var(--warning)_14%,white)] text-[var(--warning)]",
     badgeText: "Alert",
-    iconRing: "bg-white/20",
-    datePill: "bg-white/15 text-white/90",
     label: "Amber",
     swatchBg: "bg-amber-500",
   },
@@ -110,31 +110,25 @@ export function AnnouncementListItem({ item }: { item: AnnouncementFeedItem }) {
   return (
     <li
       className={cn(
-        "relative overflow-hidden rounded-2xl bg-gradient-to-r p-4 shadow-md",
-        styles.gradient,
+        "rounded-[var(--radius-card,0.875rem)] border border-border border-l-[3px] bg-card p-4 shadow-[var(--shadow-card)]",
+        styles.accent,
       )}
     >
-      {/* decorative background circle */}
-      <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-white/10" />
-      <div className="pointer-events-none absolute -bottom-6 right-12 h-20 w-20 rounded-full bg-white/5" />
-
-      <div className="relative flex items-start gap-3">
-        {/* icon */}
+      <div className="flex items-start gap-3">
         <span
           className={cn(
-            "mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl shadow-sm",
-            styles.iconRing,
+            "mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl",
+            styles.chip,
           )}
         >
-          <Icon className="h-5 w-5 text-white" />
+          <Icon className={cn("h-[18px] w-[18px]", styles.icon)} />
         </span>
 
         <div className="min-w-0 flex-1">
-          {/* badge + date row */}
-          <div className="mb-1.5 flex flex-wrap items-center gap-2">
+          <div className="mb-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
             <span
               className={cn(
-                "rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest",
+                "rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
                 styles.badge,
               )}
             >
@@ -142,19 +136,18 @@ export function AnnouncementListItem({ item }: { item: AnnouncementFeedItem }) {
             </span>
             <span
               suppressHydrationWarning
-              className={cn(
-                "rounded-full px-2 py-0.5 text-[10px] font-medium",
-                styles.datePill,
-              )}
+              className="text-[11px] font-medium tracking-normal text-muted-foreground"
             >
               {date}
             </span>
           </div>
 
-          <p className="text-sm font-bold leading-snug text-white">{item.title}</p>
+          <p className="text-sm font-semibold leading-snug tracking-normal text-foreground">
+            {item.title}
+          </p>
 
           {item.body ? (
-            <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-white/80">
+            <p className="mt-1 line-clamp-2 text-xs leading-relaxed tracking-normal text-muted-foreground">
               {item.body}
             </p>
           ) : null}

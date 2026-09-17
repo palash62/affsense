@@ -6,6 +6,7 @@ import { ListTodo, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { ButtonLink } from "@/components/ui/button-link";
+import { PageHeader } from "@/components/layout/page-header";
 import { GetPaidTasksTable } from "./get-paid-tasks-table";
 import { GetPaidTasksFilters } from "./get-paid-tasks-filters";
 import { filterGetPaidTasks, type GetPaidTaskListItem } from "./get-paid-task-list-utils";
@@ -58,6 +59,23 @@ function GetPaidTasksListInner() {
 
   return (
     <div className="space-y-5">
+      <PageHeader
+        title="Get Paid Tasks"
+        description="Manage tasks members can complete to earn."
+        breadcrumbs={[
+          { label: "Admin", href: "/admin" },
+          { label: "Get Paid Tasks" },
+        ]}
+      >
+        <ButtonLink
+          href="/admin/get-paid-tasks/new"
+          className="h-10 gap-2 rounded-md bg-[var(--theme-primary)] px-4 shadow-sm hover:opacity-90"
+        >
+          <Plus className="h-4 w-4" />
+          Add New Task
+        </ButtonLink>
+      </PageHeader>
+
       <GetPaidTasksFilters />
 
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -66,13 +84,6 @@ function GetPaidTasksListInner() {
             ? `Showing ${shown} of ${total} task${total === 1 ? "" : "s"}`
             : `${total} task${total === 1 ? "" : "s"}`}
         </p>
-        <ButtonLink
-          href="/admin/get-paid-tasks/new"
-          className="h-10 gap-2 rounded-md bg-[var(--theme-primary)] px-4 shadow-sm hover:opacity-90"
-        >
-          <Plus className="h-4 w-4" />
-          Add New Task
-        </ButtonLink>
       </div>
 
       {filtered.length === 0 ? (

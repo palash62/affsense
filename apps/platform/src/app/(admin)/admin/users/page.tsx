@@ -27,6 +27,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ADMIN_LEGACY_NAV } from "@/components/layout/nav-config";
+import { PageHeader } from "@/components/layout/page-header";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -70,6 +71,17 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
 
   return (
     <div className="space-y-5">
+      <PageHeader
+        title="Users"
+        description="Manage platform manager accounts and menu access."
+        breadcrumbs={[
+          { label: "Admin", href: "/admin" },
+          { label: "Users" },
+        ]}
+      >
+        <AdminCreateStaffUserDialog />
+      </PageHeader>
+
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <NeutralStatCard
           label="Platform Managers"
@@ -105,7 +117,6 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
             ? `Showing ${managers.length} of ${meta.total} manager${meta.total === 1 ? "" : "s"}`
             : `${meta.total} manager${meta.total === 1 ? "" : "s"}`}
         </p>
-        <AdminCreateStaffUserDialog />
       </div>
 
       {managers.length === 0 ? (

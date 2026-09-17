@@ -5,6 +5,7 @@ import { Check, Copy, Globe, Link2, Loader2, Save, Sparkles } from "lucide-react
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DashboardCard } from "@/components/admin/affsense-dashboard/dashboard-card";
 import { cn } from "@/lib/utils";
 import {
   SMART_LINK_PLATFORMS,
@@ -112,9 +113,9 @@ export function PublisherSmartLinkPanel({
         </div>
       </div>
 
-      <div className="rounded-[18px] border border-border border-t-[3px] border-t-violet-500 bg-white p-6 shadow-sm">
+      <DashboardCard className="border-t-[3px] border-t-[var(--theme-primary)] bg-gradient-to-br from-card to-muted/40 p-6">
         <div className="mb-4 flex items-center gap-2">
-          <Link2 className="h-4 w-4 text-violet-600" />
+          <Link2 className="h-4 w-4 text-[var(--theme-primary)]" />
           <h3 className="text-sm font-semibold text-foreground">Your Smart Link</h3>
         </div>
         <div className="flex flex-col gap-3 sm:flex-row">
@@ -134,11 +135,11 @@ export function PublisherSmartLinkPanel({
         <p className="mt-3 text-xs text-muted-foreground">
           {activeCampaignCount} active campaign{activeCampaignCount === 1 ? "" : "s"} in rotation
         </p>
-      </div>
+      </DashboardCard>
 
-      <div className="rounded-[18px] border border-border border-t-[3px] border-t-indigo-500 bg-white p-6 shadow-sm">
+      <DashboardCard className="border-t-[3px] border-t-[var(--secondary)] bg-gradient-to-br from-card to-muted/40 p-6">
         <div className="mb-4 flex items-center gap-2">
-          <Globe className="h-4 w-4 text-indigo-600" />
+          <Globe className="h-4 w-4 text-[var(--secondary)]" />
           <h3 className="text-sm font-semibold text-foreground">Your global fallback link</h3>
         </div>
         <p className="mb-4 text-sm text-muted-foreground">
@@ -198,9 +199,9 @@ export function PublisherSmartLinkPanel({
             )}
           </div>
         </form>
-      </div>
+      </DashboardCard>
 
-      <div className="rounded-[18px] border border-border border-t-[3px] border-t-sky-500 bg-white p-6 shadow-sm">
+      <DashboardCard className="border-t-[3px] border-t-[var(--theme-primary)] bg-gradient-to-br from-card to-muted/40 p-6">
         <h3 className="mb-4 text-sm font-semibold text-foreground">Platform links</h3>
         <p className="mb-4 text-sm text-muted-foreground">
           Copy a tagged link for each channel you promote on.
@@ -230,9 +231,9 @@ export function PublisherSmartLinkPanel({
             );
           })}
         </div>
-      </div>
+      </DashboardCard>
 
-      <div className="rounded-[18px] border border-border border-t-[3px] border-t-amber-500 bg-white p-6 shadow-sm">
+      <DashboardCard className="border-t-[3px] border-t-[var(--warning)] bg-gradient-to-br from-card to-muted/40 p-6">
         <h3 className="mb-4 text-sm font-semibold text-foreground">Custom tracking</h3>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
@@ -273,10 +274,10 @@ export function PublisherSmartLinkPanel({
           </Button>
         </div>
         <p className="mt-2 text-xs text-muted-foreground">Letters, numbers, underscores, and hyphens only (max 32 chars).</p>
-      </div>
+      </DashboardCard>
 
       {sourceBreakdown.length > 0 && (
-        <div className="rounded-[18px] border border-border border-t-[3px] border-t-emerald-500 bg-white p-6 shadow-sm">
+        <DashboardCard className="border-t-[3px] border-t-[var(--theme-success)] bg-gradient-to-br from-card to-muted/40 p-6">
           <h3 className="mb-4 text-sm font-semibold text-foreground">Performance by source</h3>
           <div className="overflow-x-auto">
             <Table>
@@ -298,7 +299,7 @@ export function PublisherSmartLinkPanel({
               </TableBody>
             </Table>
           </div>
-        </div>
+        </DashboardCard>
       )}
 
     </div>

@@ -11,10 +11,10 @@ import {
   Settings2,
   Target,
   Wallet,
-  X,
   AlertTriangle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PageHeader } from "@/components/layout/page-header";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   DEFAULT_LEAD_FIELDS,
@@ -231,11 +231,12 @@ export function CreateCampaignForm({
   const isAdmin = mode === "admin";
   const isEdit = Boolean(editCampaign);
   const editDefaults = editCampaign ? getCampaignEditFormDefaults(editCampaign) : null;
+  const campaignsListHref = isAdmin ? "/admin/campaigns" : "/advertiser/campaigns";
   const backHref = isEdit
-    ? `/admin/campaigns/${editCampaign!.id}`
+    ? `${campaignsListHref}/${editCampaign!.id}`
     : isAdmin
-      ? "/admin/campaigns"
-      : returnTo || "/advertiser/campaigns";
+      ? campaignsListHref
+      : returnTo || campaignsListHref;
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [walletBalance, setWalletBalance] = useState(0);
@@ -628,41 +629,26 @@ export function CreateCampaignForm({
       noValidate
       className="space-y-6"
     >
-      <div
-        className="relative overflow-hidden rounded-[18px] px-6 py-5 shadow-md"
-        style={{
-          backgroundImage: "linear-gradient(to right, var(--theme-hero-from), var(--theme-hero-to))",
-        }}
-      >
-        <div className="pointer-events-none absolute inset-0 opacity-[0.06]">
-          <div className="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-white" />
-        </div>
-        <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-xs font-medium uppercase tracking-wider text-white/70">
-              {isAdmin ? "Admin Portal" : "Advertiser Portal"}
-            </p>
-            <h1 className="mt-1 text-2xl font-bold tracking-tight text-white">
-              {isEdit ? "Edit Campaign" : "Create Campaign"}
-            </h1>
-            <p className="mt-1.5 max-w-lg text-sm text-white/80">
-              {isEdit
-                ? fullEdit
-                  ? "Update campaign settings, targeting, budget, and scheduling. Full edit is available for draft and pending campaigns."
-                  : "Running campaigns allow limited edits. CPL and budget cannot be changed while active."
-                : isAdmin
-                  ? "Create a full campaign on behalf of an advertiser with the same targeting and budget options."
-                  : "Set up targeting, budget, scheduling, and tracking for your next lead campaign. Submissions are reviewed by admin before going live."}
-            </p>
-          </div>
-          <Link
-            href={backHref}
-            className="inline-flex h-9 w-9 shrink-0 items-center justify-center self-end rounded-xl bg-white/15 text-white hover:bg-white/25 sm:self-center"
-          >
-            <X className="h-4 w-4" />
-          </Link>
-        </div>
-      </div>
+      <PageHeader
+        title={isEdit ? "Edit Campaign" : "Create Campaign"}
+        description={
+          isEdit
+            ? fullEdit
+              ? "Update campaign settings, targeting, budget, and scheduling. Full edit is available for draft and pending campaigns."
+              : "Running campaigns allow limited edits. CPL and budget cannot be changed while active."
+            : isAdmin
+              ? "Create a full campaign on behalf of an advertiser with the same targeting and budget options."
+              : "Set up targeting, budget, scheduling, and tracking for your next lead campaign. Submissions are reviewed by admin before going live."
+        }
+        breadcrumbs={[
+          {
+            label: isAdmin ? "Admin" : "Advertiser",
+            href: isAdmin ? "/admin" : "/advertiser",
+          },
+          { label: "Campaigns", href: campaignsListHref },
+          { label: isEdit ? "Edit" : "New" },
+        ]}
+      />
 
       <div className="grid gap-6 xl:grid-cols-[1fr_340px]">
         <div className="space-y-5">

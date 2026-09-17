@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { useCallback, useState, useTransition } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { Search, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+
+const DEBOUNCE_MS = 300;
 
 export function UsersTableFilters({ showDateRange = true }: { showDateRange?: boolean }) {
   const router = useRouter();
@@ -24,15 +26,30 @@ export function UsersTableFilters({ showDateRange = true }: { showDateRange?: bo
   const [dateFrom, setDateFrom] = useState(searchParams.get("from") ?? "");
   const [dateTo, setDateTo] = useState(searchParams.get("to") ?? "");
 
+  const searchRef = useRef(search);
+  const statusRef = useRef(status);
+  const dateFromRef = useRef(dateFrom);
+  const dateToRef = useRef(dateTo);
+  const urlQRef = useRef(searchParams.get("q") ?? "");
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const skipNextSearchDebounce = useRef(false);
+  const searchMounted = useRef(false);
+
+  searchRef.current = search;
+  statusRef.current = status;
+  dateFromRef.current = dateFrom;
+  dateToRef.current = dateTo;
+  urlQRef.current = searchParams.get("q") ?? "";
+
   const applyFilters = useCallback(
     (overrides?: { q?: string; status?: string; from?: string; to?: string }) => {
       const params = new URLSearchParams();
 
       const values = {
-        q: overrides?.q ?? search,
-        status: overrides?.status ?? status,
-        from: overrides?.from ?? dateFrom,
-        to: overrides?.to ?? dateTo,
+        q: overrides?.q ?? searchRef.current,
+        status: overrides?.status ?? statusRef.current,
+        from: overrides?.from ?? dateFromRef.current,
+        to: overrides?.to ?? dateToRef.current,
       };
 
       if (values.q.trim()) params.set("q", values.q.trim());
@@ -48,10 +65,33 @@ export function UsersTableFilters({ showDateRange = true }: { showDateRange?: bo
         router.push(qs ? `${pathname}?${qs}` : pathname);
       });
     },
-    [search, status, dateFrom, dateTo, pathname, router, showDateRange],
+    [pathname, router, showDateRange],
   );
 
+  useEffect(() => {
+    if (!searchMounted.current) {
+      searchMounted.current = true;
+      return;
+    }
+    if (skipNextSearchDebounce.current) {
+      skipNextSearchDebounce.current = false;
+      return;
+    }
+
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      if (searchRef.current.trim() === urlQRef.current.trim()) return;
+      applyFilters({ q: searchRef.current });
+    }, DEBOUNCE_MS);
+
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [search, applyFilters]);
+
   function clearFilters() {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    skipNextSearchDebounce.current = true;
     setSearch("");
     setStatus("all");
     setDateFrom("");
@@ -75,7 +115,11 @@ export function UsersTableFilters({ showDateRange = true }: { showDateRange?: bo
             placeholder="Search name, email, company..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && applyFilters()}
+            onKeyDown={(e) => {
+              if (e.key !== "Enter") return;
+              if (debounceRef.current) clearTimeout(debounceRef.current);
+              applyFilters({ q: search });
+            }}
             className="h-8 w-full rounded-md border-border bg-background pl-8 text-xs"
           />
         </div>
@@ -105,14 +149,22 @@ export function UsersTableFilters({ showDateRange = true }: { showDateRange?: bo
               <Input
                 type="date"
                 value={dateFrom}
-                onChange={(e) => setDateFrom(e.target.value)}
+                onChange={(e) => {
+                  const next = e.target.value;
+                  setDateFrom(next);
+                  applyFilters({ from: next });
+                }}
                 className="h-8 w-[132px] rounded-md border-border bg-background text-xs"
               />
               <span className="text-xs text-muted-foreground">to</span>
               <Input
                 type="date"
                 value={dateTo}
-                onChange={(e) => setDateTo(e.target.value)}
+                onChange={(e) => {
+                  const next = e.target.value;
+                  setDateTo(next);
+                  applyFilters({ to: next });
+                }}
                 className="h-8 w-[132px] rounded-md border-border bg-background text-xs"
               />
             </div>
@@ -120,9 +172,12 @@ export function UsersTableFilters({ showDateRange = true }: { showDateRange?: bo
 
           <Button
             size="sm"
-            onClick={() => applyFilters()}
+            onClick={() => {
+              if (debounceRef.current) clearTimeout(debounceRef.current);
+              applyFilters();
+            }}
             disabled={isPending}
-            className="h-8 rounded-md bg-[var(--theme-primary)] px-4 text-xs hover:opacity-90"
+            className="h-8 rounded-md bg-[var(--theme-primary)] px-4 text-xs text-white hover:opacity-90"
           >
             {isPending ? "..." : "Search"}
           </Button>

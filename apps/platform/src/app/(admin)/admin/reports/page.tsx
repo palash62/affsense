@@ -116,10 +116,13 @@ export default async function AdminReportsPage({ searchParams }: PageProps) {
   return (
     <div className="space-y-6">
       <PageHero
-        eyebrow="Analytics"
         title="Platform Reports"
         description="Platform-wide KPIs, trends, and account performance for the selected date range"
         badge={`${formatPercent(overview.conversionRate)} conv.`}
+        breadcrumbs={[
+          { label: "Admin", href: "/admin" },
+          { label: "Reports" },
+        ]}
       />
 
       <ReportsKpiStrip

@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { getLandingPageDraftPreview } from "@/modules/page-builder/server";
 import { PublishedPage } from "@/modules/page-builder";
+import { PageHeader } from "@/components/layout/page-header";
 
 export default async function LandingPagePreviewPage({
   searchParams,
@@ -21,11 +22,24 @@ export default async function LandingPagePreviewPage({
   if (!page) notFound();
 
   return (
-    <PublishedPage
-      slug={page.slug}
-      craftState={page.craftState}
-      theme={page.themeJson}
-      formJson={page.formJson}
-    />
+    <div className="flex min-h-screen flex-col">
+      <div className="shrink-0 border-b border-border bg-background px-4 py-2.5">
+        <PageHeader
+          title="Preview"
+          className="space-y-1.5 [&_.premium-page-title]:text-base [&_.premium-page-title]:font-semibold"
+          breadcrumbs={[
+            { label: "Advertiser", href: "/advertiser" },
+            { label: "Landing Pages", href: "/advertiser/landing-pages" },
+            { label: "Preview" },
+          ]}
+        />
+      </div>
+      <PublishedPage
+        slug={page.slug}
+        craftState={page.craftState}
+        theme={page.themeJson}
+        formJson={page.formJson}
+      />
+    </div>
   );
 }

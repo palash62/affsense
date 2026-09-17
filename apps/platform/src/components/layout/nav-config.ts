@@ -1,7 +1,6 @@
 import type { UserRole } from "@prisma/client";
 import type { LucideIcon } from "lucide-react";
 import {
-  Archive,
   LayoutDashboard,
   History,
   Users,
@@ -195,17 +194,6 @@ export const ADMIN_NAV: AdminNavEntry[] = [
     item: { label: "System Logs", href: "/admin/system-logs", icon: ScrollText },
   },
   { kind: "item", item: { label: "Themes", href: "/admin/themes", icon: Palette } },
-
-  { kind: "section", label: "OLD" },
-  {
-    kind: "item",
-    item: {
-      label: "Old Menu",
-      href: "/admin/old-menu",
-      icon: Archive,
-      children: ADMIN_LEGACY_NAV,
-    },
-  },
 ];
 
 export const ADVERTISER_NAV: NavItem[] = [
@@ -323,17 +311,6 @@ export const PUBLISHER_NAV: AdminNavEntry[] = [
   { kind: "item", item: { label: "Training Center", href: "/publisher/training", icon: GraduationCap } },
   { kind: "item", item: { label: "Help Center", href: "/publisher/help", icon: HelpCircle } },
   { kind: "item", item: { label: "Announcements", href: "/publisher/announcements", icon: Bell } },
-
-  { kind: "section", label: "OLD" },
-  {
-    kind: "item",
-    item: {
-      label: "Old Menu",
-      href: "/publisher/old-menu",
-      icon: Archive,
-      children: PUBLISHER_LEGACY_NAV,
-    },
-  },
 ];
 
 function asNavEntries(items: NavItem[]): AdminNavEntry[] {
@@ -360,17 +337,9 @@ export function getNavForRole(
       const entries: AdminNavEntry[] = [
         { kind: "item", item: { label: "Dashboard", href: "/admin", icon: LayoutDashboard } },
       ];
-      if (legacyChildren.length > 0) {
-        entries.push({ kind: "section", label: "OLD" });
-        entries.push({
-          kind: "item",
-          item: {
-            label: "Old Menu",
-            href: "/admin/old-menu",
-            icon: Archive,
-            children: legacyChildren,
-          },
-        });
+      // Assigned legacy routes stay available as flat items (Old Menu section hidden).
+      for (const item of legacyChildren) {
+        entries.push({ kind: "item", item });
       }
       return entries;
     }

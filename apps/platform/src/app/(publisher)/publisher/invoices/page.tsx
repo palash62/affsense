@@ -10,6 +10,7 @@ import { loadAffiliateInvoicingConfig } from "@/services/affiliate-invoicing-set
 import { GradientStatCard, NeutralStatCard } from "@/components/admin/gradient-stat-card";
 import { formatCurrency } from "@/components/admin/admin-ui";
 import { PageSection } from "@/components/admin/page-section";
+import { PageHeader } from "@/components/layout/page-header";
 import { PublisherInvoicesList } from "@/components/publisher/publisher-invoices-list";
 import { UsersTablePagination } from "@/components/admin/users-table-pagination";
 
@@ -39,6 +40,15 @@ export default async function PublisherInvoicesPage({ searchParams }: PageProps)
 
   return (
     <div className="space-y-5">
+      <PageHeader
+        title="Invoices"
+        description={`Earnings run Monday to Sunday. Each Monday your uninvoiced earnings are invoiced once they reach ${formatCurrency(config.minimumAmount)}, payable within ${config.netTermDays} days.`}
+        breadcrumbs={[
+          { label: "Publisher", href: "/publisher" },
+          { label: "Invoices" },
+        ]}
+      />
+
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <GradientStatCard
           variant="revenue"
@@ -61,8 +71,8 @@ export default async function PublisherInvoicesPage({ searchParams }: PageProps)
       </div>
 
       <PageSection
-        title="Invoices"
-        description={`Earnings run Monday to Sunday. Each Monday your uninvoiced earnings are invoiced once they reach ${formatCurrency(config.minimumAmount)}, payable within ${config.netTermDays} days. Anything below the minimum rolls into the next week.`}
+        title="Invoice history"
+        description="Anything below the minimum rolls into the next week."
         icon={Receipt}
         gradient="revenue"
       >

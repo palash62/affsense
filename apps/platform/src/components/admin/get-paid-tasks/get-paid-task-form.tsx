@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronDown, Send } from "lucide-react";
 import { toast } from "sonner";
-import { AdminBreadcrumbs } from "@/components/admin/digital-products/admin-breadcrumbs";
+import { PageHeader } from "@/components/layout/page-header";
 import {
   DashboardCard,
   DashboardCardTitle,
@@ -146,9 +146,11 @@ export function GetPaidTaskForm() {
 
   return (
     <div className="space-y-5 pb-24">
-      <AdminBreadcrumbs
-        items={[
-          { label: "Dashboard", href: "/admin" },
+      <PageHeader
+        title="Add New Task"
+        description="Create a get-paid task for affiliates to complete."
+        breadcrumbs={[
+          { label: "Admin", href: "/admin" },
           { label: "Get Paid Tasks", href: "/admin/get-paid-tasks" },
           { label: "Add New Task" },
         ]}

@@ -1601,31 +1601,19 @@ export async function sendAdminBulkEmailTest(input: {
 }
 
 // ---------------------------------------------------------------------------
-// Admin Dashboard Stats
+// Admin Dashboard Stats (Affsense marketplace)
 // ---------------------------------------------------------------------------
 
-export type AdminRevenuePoint = {
+export type AdminSeriesPoint = {
   date: string;
   label: string;
-  revenue: number;
-};
-
-export type AdminDepositRow = {
-  id: string;
-  userName: string;
-  userEmail: string;
   amount: number;
-  method: string;
-  status: string;
-  createdAt: string;
 };
 
-export type AdminSignupRow = {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  createdAt: string;
+export type AdminTrafficPoint = {
+  date: string;
+  label: string;
+  clicks: number;
 };
 
 export type AdminPayoutRow = {
@@ -1638,53 +1626,125 @@ export type AdminPayoutRow = {
   createdAt: string;
 };
 
-export type AdminDashboardStats = {
-  totalUsers: number;
-  activeUsers: number;
-  totalRevenue: number;
-  totalPayouts: number;
-  totalLeads: number;
-  approvedLeads: number;
-  recentSignups: AdminSignupRow[];
-  recentDeposits: AdminDepositRow[];
-  pendingPayouts: AdminPayoutRow[];
-  revenueSeries: AdminRevenuePoint[];
+export type AdminTopOfferRow = {
+  id: string;
+  name: string;
+  conversions: number;
+  payout: number;
 };
 
+export type AdminProductMixSlice = {
+  name: string;
+  value: number;
+};
+
+export type AdminDashboardStats = {
+  affiliateCount: number;
+  activeDigitalProducts: number;
+  activeCpaOffers: number;
+  activeTasks: number;
+  offerWallPayout30d: number;
+  cpaProfit30d: number;
+  cpaClicks30d: number;
+  digitalConversions30d: number;
+  pendingTaskSubmissions: number;
+  pendingCpaRequests: number;
+  openTickets: number;
+  pendingPayouts: AdminPayoutRow[];
+  earningsSeries: AdminSeriesPoint[];
+  trafficSeries: AdminTrafficPoint[];
+  productMix: AdminProductMixSlice[];
+  topCpaOffers: AdminTopOfferRow[];
+};
+
+function dayLabel(date: string) {
+  return new Intl.DateTimeFormat("en-GB", { month: "short", day: "numeric" }).format(
+    new Date(`${date}T12:00:00`),
+  );
+}
+
+function toDayKey(d: Date) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function buildLast30DayKeys(): string[] {
+  const keys: string[] = [];
+  const now = new Date();
+  now.setHours(12, 0, 0, 0);
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - i);
+    keys.push(toDayKey(d));
+  }
+  return keys;
+}
+
+function money(n: number) {
+  return Math.round(n * 100) / 100;
+}
+
 export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
+  const since30d = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  const dayKeys = buildLast30DayKeys();
+
   const [
-    totalUsers,
-    activeUsers,
-    totalLeads,
-    approvedLeads,
-    revenueAgg,
-    payoutsAgg,
-    recentSignupsRaw,
-    recentDepositsRaw,
+    affiliateCount,
+    activeDigitalProducts,
+    activeCpaOffers,
+    activeTasks,
+    offerWallPayoutAgg,
+    cpaPayoutAgg,
+    cpaClicks30d,
+    digitalConversions30d,
+    digitalPayoutAgg,
+    taskRewardsAgg,
+    pendingTaskSubmissions,
+    pendingCpaRequests,
+    openTickets,
     pendingPayoutsRaw,
-    revenueSeriesRaw,
+    offerWallConvRows,
+    cpaConvRows,
+    digitalPayoutRows,
+    taskRewardRows,
+    cpaClickRows,
+    offerWallClickRows,
+    digitalClickRows,
+    topCpaGroups,
   ] = await Promise.all([
-    prisma.user.count(),
-    prisma.user.count({ where: { status: "ACTIVE" } }),
-    prisma.lead.count(),
-    prisma.lead.count({ where: { status: "APPROVED" } }),
-    prisma.deposit.aggregate({
-      _sum: { amount: true },
-      where: { status: "COMPLETED" },
+    prisma.user.count({ where: { role: "PUBLISHER" } }),
+    prisma.digitalProduct.count({ where: { status: "ACTIVE" } }),
+    prisma.cpaOffer.count({ where: { status: "ACTIVE" } }),
+    prisma.getPaidTask.count({ where: { status: "ACTIVE" } }),
+    prisma.offerwallConversion.aggregate({
+      _sum: { payout: true },
+      where: { createdAt: { gte: since30d } },
     }),
-    prisma.payout.aggregate({
-      _sum: { amount: true },
-      where: { status: { in: ["PROCESSING", "COMPLETED"] } },
+    prisma.cpaOfferConversion.aggregate({
+      _sum: { payout: true },
+      where: { createdAt: { gte: since30d } },
     }),
-    prisma.user.findMany({
-      orderBy: { createdAt: "desc" },
-      take: 5,
-      select: { id: true, name: true, email: true, role: true, createdAt: true },
+    prisma.cpaOfferClick.count({ where: { createdAt: { gte: since30d } } }),
+    prisma.webhookEvent.count({
+      where: { status: "PROCESSED", createdAt: { gte: since30d } },
     }),
-    prisma.deposit.findMany({
-      orderBy: { createdAt: "desc" },
-      take: 6,
-      include: { user: { select: { name: true, email: true } } },
+    prisma.digitalProductPostbackDelivery.aggregate({
+      _sum: { payout: true },
+      where: {
+        status: "SUCCESS",
+        createdAt: { gte: since30d },
+      },
+    }),
+    prisma.publisherTaskSubmission.aggregate({
+      _sum: { rewardAmount: true },
+      where: { status: "APPROVED", createdAt: { gte: since30d } },
+    }),
+    prisma.publisherTaskSubmission.count({ where: { status: "PENDING" } }),
+    prisma.publisherCpaOfferAccess.count({ where: { status: "PENDING" } }),
+    prisma.supportTicket.count({
+      where: { status: { in: ["OPEN", "IN_PROGRESS"] } },
     }),
     prisma.payout.findMany({
       where: { status: { in: ["PENDING", "REQUESTED", "PROCESSING"] } },
@@ -1692,56 +1752,126 @@ export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
       take: 5,
       include: { publisher: { select: { name: true, email: true } } },
     }),
-    // Revenue per day for the last 30 days
-    prisma.deposit.groupBy({
-      by: ["createdAt"],
-      _sum: { amount: true },
-      where: {
-        status: "COMPLETED",
-        createdAt: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) },
-      },
+    prisma.offerwallConversion.findMany({
+      where: { createdAt: { gte: since30d } },
+      select: { payout: true, createdAt: true },
+    }),
+    prisma.cpaOfferConversion.findMany({
+      where: { createdAt: { gte: since30d } },
+      select: { payout: true, createdAt: true },
+    }),
+    prisma.digitalProductPostbackDelivery.findMany({
+      where: { status: "SUCCESS", createdAt: { gte: since30d } },
+      select: { payout: true, createdAt: true },
+    }),
+    prisma.publisherTaskSubmission.findMany({
+      where: { status: "APPROVED", createdAt: { gte: since30d } },
+      select: { rewardAmount: true, createdAt: true },
+    }),
+    prisma.cpaOfferClick.findMany({
+      where: { createdAt: { gte: since30d } },
+      select: { createdAt: true },
+    }),
+    prisma.offerwallClick.findMany({
+      where: { createdAt: { gte: since30d } },
+      select: { createdAt: true },
+    }),
+    prisma.digitalProductClick.findMany({
+      where: { createdAt: { gte: since30d } },
+      select: { createdAt: true },
+    }),
+    prisma.cpaOfferConversion.groupBy({
+      by: ["offerId"],
+      where: { createdAt: { gte: since30d } },
+      _sum: { payout: true },
+      _count: { _all: true },
+      orderBy: { _sum: { payout: "desc" } },
+      take: 5,
     }),
   ]);
 
-  // Aggregate revenue series by calendar day
-  const dayMap = new Map<string, number>();
-  for (const row of revenueSeriesRaw) {
-    const day = row.createdAt.toISOString().slice(0, 10);
-    dayMap.set(day, (dayMap.get(day) ?? 0) + Number(row._sum.amount ?? 0));
+  const cpaPayout30d = Number(cpaPayoutAgg._sum.payout ?? 0);
+  const cpaProfit30d = money(cpaPayout30d);
+
+  const offerWallPayout30d = money(Number(offerWallPayoutAgg._sum.payout ?? 0));
+  const digitalPayout30d = money(Number(digitalPayoutAgg._sum.payout ?? 0));
+  const taskRewards30d = money(Number(taskRewardsAgg._sum.rewardAmount ?? 0));
+
+  const earningsMap = new Map<string, number>();
+  const trafficMap = new Map<string, number>();
+  for (const key of dayKeys) {
+    earningsMap.set(key, 0);
+    trafficMap.set(key, 0);
   }
-  const revenueSeries: AdminRevenuePoint[] = Array.from(dayMap.entries())
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([date, revenue]) => ({
-      date,
-      label: new Intl.DateTimeFormat("en-GB", { month: "short", day: "numeric" }).format(
-        new Date(date),
-      ),
-      revenue: Math.round(revenue * 100) / 100,
-    }));
+
+  const addEarn = (createdAt: Date, amount: number | null | undefined) => {
+    const day = toDayKey(createdAt);
+    if (!earningsMap.has(day)) return;
+    earningsMap.set(day, (earningsMap.get(day) ?? 0) + Number(amount ?? 0));
+  };
+  const addClick = (createdAt: Date) => {
+    const day = toDayKey(createdAt);
+    if (!trafficMap.has(day)) return;
+    trafficMap.set(day, (trafficMap.get(day) ?? 0) + 1);
+  };
+
+  for (const row of offerWallConvRows) addEarn(row.createdAt, row.payout);
+  for (const row of cpaConvRows) addEarn(row.createdAt, row.payout);
+  for (const row of digitalPayoutRows) addEarn(row.createdAt, row.payout);
+  for (const row of taskRewardRows) addEarn(row.createdAt, row.rewardAmount);
+
+  for (const row of cpaClickRows) addClick(row.createdAt);
+  for (const row of offerWallClickRows) addClick(row.createdAt);
+  for (const row of digitalClickRows) addClick(row.createdAt);
+
+  const earningsSeries: AdminSeriesPoint[] = dayKeys.map((date) => ({
+    date,
+    label: dayLabel(date),
+    amount: money(earningsMap.get(date) ?? 0),
+  }));
+
+  const trafficSeries: AdminTrafficPoint[] = dayKeys.map((date) => ({
+    date,
+    label: dayLabel(date),
+    clicks: trafficMap.get(date) ?? 0,
+  }));
+
+  const productMix: AdminProductMixSlice[] = [
+    { name: "Digital", value: digitalPayout30d },
+    { name: "CPA", value: money(cpaPayout30d) },
+    { name: "Offer Wall", value: offerWallPayout30d },
+    { name: "Tasks", value: taskRewards30d },
+  ].filter((s) => s.value > 0);
+
+  const offerIds = topCpaGroups.map((g) => g.offerId);
+  const offerNames =
+    offerIds.length > 0
+      ? await prisma.cpaOffer.findMany({
+          where: { id: { in: offerIds } },
+          select: { id: true, name: true },
+        })
+      : [];
+  const nameById = new Map(offerNames.map((o) => [o.id, o.name]));
+
+  const topCpaOffers: AdminTopOfferRow[] = topCpaGroups.map((g) => ({
+    id: g.offerId,
+    name: nameById.get(g.offerId) ?? g.offerId,
+    conversions: g._count._all,
+    payout: money(Number(g._sum.payout ?? 0)),
+  }));
 
   return {
-    totalUsers,
-    activeUsers,
-    totalLeads,
-    approvedLeads,
-    totalRevenue: Number(revenueAgg._sum.amount ?? 0),
-    totalPayouts: Number(payoutsAgg._sum.amount ?? 0),
-    recentSignups: recentSignupsRaw.map((u) => ({
-      id: u.id,
-      name: u.name ?? u.email,
-      email: u.email,
-      role: u.role,
-      createdAt: u.createdAt.toISOString(),
-    })),
-    recentDeposits: recentDepositsRaw.map((d) => ({
-      id: d.id,
-      userName: d.user.name ?? d.user.email,
-      userEmail: d.user.email,
-      amount: Number(d.amount),
-      method: d.method,
-      status: d.status,
-      createdAt: d.createdAt.toISOString(),
-    })),
+    affiliateCount,
+    activeDigitalProducts,
+    activeCpaOffers,
+    activeTasks,
+    offerWallPayout30d,
+    cpaProfit30d,
+    cpaClicks30d,
+    digitalConversions30d,
+    pendingTaskSubmissions,
+    pendingCpaRequests,
+    openTickets,
     pendingPayouts: pendingPayoutsRaw.map((p) => ({
       id: p.id,
       publisherName: p.publisher.name ?? p.publisher.email,
@@ -1751,6 +1881,9 @@ export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
       status: p.status,
       createdAt: p.createdAt.toISOString(),
     })),
-    revenueSeries,
+    earningsSeries,
+    trafficSeries,
+    productMix,
+    topCpaOffers,
   };
 }

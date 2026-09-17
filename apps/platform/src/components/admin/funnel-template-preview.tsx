@@ -32,7 +32,7 @@ function FunnelTemplatePreviewContent({
   const formJson = extractFormJson(craftState, "");
 
   return (
-    <div className="flex min-h-screen w-full flex-col">
+    <div className="flex min-h-0 w-full flex-1 flex-col">
       <div className="shrink-0 border-b border-amber-200 bg-amber-50 px-4 py-2 text-center text-sm text-amber-900">
         Preview: <span className="font-semibold">{templateName}</span> — leads are not captured in template preview.
       </div>

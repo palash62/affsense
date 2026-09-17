@@ -162,13 +162,6 @@ export function PublisherCpaOffersList() {
 
   return (
     <div className="space-y-5">
-      <div>
-        <h1 className="text-xl font-bold tracking-tight text-foreground">CPA Offers</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Browse active CPA offers and copy your tracked affiliate links.
-        </p>
-      </div>
-
       <div className="space-y-3 rounded-[var(--radius-card,0.875rem)] border border-border bg-card p-4 shadow-[var(--shadow-card)]">
         <div className="flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-end">
           <div className="w-full space-y-1 sm:w-40">

@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { formatUserDateTime } from "@/lib/user-timezone";
 import { getSession } from "@/lib/session";
-import { ArrowLeft, Globe, Link2, Mail, MapPin, Share2, ShieldAlert, Wallet } from "lucide-react";
+import { Globe, Link2, Mail, MapPin, Share2, ShieldAlert, Wallet } from "lucide-react";
 import { getPublisherDetail, listActiveCampaignsForSmartLinkAllowlist } from "@/services/admin.service";
 import { getPublisherSpamScoresByIds } from "@/modules/fraud/repositories/quality.repo";
 import { TIER_PAYOUT_ROWS } from "@/lib/platform-settings";
@@ -17,7 +17,6 @@ import { AdminLoginAsButton } from "@/components/admin/admin-login-as-button";
 import { AdminPublisherSpecialPayoutDialog } from "@/components/admin/admin-publisher-special-payout-dialog";
 import { AdminPublisherSmartLinkCampaignsDialog } from "@/components/admin/admin-publisher-smart-link-campaigns-dialog";
 import { UserStatusActions } from "@/components/admin/user-status-actions";
-import { ButtonLink } from "@/components/ui/button-link";
 
 export const dynamic = "force-dynamic";
 
@@ -59,16 +58,15 @@ export default async function AdminPublisherDetailPage({ params }: PageProps) {
 
   return (
     <div className="space-y-7">
-      <ButtonLink href="/admin/publishers" variant="outline" size="sm" className="h-9 gap-1">
-        <ArrowLeft className="h-4 w-4" />
-        Back to publishers
-      </ButtonLink>
-
       <PageHero
-        eyebrow="Publisher Account"
         title={publisher.name}
         description={publisher.email}
         badge={profile?.kycStatus?.replace(/_/g, " ") ?? "Publisher"}
+        breadcrumbs={[
+          { label: "Admin", href: "/admin" },
+          { label: "Affiliates", href: "/admin/publishers" },
+          { label: publisher.name },
+        ]}
       />
 
       <div className="flex flex-wrap items-center justify-end gap-2">

@@ -93,10 +93,13 @@ export default async function AdminCampaignsPage({ searchParams }: PageProps) {
   return (
     <div className="space-y-7">
       <PageHero
-        eyebrow="Campaign Management"
         title="All Campaigns"
         description="Manage campaigns across all advertisers"
         badge={`${meta.total} campaign${meta.total === 1 ? "" : "s"}`}
+        breadcrumbs={[
+          { label: "Admin", href: "/admin" },
+          { label: "Campaigns" },
+        ]}
       />
 
       <div className="flex flex-wrap items-center justify-end gap-3">

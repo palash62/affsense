@@ -1,7 +1,7 @@
 # CPL Platform — Design System
 
 **Version:** 1.0  
-**Stack:** Shadcn UI · Tailwind CSS · Lucide Icons · Inter Font
+**Stack:** Shadcn UI · Tailwind CSS · Lucide Icons · Plus Jakarta Sans
 
 ---
 
@@ -32,7 +32,7 @@ Premium SaaS aesthetic inspired by Affsense admin dashboards (deep navy + indigo
 | Sidebar | `#07162D` | `--sidebar` / `--theme-sidebar-*` | Deep navy shell (solid) |
 | Active nav | `#4F46F5` → `#713BFF` | `--theme-sidebar-active-*` | Indigo→purple gradient |
 
-Default pack is Affsense (`slate-pro`). Chart accents: `#4F46F5`, `#12A150`, `#F59E0B`, `#713BFF`, `#EF4444`.
+Default pack is **Coral + Navy** (`coral-navy`). Chart accents follow the active theme pack.
 
 ### Shadcn CSS Variables (`globals.css`)
 
@@ -67,16 +67,40 @@ Default pack is Affsense (`slate-pro`). Chart accents: `#4F46F5`, `#12A150`, `#F
 
 ## Typography
 
-**Font Family:** Inter (Google Fonts)
+**Font Family:** Plus Jakarta Sans, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif  
+Loaded via `next/font` as `--font-sans` (weights 400 / 500 / 600 / 700).
 
-| Level | Size | Weight | Tailwind Class |
-|-------|------|--------|----------------|
-| Page title | 24px | 700 | `text-2xl font-bold` |
-| H2 | 20px | 600 | `text-xl font-semibold` |
-| Card title | 16px | 600 | `text-base font-semibold` |
-| Body | 14px | 400 | `text-sm` |
-| Small | 12px | 400 | `text-xs` |
-| Label | 14px | 500 | `text-sm font-medium` |
+| Level | Size | Weight | CSS token |
+|-------|------|--------|-----------|
+| Page title | 24px | 700 | `--type-page-title` |
+| Section heading | 20px | 600 | `--type-section` |
+| Card heading | 16px | 600 | `--type-card-heading` |
+| Body | 14px | 400 | `--type-body` |
+| Secondary | 13px | 400 | `--type-secondary` |
+| Small labels | 12px | 500 | `--type-label` |
+| Dashboard metric | 26px | 700 | `--type-metric` |
+| Sidebar / nav | 14px | 500 | body + `font-medium` |
+| Button | 14px | 600 / 500 | body + weight utilities |
+
+Line height: `--leading-body` (1.55) for body; `--leading-heading` (1.25) for headings.  
+Letter spacing: `--tracking-body` (`0`) for UI text, labels, and card titles; `--tracking-display` (−0.01em) only for page titles. Avoid `tracking-tight` on KPI labels.
+
+Baseline is applied on `body` in `globals.css` (`font-size: var(--type-body)`).
+
+---
+
+## Additional dashboard themes
+
+Registered in `themes.ts` / `globals.css` (switcher + `/admin/themes`). Runtime default is **Coral + Navy** (`coral-navy`).
+
+| ID | Name | Primary | Sidebar shell | Background | Border |
+|----|------|---------|---------------|------------|--------|
+| `coral-navy` | Coral + Navy | `#FF6B6B` | `#0B1F3A` | `#FFF5F2` | `#F1D9D5` |
+| `deep-teal-peach` | Deep Teal + Peach | `#006D77` | `#006D77` (+ peach accent `#FFB4A2`) | `#F6FFF8` | `#D9EAE6` |
+| `ocean-blue-mist` | Ocean Blue + Mist | `#0077B6` | `#16324F` | `#F8FBFF` | `#DCEAF3` |
+
+Shared: Success `#16A34A`, Warning `#F59E0B`, Error `#DC2626`.  
+Radii on these packs: `--radius` 8px (controls), `--radius-card` 10px (cards).
 
 ---
 
@@ -89,7 +113,7 @@ Default pack is Affsense (`slate-pro`). Chart accents: `#4F46F5`, `#12A150`, `#F
 | Content max-width | 1280px (dashboard); full-width for tables |
 | Spacing system | 8px base (`gap-2`, `p-4`, `p-5`, `p-6`) |
 | Card padding | 20–24px (`p-5` / `p-6`) |
-| Border radius (cards) | 14px (`--radius-card`) |
+| Border radius (cards) | 14px (`--radius-card`; 10px on coral/teal/ocean packs) |
 | Border radius (buttons/inputs) | 8px (`rounded-md` / `--radius`) |
 | Default shadow | `--shadow-card` (subtle) |
 | Interactive card hover | `--shadow-card-hover` |

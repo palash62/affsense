@@ -1,6 +1,7 @@
 import { getSession } from "@/lib/session";
 import { listEmailLists } from "@/modules/email-marketing";
 import { NewAutomationExperience } from "@/components/advertiser/email/automation-builder";
+import { PageHeader } from "@/components/layout/page-header";
 
 export const dynamic = "force-dynamic";
 
@@ -18,5 +19,19 @@ export default async function NewEmailAutomationPage() {
       campaignName: l.campaignName,
     }));
 
-  return <NewAutomationExperience lists={lists} />;
+  return (
+    <div className="space-y-4">
+      <PageHeader
+        title="New automation"
+        description="Name the sequence, then build it on the canvas."
+        breadcrumbs={[
+          { label: "Advertiser", href: "/advertiser" },
+          { label: "Email", href: "/advertiser/email" },
+          { label: "Automations", href: "/advertiser/email/automations" },
+          { label: "New" },
+        ]}
+      />
+      <NewAutomationExperience lists={lists} />
+    </div>
+  );
 }

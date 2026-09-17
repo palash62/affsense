@@ -6,6 +6,7 @@ import { PackageOpen, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { ButtonLink } from "@/components/ui/button-link";
+import { PageHeader } from "@/components/layout/page-header";
 import { DigitalProductCard } from "./digital-product-card";
 import { DigitalProductsFilters } from "./digital-products-filters";
 import {
@@ -72,6 +73,23 @@ function DigitalProductsListInner() {
 
   return (
     <div className="space-y-5">
+      <PageHeader
+        title="Digital Products"
+        description="Manage digital product catalog and listings."
+        breadcrumbs={[
+          { label: "Admin", href: "/admin" },
+          { label: "Digital Products" },
+        ]}
+      >
+        <ButtonLink
+          href="/admin/digital-products/new"
+          className="h-10 gap-2 rounded-md bg-[var(--theme-primary)] px-4 shadow-sm hover:opacity-90"
+        >
+          <Plus className="h-4 w-4" />
+          Add Product
+        </ButtonLink>
+      </PageHeader>
+
       <DigitalProductsFilters />
 
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -80,13 +98,6 @@ function DigitalProductsListInner() {
             ? `Showing ${shown} of ${total} product${total === 1 ? "" : "s"}`
             : `${total} product${total === 1 ? "" : "s"}`}
         </p>
-        <ButtonLink
-          href="/admin/digital-products/new"
-          className="h-10 gap-2 rounded-md bg-[var(--theme-primary)] px-4 shadow-sm hover:opacity-90"
-        >
-          <Plus className="h-4 w-4" />
-          Add Product
-        </ButtonLink>
       </div>
 
       {filtered.length === 0 ? (

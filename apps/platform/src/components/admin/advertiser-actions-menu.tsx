@@ -5,11 +5,10 @@ import { useRouter } from "next/navigation";
 import {
   MoreHorizontal,
   Eye,
-  ClipboardList,
-  DollarSign,
   CheckCircle,
   Ban,
   Trash2,
+  Mail,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,59 +18,36 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { AdminPublisherReviewDialog } from "@/components/admin/admin-publisher-review-dialog";
-import { AdminPublisherSpecialPayoutDialog } from "@/components/admin/admin-publisher-special-payout-dialog";
 import { AdminDeleteUserDialog } from "@/components/admin/admin-delete-user-dialog";
-import type { PublisherSpecialPayoutSettings } from "@/components/admin/admin-publisher-special-payout-dialog";
 import type { UserStatus } from "@prisma/client";
 import { cn } from "@/lib/utils";
 
-type PublisherProfile = {
-  website?: string | null;
-  trafficSource?: string | null;
-  country?: string | null;
-  addressLine1?: string | null;
-  addressLine2?: string | null;
-  city?: string | null;
-  state?: string | null;
-  postalCode?: string | null;
-  rejectionReason?: string | null;
-  rejectedAt?: string | Date | null;
-  kycStatus?: string | null;
-  qualityScore?: number | null;
-  spamScore?: number | null;
-  fraudFlags?: number | null;
-  restrictSmartLinkCampaigns?: boolean;
-} & PublisherSpecialPayoutSettings;
-
-type PublisherForMenu = {
+type AdvertiserForMenu = {
   id: string;
   name: string;
   email: string;
   status: UserStatus;
-  createdAt: string | Date;
-  publisherProfile?: PublisherProfile | null;
-  allowedSmartLinkCampaignIds?: string[];
+  emailVerified: Date | string | null;
 };
 
-type PublisherActionsMenuProps = {
-  publisher: PublisherForMenu;
+type AdvertiserActionsMenuProps = {
+  advertiser: AdvertiserForMenu;
   deleteDisabledReason?: string;
 };
 
-export function PublisherActionsMenu({
-  publisher,
+export function AdvertiserActionsMenu({
+  advertiser,
   deleteDisabledReason,
-}: PublisherActionsMenuProps) {
+}: AdvertiserActionsMenuProps) {
   const router = useRouter();
-  const [reviewOpen, setReviewOpen] = useState(false);
-  const [payoutOpen, setPayoutOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [statusLoading, setStatusLoading] = useState<UserStatus | null>(null);
+  const [resendLoading, setResendLoading] = useState(false);
   const [statusError, setStatusError] = useState("");
 
-  const status = publisher.status;
-  const profile = publisher.publisherProfile;
+  const status = advertiser.status;
+  const emailVerified = Boolean(advertiser.emailVerified);
+  const canChangeStatus = !(status === "PENDING" && !emailVerified);
 
   async function updateStatus(next: UserStatus) {
     if (statusLoading) return;
@@ -81,7 +57,7 @@ export function PublisherActionsMenu({
       const res = await fetch("/api/v1/admin/users", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: publisher.id, status: next }),
+        body: JSON.stringify({ userId: advertiser.id, status: next }),
         cache: "no-store",
       });
       if (!res.ok) {
@@ -92,6 +68,26 @@ export function PublisherActionsMenu({
       router.refresh();
     } finally {
       setStatusLoading(null);
+    }
+  }
+
+  async function resendVerification() {
+    if (resendLoading || emailVerified) return;
+    setResendLoading(true);
+    setStatusError("");
+    try {
+      const res = await fetch(`/api/v1/admin/advertisers/${advertiser.id}/resend-verification`, {
+        method: "POST",
+        cache: "no-store",
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setStatusError(data.error?.message ?? "Failed to resend verification");
+        return;
+      }
+      router.refresh();
+    } finally {
+      setResendLoading(false);
     }
   }
 
@@ -112,28 +108,26 @@ export function PublisherActionsMenu({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" side="bottom">
           <DropdownMenuItem
-            onClick={() => router.push(`/admin/publishers/${publisher.id}`)}
+            onClick={() => router.push(`/admin/advertisers/${advertiser.id}`)}
           >
             <Eye className="h-4 w-4" />
             View profile
           </DropdownMenuItem>
 
-          <DropdownMenuSeparator />
-
-          <DropdownMenuItem onClick={() => setReviewOpen(true)}>
-            <ClipboardList className="h-4 w-4" />
-            Review
-          </DropdownMenuItem>
-
-          <DropdownMenuItem onClick={() => setPayoutOpen(true)}>
-            <DollarSign className="h-4 w-4" />
-            Special payout
-          </DropdownMenuItem>
+          {!emailVerified && status !== "SUSPENDED" ? (
+            <DropdownMenuItem
+              disabled={resendLoading}
+              onClick={() => void resendVerification()}
+            >
+              <Mail className="h-4 w-4" />
+              {resendLoading ? "Sending..." : "Resend verification"}
+            </DropdownMenuItem>
+          ) : null}
 
           <DropdownMenuSeparator />
 
           <DropdownMenuItem
-            disabled={status === "ACTIVE" || statusLoading !== null}
+            disabled={!canChangeStatus || status === "ACTIVE" || statusLoading !== null}
             onClick={() => void updateStatus("ACTIVE")}
             className={cn(status === "ACTIVE" && "opacity-40")}
           >
@@ -142,7 +136,7 @@ export function PublisherActionsMenu({
           </DropdownMenuItem>
 
           <DropdownMenuItem
-            disabled={status === "SUSPENDED" || statusLoading !== null}
+            disabled={!canChangeStatus || status === "SUSPENDED" || statusLoading !== null}
             onClick={() => void updateStatus("SUSPENDED")}
             className={cn(status === "SUSPENDED" && "opacity-40")}
           >
@@ -164,40 +158,14 @@ export function PublisherActionsMenu({
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {statusError && (
+      {statusError ? (
         <p className="mt-1 text-right text-xs text-red-500">{statusError}</p>
-      )}
-
-      <AdminPublisherReviewDialog
-        publisher={{
-          id: publisher.id,
-          name: publisher.name,
-          email: publisher.email,
-          status: publisher.status,
-          createdAt: publisher.createdAt,
-          publisherProfile: profile,
-        }}
-        open={reviewOpen}
-        onOpenChange={setReviewOpen}
-      />
-
-      <AdminPublisherSpecialPayoutDialog
-        publisherId={publisher.id}
-        publisherName={publisher.name}
-        settings={{
-          useSpecialTierPayouts: profile?.useSpecialTierPayouts ?? false,
-          tier1SpecialPayout: profile?.tier1SpecialPayout ?? null,
-          tier2SpecialPayout: profile?.tier2SpecialPayout ?? null,
-          tier3SpecialPayout: profile?.tier3SpecialPayout ?? null,
-        }}
-        open={payoutOpen}
-        onOpenChange={setPayoutOpen}
-      />
+      ) : null}
 
       <AdminDeleteUserDialog
-        userId={publisher.id}
-        userName={publisher.name}
-        role="PUBLISHER"
+        userId={advertiser.id}
+        userName={advertiser.name}
+        role="ADVERTISER"
         disabledReason={deleteDisabledReason}
         open={deleteOpen}
         onOpenChange={setDeleteOpen}

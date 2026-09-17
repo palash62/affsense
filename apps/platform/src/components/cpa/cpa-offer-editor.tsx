@@ -10,6 +10,7 @@ import {
   countriesToStorage,
 } from "@/components/cpa/cpa-country-multi-select";
 import { BuilderImageUpload } from "@/modules/page-builder/components/editor/builder-image-upload";
+import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -328,7 +329,10 @@ export function CpaOfferEditor({
   advertisers = [],
 }: CpaOfferEditorProps) {
   const router = useRouter();
-  const cancelHref = role === "ADMIN" ? "/admin/offer-network" : "/advertiser/cpa-offers";
+  const isAdmin = role === "ADMIN";
+  const isEdit = mode === "edit";
+  const cpaOffersHref = isAdmin ? "/admin/cpa-offers" : "/advertiser/cpa-offers";
+  const cancelHref = isAdmin ? "/admin/offer-network" : "/advertiser/cpa-offers";
   const [saving, setSaving] = useState<"draft" | "publish" | null>(null);
   const [values, setValues] = useState<EditorValues>(() =>
     valuesFromOffer(offer, advertiserLabelDefault),
@@ -496,12 +500,24 @@ export function CpaOfferEditor({
 
   return (
     <div className="space-y-5 pb-24">
-      {role === "ADVERTISER" ? (
-        <div>
-          <h1 className="text-2xl font-semibold text-foreground">Add New CPA Offer</h1>
-          <p className="mt-1 text-sm text-muted-foreground">CPA Offers &gt; Add New CPA Offer</p>
-        </div>
-      ) : null}
+      <PageHeader
+        title={isEdit ? "Edit CPA Offer" : "New CPA Offer"}
+        description={
+          isEdit
+            ? "Update offer details, payout, targeting, and tracking settings."
+            : isAdmin
+              ? "Create a CPA offer for the network with payout, targeting, and tracking."
+              : "Submit a new CPA offer for admin review before it goes live."
+        }
+        breadcrumbs={[
+          {
+            label: isAdmin ? "Admin" : "Advertiser",
+            href: isAdmin ? "/admin" : "/advertiser",
+          },
+          { label: "CPA Offers", href: cpaOffersHref },
+          { label: isEdit ? "Edit" : "New" },
+        ]}
+      />
 
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
         <div className="space-y-5">

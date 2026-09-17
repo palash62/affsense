@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Copy, Info, Plus, Send, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { AdminBreadcrumbs } from "./admin-breadcrumbs";
+import { PageHeader } from "@/components/layout/page-header";
 import {
   DEFAULT_FORM_VALUES,
   DIGITAL_PRODUCT_NICHES,
@@ -302,9 +302,15 @@ export function DigitalProductForm({ productId }: { productId?: string }) {
 
   return (
     <div className="space-y-5 pb-24">
-      <AdminBreadcrumbs
-        items={[
-          { label: "Dashboard", href: "/admin" },
+      <PageHeader
+        title={isEdit ? "Edit Digital Product" : "Add Digital Product"}
+        description={
+          isEdit
+            ? "Update product details, pricing, and delivery settings."
+            : "Create a new digital product for the marketplace."
+        }
+        breadcrumbs={[
+          { label: "Admin", href: "/admin" },
           { label: "Digital Products", href: "/admin/digital-products" },
           { label: isEdit ? "Edit" : "Add New" },
         ]}

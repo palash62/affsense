@@ -52,13 +52,6 @@ function PublisherMarketplaceListInner() {
 
   return (
     <div className="space-y-5">
-      <div>
-        <h1 className="text-xl font-bold tracking-tight text-foreground">Marketplace</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Browse digital products to promote. Copy your tracked link and share it with your audience.
-        </p>
-      </div>
-
       <PublisherMarketplaceFilters categories={categories} />
 
       <p className="text-sm text-muted-foreground">

@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { PageHeader } from "@/components/layout/page-header";
 import type { SerializedCpaOfferAccessRequest } from "@/services/cpa-offer.service";
 
 const STATUS_TABS = [
@@ -88,12 +89,15 @@ export function AdminCpaOfferAccessRequestsList() {
 
   return (
     <div className="space-y-5">
-      <div>
-        <h1 className="text-xl font-bold tracking-tight text-foreground">Offer Requests</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Review affiliate requests to promote private CPA offers.
-        </p>
-      </div>
+      <PageHeader
+        title="Requests"
+        description="Review affiliate requests to promote private CPA offers."
+        breadcrumbs={[
+          { label: "Admin", href: "/admin" },
+          { label: "Offer Network", href: "/admin/offer-network" },
+          { label: "Requests" },
+        ]}
+      />
 
       <div className="flex flex-wrap gap-2">
         {STATUS_TABS.map((tab) => (

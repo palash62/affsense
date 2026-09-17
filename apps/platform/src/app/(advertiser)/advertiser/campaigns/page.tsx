@@ -80,10 +80,14 @@ export default async function AdvertiserCampaignsPage({ searchParams }: PageProp
   return (
     <div className="space-y-6">
       <RoleHero
-        eyebrow="Advertiser Portal"
+        eyebrow="Advertiser"
         title="All Campaigns"
         description="Manage your lead generation campaigns and track CPL performance."
         action={{ label: "Create Campaign", href: "/advertiser/campaigns/new", icon: Megaphone }}
+        breadcrumbs={[
+          { label: "Advertiser", href: "/advertiser" },
+          { label: "Campaigns" },
+        ]}
       />
 
       <div

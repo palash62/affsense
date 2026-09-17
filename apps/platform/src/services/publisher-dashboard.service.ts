@@ -1,8 +1,8 @@
 import { prisma } from "@cpl/database";
 import { listPublishedAnnouncements } from "@/services/announcement.service";
-import { listPublisherCpaOffers } from "@/services/cpa-offer.service";
-import { listPublisherDigitalProducts } from "@/services/digital-product.service";
-import { listGetPaidTasks } from "@/services/get-paid-task.service";
+import { getPublisherEarningsForRange } from "@/lib/publisher-earnings";
+import { formatPublisherLeadPayout } from "@/lib/publisher-leads";
+import { getPlatformSettingsConfig } from "@/lib/platform-settings-server";
 import { reconcilePublisherLeadCreditsForUser } from "@/services/wallet.service";
 
 export type PublisherDashboardPeriod = "7d" | "30d" | "month" | "year";
@@ -30,7 +30,7 @@ function periodStart(period: PublisherDashboardPeriod): Date {
   return d;
 }
 
-function previousPeriodStart(period: PublisherDashboardPeriod): { from: Date; to: Date } {
+function previousPeriodBounds(period: PublisherDashboardPeriod): { from: Date; to: Date } {
   const to = periodStart(period);
   const from = new Date(to);
   const spanMs = Date.now() - to.getTime();
@@ -38,54 +38,34 @@ function previousPeriodStart(period: PublisherDashboardPeriod): { from: Date; to
   return { from, to };
 }
 
-function calcTrend(current: number, previous: number): string {
-  if (previous === 0) return current > 0 ? "+100%" : "0%";
-  const pct = ((current - previous) / previous) * 100;
-  const sign = pct >= 0 ? "+" : "";
-  return `${sign}${pct.toFixed(1)}%`;
+function calcTrend(current: number, previous: number): number {
+  if (previous === 0) return current > 0 ? 100 : 0;
+  return Math.round(((current - previous) / previous) * 100);
 }
 
-async function sumLedgerCredits(publisherId: string, from?: Date, to?: Date) {
-  const where: {
-    type: "CREDIT";
-    wallet: { userId: string };
-    createdAt?: { gte?: Date; lte?: Date };
-  } = {
-    type: "CREDIT",
-    wallet: { userId: publisherId },
-  };
-  if (from || to) {
-    where.createdAt = {};
-    if (from) where.createdAt.gte = from;
-    if (to) where.createdAt.lte = to;
-  }
-  const agg = await prisma.ledgerEntry.aggregate({
-    where,
-    _sum: { amount: true },
-  });
-  return Number(agg._sum.amount ?? 0);
-}
+async function publisherMetrics(publisherId: string, from: Date, to: Date) {
+  const [clicks, totalLeads, approvedLeads, earnings] = await Promise.all([
+    prisma.click.count({
+      where: {
+        trackingLink: { publisherId },
+        createdAt: { gte: from, lte: to },
+      },
+    }),
+    prisma.lead.count({
+      where: { publisherId, createdAt: { gte: from, lte: to } },
+    }),
+    prisma.lead.count({
+      where: {
+        publisherId,
+        status: { in: ["APPROVED", "PAID"] },
+        createdAt: { gte: from, lte: to },
+      },
+    }),
+    getPublisherEarningsForRange(publisherId, from, to),
+  ]);
 
-async function pendingEarnings(publisherId: string) {
-  const leads = await prisma.lead.findMany({
-    where: {
-      publisherId,
-      status: { in: ["PENDING", "APPROVED"] },
-    },
-    select: { id: true, status: true, campaign: { select: { cpl: true } } },
-  });
-  const credited = await prisma.ledgerEntry.findMany({
-    where: {
-      type: "CREDIT",
-      referenceType: "lead",
-      wallet: { userId: publisherId },
-    },
-    select: { referenceId: true },
-  });
-  const creditedIds = new Set(credited.map((e) => e.referenceId));
-  return leads
-    .filter((l) => !creditedIds.has(l.id))
-    .reduce((sum, l) => sum + Number(l.campaign?.cpl ?? 0) * 0.7, 0);
+  const conversionRate = clicks > 0 ? (approvedLeads / clicks) * 100 : 0;
+  return { clicks, totalLeads, approvedLeads, conversionRate, earnings };
 }
 
 async function earningsSeries(publisherId: string, period: PublisherDashboardPeriod) {
@@ -111,105 +91,82 @@ async function earningsSeries(publisherId: string, period: PublisherDashboardPer
   }));
 }
 
-export async function getAffsensePublisherDashboard(publisherId: string, period: PublisherDashboardPeriod = "30d") {
+export async function getAffsensePublisherDashboard(
+  publisherId: string,
+  period: PublisherDashboardPeriod = "30d",
+) {
   await reconcilePublisherLeadCreditsForUser(publisherId);
 
   const from = periodStart(period);
-  const prev = previousPeriodStart(period);
+  const to = new Date();
+  const prev = previousPeriodBounds(period);
 
-  const [
-    wallet,
-    totalEarnings,
-    currentPeriodEarnings,
-    previousPeriodEarnings,
-    pending,
-    tasksCompleted,
-    totalReferrals,
-    tasks,
-    products,
-    cpaOffers,
-    announcements,
-    recentPayouts,
-    earningsChart,
-  ] = await Promise.all([
-    prisma.wallet.findUnique({ where: { userId: publisherId } }),
-    sumLedgerCredits(publisherId),
-    sumLedgerCredits(publisherId, from),
-    sumLedgerCredits(publisherId, prev.from, prev.to),
-    pendingEarnings(publisherId),
-    prisma.publisherTaskSubmission.count({
-      where: { publisherId, status: "APPROVED" },
-    }),
-    prisma.user.count({ where: { referredById: publisherId } }),
-    listGetPaidTasks({ activeOnly: true, showOnDashboard: true, limit: 5 }),
-    listPublisherDigitalProducts({ limit: 6 }),
-    listPublisherCpaOffers(publisherId, { page: 1, limit: 6 }),
-    listPublishedAnnouncements("PUBLISHER", 6),
-    prisma.payout.findMany({
-      where: { publisherId },
-      orderBy: { createdAt: "desc" },
-      take: 5,
-      select: { id: true, amount: true, status: true, createdAt: true, method: true },
-    }),
-    earningsSeries(publisherId, period),
-  ]);
+  const [wallet, current, previous, earningsChart, announcements, recentLeadsRaw, platformSettings] =
+    await Promise.all([
+      prisma.wallet.findUnique({ where: { userId: publisherId } }),
+      publisherMetrics(publisherId, from, to),
+      publisherMetrics(publisherId, prev.from, prev.to),
+      earningsSeries(publisherId, period),
+      listPublishedAnnouncements("PUBLISHER", 6),
+      prisma.lead.findMany({
+        where: { publisherId },
+        take: 6,
+        orderBy: { createdAt: "desc" },
+        include: {
+          campaign: { select: { cpl: true } },
+        },
+      }),
+      getPlatformSettingsConfig(),
+    ]);
+
+  const recentLeadIds = recentLeadsRaw.map((lead) => lead.id);
+  const creditedEntries =
+    recentLeadIds.length > 0
+      ? await prisma.ledgerEntry.findMany({
+          where: {
+            type: "CREDIT",
+            referenceType: "lead",
+            referenceId: { in: recentLeadIds },
+            wallet: { userId: publisherId },
+          },
+          select: { referenceId: true, amount: true },
+        })
+      : [];
+  const creditedByLeadId = new Map(
+    creditedEntries.map((entry) => [entry.referenceId, Number(entry.amount)]),
+  );
 
   const availableBalance = wallet
     ? Number(wallet.balance) - Number(wallet.holdBalance)
     : 0;
 
-  const cpaRows = cpaOffers.items.map((o) => ({
-    id: o.id,
-    name: o.name,
-    category: o.category ?? "CPA",
-    commission: `${o.payout} ${o.payoutModel}`,
-    earnings: 0,
-    sales: 0,
-    imageUrl: o.thumbnailUrl,
-    type: "cpa" as const,
-    hot: o.status === "ACTIVE",
-    canPromote: o.canPromote,
-  }));
-
-  const productRows = products.items.map((p) => ({
-    id: p.id,
-    name: p.name,
-    category: p.category,
-    commission: `${p.frontEndCommission}%`,
-    earnings: 0,
-    sales: 0,
-    imageUrl: p.imageUrl,
-    type: "product" as const,
-    hot: p.featured,
-    salesPageUrl: p.salesPageUrl,
-    affiliateTrackingParam: p.affiliateTrackingParam,
-  }));
-
-  const topOffers = [...cpaRows, ...productRows]
-    .sort((a, b) => (b.hot ? 1 : 0) - (a.hot ? 1 : 0))
-    .slice(0, 5);
+  const recentLeads = recentLeadsRaw.map((lead) => {
+    const creditedAmount = creditedByLeadId.get(lead.id);
+    const payout = formatPublisherLeadPayout(lead, platformSettings, creditedAmount);
+    return {
+      id: lead.id,
+      status: lead.status,
+      createdAt: lead.createdAt.toISOString(),
+      payoutLabel: payout.label,
+      payoutClassName: payout.className,
+    };
+  });
 
   return {
     period,
+    availableBalance,
     kpis: {
-      totalEarnings,
-      totalEarningsTrend: calcTrend(currentPeriodEarnings, previousPeriodEarnings),
-      pendingEarnings: pending,
-      availableBalance,
-      totalReferrals,
-      referralsTrend: "+0",
-      tasksCompleted,
-      tasksToday: 0,
+      clicks: current.clicks,
+      clicksTrend: calcTrend(current.clicks, previous.clicks),
+      totalLeads: current.totalLeads,
+      leadsTrend: calcTrend(current.totalLeads, previous.totalLeads),
+      conversionRate: current.conversionRate,
+      conversionTrend: calcTrend(current.conversionRate, previous.conversionRate),
+      earnings: current.earnings,
+      earningsTrend: calcTrend(current.earnings, previous.earnings),
     },
     earningsChart,
-    tasks: tasks.items.map((t) => ({
-      id: t.id,
-      title: t.title,
-      platform: t.category,
-      rewardAmount: t.rewardAmount,
-      requiredAction: t.requiredAction,
-    })),
-    topOffers,
+    recentLeads,
     announcements: announcements.map((a) => ({
       id: a.id,
       title: a.title,
@@ -217,14 +174,6 @@ export async function getAffsensePublisherDashboard(publisherId: string, period:
       iconKey: a.iconKey,
       tone: a.tone,
       publishedAt: a.publishedAt ?? a.createdAt,
-    })),
-    recentReports: recentPayouts.map((p) => ({
-      id: p.id,
-      name: `Payout ${p.method}`,
-      type: "Payout",
-      dateRange: "—",
-      generatedOn: p.createdAt.toISOString(),
-      status: p.status,
     })),
   };
 }

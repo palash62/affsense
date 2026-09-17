@@ -1,12 +1,10 @@
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
 import { getSession } from "@/lib/session";
 import { getCampaignById } from "@/services/campaign.service";
 import { PageHero } from "@/components/admin/page-hero";
 import { AdminCampaignActions } from "@/components/admin/admin-campaign-actions";
 import { AdminCampaignDetails } from "@/components/admin/admin-campaign-details";
 import { AdminCampaignReviewDialog } from "@/components/admin/admin-campaign-review-dialog";
-import { ButtonLink } from "@/components/ui/button-link";
 import { PageSection } from "@/components/admin/page-section";
 import { Building2 } from "lucide-react";
 import { parseCampaignTargeting } from "@/lib/campaign-targeting";
@@ -30,11 +28,16 @@ export default async function AdminCampaignDetailPage({ params }: PageProps) {
 
   return (
     <div className="space-y-7">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <ButtonLink href="/admin/campaigns" variant="outline" size="sm" className="h-9 gap-1">
-          <ArrowLeft className="h-4 w-4" />
-          Back to campaigns
-        </ButtonLink>
+      <PageHero
+        title={campaign.name}
+        description={campaign.advertiser.name}
+        badge={campaign.status}
+        breadcrumbs={[
+          { label: "Admin", href: "/admin" },
+          { label: "Campaigns", href: "/admin/campaigns" },
+          { label: campaign.name },
+        ]}
+      >
         <AdminCampaignActions
           campaign={{
             id: campaign.id,
@@ -46,14 +49,7 @@ export default async function AdminCampaignDetailPage({ params }: PageProps) {
               parseCampaignTargeting(campaign.targeting).optinSlug,
           }}
         />
-      </div>
-
-      <PageHero
-        eyebrow="Campaign"
-        title={campaign.name}
-        description={campaign.advertiser.name}
-        badge={campaign.status}
-      />
+      </PageHero>
 
       <AdminCampaignDetails
         campaign={{

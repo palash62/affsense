@@ -4,11 +4,14 @@ export const THEME_IDS = [
   "performance-green",
   "marketplace-purple",
   "slate-pro",
+  "coral-navy",
+  "deep-teal-peach",
+  "ocean-blue-mist",
 ] as const;
 
 export type ThemeId = (typeof THEME_IDS)[number];
 
-export const DEFAULT_THEME: ThemeId = "marketing-saas";
+export const DEFAULT_THEME: ThemeId = "coral-navy";
 
 export const THEME_STORAGE_KEY = "cpl-theme";
 
@@ -49,6 +52,24 @@ export const THEMES: ThemeMeta[] = [
     name: "Affsense",
     tagline: "Deep navy sidebar · indigo + purple accents",
     inspiredBy: "Affsense premium SaaS dashboard",
+  },
+  {
+    id: "coral-navy",
+    name: "Coral + Navy",
+    tagline: "Warm coral accents · deep navy shell",
+    inspiredBy: "Modern SaaS with soft warmth and contrast",
+  },
+  {
+    id: "deep-teal-peach",
+    name: "Deep Teal + Peach",
+    tagline: "Calm teal · soft peach accents",
+    inspiredBy: "Fresh, approachable growth dashboard",
+  },
+  {
+    id: "ocean-blue-mist",
+    name: "Ocean Blue + Mist",
+    tagline: "Ocean primary · mist surfaces",
+    inspiredBy: "Clean analytics SaaS, clear and professional",
   },
 ];
 

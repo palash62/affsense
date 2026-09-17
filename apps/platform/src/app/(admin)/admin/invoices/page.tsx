@@ -16,6 +16,7 @@ import { AdminInvoicesFilters } from "@/components/admin/admin-invoices-filters"
 import { AdminInvoicePayDialog } from "@/components/admin/admin-invoice-pay-dialog";
 import { AdminGenerateInvoicesButton } from "@/components/admin/admin-generate-invoices-button";
 import { UsersTablePagination } from "@/components/admin/users-table-pagination";
+import { PageHeader } from "@/components/layout/page-header";
 import {
   Table,
   TableBody,
@@ -64,6 +65,17 @@ export default async function AdminInvoicesPage({ searchParams }: PageProps) {
 
   return (
     <div className="space-y-5">
+      <PageHeader
+        title="Invoices"
+        description="Review and pay affiliate invoices."
+        breadcrumbs={[
+          { label: "Admin", href: "/admin" },
+          { label: "Invoices" },
+        ]}
+      >
+        <AdminGenerateInvoicesButton />
+      </PageHeader>
+
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <GradientStatCard
           variant="revenue"
@@ -85,14 +97,11 @@ export default async function AdminInvoicesPage({ searchParams }: PageProps) {
         />
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-muted-foreground">
-          Weekly Monday-to-Sunday earnings, invoiced on Net-{config.netTermDays} terms once an
-          affiliate reaches {formatCurrency(config.minimumAmount)}.
-          {config.enabled ? "" : " Invoicing is currently disabled in settings."}
-        </p>
-        <AdminGenerateInvoicesButton />
-      </div>
+      <p className="text-sm text-muted-foreground">
+        Weekly Monday-to-Sunday earnings, invoiced on Net-{config.netTermDays} terms once an
+        affiliate reaches {formatCurrency(config.minimumAmount)}.
+        {config.enabled ? "" : " Invoicing is currently disabled in settings."}
+      </p>
 
       <div className="overflow-hidden rounded-[var(--radius-card,0.875rem)] border border-border bg-card shadow-[var(--shadow-card)]">
         <Suspense fallback={null}>

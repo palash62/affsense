@@ -1,30 +1,33 @@
 export const dynamic = "force-dynamic";
 
 import { Suspense } from "react";
-import { DollarSign, FileText, LineChart, Megaphone, Wallet } from "lucide-react";
+import { DollarSign, FileText, Megaphone, MousePointer, Wallet } from "lucide-react";
 import { getSession } from "@/lib/session";
+import { canAdvertiserAccessAutoresponder } from "@/lib/autoresponder-access";
 import { ADVERTISER_PERIODS, parseAdvertiserPeriod } from "@/lib/advertiser-periods";
 import { ensureReferralCode } from "@/services/referral.service";
 import { getAdvertiserDashboardData } from "@/services/report.service";
 import { listAdvertiserDashboardAlerts } from "@/services/notification.service";
 import { listPublishedAnnouncements } from "@/services/announcement.service";
-import { GradientStatCard, NeutralStatCard } from "@/components/admin/gradient-stat-card";
-import { PageSection } from "@/components/admin/page-section";
 import { formatCurrency } from "@/components/admin/admin-ui";
-import { RoleHero } from "@/components/layout/role-hero";
 import { AdvertiserPeriodFilter } from "@/components/advertiser/advertiser-period-filter";
 import { AdvertiserReferralCard } from "@/components/advertiser/advertiser-referral-card";
 import {
   DashboardCard,
+  DashboardCardDescription,
   DashboardCardTitle,
 } from "@/components/admin/affsense-dashboard/dashboard-card";
+import { AffsenseStatCard } from "@/components/dashboard/affsense-stat-card";
 import { AnnouncementsFeed } from "@/components/announcements/announcements-feed";
 import { AdvertiserDashboardAlerts } from "@/components/advertiser/advertiser-dashboard-alerts";
+import { AutoresponderAnnouncementBanner } from "@/components/advertiser/autoresponder-announcement-banner";
 import {
   AdvertiserPendingQueue,
   AdvertiserSummaryTable,
 } from "@/components/advertiser/advertiser-dashboard-panels";
 import { LeadsTrendChart } from "@/components/dashboard/dashboard-charts";
+import { PageHeader } from "@/components/layout/page-header";
+import { ButtonLink } from "@/components/ui/button-link";
 
 interface PageProps {
   searchParams: Promise<{ period?: string }>;
@@ -42,81 +45,100 @@ export default async function AdvertiserDashboardPage({ searchParams }: PageProp
     listAdvertiserDashboardAlerts(userId),
     listPublishedAnnouncements("ADVERTISER", 6),
   ]);
-  const firstName = session?.user?.name?.split(" ")[0] ?? "Advertiser";
+  const showAutoresponderAnnouncement = canAdvertiserAccessAutoresponder(session?.user?.email);
 
   return (
     <div className="space-y-5">
-      <RoleHero
-        eyebrow="Advertiser Portal"
-        title={`Hello, ${session?.user?.name ?? firstName}!`}
+      <PageHeader
+        title="Dashboard"
         description={`Campaign performance for ${periodLabel.toLowerCase()}.`}
-        action={{ label: "Create Campaign", href: "/advertiser/campaigns/new", icon: Megaphone }}
-      />
-
-      <AdvertiserDashboardAlerts alerts={alerts} />
-
-      <div className="flex flex-wrap items-center justify-between gap-3">
+        breadcrumbs={[
+          { label: "Advertiser", href: "/advertiser" },
+          { label: "Dashboard" },
+        ]}
+      >
         <Suspense fallback={<div className="h-9 w-36 animate-pulse rounded-lg bg-muted" />}>
           <AdvertiserPeriodFilter current={period} />
         </Suspense>
-        <div className="rounded-[18px] border border-border border-t-[3px] border-t-emerald-500 bg-card px-5 py-3 shadow-sm">
-          <p className="text-xs font-medium text-muted-foreground">Wallet Balance</p>
-          <p className="text-xl font-bold tracking-tight text-[var(--theme-primary)]">
+        <div className="rounded-[var(--radius-card,0.875rem)] border border-border bg-card px-4 py-2 shadow-[var(--shadow-card)]">
+          <p className="text-xs font-medium tracking-normal text-muted-foreground">Wallet</p>
+          <p className="text-lg font-bold tracking-normal text-foreground">
             {formatCurrency(data.walletBalance)}
           </p>
         </div>
-      </div>
+        <ButtonLink
+          href="/advertiser/campaigns/new"
+          className="h-9 rounded-lg bg-[var(--theme-primary)] px-4 text-sm hover:opacity-90"
+        >
+          <Megaphone className="mr-1.5 h-4 w-4" />
+          Create Campaign
+        </ButtonLink>
+        <ButtonLink
+          href="/advertiser/wallet"
+          variant="outline"
+          className="h-9 rounded-lg px-4 text-sm"
+        >
+          <Wallet className="mr-1.5 h-4 w-4" />
+          Add Funds
+        </ButtonLink>
+      </PageHeader>
+
+      {showAutoresponderAnnouncement ? <AutoresponderAnnouncementBanner /> : null}
+      <AdvertiserDashboardAlerts alerts={alerts} />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <NeutralStatCard
+        <AffsenseStatCard
           label="Active Campaigns"
-          value={data.activeCampaigns}
+          value={String(data.activeCampaigns)}
           icon={Megaphone}
-          accent="green"
+          accent="coral"
+          footer={{ href: "/advertiser/campaigns", linkLabel: "View campaigns" }}
         />
-        <GradientStatCard
-          variant="leads"
+        <AffsenseStatCard
           label="Approved Leads"
-          value={data.stats.leads}
+          value={data.stats.leads.toLocaleString("en-US")}
           icon={FileText}
           trend={data.stats.leadsTrend}
+          accent="emerald"
+          footer={{ href: "/advertiser/leads", linkLabel: "View leads" }}
         />
-        <GradientStatCard
-          variant="revenue"
+        <AffsenseStatCard
+          label="Clicks"
+          value={data.stats.clicks.toLocaleString("en-US")}
+          icon={MousePointer}
+          trend={data.stats.clicksTrend}
+          accent="amber"
+        />
+        <AffsenseStatCard
           label="CPL"
           value={formatCurrency(data.stats.cpl)}
           icon={DollarSign}
           trend={data.stats.cplTrend}
-        />
-        <NeutralStatCard
-          label="Spent"
-          value={formatCurrency(data.stats.spent)}
-          icon={Wallet}
-          accent="orange"
-          trend={data.stats.spentTrend}
+          accent="navy"
         />
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[1fr_300px]">
-        <div className="space-y-6">
+      <div className="grid gap-5 xl:grid-cols-12">
+        <div className="space-y-5 xl:col-span-8">
           <AdvertiserSummaryTable rows={data.summaryRows} />
-
-          {data.leadsTrend.length > 0 && (
-            <PageSection
-              title="Leads Over Time"
-              description="Daily lead volume for the last 30 days"
-              icon={LineChart}
-              gradient="leads"
-              contentClassName="px-6 py-5"
-            >
-              <LeadsTrendChart title="Leads Over Time" data={data.leadsTrend} embedded />
-            </PageSection>
-          )}
-
+          <DashboardCard className="h-full">
+            <DashboardCardTitle>Leads Over Time</DashboardCardTitle>
+            <DashboardCardDescription>
+              Daily approved lead volume — last 30 days
+            </DashboardCardDescription>
+            <div className="mt-4">
+              {data.leadsTrend.length > 0 ? (
+                <LeadsTrendChart title="Leads Over Time" data={data.leadsTrend} embedded />
+              ) : (
+                <div className="flex min-h-[240px] items-center justify-center text-sm text-muted-foreground">
+                  No lead data for this period yet
+                </div>
+              )}
+            </div>
+          </DashboardCard>
           <AdvertiserPendingQueue leads={data.pendingLeads} />
         </div>
-
-        <aside className="space-y-4">
+        <aside className="space-y-4 xl:col-span-4">
           <AdvertiserReferralCard referralCode={referralCode} />
           <DashboardCard>
             <DashboardCardTitle>Announcements</DashboardCardTitle>

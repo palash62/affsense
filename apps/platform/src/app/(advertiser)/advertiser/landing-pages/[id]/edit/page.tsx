@@ -5,8 +5,27 @@ import { useParams } from "next/navigation";
 import { LandingPageBuilder } from "@/modules/page-builder";
 import { useBuilderStore } from "@/modules/page-builder/lib/builder-store";
 import type { CraftSerializedState } from "@/modules/page-builder/types/page-document";
-import type { ThemeJson } from "@/modules/page-builder/lib/theme";
 import { normalizeThemeJson } from "@/modules/page-builder/lib/theme";
+import { PageHeader } from "@/components/layout/page-header";
+
+const slimHeaderClass =
+  "space-y-1.5 [&_.premium-page-title]:text-base [&_.premium-page-title]:font-semibold";
+
+function SlimBuilderHeader({ title }: { title: string }) {
+  return (
+    <div className="shrink-0 border-b border-border bg-background px-4 py-2.5">
+      <PageHeader
+        title={title}
+        className={slimHeaderClass}
+        breadcrumbs={[
+          { label: "Advertiser", href: "/advertiser" },
+          { label: "Landing Pages", href: "/advertiser/landing-pages" },
+          { label: "Edit" },
+        ]}
+      />
+    </div>
+  );
+}
 
 export default function LandingPageEditPage() {
   const params = useParams();
@@ -63,35 +82,46 @@ export default function LandingPageEditPage() {
 
   if (loadError) {
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-3 px-6 text-center text-sm text-muted-foreground">
-        <p>{loadError}</p>
-        <button
-          type="button"
-          className="rounded-lg border border-border bg-card px-4 py-2 text-foreground hover:bg-muted"
-          onClick={() => window.location.reload()}
-        >
-          Reload
-        </button>
-      </div>
+      <>
+        <SlimBuilderHeader title="Edit landing page" />
+        <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 px-6 text-center text-sm text-muted-foreground">
+          <p>{loadError}</p>
+          <button
+            type="button"
+            className="rounded-lg border border-border bg-card px-4 py-2 text-foreground hover:bg-muted"
+            onClick={() => window.location.reload()}
+          >
+            Reload
+          </button>
+        </div>
+      </>
     );
   }
 
   if (!state) {
     return (
-      <div className="flex h-full items-center justify-center gap-2 text-sm text-muted-foreground">
-        <div className="h-5 w-5 animate-spin rounded-full border-2 border-indigo-500 border-t-transparent" />
-        Loading builder...
-      </div>
+      <>
+        <SlimBuilderHeader title="Edit landing page" />
+        <div className="flex min-h-0 flex-1 items-center justify-center gap-2 text-sm text-muted-foreground">
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-indigo-500 border-t-transparent" />
+          Loading builder...
+        </div>
+      </>
     );
   }
 
   return (
-    <LandingPageBuilder
-      pageId={pageId}
-      initialCraftState={state.craftState}
-      pageName={state.name}
-      pageSlug={state.slug}
-      campaignId={state.campaignId}
-    />
+    <>
+      <SlimBuilderHeader title={state.name || "Edit landing page"} />
+      <div className="min-h-0 flex-1">
+        <LandingPageBuilder
+          pageId={pageId}
+          initialCraftState={state.craftState}
+          pageName={state.name}
+          pageSlug={state.slug}
+          campaignId={state.campaignId}
+        />
+      </div>
+    </>
   );
 }

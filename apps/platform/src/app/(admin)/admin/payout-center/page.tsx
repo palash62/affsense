@@ -15,6 +15,7 @@ import {
   listPayoutPublisherOptions,
   PAYOUT_CENTER_KINDS,
 } from "@/services/payout.service";
+import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -65,6 +66,15 @@ export default async function AdminPayoutCenterPage({ searchParams }: PageProps)
 
   return (
     <div className="space-y-5">
+      <PageHeader
+        title="Payout Center"
+        description="Approve pending payouts and review payout history."
+        breadcrumbs={[
+          { label: "Admin", href: "/admin" },
+          { label: "Payout Center" },
+        ]}
+      />
+
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <GradientStatCard
           variant="approved"

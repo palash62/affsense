@@ -13,6 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { PageHeader } from "@/components/layout/page-header";
 import { readApiErrorMessage } from "@/lib/errors";
 import type { SerializedAnnouncement } from "@/services/announcement.service";
 import {
@@ -123,7 +124,14 @@ export function AdminAnnouncementsPage() {
 
   return (
     <div className="space-y-5">
-      <div className="flex justify-end">
+      <PageHeader
+        title="Announcements"
+        description="Create and manage dashboard announcements for advertisers and affiliates."
+        breadcrumbs={[
+          { label: "Admin", href: "/admin" },
+          { label: "Announcements" },
+        ]}
+      >
         <Button
           className="rounded-xl"
           onClick={() => {
@@ -134,7 +142,7 @@ export function AdminAnnouncementsPage() {
           <Plus className="mr-2 h-4 w-4" />
           New announcement
         </Button>
-      </div>
+      </PageHeader>
 
       <div className="overflow-hidden rounded-[var(--radius-card,0.875rem)] border border-border bg-card shadow-[var(--shadow-card)]">
         {loading ? (

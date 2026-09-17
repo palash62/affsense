@@ -1,4 +1,4 @@
-import { Inter } from "next/font/google";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/components/providers/auth-provider";
@@ -10,9 +10,11 @@ import { DEFAULT_THEME } from "@/lib/themes";
 import { getPublicPlatformPixelConfig } from "@/services/platform-pixel-settings.service";
 import "./globals.css";
 
-const inter = Inter({
+const plusJakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
   variable: "--font-sans",
+  display: "swap",
 });
 
 export const metadata = {
@@ -37,7 +39,7 @@ export default async function RootLayout({
   const hasTracking = Boolean(pixelConfig.meta || pixelConfig.googleAds);
 
   return (
-    <html lang="en" className={inter.variable} data-theme={DEFAULT_THEME} suppressHydrationWarning>
+    <html lang="en" className={plusJakarta.variable} data-theme={DEFAULT_THEME} suppressHydrationWarning>
       <body className="bg-background font-sans antialiased">
         {hasTracking ? <PublicPageTrackingScripts config={pixelConfig} /> : null}
         {pixelConfig.meta ? <PlatformPixelRouteTracker /> : null}

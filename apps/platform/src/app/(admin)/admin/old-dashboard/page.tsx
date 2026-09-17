@@ -18,6 +18,7 @@ import {
   AdminPlatformBarChart,
   AdminRevenueTrendChart,
 } from "@/components/admin/admin-dashboard-charts";
+import { PageHeader } from "@/components/layout/page-header";
 
 export const dynamic = "force-dynamic";
 
@@ -31,6 +32,14 @@ export default async function AdminOldDashboardPage() {
 
   return (
     <div className="space-y-5">
+      <PageHeader
+        title="Old Dashboard"
+        description="Legacy control center overview."
+        breadcrumbs={[
+          { label: "Admin", href: "/admin" },
+          { label: "Old Dashboard" },
+        ]}
+      />
       <AdminWelcomeSummary
         userName={firstName}
         platformStatus={data.platformStatus}
