@@ -1815,10 +1815,10 @@ export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
     trafficMap.set(day, (trafficMap.get(day) ?? 0) + 1);
   };
 
-  for (const row of offerWallConvRows) addEarn(row.createdAt, row.payout);
-  for (const row of cpaConvRows) addEarn(row.createdAt, row.payout);
-  for (const row of digitalPayoutRows) addEarn(row.createdAt, row.payout);
-  for (const row of taskRewardRows) addEarn(row.createdAt, row.rewardAmount);
+  for (const row of offerWallConvRows) addEarn(row.createdAt, Number(row.payout));
+  for (const row of cpaConvRows) addEarn(row.createdAt, Number(row.payout));
+  for (const row of digitalPayoutRows) addEarn(row.createdAt, Number(row.payout));
+  for (const row of taskRewardRows) addEarn(row.createdAt, Number(row.rewardAmount));
 
   for (const row of cpaClickRows) addClick(row.createdAt);
   for (const row of offerWallClickRows) addClick(row.createdAt);
