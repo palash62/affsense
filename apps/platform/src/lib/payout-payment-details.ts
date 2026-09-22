@@ -24,16 +24,21 @@ export type BankPayoutDetails = {
 
 export type PayoutPaymentDetails = EmailPayoutDetails | BankPayoutDetails;
 
+export function isBankDetailsRecord(value: unknown): value is BankPayoutDetails {
+  return (
+    !!value &&
+    typeof value === "object" &&
+    "beneficiaryName" in value &&
+    "accountNumber" in value &&
+    "country" in value
+  );
+}
+
 export function isBankPayoutDetails(
   details: unknown,
   method: PayoutMethod | string,
 ): details is BankPayoutDetails {
-  return (
-    method === "BANK_TRANSFER" &&
-    !!details &&
-    typeof details === "object" &&
-    "beneficiaryName" in details
-  );
+  return method === "BANK_TRANSFER" && isBankDetailsRecord(details);
 }
 
 export function isEmailPayoutDetails(

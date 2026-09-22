@@ -7,7 +7,7 @@ import { getPublisherSettings } from "@/services/user.service";
 import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/layout/page-header";
 import { PublisherSettingsView } from "@/components/publisher/settings/publisher-settings-view";
-import { isBankDetailsRecord } from "@/components/publisher/publisher-settings-panels";
+import { isBankDetailsRecord } from "@/lib/payout-payment-details";
 
 export default async function PublisherSettingsPage() {
   const session = await getSession();

@@ -12,7 +12,10 @@ import { TimezoneSelect } from "@/components/settings/timezone-select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import type { BankPayoutDetails } from "@/lib/payout-payment-details";
+import {
+  isBankDetailsRecord,
+  type BankPayoutDetails,
+} from "@/lib/payout-payment-details";
 import { isStrongPassword } from "@/lib/password-policy";
 import { cn } from "@/lib/utils";
 
@@ -250,16 +253,6 @@ export function PublisherPasswordForm() {
   );
 }
 
-function isBankDetailsRecord(value: unknown): value is BankPayoutDetails {
-  return (
-    !!value &&
-    typeof value === "object" &&
-    "beneficiaryName" in value &&
-    "accountNumber" in value &&
-    "country" in value
-  );
-}
-
 export function PublisherPayoutDetailsForm({
   name,
   website,
@@ -394,5 +387,3 @@ export function PublisherPayoutDetailsForm({
     </form>
   );
 }
-
-export { isBankDetailsRecord };
