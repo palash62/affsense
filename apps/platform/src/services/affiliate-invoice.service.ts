@@ -231,7 +231,9 @@ async function createInvoiceForWallet(
         total,
         currency: wallet.currency,
         payeeMethod: payee?.method ?? null,
-        payeeDetails: payee?.details ?? undefined,
+        payeeDetails: payee
+          ? (payee.details as Prisma.InputJsonValue)
+          : undefined,
         lines: {
           create: [...groups.entries()].map(([source, group]) => ({
             source,

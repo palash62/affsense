@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { AppError, Errors } from "@/lib/errors";
 import { isValidTimezone, resolveUserTimezone } from "@/lib/user-timezone";
+import { Prisma } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { notifyPasswordChanged } from "@/services/notify.service";
 
@@ -104,7 +105,7 @@ export async function updatePublisherProfile(
     timezone?: string;
     updatePayoutDetails?: boolean;
     payoutWiseId?: string | null;
-    payoutBankDetails?: unknown | null;
+    payoutBankDetails?: Prisma.InputJsonValue | null;
     defaultPayoutMethod?: "WISE" | "BANK_TRANSFER" | null;
   },
 ) {
@@ -119,20 +120,17 @@ export async function updatePublisherProfile(
       },
     });
 
-    const profileUpdate: {
-      website: string | null;
-      trafficSource: string | null;
-      payoutWiseId?: string | null;
-      payoutBankDetails?: unknown | null;
-      defaultPayoutMethod?: "WISE" | "BANK_TRANSFER" | null;
-    } = {
+    const profileUpdate: Prisma.PublisherProfileUpdateInput = {
       website: data.website || null,
       trafficSource: data.trafficSource || null,
     };
 
     if (data.updatePayoutDetails) {
       profileUpdate.payoutWiseId = data.payoutWiseId?.trim() || null;
-      profileUpdate.payoutBankDetails = data.payoutBankDetails ?? null;
+      profileUpdate.payoutBankDetails =
+        data.payoutBankDetails === null || data.payoutBankDetails === undefined
+          ? Prisma.JsonNull
+          : data.payoutBankDetails;
       profileUpdate.defaultPayoutMethod = data.defaultPayoutMethod ?? null;
     }
 
@@ -140,7 +138,18 @@ export async function updatePublisherProfile(
       where: { userId },
       create: {
         userId,
-        ...profileUpdate,
+        website: data.website || null,
+        trafficSource: data.trafficSource || null,
+        ...(data.updatePayoutDetails
+          ? {
+              payoutWiseId: data.payoutWiseId?.trim() || null,
+              payoutBankDetails:
+                data.payoutBankDetails === null || data.payoutBankDetails === undefined
+                  ? Prisma.JsonNull
+                  : data.payoutBankDetails,
+              defaultPayoutMethod: data.defaultPayoutMethod ?? null,
+            }
+          : {}),
       },
       update: profileUpdate,
     });

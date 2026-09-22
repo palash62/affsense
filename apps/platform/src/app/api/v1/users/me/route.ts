@@ -63,7 +63,12 @@ export async function PATCH(request: Request) {
           timezone: parsed.data.timezone,
           updatePayoutDetails: parsed.data.updatePayoutDetails,
           payoutWiseId: parsed.data.payoutWiseId,
-          payoutBankDetails: parsed.data.payoutBankDetails,
+          payoutBankDetails:
+            parsed.data.payoutBankDetails === undefined
+              ? undefined
+              : parsed.data.payoutBankDetails === null
+                ? null
+                : (parsed.data.payoutBankDetails as import("@prisma/client").Prisma.InputJsonValue),
           defaultPayoutMethod: parsed.data.defaultPayoutMethod,
         });
         return Response.json({ data: user });
