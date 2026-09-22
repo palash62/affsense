@@ -33,11 +33,7 @@ export default async function AdvertiserCpaWalletWithdrawPage() {
 
       <AdvertiserCpaPayoutRequestForm
         availableBalance={balances.availableBalance}
-        minPayoutSettings={{
-          wise: settings.minPayoutWise,
-          bankTransfer: settings.minPayoutBankTransfer,
-          stripeConnect: settings.minPayoutStripeConnect,
-        }}
+        minWithdrawAmount={settings.minAdvertiserWithdrawAmount}
       />
     </div>
   );

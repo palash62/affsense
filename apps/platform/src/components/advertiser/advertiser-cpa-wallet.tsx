@@ -3,10 +3,6 @@
 import { useState } from "react";
 import { formatUserDateTime } from "@/lib/user-timezone";
 import { ArrowDownLeft, ArrowUpRight, Banknote, Clock, History, Wallet } from "lucide-react";
-import {
-  lowestCpaMinPayout,
-  type CpaMinPayoutSettings,
-} from "@/components/advertiser/advertiser-cpa-payout-request-form";
 import { formatCurrency } from "@/components/admin/admin-ui";
 import { GradientStatCard, NeutralStatCard } from "@/components/admin/gradient-stat-card";
 import { PageHero } from "@/components/admin/page-hero";
@@ -88,17 +84,16 @@ function ActivityStatusBadge({ row }: { row: CpaWalletActivityRow }) {
 
 export function AdvertiserCpaWallet({
   snapshot,
-  minPayoutSettings,
+  minWithdrawAmount,
   timezone,
 }: {
   snapshot: WalletSnapshot;
-  minPayoutSettings: CpaMinPayoutSettings;
+  minWithdrawAmount: number;
   timezone?: string;
 }) {
   const [tab, setTab] = useState<"activity" | "summary">("activity");
   const { balances, activity, summary } = snapshot;
-  const lowestMin = lowestCpaMinPayout(minPayoutSettings);
-  const canWithdraw = balances.availableBalance >= lowestMin;
+  const canWithdraw = balances.availableBalance >= minWithdrawAmount;
 
   return (
     <div className="space-y-6">
@@ -123,7 +118,7 @@ export function AdvertiserCpaWallet({
         />
         <NeutralStatCard
           label="Minimum Withdrawal"
-          value={formatCurrency(lowestMin)}
+          value={formatCurrency(minWithdrawAmount)}
           icon={Banknote}
           accent="purple"
         />
@@ -143,7 +138,7 @@ export function AdvertiserCpaWallet({
               {formatCurrency(balances.availableBalance)}
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
-              Minimum withdrawal: {formatCurrency(lowestMin)}
+              Minimum withdrawal: {formatCurrency(minWithdrawAmount)}
             </p>
           </div>
           {canWithdraw ? (

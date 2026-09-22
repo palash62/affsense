@@ -48,7 +48,7 @@ export type AdminCpaOfferFormValues = {
   payoutType: CpaPayoutType;
   revenue: string;
   payout: string;
-  status: "ACTIVE" | "PAUSED" | "ARCHIVED";
+  status: "PENDING" | "ACTIVE" | "PAUSED" | "ARCHIVED";
 };
 
 type AdminCpaOfferFormProps = {
@@ -57,6 +57,7 @@ type AdminCpaOfferFormProps = {
 };
 
 const STATUS_OPTIONS: Array<{ value: AdminCpaOfferFormValues["status"]; label: string }> = [
+  { value: "PENDING", label: "Pending" },
   { value: "ACTIVE", label: "Active" },
   { value: "PAUSED", label: "Paused" },
   { value: "ARCHIVED", label: "Archived" },

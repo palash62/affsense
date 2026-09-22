@@ -13,7 +13,15 @@ function hasPreviewUrl(url: string) {
 
 function StatusPill({ status }: { status: SerializedCpaOffer["status"] }) {
   const label =
-    status === "ACTIVE" ? "Active" : status === "PAUSED" ? "Paused" : status === "ARCHIVED" ? "Archived" : status;
+    status === "ACTIVE"
+      ? "Active"
+      : status === "PENDING"
+        ? "Pending"
+        : status === "PAUSED"
+          ? "Paused"
+          : status === "ARCHIVED"
+            ? "Archived"
+            : status;
 
   return (
     <span
@@ -21,6 +29,8 @@ function StatusPill({ status }: { status: SerializedCpaOffer["status"] }) {
         "inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold shadow-sm backdrop-blur-sm",
         status === "ACTIVE" &&
           "bg-[color-mix(in_srgb,var(--theme-success)_14%,white)] text-[var(--theme-success)]",
+        status === "PENDING" &&
+          "bg-[color-mix(in_srgb,var(--warning)_16%,white)] text-[var(--warning)]",
         status === "PAUSED" &&
           "bg-[color-mix(in_srgb,var(--warning)_16%,white)] text-[var(--warning)]",
         status === "ARCHIVED" && "bg-muted text-muted-foreground",

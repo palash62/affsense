@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
-import { Cloud, CreditCard, Crosshair, LayoutGrid, Link2, Mail, Receipt, ScrollText, Settings, UserCog, Webhook } from "lucide-react";
+import { Banknote, Cloud, CreditCard, Crosshair, LayoutGrid, Link2, Mail, Receipt, ScrollText, Settings, UserCog, Webhook } from "lucide-react";
 import { AdminPreferencesForm } from "@/components/admin/admin-preferences-form";
-import { PlatformSettingsForm } from "@/components/forms/platform-settings-form";
+import { WithdrawSettingsForm } from "@/components/forms/platform-settings-form";
 import { SmtpSettingsForm } from "@/components/forms/smtp-settings-form";
 import { MailgunMarketingInfo } from "@/components/admin/mailgun-marketing-info";
 import { EmailMarketingConfigForm } from "@/components/admin/email-marketing-config-form";
@@ -21,7 +21,7 @@ import { cn } from "@/lib/utils";
 
 type SectionId =
   | "preferences"
-  | "payout"
+  | "withdraw"
   | "payments"
   | "pixels"
   | "webhooks"
@@ -51,11 +51,11 @@ const SECTIONS: SectionItem[] = [
     gradient: "approved",
   },
   {
-    id: "payout",
-    label: "Payout & Links",
-    icon: Settings,
-    title: "Payout & Smart Link Fallback",
-    description: "Publisher earnings, tier ranges, and global campaign routing",
+    id: "withdraw",
+    label: "Withdraw",
+    icon: Banknote,
+    title: "Withdraw",
+    description: "Weekly invoice minimums for publishers and advertisers",
     gradient: "revenue",
   },
   {
@@ -105,7 +105,7 @@ const SECTIONS: SectionItem[] = [
     label: "Invoicing",
     icon: Receipt,
     title: "Affiliate Invoicing",
-    description: "Weekly Net-7 invoices — minimum amount, payment term, and week timezone",
+    description: "Weekly Net-7 invoices — payment term, timezone, and cutover date",
     gradient: "revenue",
   },
   {
@@ -140,10 +140,16 @@ function isSectionId(value: string | null): value is SectionId {
   return SECTIONS.some((section) => section.id === value);
 }
 
+function resolveSectionId(value: string | null): SectionId {
+  // Legacy bookmarks: ?section=payout → withdraw
+  if (value === "payout") return "withdraw";
+  if (isSectionId(value)) return value;
+  return "preferences";
+}
+
 export function AdminSettingsShell({ initialTimezone }: { initialTimezone: string }) {
   const searchParams = useSearchParams();
-  const requested = searchParams.get("section");
-  const activeId: SectionId = isSectionId(requested) ? requested : "preferences";
+  const activeId = resolveSectionId(searchParams.get("section"));
   const active = SECTIONS.find((section) => section.id === activeId) ?? SECTIONS[0];
 
   return (
@@ -189,7 +195,7 @@ export function AdminSettingsShell({ initialTimezone }: { initialTimezone: strin
             {activeId === "preferences" && (
               <AdminPreferencesForm initialTimezone={initialTimezone} />
             )}
-            {activeId === "payout" && <PlatformSettingsForm />}
+            {activeId === "withdraw" && <WithdrawSettingsForm />}
             {activeId === "payments" && <StripeSettingsForm />}
             {activeId === "pixels" && <PixelSettingsForm />}
             {activeId === "webhooks" && <ClickFunnelsWebhookSettingsForm />}

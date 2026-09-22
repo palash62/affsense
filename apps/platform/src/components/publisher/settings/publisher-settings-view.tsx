@@ -14,8 +14,10 @@ import {
 import { PublisherInfoBanner } from "@/components/publisher/publisher-info-banner";
 import {
   PublisherPasswordForm,
+  PublisherPayoutDetailsForm,
   PublisherProfileForm,
 } from "@/components/publisher/publisher-settings-panels";
+import type { BankPayoutDetails } from "@/lib/payout-payment-details";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -34,6 +36,9 @@ export type PublisherSettingsViewProps = {
   totalLeads: number;
   approvedLeads: number;
   availableBalance: number;
+  payoutWiseId: string;
+  payoutBankDetails: BankPayoutDetails | null;
+  defaultPayoutMethod: "WISE" | "BANK_TRANSFER" | null;
 };
 
 function SettingsStatTile({
@@ -72,6 +77,9 @@ export function PublisherSettingsView({
   totalLeads,
   approvedLeads,
   availableBalance,
+  payoutWiseId,
+  payoutBankDetails,
+  defaultPayoutMethod,
 }: PublisherSettingsViewProps) {
   return (
     <div className="space-y-5">
@@ -146,6 +154,18 @@ export function PublisherSettingsView({
             initialTrafficSource={trafficSource}
             initialTimezone={timezone}
             email={email}
+        />
+      </DashboardCard>
+
+      <DashboardCard>
+        <PublisherPayoutDetailsForm
+          name={name}
+          website={website}
+          trafficSource={trafficSource}
+          timezone={timezone}
+          initialWiseId={payoutWiseId}
+          initialBankDetails={payoutBankDetails}
+          initialDefaultMethod={defaultPayoutMethod}
         />
       </DashboardCard>
 

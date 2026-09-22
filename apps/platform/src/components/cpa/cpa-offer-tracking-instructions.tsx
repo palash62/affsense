@@ -63,12 +63,14 @@ function LinkList({ urls }: { urls: string[] }) {
 
 export function cpaOfferStatusBadgeClass(status: SerializedCpaOffer["status"]) {
   if (status === "ACTIVE") return "bg-emerald-100 text-emerald-800 hover:bg-emerald-100";
+  if (status === "PENDING") return "bg-amber-100 text-amber-900 hover:bg-amber-100";
   if (status === "PAUSED") return "bg-amber-100 text-amber-900 hover:bg-amber-100";
   return "bg-muted text-muted-foreground hover:bg-muted";
 }
 
 export function cpaOfferStatusLabel(status: SerializedCpaOffer["status"]) {
   if (status === "ACTIVE") return "Active";
+  if (status === "PENDING") return "Pending";
   if (status === "PAUSED") return "Paused";
   if (status === "ARCHIVED") return "Archived";
   return status;

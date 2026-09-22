@@ -149,12 +149,15 @@ export function AffiliateInvoiceStatusBadge({
   const styles: Record<string, string> = {
     PAID: "border-[color-mix(in_srgb,var(--success)_30%,transparent)] bg-[color-mix(in_srgb,var(--success)_10%,white)] text-[var(--success)]",
     UNPAID: "border-[color-mix(in_srgb,var(--warning)_35%,transparent)] bg-[color-mix(in_srgb,var(--warning)_12%,white)] text-[var(--warning)]",
+    PENDING_APPROVAL:
+      "border-[color-mix(in_srgb,var(--theme-primary)_35%,transparent)] bg-[color-mix(in_srgb,var(--theme-primary)_12%,white)] text-[var(--theme-primary)]",
     OVERDUE: "border-[color-mix(in_srgb,var(--destructive)_30%,transparent)] bg-[color-mix(in_srgb,var(--destructive)_10%,white)] text-destructive",
     CANCELLED: "border-border bg-muted text-muted-foreground",
   };
   const labels: Record<string, string> = {
     PAID: "Paid",
     UNPAID: "Unpaid",
+    PENDING_APPROVAL: "Pending approval",
     OVERDUE: "Overdue",
     CANCELLED: "Cancelled",
   };

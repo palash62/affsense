@@ -61,6 +61,10 @@ export async function PATCH(request: Request) {
           website: parsed.data.website || undefined,
           trafficSource: parsed.data.trafficSource,
           timezone: parsed.data.timezone,
+          updatePayoutDetails: parsed.data.updatePayoutDetails,
+          payoutWiseId: parsed.data.payoutWiseId,
+          payoutBankDetails: parsed.data.payoutBankDetails,
+          defaultPayoutMethod: parsed.data.defaultPayoutMethod,
         });
         return Response.json({ data: user });
       }

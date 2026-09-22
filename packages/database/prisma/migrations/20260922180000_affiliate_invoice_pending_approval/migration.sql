@@ -1,0 +1,5 @@
+-- AlterTable
+ALTER TABLE `affiliate_invoices` MODIFY `status` ENUM('UNPAID', 'PENDING_APPROVAL', 'PAID', 'CANCELLED') NOT NULL DEFAULT 'UNPAID';
+
+-- AlterTable
+ALTER TABLE `advertiser_cpa_invoices` MODIFY `status` ENUM('UNPAID', 'PENDING_APPROVAL', 'PAID', 'CANCELLED') NOT NULL DEFAULT 'UNPAID';

@@ -45,6 +45,7 @@ enum PublisherAccess {
 }
 
 enum CpaOfferStatus {
+  PENDING
   ACTIVE
   PAUSED
   ARCHIVED
@@ -387,6 +388,12 @@ model PublisherProfile {
   tier3SpecialPayout Decimal? @map("tier3_special_payout") @db.Decimal(10, 2)
   globalLinkUrl     String?   @map("global_link_url")
   restrictSmartLinkCampaigns Boolean @default(false) @map("restrict_smart_link_campaigns")
+  /// Wise receive ID/email for weekly invoice pay-to
+  payoutWiseId      String?   @map("payout_wise_id")
+  /// Bank transfer details JSON for weekly invoice pay-to
+  payoutBankDetails Json?     @map("payout_bank_details")
+  /// Default method shown on new invoices: WISE or BANK_TRANSFER
+  defaultPayoutMethod PayoutMethod? @map("default_payout_method")
   user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   smartLinkCampaigns PublisherSmartLinkCampaign[]
 
@@ -690,6 +697,7 @@ model LedgerEntry {
 
 enum AffiliateInvoiceStatus {
   UNPAID
+  PENDING_APPROVAL
   PAID
   CANCELLED
 }
@@ -715,6 +723,9 @@ model AffiliateInvoice {
   paymentReference String?                @map("payment_reference")
   adminNote        String?                @db.Text @map("admin_note")
   cancelReason     String?                @db.Text @map("cancel_reason")
+  /// Snapshot of publisher default pay-to at invoice creation
+  payeeMethod      PayoutMethod?          @map("payee_method")
+  payeeDetails     Json?                  @map("payee_details")
   payoutId         String?                @unique @map("payout_id")
   createdAt        DateTime               @default(now()) @map("created_at")
   updatedAt        DateTime               @updatedAt @map("updated_at")

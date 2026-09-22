@@ -1137,6 +1137,7 @@ export async function updatePlatformSettings(
   data: {
     publisherPayoutPercent?: number;
     minPayoutAmount?: number;
+    minAdvertiserWithdrawAmount?: number;
     minPayoutWise?: number;
     minPayoutBankTransfer?: number;
     minPayoutStripeConnect?: number;
@@ -1147,6 +1148,10 @@ export async function updatePlatformSettings(
     tier3PayoutMin?: number;
     tier3PayoutMax?: number;
     globalLinkUrl?: string | null;
+    adminPayBankDetails?: string | null;
+    adminPayWise?: string | null;
+    adminPayPaypal?: string | null;
+    adminPayStripe?: string | null;
   },
   adminId: string,
 ) {

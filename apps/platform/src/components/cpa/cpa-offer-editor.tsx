@@ -331,6 +331,7 @@ export function CpaOfferEditor({
   const router = useRouter();
   const isAdmin = role === "ADMIN";
   const isEdit = mode === "edit";
+  const isPendingReview = isAdmin && offer?.status === "PENDING";
   const cpaOffersHref = isAdmin ? "/admin/cpa-offers" : "/advertiser/cpa-offers";
   const cancelHref = isAdmin ? "/admin/offer-network" : "/advertiser/cpa-offers";
   const [saving, setSaving] = useState<"draft" | "publish" | null>(null);
@@ -374,12 +375,17 @@ export function CpaOfferEditor({
       values.name.trim().length >= 2 &&
       values.category.trim().length >= 1 &&
       values.trackingUrl.trim().length >= 1 &&
+      (role === "ADVERTISER" || values.ownerAdvertiserId.trim().length >= 1);
+    if (role === "ADVERTISER") {
+      return baseOk && Number.isFinite(revenueAmount) && revenueAmount > 0;
+    }
+    return (
+      baseOk &&
       Number.isFinite(payoutAmount) &&
       payoutAmount > 0 &&
       Number.isFinite(revenueAmount) &&
-      revenueAmount > 0 &&
-      (role === "ADVERTISER" || values.ownerAdvertiserId.trim().length >= 1);
-    return baseOk;
+      revenueAmount > 0
+    );
   }, [values, payoutAmount, revenueAmount, role]);
 
   const trackingPreview = useMemo(() => {
@@ -401,8 +407,14 @@ export function CpaOfferEditor({
   function buildPayload(publish: boolean) {
     const payout = Number(values.payout);
     const revenue = Number(values.revenue);
-    const status = publish ? "ACTIVE" : "PAUSED";
     if (role === "ADMIN") {
+      const status = publish
+        ? "ACTIVE"
+        : isPendingReview
+          ? "PENDING"
+          : values.statusActive
+            ? "ACTIVE"
+            : "PAUSED";
       const selected = advertisers.find((a) => a.id === values.ownerAdvertiserId);
       return {
         name: values.name.trim(),
@@ -435,13 +447,13 @@ export function CpaOfferEditor({
       previewUrl: values.trackingUrl.trim() || "#",
       thumbnailUrl: values.thumbnailUrl.trim() || null,
       description: values.description.trim() || null,
-      details: buildDetails(values, false),
+      details: buildDetails(values, true),
       payoutModel: values.payoutModel,
       revenueModel: values.revenueModel,
       payoutType: values.payoutType,
       revenue,
-      payout,
-      status,
+      payout: 0,
+      status: "PENDING" as const,
       visibility: values.visibility,
     };
   }
@@ -475,10 +487,22 @@ export function CpaOfferEditor({
       if (!res.ok) {
         throw new Error(readApiErrorMessage(body, "Unable to save offer", res.status));
       }
-      if (publish) {
-        toast.success(mode === "edit" ? "Offer published" : "Offer created and published");
+      if (role === "ADVERTISER") {
+        toast.success(
+          mode === "edit" ? "Offer submitted for review" : "Offer submitted for admin review",
+        );
+      } else if (publish) {
+        toast.success(
+          isPendingReview
+            ? "Offer activated — publishers can now promote it"
+            : mode === "edit"
+              ? "Offer published"
+              : "Offer created and published",
+        );
       } else {
-        toast.success(mode === "edit" ? "Draft saved" : "Draft created");
+        toast.success(
+          isPendingReview ? "Pending offer saved (not activated yet)" : "Draft saved",
+        );
       }
       router.push(cancelHref);
       router.refresh();
@@ -501,13 +525,21 @@ export function CpaOfferEditor({
   return (
     <div className="space-y-5 pb-24">
       <PageHeader
-        title={isEdit ? "Edit CPA Offer" : "New CPA Offer"}
+        title={
+          isPendingReview
+            ? "Review CPA Offer"
+            : isEdit
+              ? "Edit CPA Offer"
+              : "New CPA Offer"
+        }
         description={
-          isEdit
-            ? "Update offer details, payout, targeting, and tracking settings."
-            : isAdmin
-              ? "Create a CPA offer for the network with payout, targeting, and tracking."
-              : "Submit a new CPA offer for admin review before it goes live."
+          isPendingReview
+            ? "Set publisher payout (and adjust revenue if needed), then activate this advertiser submission."
+            : isEdit
+              ? "Update offer details, payout, targeting, and tracking settings."
+              : isAdmin
+                ? "Create a CPA offer for the network with payout, targeting, and tracking."
+                : "Submit a new CPA offer for admin review before it goes live."
         }
         breadcrumbs={[
           {
@@ -515,9 +547,20 @@ export function CpaOfferEditor({
             href: isAdmin ? "/admin" : "/advertiser",
           },
           { label: "CPA Offers", href: cpaOffersHref },
-          { label: isEdit ? "Edit" : "New" },
+          { label: isPendingReview ? "Review" : isEdit ? "Edit" : "New" },
         ]}
       />
+
+      {isPendingReview ? (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+          <p className="font-semibold">Pending advertiser submission</p>
+          <p className="mt-1 text-amber-900/90">
+            Set <span className="font-medium">Publisher payout</span> greater than $0 before
+            activating. Revenue can be adjusted if needed. Use <span className="font-medium">Save
+            &amp; activate</span> to make the offer live for publishers.
+          </p>
+        </div>
+      ) : null}
 
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
         <div className="space-y-5">
@@ -624,13 +667,14 @@ export function CpaOfferEditor({
           </SectionCard>
 
           <SectionCard step={2} title="Offer Details">
+            {role === "ADMIN" ? (
             <div className="space-y-4 rounded-xl border border-border bg-muted/20 p-4">
                 <div>
                   <h3 className="text-sm font-semibold text-foreground">Payout</h3>
                   <p className="text-xs text-muted-foreground">
-                    {role === "ADMIN"
-                      ? "Revenue from advertiser and payout to affiliates."
-                      : "Your cost (revenue) and affiliate payout for this offer."}
+                    {isPendingReview
+                      ? "Set the publisher payout for this offer before activating."
+                      : "Revenue from advertiser and payout to affiliates."}
                   </p>
                 </div>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -744,6 +788,28 @@ export function CpaOfferEditor({
                   </Field>
                 </div>
               </div>
+            ) : (
+              <div className="space-y-3 rounded-xl border border-border bg-muted/20 p-4">
+                <div>
+                  <h3 className="text-sm font-semibold text-foreground">Revenue</h3>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Set your offer revenue. Affiliate payout is set by an admin when they
+                    review and activate your offer.
+                  </p>
+                </div>
+                <Field label="Revenue ($)" required className="max-w-md">
+                  <Input
+                    className="h-10 w-full"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={values.revenue}
+                    onChange={(e) => patch({ revenue: e.target.value })}
+                    placeholder="160.00"
+                  />
+                </Field>
+              </div>
+            )}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <Field label="Approval Time">
                 <Select
@@ -788,13 +854,12 @@ export function CpaOfferEditor({
                 />
               </Field>
             </div>
+            {role === "ADMIN" ? (
             <div className="flex items-center justify-between rounded-xl border border-border px-4 py-3">
               <div>
                 <p className="text-sm font-medium text-foreground">Offer Status</p>
                 <p className="text-xs text-muted-foreground">
-                  {role === "ADVERTISER"
-                    ? "Advertiser offers stay paused until an admin publishes them."
-                    : "Active offers appear in the marketplace."}
+                  Active offers appear in the marketplace.
                 </p>
               </div>
               <button
@@ -815,6 +880,14 @@ export function CpaOfferEditor({
                 />
               </button>
             </div>
+            ) : (
+            <div className="rounded-xl border border-border px-4 py-3">
+              <p className="text-sm font-medium text-foreground">Review status</p>
+              <p className="text-xs text-muted-foreground">
+                New offers stay pending until an admin sets payout and activates them.
+              </p>
+            </div>
+            )}
             <Field label="Affiliate Visibility" hint="Private offers require affiliate approval before they can promote.">
                 <Select
                   value={values.visibility}
@@ -1084,34 +1157,40 @@ export function CpaOfferEditor({
               </div>
               <div className="flex justify-between gap-3">
                 <dt className="text-muted-foreground">
-                  {role === "ADMIN" ? "Affiliate Payout" : "Payout Amount"}
+                  {role === "ADMIN" ? "Affiliate Payout" : "Payout"}
                 </dt>
-                <dd className="font-medium">{formatMoney(values.payout, values.payoutType)}</dd>
+                <dd className="font-medium">
+                  {role === "ADMIN"
+                    ? formatMoney(values.payout, values.payoutType)
+                    : "Set by admin"}
+                </dd>
+              </div>
+              <div className="flex justify-between gap-3">
+                <dt className="text-muted-foreground">Revenue</dt>
+                <dd className="font-medium">
+                  {formatMoney(values.revenue, role === "ADMIN" ? values.payoutType : "FLAT")}
+                </dd>
               </div>
               {role === "ADMIN" ? (
-                <div className="flex justify-between gap-3">
-                  <dt className="text-muted-foreground">Revenue</dt>
-                  <dd className="font-medium">{formatMoney(values.revenue, values.payoutType)}</dd>
-                </div>
-              ) : null}
               <div className="flex justify-between gap-3">
-                <dt className="text-muted-foreground">
-                  {role === "ADMIN" ? "Payout Model" : "Conversion Type"}
-                </dt>
+                <dt className="text-muted-foreground">Payout Model</dt>
                 <dd className="truncate font-medium">{conversionLabel(values.payoutModel)}</dd>
               </div>
+              ) : null}
               <div className="flex items-center justify-between gap-3">
                 <dt className="text-muted-foreground">Status</dt>
                 <dd>
                   <span
                     className={cn(
                       "rounded-full px-2 py-0.5 text-xs font-semibold",
-                      statusLabel === "Active"
-                        ? "bg-emerald-50 text-emerald-700"
-                        : "bg-muted text-muted-foreground",
+                      role === "ADVERTISER"
+                        ? "bg-amber-50 text-amber-800"
+                        : statusLabel === "Active"
+                          ? "bg-emerald-50 text-emerald-700"
+                          : "bg-muted text-muted-foreground",
                     )}
                   >
-                    {statusLabel}
+                    {role === "ADVERTISER" ? "Pending review" : statusLabel}
                   </span>
                 </dd>
               </div>
@@ -1168,25 +1247,47 @@ export function CpaOfferEditor({
           <Button type="button" variant="outline" disabled={Boolean(saving)} onClick={() => router.push(cancelHref)}>
             Cancel
           </Button>
-          <Button
-            type="button"
-            variant="outline"
-            disabled={!canSubmit || Boolean(saving)}
-            onClick={() => void handleSave(false)}
-          >
-            {saving === "draft" ? "Saving…" : "Save as Draft"}
-          </Button>
-          <Button
-            type="button"
-            className="gap-1.5"
-            disabled={!canSubmit || Boolean(saving)}
-            onClick={() => void handleSave(true)}
-          >
-            <Send className="h-4 w-4" />
-            {saving === "publish"
-              ? "Publishing…"
-              : "Save & Publish Offer"}
-          </Button>
+          {role === "ADMIN" ? (
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={!canSubmit || Boolean(saving)}
+                onClick={() => void handleSave(false)}
+              >
+                {saving === "draft"
+                  ? "Saving…"
+                  : isPendingReview
+                    ? "Save (keep pending)"
+                    : "Save as Draft"}
+              </Button>
+              <Button
+                type="button"
+                className="gap-1.5"
+                disabled={!canSubmit || Boolean(saving)}
+                onClick={() => void handleSave(true)}
+              >
+                <Send className="h-4 w-4" />
+                {saving === "publish"
+                  ? isPendingReview
+                    ? "Activating…"
+                    : "Publishing…"
+                  : isPendingReview
+                    ? "Save & activate"
+                    : "Save & Publish Offer"}
+              </Button>
+            </>
+          ) : (
+            <Button
+              type="button"
+              className="gap-1.5"
+              disabled={!canSubmit || Boolean(saving)}
+              onClick={() => void handleSave(true)}
+            >
+              <Send className="h-4 w-4" />
+              {saving ? "Submitting…" : "Submit for review"}
+            </Button>
+          )}
         </div>
       </div>
     </div>

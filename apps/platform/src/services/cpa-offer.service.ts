@@ -612,6 +612,19 @@ export async function updateCpaOffer(
   const existing = await prisma.cpaOffer.findUnique({ where: { id } });
   if (!existing) throw Errors.notFound("CPA offer");
 
+  const nextStatus = input.status ?? existing.status;
+  const nextRevenue = input.revenue !== undefined ? input.revenue : Number(existing.revenue);
+  const nextPayout = input.payout !== undefined ? input.payout : Number(existing.payout);
+  if (
+    nextStatus === "ACTIVE" &&
+    existing.status === "PENDING" &&
+    (!(nextRevenue > 0) || !(nextPayout > 0))
+  ) {
+    throw Errors.validation(
+      "Set revenue and payout greater than 0 before activating a pending offer",
+    );
+  }
+
   const details =
     input.details === undefined ? undefined : cpaOfferDetailsToJson(input.details) ?? Prisma.JsonNull;
 

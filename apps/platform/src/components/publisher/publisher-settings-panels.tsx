@@ -2,12 +2,17 @@
 
 import { useState } from "react";
 import { useSession } from "next-auth/react";
-import { Globe, KeyRound, Loader2, Save } from "lucide-react";
+import { Banknote, Globe, KeyRound, Loader2, Save } from "lucide-react";
 import { PasswordRequirements } from "@/components/auth/password-requirements";
+import {
+  EMPTY_BANK_DETAILS,
+  PublisherBankPayoutFields,
+} from "@/components/publisher/publisher-bank-payout-fields";
 import { TimezoneSelect } from "@/components/settings/timezone-select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import type { BankPayoutDetails } from "@/lib/payout-payment-details";
 import { isStrongPassword } from "@/lib/password-policy";
 import { cn } from "@/lib/utils";
 
@@ -244,3 +249,150 @@ export function PublisherPasswordForm() {
     </form>
   );
 }
+
+function isBankDetailsRecord(value: unknown): value is BankPayoutDetails {
+  return (
+    !!value &&
+    typeof value === "object" &&
+    "beneficiaryName" in value &&
+    "accountNumber" in value &&
+    "country" in value
+  );
+}
+
+export function PublisherPayoutDetailsForm({
+  name,
+  website,
+  trafficSource,
+  timezone,
+  initialWiseId,
+  initialBankDetails,
+  initialDefaultMethod,
+}: {
+  name: string;
+  website: string;
+  trafficSource: string;
+  timezone: string;
+  initialWiseId: string;
+  initialBankDetails: BankPayoutDetails | null;
+  initialDefaultMethod: "WISE" | "BANK_TRANSFER" | null;
+}) {
+  const [wiseId, setWiseId] = useState(initialWiseId);
+  const [bankDetails, setBankDetails] = useState<BankPayoutDetails>(
+    initialBankDetails ?? EMPTY_BANK_DETAILS,
+  );
+  const [defaultMethod, setDefaultMethod] = useState<"WISE" | "BANK_TRANSFER" | "">(
+    initialDefaultMethod ?? "",
+  );
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setSaving(true);
+    setError(null);
+    setSuccess(null);
+
+    const hasBank =
+      Boolean(bankDetails.beneficiaryName?.trim()) ||
+      Boolean(bankDetails.accountNumber?.trim()) ||
+      Boolean(bankDetails.country?.trim());
+
+    const res = await fetch("/api/v1/users/me", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name,
+        website: website || undefined,
+        trafficSource: trafficSource || undefined,
+        timezone,
+        updatePayoutDetails: true,
+        payoutWiseId: wiseId.trim() || null,
+        payoutBankDetails: hasBank ? bankDetails : null,
+        defaultPayoutMethod: defaultMethod || null,
+      }),
+    });
+    const data = await res.json();
+    setSaving(false);
+
+    if (!res.ok) {
+      setError(data?.error?.message ?? "Unable to save payout details");
+      return;
+    }
+
+    setSuccess("Payout details saved. Your default method will appear on new invoices.");
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-5">
+      <div className="flex items-center gap-2">
+        <Banknote className="h-4 w-4 text-[var(--theme-primary)]" />
+        <h3 className="text-sm font-semibold text-foreground">Invoice payout details</h3>
+      </div>
+      <p className="text-sm text-muted-foreground">
+        Set Wise and/or bank details for weekly invoices. Choose one default — that account is
+        shown on each new invoice for admin payment.
+      </p>
+
+      {error && (
+        <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          {error}
+        </p>
+      )}
+      {success && (
+        <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+          {success}
+        </p>
+      )}
+
+      <div className="space-y-2">
+        <Label htmlFor="publisher-wise-id">Wise ID / email</Label>
+        <Input
+          id="publisher-wise-id"
+          type="email"
+          value={wiseId}
+          onChange={(e) => setWiseId(e.target.value)}
+          placeholder="you@example.com"
+        />
+      </div>
+
+      <PublisherBankPayoutFields value={bankDetails} onChange={setBankDetails} />
+
+      <div className="space-y-2">
+        <Label>Default for invoices</Label>
+        <div className="flex flex-wrap gap-4">
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="radio"
+              name="defaultPayoutMethod"
+              checked={defaultMethod === "WISE"}
+              onChange={() => setDefaultMethod("WISE")}
+            />
+            Wise
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="radio"
+              name="defaultPayoutMethod"
+              checked={defaultMethod === "BANK_TRANSFER"}
+              onChange={() => setDefaultMethod("BANK_TRANSFER")}
+            />
+            Bank transfer
+          </label>
+        </div>
+      </div>
+
+      <Button
+        type="submit"
+        disabled={saving}
+        className="h-10 gap-2 rounded-xl bg-[var(--theme-primary)] hover:opacity-90"
+      >
+        {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+        {saving ? "Saving..." : "Save payout details"}
+      </Button>
+    </form>
+  );
+}
+
+export { isBankDetailsRecord };

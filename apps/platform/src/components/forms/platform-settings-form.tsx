@@ -1,69 +1,35 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Globe, Percent, Wallet } from "lucide-react";
+import { Banknote, Building2, Percent } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 type Settings = {
   publisherPayoutPercent: number;
   minPayoutAmount: number;
-  minPayoutWise: number;
-  minPayoutBankTransfer: number;
-  minPayoutStripeConnect: number;
-  tier1PayoutMin: number;
-  tier1PayoutMax: number;
-  tier2PayoutMin: number;
-  tier2PayoutMax: number;
-  tier3PayoutMin: number;
-  tier3PayoutMax: number;
-  globalLinkUrl: string | null;
+  minAdvertiserWithdrawAmount: number;
+  adminPayBankDetails: string;
+  adminPayWise: string;
+  adminPayPaypal: string;
+  adminPayStripe: string;
 };
 
-function TierPayoutRow({
-  tier,
-  min,
-  max,
-  onMinChange,
-  onMaxChange,
-}: {
-  tier: string;
-  min: number;
-  max: number;
-  onMinChange: (value: number) => void;
-  onMaxChange: (value: number) => void;
-}) {
-  return (
-    <div className="rounded-xl border border-border bg-muted/50 p-4">
-      <p className="mb-3 text-sm font-semibold text-foreground">{tier}</p>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <div className="space-y-1.5">
-          <Label className="text-xs text-muted-foreground">Min payout (USD)</Label>
-          <Input
-            type="number"
-            min={0}
-            step={0.01}
-            value={min}
-            onChange={(e) => onMinChange(Number(e.target.value))}
-          />
-        </div>
-        <div className="space-y-1.5">
-          <Label className="text-xs text-muted-foreground">Max payout (USD)</Label>
-          <Input
-            type="number"
-            min={0}
-            step={0.01}
-            value={max}
-            onChange={(e) => onMaxChange(Number(e.target.value))}
-          />
-        </div>
-      </div>
-    </div>
-  );
+function fromApi(data: Record<string, unknown>): Settings {
+  return {
+    publisherPayoutPercent: Number(data.publisherPayoutPercent),
+    minPayoutAmount: Number(data.minPayoutAmount),
+    minAdvertiserWithdrawAmount: Number(data.minAdvertiserWithdrawAmount),
+    adminPayBankDetails: typeof data.adminPayBankDetails === "string" ? data.adminPayBankDetails : "",
+    adminPayWise: typeof data.adminPayWise === "string" ? data.adminPayWise : "",
+    adminPayPaypal: typeof data.adminPayPaypal === "string" ? data.adminPayPaypal : "",
+    adminPayStripe: typeof data.adminPayStripe === "string" ? data.adminPayStripe : "",
+  };
 }
 
-export function PlatformSettingsForm() {
+export function WithdrawSettingsForm() {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
@@ -75,7 +41,7 @@ export function PlatformSettingsForm() {
       .then(async (res) => {
         if (!res.ok) throw new Error(`Failed to load settings (HTTP ${res.status})`);
         const d = await res.json();
-        setSettings(d.data);
+        setSettings(fromApi(d.data));
       })
       .catch((err) => setLoadError(err?.message ?? "Failed to load settings"));
   }
@@ -97,12 +63,35 @@ export function PlatformSettingsForm() {
       return;
     }
 
+    if (!Number.isFinite(settings.minPayoutAmount) || settings.minPayoutAmount < 1) {
+      setMessage("Publisher minimum invoice must be at least $1.");
+      return;
+    }
+
+    if (
+      !Number.isFinite(settings.minAdvertiserWithdrawAmount) ||
+      settings.minAdvertiserWithdrawAmount < 1
+    ) {
+      setMessage("Advertiser minimum invoice must be at least $1.");
+      return;
+    }
+
+    const payload = {
+      publisherPayoutPercent: settings.publisherPayoutPercent,
+      minPayoutAmount: settings.minPayoutAmount,
+      minAdvertiserWithdrawAmount: settings.minAdvertiserWithdrawAmount,
+      adminPayBankDetails: settings.adminPayBankDetails.trim() || null,
+      adminPayWise: settings.adminPayWise.trim() || null,
+      adminPayPaypal: settings.adminPayPaypal.trim() || null,
+      adminPayStripe: settings.adminPayStripe.trim() || null,
+    };
+
     setSaving(true);
     setMessage("");
     const res = await fetch("/api/v1/admin/settings", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(settings),
+      body: JSON.stringify(payload),
     });
     const data = await res.json();
     if (!res.ok) {
@@ -110,7 +99,7 @@ export function PlatformSettingsForm() {
       setSaving(false);
       return;
     }
-    setSettings(data.data);
+    setSettings(fromApi(data.data));
     setMessage("Settings saved");
     setSaving(false);
   }
@@ -133,116 +122,129 @@ export function PlatformSettingsForm() {
     <form onSubmit={save} noValidate className="mx-auto max-w-3xl space-y-8">
       <section className="space-y-4">
         <div className="flex items-center gap-2">
-          <Percent className="h-4 w-4 text-[var(--theme-primary)]" />
-          <h3 className="text-sm font-semibold text-foreground">Publisher payout</h3>
+          <Banknote className="h-4 w-4 text-[var(--theme-primary)]" />
+          <h3 className="text-sm font-semibold text-foreground">Weekly invoice minimums</h3>
         </div>
         <p className="text-sm text-muted-foreground">
-          Publisher payout per lead is calculated as CPL multiplied by this percentage (for example,
-          $1.00 CPL at 70% pays the publisher $0.70). Changes apply to new paid leads after you save.
+          Monday invoice floors. Below these amounts, unbilled totals carry forward to the next
+          Monday. CPA offer publisher payouts are set per offer by admin — not here.
         </p>
         <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor="publisherPayoutPercent">Publisher payout (% of CPL)</Label>
-            <Input
-              id="publisherPayoutPercent"
-              type="number"
-              step={0.1}
-              value={settings.publisherPayoutPercent}
-              onChange={(e) =>
-                setSettings({ ...settings, publisherPayoutPercent: Number(e.target.value) })
-              }
-            />
-            <p className="text-xs text-muted-foreground">Must be between 1% and 100%.</p>
-          </div>
           <div className="space-y-2">
-            <Label htmlFor="minPayoutWise">Minimum Wise payout ($)</Label>
+            <Label htmlFor="minPayoutAmount">Minimum invoice — Publisher ($)</Label>
             <Input
-              id="minPayoutWise"
+              id="minPayoutAmount"
               type="number"
               min={1}
               step={1}
-              value={settings.minPayoutWise}
+              value={settings.minPayoutAmount}
               onChange={(e) =>
-                setSettings({ ...settings, minPayoutWise: Number(e.target.value) })
+                setSettings({ ...settings, minPayoutAmount: Number(e.target.value) })
               }
             />
+            <p className="text-xs text-muted-foreground">
+              Affiliate weekly invoices (platform pays publisher).
+            </p>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="minPayoutBank">Minimum bank transfer payout ($)</Label>
+            <Label htmlFor="minAdvertiserWithdrawAmount">
+              Minimum invoice — Advertiser ($)
+            </Label>
             <Input
-              id="minPayoutBank"
+              id="minAdvertiserWithdrawAmount"
               type="number"
               min={1}
               step={1}
-              value={settings.minPayoutBankTransfer}
+              value={settings.minAdvertiserWithdrawAmount}
               onChange={(e) =>
-                setSettings({ ...settings, minPayoutBankTransfer: Number(e.target.value) })
+                setSettings({
+                  ...settings,
+                  minAdvertiserWithdrawAmount: Number(e.target.value),
+                })
               }
             />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="minPayoutStripe">Minimum Stripe payout ($)</Label>
-            <Input
-              id="minPayoutStripe"
-              type="number"
-              min={1}
-              step={1}
-              value={settings.minPayoutStripeConnect}
-              onChange={(e) =>
-                setSettings({ ...settings, minPayoutStripeConnect: Number(e.target.value) })
-              }
-            />
+            <p className="text-xs text-muted-foreground">
+              CPA AR invoices: advertiser pays admin full offer revenue once this floor is met.
+            </p>
           </div>
         </div>
       </section>
 
-      <section className="space-y-4">
+      <section className="space-y-4 border-t border-border pt-6">
         <div className="flex items-center gap-2">
-          <Wallet className="h-4 w-4 text-[var(--theme-primary)]" />
+          <Building2 className="h-4 w-4 text-[var(--theme-primary)]" />
           <h3 className="text-sm font-semibold text-foreground">
-            Tier payout ranges for advertiser bid guidance (USD per lead)
+            Receive payment details (advertiser invoices)
           </h3>
         </div>
-        <div className="grid gap-3">
-          <TierPayoutRow
-            tier="Tier 1 — AU, CA, NZ, GB, US"
-            min={settings.tier1PayoutMin}
-            max={settings.tier1PayoutMax}
-            onMinChange={(v) => setSettings({ ...settings, tier1PayoutMin: v })}
-            onMaxChange={(v) => setSettings({ ...settings, tier1PayoutMax: v })}
-          />
-          <TierPayoutRow
-            tier="Tier 2 — AR, BG, BR, CL, IN, ID, LV, MY, MX, PH, PL, ZA, TH, TR"
-            min={settings.tier2PayoutMin}
-            max={settings.tier2PayoutMax}
-            onMinChange={(v) => setSettings({ ...settings, tier2PayoutMin: v })}
-            onMaxChange={(v) => setSettings({ ...settings, tier2PayoutMax: v })}
-          />
-          <TierPayoutRow
-            tier="Tier 3 — BD, EG, GH, KE, NG, PK, LK, TZ, UG, VN, ZM"
-            min={settings.tier3PayoutMin}
-            max={settings.tier3PayoutMax}
-            onMinChange={(v) => setSettings({ ...settings, tier3PayoutMin: v })}
-            onMaxChange={(v) => setSettings({ ...settings, tier3PayoutMax: v })}
-          />
+        <p className="text-sm text-muted-foreground">
+          IDs and addresses only — no online checkout. Advertisers see these when paying CPA
+          invoices offline.
+        </p>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="adminPayBankDetails">Bank details</Label>
+            <Textarea
+              id="adminPayBankDetails"
+              rows={4}
+              value={settings.adminPayBankDetails}
+              onChange={(e) =>
+                setSettings({ ...settings, adminPayBankDetails: e.target.value })
+              }
+              placeholder="Account name, bank, account number, routing / SWIFT…"
+            />
+          </div>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div className="space-y-2">
+              <Label htmlFor="adminPayWise">Wise ID / email</Label>
+              <Input
+                id="adminPayWise"
+                value={settings.adminPayWise}
+                onChange={(e) => setSettings({ ...settings, adminPayWise: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="adminPayPaypal">PayPal email / ID</Label>
+              <Input
+                id="adminPayPaypal"
+                value={settings.adminPayPaypal}
+                onChange={(e) => setSettings({ ...settings, adminPayPaypal: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="adminPayStripe">Stripe account email / ID</Label>
+              <Input
+                id="adminPayStripe"
+                value={settings.adminPayStripe}
+                onChange={(e) => setSettings({ ...settings, adminPayStripe: e.target.value })}
+              />
+            </div>
+          </div>
         </div>
       </section>
 
-      <section className="space-y-2">
+      <section className="space-y-4 border-t border-border pt-6">
         <div className="flex items-center gap-2">
-          <Globe className="h-4 w-4 text-[var(--theme-primary)]" />
-          <h3 className="text-sm font-semibold text-foreground">Global link</h3>
+          <Percent className="h-4 w-4 text-[var(--theme-primary)]" />
+          <h3 className="text-sm font-semibold text-foreground">CPL publisher payout</h3>
         </div>
-        <Label htmlFor="globalLinkUrl">Global campaign link</Label>
-        <Input
-          id="globalLinkUrl"
-          type="url"
-          value={settings.globalLinkUrl ?? ""}
-          onChange={(e) =>
-            setSettings({ ...settings, globalLinkUrl: e.target.value.trim() || null })
-          }
-          placeholder="https://example.com/offer"
-        />
+        <p className="text-sm text-muted-foreground">
+          Used for <span className="font-medium">CPL campaigns</span> only: publisher earn is CPL ×
+          this percentage (e.g. $1.00 CPL at 70% = $0.70).
+        </p>
+        <div className="max-w-xs space-y-2">
+          <Label htmlFor="publisherPayoutPercent">Publisher payout (% of CPL)</Label>
+          <Input
+            id="publisherPayoutPercent"
+            type="number"
+            step={0.1}
+            value={settings.publisherPayoutPercent}
+            onChange={(e) =>
+              setSettings({ ...settings, publisherPayoutPercent: Number(e.target.value) })
+            }
+          />
+          <p className="text-xs text-muted-foreground">Must be between 1% and 100%.</p>
+        </div>
       </section>
 
       <div className="flex items-center gap-3 border-t border-border pt-4">
@@ -255,7 +257,7 @@ export function PlatformSettingsForm() {
         </Button>
         {message && (
           <p
-            className={`text-sm ${message.includes("Failed") ? "text-red-600" : "text-emerald-600"}`}
+            className={`text-sm ${message.includes("Failed") || message.includes("must be") ? "text-red-600" : "text-emerald-600"}`}
           >
             {message}
           </p>
@@ -264,3 +266,6 @@ export function PlatformSettingsForm() {
     </form>
   );
 }
+
+/** @deprecated Use WithdrawSettingsForm */
+export const PlatformSettingsForm = WithdrawSettingsForm;

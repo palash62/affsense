@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/prisma";
 import { Errors } from "@/lib/errors";
-import { getMinPayoutForMethod } from "@/lib/platform-settings";
 import type { PayoutPaymentDetails } from "@/lib/payout-payment-details";
 import type { Prisma, PayoutMethod } from "@prisma/client";
 import { getPlatformSettings } from "@/services/wallet.service";
@@ -305,7 +304,7 @@ export async function requestCpaPayout(
   idempotencyKey?: string,
 ) {
   const settings = await getPlatformSettings();
-  const minAmount = getMinPayoutForMethod(method, settings);
+  const minAmount = settings.minAdvertiserWithdrawAmount;
 
   if (amount < minAmount) {
     throw Errors.payoutBelowMinimum(minAmount);

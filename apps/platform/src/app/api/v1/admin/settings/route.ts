@@ -60,6 +60,39 @@ export async function PATCH(request: Request) {
       }
     }
 
+    if (
+      body.minPayoutAmount !== undefined &&
+      (!Number.isFinite(Number(body.minPayoutAmount)) || Number(body.minPayoutAmount) < 1)
+    ) {
+      return Response.json(
+        {
+          error: {
+            code: "VALIDATION_ERROR",
+            message: "Publisher minimum withdraw must be at least $1",
+            status: 422,
+          },
+        },
+        { status: 422 },
+      );
+    }
+
+    if (
+      body.minAdvertiserWithdrawAmount !== undefined &&
+      (!Number.isFinite(Number(body.minAdvertiserWithdrawAmount)) ||
+        Number(body.minAdvertiserWithdrawAmount) < 1)
+    ) {
+      return Response.json(
+        {
+          error: {
+            code: "VALIDATION_ERROR",
+            message: "Advertiser minimum withdraw must be at least $1",
+            status: 422,
+          },
+        },
+        { status: 422 },
+      );
+    }
+
     await updatePlatformSettings(body, session.user.id);
     const data = await getPlatformSettingsResponse();
     return Response.json({ data });

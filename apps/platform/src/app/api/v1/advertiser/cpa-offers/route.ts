@@ -95,8 +95,13 @@ export async function POST(request: Request) {
       advertiserLabel: user?.advertiserProfile?.company || user?.name || "Advertiser",
       createdByUserId: session.user.id,
       ownerAdvertiserId: session.user.id,
-      details: { ...details, publishRequested: false },
-      status: parsed.data.status ?? "ACTIVE",
+      details: { ...details, publishRequested: true },
+      revenue: parsed.data.revenue,
+      payout: 0,
+      revenueModel: parsed.data.revenueModel ?? "RPA",
+      payoutModel: parsed.data.payoutModel ?? "CPA",
+      payoutType: parsed.data.payoutType ?? "FLAT",
+      status: "PENDING",
       visibility: parsed.data.visibility ?? "PUBLIC",
     });
 

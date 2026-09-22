@@ -26,11 +26,7 @@ export default async function AdvertiserCpaWalletPage() {
     <AdvertiserCpaWallet
       snapshot={snapshot}
       timezone={session.user.timezone}
-      minPayoutSettings={{
-        wise: settings.minPayoutWise,
-        bankTransfer: settings.minPayoutBankTransfer,
-        stripeConnect: settings.minPayoutStripeConnect,
-      }}
+      minWithdrawAmount={settings.minAdvertiserWithdrawAmount}
     />
   );
 }

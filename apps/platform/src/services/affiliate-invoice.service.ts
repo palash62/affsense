@@ -6,10 +6,12 @@ import { invoiceWeekStart, resolveInvoicePeriod } from "@/lib/affiliate-invoice-
 import { loadAffiliateInvoicingConfig } from "@/services/affiliate-invoicing-settings.service";
 import {
   debitWalletForPayout,
+  getPlatformSettings,
   holdWalletFunds,
   releaseWalletHold,
 } from "@/services/wallet.service";
 import { notifyApproved, notifyUserById } from "@/services/notify.service";
+import { resolvePublisherPayeeSnapshot } from "@/lib/payout-payment-details";
 
 /** Ledger reference types that represent money leaving the wallet, never earnings. */
 const NON_EARNING_REFERENCE_TYPES = ["payout", "referral_payout"];
@@ -79,6 +81,9 @@ export async function generateAffiliateInvoices(
     throw new AppError("INVOICING_DISABLED", "Affiliate invoicing is disabled", 422);
   }
 
+  const platformSettings = await getPlatformSettings();
+  const minimumAmount = platformSettings.minPayoutAmount;
+
   const { periodEnd, periodEndExclusive } = resolveInvoicePeriod(runAt, config.timezone);
   const startAt = config.startAt ? new Date(config.startAt) : null;
 
@@ -100,7 +105,7 @@ export async function generateAffiliateInvoices(
 
   const result: GenerateAffiliateInvoicesResult = {
     periodEnd: periodEnd.toISOString(),
-    minimumAmount: config.minimumAmount,
+    minimumAmount,
     created: 0,
     skipped: 0,
     failed: 0,
@@ -115,7 +120,7 @@ export async function generateAffiliateInvoices(
       const invoice = await createInvoiceForWallet(candidate.walletId, {
         createdAtFilter,
         periodEnd,
-        minimumAmount: config.minimumAmount,
+        minimumAmount,
         netTermDays: config.netTermDays,
         timezone: config.timezone,
         issuedAt: runAt,
@@ -203,6 +208,16 @@ async function createInvoiceForWallet(
     const periodStart = invoiceWeekStart(entries[0].createdAt, options.timezone);
     const number = await nextInvoiceNumber(tx, options.issuedAt);
 
+    const profile = await tx.publisherProfile.findUnique({
+      where: { userId: wallet.userId },
+      select: {
+        defaultPayoutMethod: true,
+        payoutWiseId: true,
+        payoutBankDetails: true,
+      },
+    });
+    const payee = resolvePublisherPayeeSnapshot(profile);
+
     const invoice = await tx.affiliateInvoice.create({
       data: {
         number,
@@ -215,6 +230,8 @@ async function createInvoiceForWallet(
         subtotal: total,
         total,
         currency: wallet.currency,
+        payeeMethod: payee?.method ?? null,
+        payeeDetails: payee?.details ?? undefined,
         lines: {
           create: [...groups.entries()].map(([source, group]) => ({
             source,
@@ -455,6 +472,8 @@ export type SerializedAffiliateInvoice = {
   paymentReference: string | null;
   adminNote: string | null;
   cancelReason: string | null;
+  payeeMethod: PayoutMethod | null;
+  payeeDetails: unknown | null;
   lines: { id: string; source: string; entryCount: number; amount: number }[];
 };
 
@@ -488,6 +507,8 @@ function serializeInvoice(
     paymentReference: invoice.paymentReference,
     adminNote: invoice.adminNote,
     cancelReason: invoice.cancelReason,
+    payeeMethod: invoice.payeeMethod,
+    payeeDetails: invoice.payeeDetails ?? null,
     lines: invoice.lines.map((line) => ({
       id: line.id,
       source: line.source,

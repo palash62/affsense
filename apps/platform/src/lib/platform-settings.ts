@@ -13,8 +13,10 @@ export {
 
 export type PlatformSettingsConfig = {
   publisherPayoutPercent: number;
-  /** @deprecated Use method-specific minimums */
+  /** Publisher minimum withdraw (stored as min_payout_amount) */
   minPayoutAmount: number;
+  /** Advertiser CPA minimum withdraw */
+  minAdvertiserWithdrawAmount: number;
   minPayoutWise: number;
   minPayoutBankTransfer: number;
   minPayoutStripeConnect: number;
@@ -23,11 +25,17 @@ export type PlatformSettingsConfig = {
   tier3: TierPayoutRange;
   globalLinkUrl: string | null;
   duplicateWindowDays: number;
+  /** Admin receive-only payment IDs for advertiser offline invoice pay */
+  adminPayBankDetails: string | null;
+  adminPayWise: string | null;
+  adminPayPaypal: string | null;
+  adminPayStripe: string | null;
 };
 
 const DEFAULTS: PlatformSettingsConfig = {
   publisherPayoutPercent: 70,
   minPayoutAmount: 50,
+  minAdvertiserWithdrawAmount: 50,
   minPayoutWise: 50,
   minPayoutBankTransfer: 100,
   minPayoutStripeConnect: 50,
@@ -36,7 +44,18 @@ const DEFAULTS: PlatformSettingsConfig = {
   tier3: { min: 0.25, max: 1.0 },
   globalLinkUrl: null,
   duplicateWindowDays: 30,
+  adminPayBankDetails: null,
+  adminPayWise: null,
+  adminPayPaypal: null,
+  adminPayStripe: null,
 };
+
+function readOptionalString(map: Record<string, unknown>, key: string): string | null {
+  const value = map[key];
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  return trimmed ? trimmed : null;
+}
 
 function readRange(map: Record<string, unknown>, prefix: string, fallback: TierPayoutRange): TierPayoutRange {
   const min = Number(map[`${prefix}_payout_min`]);
@@ -76,10 +95,15 @@ export function parsePlatformSettings(map: Record<string, unknown>): PlatformSet
   const minPayoutAmount = Number(map.min_payout_amount);
   const duplicateWindowDays = Number(map.duplicate_window_days);
   const legacyMin = Number.isFinite(minPayoutAmount) ? minPayoutAmount : DEFAULTS.minPayoutAmount;
+  const advertiserMinRaw = Number(map.min_advertiser_withdraw_amount);
+  const minAdvertiserWithdrawAmount = Number.isFinite(advertiserMinRaw)
+    ? advertiserMinRaw
+    : legacyMin || DEFAULTS.minAdvertiserWithdrawAmount;
 
   return {
     publisherPayoutPercent,
     minPayoutAmount: legacyMin,
+    minAdvertiserWithdrawAmount,
     minPayoutWise: readNumber(map, "min_payout_wise", legacyMin || DEFAULTS.minPayoutWise),
     minPayoutBankTransfer: readNumber(map, "min_payout_bank_transfer", legacyMin || DEFAULTS.minPayoutBankTransfer),
     minPayoutStripeConnect: readNumber(map, "min_payout_stripe_connect", legacyMin || DEFAULTS.minPayoutStripeConnect),
@@ -93,29 +117,25 @@ export function parsePlatformSettings(map: Record<string, unknown>): PlatformSet
     duplicateWindowDays: Number.isFinite(duplicateWindowDays)
       ? duplicateWindowDays
       : DEFAULTS.duplicateWindowDays,
+    adminPayBankDetails: readOptionalString(map, "admin_pay_bank_details"),
+    adminPayWise: readOptionalString(map, "admin_pay_wise"),
+    adminPayPaypal: readOptionalString(map, "admin_pay_paypal"),
+    adminPayStripe: readOptionalString(map, "admin_pay_stripe"),
   };
 }
 
 export function getMinPayoutForMethod(
-  method: PayoutMethod | string,
+  _method: PayoutMethod | string,
   settings: PlatformSettingsConfig,
 ): number {
-  switch (method) {
-    case "WISE":
-      return settings.minPayoutWise;
-    case "BANK_TRANSFER":
-      return settings.minPayoutBankTransfer;
-    case "STRIPE_CONNECT":
-      return settings.minPayoutStripeConnect;
-    default:
-      return settings.minPayoutAmount;
-  }
+  return settings.minPayoutAmount;
 }
 
 export function platformSettingsToUpdates(
   data: Partial<{
     publisherPayoutPercent: number;
     minPayoutAmount: number;
+    minAdvertiserWithdrawAmount: number;
     minPayoutWise: number;
     minPayoutBankTransfer: number;
     minPayoutStripeConnect: number;
@@ -126,6 +146,10 @@ export function platformSettingsToUpdates(
     tier3PayoutMin: number;
     tier3PayoutMax: number;
     globalLinkUrl?: string | null;
+    adminPayBankDetails?: string | null;
+    adminPayWise?: string | null;
+    adminPayPaypal?: string | null;
+    adminPayStripe?: string | null;
   }>,
 ) {
   const updates: Array<{ key: string; value: unknown }> = [];
@@ -135,6 +159,22 @@ export function platformSettingsToUpdates(
   }
   if (data.minPayoutAmount !== undefined) {
     updates.push({ key: "min_payout_amount", value: data.minPayoutAmount });
+    // Mirror publisher min into legacy method keys so older callers stay consistent
+    if (data.minPayoutWise === undefined) {
+      updates.push({ key: "min_payout_wise", value: data.minPayoutAmount });
+    }
+    if (data.minPayoutBankTransfer === undefined) {
+      updates.push({ key: "min_payout_bank_transfer", value: data.minPayoutAmount });
+    }
+    if (data.minPayoutStripeConnect === undefined) {
+      updates.push({ key: "min_payout_stripe_connect", value: data.minPayoutAmount });
+    }
+  }
+  if (data.minAdvertiserWithdrawAmount !== undefined) {
+    updates.push({
+      key: "min_advertiser_withdraw_amount",
+      value: data.minAdvertiserWithdrawAmount,
+    });
   }
   if (data.minPayoutWise !== undefined) {
     updates.push({ key: "min_payout_wise", value: data.minPayoutWise });
@@ -166,6 +206,18 @@ export function platformSettingsToUpdates(
   if (data.globalLinkUrl !== undefined) {
     updates.push({ key: "global_link_url", value: data.globalLinkUrl ?? "" });
   }
+  if (data.adminPayBankDetails !== undefined) {
+    updates.push({ key: "admin_pay_bank_details", value: data.adminPayBankDetails ?? "" });
+  }
+  if (data.adminPayWise !== undefined) {
+    updates.push({ key: "admin_pay_wise", value: data.adminPayWise ?? "" });
+  }
+  if (data.adminPayPaypal !== undefined) {
+    updates.push({ key: "admin_pay_paypal", value: data.adminPayPaypal ?? "" });
+  }
+  if (data.adminPayStripe !== undefined) {
+    updates.push({ key: "admin_pay_stripe", value: data.adminPayStripe ?? "" });
+  }
 
   return updates;
 }
@@ -174,6 +226,7 @@ export function settingsConfigToApi(config: PlatformSettingsConfig) {
   return {
     publisherPayoutPercent: config.publisherPayoutPercent,
     minPayoutAmount: config.minPayoutAmount,
+    minAdvertiserWithdrawAmount: config.minAdvertiserWithdrawAmount,
     minPayoutWise: config.minPayoutWise,
     minPayoutBankTransfer: config.minPayoutBankTransfer,
     minPayoutStripeConnect: config.minPayoutStripeConnect,
@@ -184,6 +237,20 @@ export function settingsConfigToApi(config: PlatformSettingsConfig) {
     tier3PayoutMin: config.tier3.min,
     tier3PayoutMax: config.tier3.max,
     globalLinkUrl: config.globalLinkUrl,
+    adminPayBankDetails: config.adminPayBankDetails,
+    adminPayWise: config.adminPayWise,
+    adminPayPaypal: config.adminPayPaypal,
+    adminPayStripe: config.adminPayStripe,
+  };
+}
+
+/** Public receive IDs for advertiser offline invoice payment (no write). */
+export function adminPayInstructionsFromConfig(config: PlatformSettingsConfig) {
+  return {
+    bankDetails: config.adminPayBankDetails,
+    wise: config.adminPayWise,
+    paypal: config.adminPayPaypal,
+    stripe: config.adminPayStripe,
   };
 }
 

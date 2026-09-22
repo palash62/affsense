@@ -118,6 +118,7 @@ export function AdvertiserCpaOffersList() {
                 onChange={(e) => setDraft((prev) => ({ ...prev, status: e.target.value }))}
               >
                 <option value="ALL">All</option>
+                <option value="PENDING">Pending</option>
                 <option value="ACTIVE">Active</option>
                 <option value="PAUSED">Paused</option>
                 <option value="ARCHIVED">Archived</option>

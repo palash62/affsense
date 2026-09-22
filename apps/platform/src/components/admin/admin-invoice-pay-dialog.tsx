@@ -23,11 +23,18 @@ import {
 import { AffiliateInvoiceStatusBadge, formatCurrency } from "@/components/admin/admin-ui";
 import { AffiliateInvoiceDownloadButton } from "@/components/invoices/affiliate-invoice-download-button";
 import { formatInvoicePeriod } from "@/lib/affiliate-invoice-period";
-import { formatPayoutMethodLabel } from "@/lib/payout-payment-details";
+import {
+  bankPayoutDetailRows,
+  formatPayoutMethodLabel,
+  isBankPayoutDetails,
+  isEmailPayoutDetails,
+  payoutDetailsSummary,
+  type BankPayoutDetails,
+} from "@/lib/payout-payment-details";
 import { formatUserDateTime } from "@/lib/user-timezone";
 import type { SerializedAffiliateInvoice } from "@/services/affiliate-invoice.service";
 
-const METHOD_OPTIONS = ["WISE", "BANK_TRANSFER", "STRIPE_CONNECT"] as const;
+const METHOD_OPTIONS = ["WISE", "BANK_TRANSFER"] as const;
 
 export function AdminInvoicePayDialog({
   invoice,
@@ -41,7 +48,13 @@ export function AdminInvoicePayDialog({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState(invoice.status);
-  const [method, setMethod] = useState<string>(invoice.paymentMethod ?? "WISE");
+  const [method, setMethod] = useState<string>(
+    invoice.payeeMethod === "WISE" || invoice.payeeMethod === "BANK_TRANSFER"
+      ? invoice.payeeMethod
+      : invoice.paymentMethod === "WISE" || invoice.paymentMethod === "BANK_TRANSFER"
+        ? invoice.paymentMethod
+        : "WISE",
+  );
   const [reference, setReference] = useState(invoice.paymentReference ?? "");
   const [note, setNote] = useState(invoice.adminNote ?? "");
   const [cancelReason, setCancelReason] = useState("");
@@ -135,6 +148,8 @@ export function AdminInvoicePayDialog({
               </div>
             </div>
           </div>
+
+          <PayToSummary invoice={invoice} />
 
           <div>
             <p className="mb-2 text-sm font-semibold text-foreground">Breakdown</p>
@@ -293,6 +308,45 @@ export function AdminInvoicePayDialog({
         </div>
       </DialogContent>
     </Dialog>
+    </div>
+  );
+}
+
+function PayToSummary({ invoice }: { invoice: SerializedAffiliateInvoice }) {
+  if (!invoice.payeeMethod || !invoice.payeeDetails) {
+    return (
+      <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+        No publisher payout details on this invoice. Ask them to set a default Bank or Wise method
+        in Profile Settings (new invoices will snapshot it).
+      </div>
+    );
+  }
+
+  const method = invoice.payeeMethod;
+  const details = invoice.payeeDetails;
+
+  return (
+    <div className="rounded-lg border border-border bg-card px-3 py-2 text-sm">
+      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        Pay to (publisher default)
+      </p>
+      <p className="mt-1 font-semibold text-foreground">
+        {formatPayoutMethodLabel(method)} · {payoutDetailsSummary(method, details)}
+      </p>
+      {isEmailPayoutDetails(details, method) ? (
+        <p className="mt-1 font-mono text-xs text-muted-foreground">{details.email}</p>
+      ) : null}
+      {isBankPayoutDetails(details, method) ? (
+        <ul className="mt-2 space-y-0.5 text-xs text-muted-foreground">
+          {bankPayoutDetailRows(details as BankPayoutDetails)
+            .slice(0, 6)
+            .map((row) => (
+              <li key={row.label}>
+                {row.label}: {row.value}
+              </li>
+            ))}
+        </ul>
+      ) : null}
     </div>
   );
 }

@@ -398,18 +398,81 @@ export const updateAdvertiserProfileSchema = z.object({
   timezone: z.string().trim().min(1).optional(),
 });
 
-export const updatePublisherProfileSchema = z.object({
-  name: z.string().trim().min(2, "Name must be at least 2 characters"),
-  website: z
-    .string()
-    .trim()
-    .optional()
-    .refine((val) => !val || val === "" || z.string().url().safeParse(val).success, {
-      message: "Enter a valid website URL",
-    }),
-  trafficSource: z.string().trim().max(120).optional(),
-  timezone: z.string().trim().min(1).optional(),
-});
+export const updatePublisherProfileSchema = z
+  .object({
+    name: z.string().trim().min(2, "Name must be at least 2 characters"),
+    website: z
+      .string()
+      .trim()
+      .optional()
+      .refine((val) => !val || val === "" || z.string().url().safeParse(val).success, {
+        message: "Enter a valid website URL",
+      }),
+    trafficSource: z.string().trim().max(120).optional(),
+    timezone: z.string().trim().min(1).optional(),
+    payoutWiseId: z.string().trim().max(200).optional().nullable(),
+    payoutBankDetails: bankPayoutDetailsSchema.optional().nullable(),
+    defaultPayoutMethod: z.enum(["WISE", "BANK_TRANSFER"]).optional().nullable(),
+    updatePayoutDetails: z.boolean().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (!data.updatePayoutDetails) return;
+
+    const wiseId = data.payoutWiseId?.trim() || "";
+    const hasBank =
+      data.payoutBankDetails != null &&
+      Boolean(data.payoutBankDetails.beneficiaryName?.trim()) &&
+      Boolean(data.payoutBankDetails.accountNumber?.trim());
+    const defaultMethod = data.defaultPayoutMethod ?? null;
+
+    if (!wiseId && !hasBank) {
+      if (defaultMethod) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Set Wise or bank details before choosing a default",
+          path: ["defaultPayoutMethod"],
+        });
+      }
+      return;
+    }
+
+    if (!defaultMethod) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Choose a default payout method (Wise or Bank)",
+        path: ["defaultPayoutMethod"],
+      });
+      return;
+    }
+
+    if (defaultMethod === "WISE" && !wiseId) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Wise ID is required when Wise is the default",
+        path: ["payoutWiseId"],
+      });
+    }
+
+    if (defaultMethod === "BANK_TRANSFER") {
+      if (!data.payoutBankDetails) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Bank details are required when Bank is the default",
+          path: ["payoutBankDetails"],
+        });
+      } else {
+        const bankCheck = bankPayoutDetailsSchema.safeParse(data.payoutBankDetails);
+        if (!bankCheck.success) {
+          for (const issue of bankCheck.error.issues) {
+            ctx.addIssue({
+              ...issue,
+              path: ["payoutBankDetails", ...(issue.path ?? [])],
+            });
+          }
+        }
+      }
+    }
+  });
 
 export const updateUserTimezoneSchema = z.object({
   timezone: z.string().trim().min(1, "Timezone is required"),
@@ -1153,7 +1216,7 @@ const optionalHttpUrlSchema = z
     message: "URL must start with http:// or https://",
   });
 
-const cpaOfferStatusSchema = z.enum(["ACTIVE", "PAUSED", "ARCHIVED"]);
+const cpaOfferStatusSchema = z.enum(["PENDING", "ACTIVE", "PAUSED", "ARCHIVED"]);
 const cpaOfferVisibilitySchema = z.enum(["PUBLIC", "PRIVATE"]);
 const cpaRevenueModelSchema = z.enum(["RPA", "RPS", "RPC", "RPI", "RPL", "RPM"]);
 const cpaPayoutModelSchema = z.enum(["CPC", "CPA", "CPS", "CPI", "CPL", "CPM"]);
@@ -1258,15 +1321,22 @@ export const adminCpaOfferUpdateSchema = z.object({
   visibility: cpaOfferVisibilitySchema.optional(),
 });
 
-export const advertiserCpaOfferCreateSchema = adminCpaOfferCreateSchema.omit({
-  advertiserLabel: true,
-  ownerAdvertiserId: true,
-});
+export const advertiserCpaOfferCreateSchema = adminCpaOfferCreateSchema
+  .omit({
+    advertiserLabel: true,
+    ownerAdvertiserId: true,
+  })
+  .extend({
+    revenue: z.coerce.number().positive("Revenue must be greater than 0").max(1_000_000),
+    /** Ignored on create — server forces 0 until admin sets payout. */
+    payout: z.coerce.number().min(0).max(1_000_000).optional(),
+    status: cpaOfferStatusSchema.optional(),
+  });
 
 export const cpaOfferListQuerySchema = z.object({
   q: z.string().trim().optional(),
   id: z.string().trim().optional(),
-  status: z.enum(["ACTIVE", "PAUSED", "ARCHIVED", "ALL"]).optional(),
+  status: z.enum(["PENDING", "ACTIVE", "PAUSED", "ARCHIVED", "ALL"]).optional(),
   network: z.string().trim().optional(),
   category: z.string().trim().optional(),
   country: z.string().trim().optional(),

@@ -47,13 +47,17 @@ export function CpaOfferThumb({
 }
 
 export function CpaOfferStatusDot({ status }: { status: string }) {
-  const active = status === "ACTIVE";
+  const tone =
+    status === "ACTIVE"
+      ? "bg-emerald-500"
+      : status === "PENDING"
+        ? "bg-amber-500"
+        : status === "PAUSED"
+          ? "bg-slate-400"
+          : "bg-slate-300";
   return (
     <span
-      className={cn(
-        "inline-block h-2 w-2 shrink-0 rounded-full",
-        active ? "bg-emerald-500" : "bg-slate-300",
-      )}
+      className={cn("inline-block h-2 w-2 shrink-0 rounded-full", tone)}
       title={status}
     />
   );

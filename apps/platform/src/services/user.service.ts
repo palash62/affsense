@@ -64,6 +64,9 @@ export async function getPublisherSettings(userId: string) {
           kycStatus: true,
           rejectionReason: true,
           rejectedAt: true,
+          payoutWiseId: true,
+          payoutBankDetails: true,
+          defaultPayoutMethod: true,
         },
       },
       wallet: { select: { balance: true } },
@@ -94,7 +97,16 @@ export async function updateAdminPreferences(
 
 export async function updatePublisherProfile(
   userId: string,
-  data: { name: string; website?: string; trafficSource?: string; timezone?: string },
+  data: {
+    name: string;
+    website?: string;
+    trafficSource?: string;
+    timezone?: string;
+    updatePayoutDetails?: boolean;
+    payoutWiseId?: string | null;
+    payoutBankDetails?: unknown | null;
+    defaultPayoutMethod?: "WISE" | "BANK_TRANSFER" | null;
+  },
 ) {
   const timezone = data.timezone !== undefined ? assertTimezone(data.timezone) : undefined;
 
@@ -107,17 +119,30 @@ export async function updatePublisherProfile(
       },
     });
 
+    const profileUpdate: {
+      website: string | null;
+      trafficSource: string | null;
+      payoutWiseId?: string | null;
+      payoutBankDetails?: unknown | null;
+      defaultPayoutMethod?: "WISE" | "BANK_TRANSFER" | null;
+    } = {
+      website: data.website || null,
+      trafficSource: data.trafficSource || null,
+    };
+
+    if (data.updatePayoutDetails) {
+      profileUpdate.payoutWiseId = data.payoutWiseId?.trim() || null;
+      profileUpdate.payoutBankDetails = data.payoutBankDetails ?? null;
+      profileUpdate.defaultPayoutMethod = data.defaultPayoutMethod ?? null;
+    }
+
     await tx.publisherProfile.upsert({
       where: { userId },
       create: {
         userId,
-        website: data.website || null,
-        trafficSource: data.trafficSource || null,
+        ...profileUpdate,
       },
-      update: {
-        website: data.website || null,
-        trafficSource: data.trafficSource || null,
-      },
+      update: profileUpdate,
     });
 
     return getPublisherSettings(userId);

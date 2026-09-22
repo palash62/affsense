@@ -62,7 +62,12 @@ export function AffiliateInvoicingSettingsForm() {
       const res = await fetch("/api/v1/admin/settings/affiliate-invoicing", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(settings),
+        body: JSON.stringify({
+          enabled: settings.enabled,
+          netTermDays: settings.netTermDays,
+          timezone: settings.timezone,
+          startAt: settings.startAt,
+        }),
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -86,8 +91,8 @@ export function AffiliateInvoicingSettingsForm() {
         <DashboardCardTitle>Weekly invoicing</DashboardCardTitle>
         <DashboardCardDescription>
           Affiliate earnings accrue Monday to Sunday. Every Monday an invoice is raised for
-          all uninvoiced earnings once they reach the minimum, and it stays unpaid until an
-          admin records the payment.
+          all uninvoiced earnings once they reach the publisher minimum from Settings →
+          Withdraw, and it stays unpaid until an admin records the payment.
         </DashboardCardDescription>
 
         <div className="mt-6 space-y-5">
@@ -114,20 +119,13 @@ export function AffiliateInvoicingSettingsForm() {
           </div>
 
           <div className="space-y-2">
-            <Label>Minimum invoice amount (USD)</Label>
-            <Input
-              type="number"
-              min={0}
-              step="0.01"
-              value={settings.minimumAmount}
-              onChange={(e) =>
-                setSettings({ ...settings, minimumAmount: Number(e.target.value) || 0 })
-              }
-              className="max-w-xs"
-            />
-            <p className="text-xs text-muted-foreground">
-              Below this, earnings stay uninvoiced and roll into the next Monday, so nothing
-              is lost.
+            <Label>Minimum invoice amount</Label>
+            <p className="rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
+              Controlled by{" "}
+              <span className="font-medium text-foreground">
+                Settings → Withdraw → Minimum withdraw — Publisher
+              </span>
+              . Below that floor, earnings stay uninvoiced and roll into the next Monday.
             </p>
           </div>
 

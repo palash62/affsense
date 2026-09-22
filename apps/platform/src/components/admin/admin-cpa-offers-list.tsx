@@ -137,11 +137,17 @@ function AdminCpaOffersListInner() {
             <Store className="h-6 w-6 text-[var(--theme-primary)]" />
           </div>
           <h3 className="mt-4 text-base font-semibold text-foreground">
-            {hasFilters ? "No offers match your filters" : "No CPA offers yet"}
+            {hasFilters
+              ? filters.status === "PENDING"
+                ? "No pending advertiser submissions"
+                : "No offers match your filters"
+              : "No CPA offers yet"}
           </h3>
           <p className="mt-1 max-w-sm text-sm text-muted-foreground">
             {hasFilters
-              ? "Try adjusting search or filters to see more offers."
+              ? filters.status === "PENDING"
+                ? "Advertiser-submitted offers awaiting review will appear here. Try All status to see other offers."
+                : "Try adjusting search or filters to see more offers."
               : "Create your first CPA offer to populate the marketplace."}
           </p>
           {hasFilters ? (

@@ -57,7 +57,7 @@ export function formatPayoutMethodLabel(method: string) {
     case "BANK_TRANSFER":
       return "Bank Transfer";
     case "PAYPAL":
-      return "PayPal (legacy)";
+      return "PayPal";
     default:
       return method.toLowerCase().replace(/_/g, " ");
   }
@@ -82,6 +82,30 @@ export function payoutDetailsSummary(
   }
 
   return "—";
+}
+
+export type PublisherPayeeSnapshot = {
+  method: "WISE" | "BANK_TRANSFER";
+  details: EmailPayoutDetails | BankPayoutDetails;
+};
+
+/** Resolve default pay-to from publisher profile for invoice snapshot. */
+export function resolvePublisherPayeeSnapshot(profile: {
+  defaultPayoutMethod?: string | null;
+  payoutWiseId?: string | null;
+  payoutBankDetails?: unknown;
+} | null | undefined): PublisherPayeeSnapshot | null {
+  if (!profile?.defaultPayoutMethod) return null;
+  if (profile.defaultPayoutMethod === "WISE") {
+    const id = profile.payoutWiseId?.trim();
+    if (!id) return null;
+    return { method: "WISE", details: { email: id } };
+  }
+  if (profile.defaultPayoutMethod === "BANK_TRANSFER") {
+    if (!isBankPayoutDetails(profile.payoutBankDetails, "BANK_TRANSFER")) return null;
+    return { method: "BANK_TRANSFER", details: profile.payoutBankDetails };
+  }
+  return null;
 }
 
 export function bankPayoutDetailRows(details: BankPayoutDetails): { label: string; value: string }[] {

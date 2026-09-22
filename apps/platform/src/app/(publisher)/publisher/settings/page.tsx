@@ -7,6 +7,7 @@ import { getPublisherSettings } from "@/services/user.service";
 import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/layout/page-header";
 import { PublisherSettingsView } from "@/components/publisher/settings/publisher-settings-view";
+import { isBankDetailsRecord } from "@/components/publisher/publisher-settings-panels";
 
 export default async function PublisherSettingsPage() {
   const session = await getSession();
@@ -23,12 +24,16 @@ export default async function PublisherSettingsPage() {
   });
 
   const timezone = resolveUserTimezone(user.timezone);
+  const bankRaw = user.publisherProfile?.payoutBankDetails;
+  const defaultMethod = user.publisherProfile?.defaultPayoutMethod;
+  const defaultPayoutMethod =
+    defaultMethod === "WISE" || defaultMethod === "BANK_TRANSFER" ? defaultMethod : null;
 
   return (
     <div className="space-y-5">
       <PageHeader
         title="Settings"
-        description="Manage your profile, password, and account details."
+        description="Manage your profile, payout details, password, and account."
         breadcrumbs={[
           { label: "Publisher", href: "/publisher" },
           { label: "Settings" },
@@ -48,6 +53,9 @@ export default async function PublisherSettingsPage() {
         totalLeads={user._count.leads}
         approvedLeads={approvedLeads}
         availableBalance={user.wallet ? Number(user.wallet.balance) : 0}
+        payoutWiseId={user.publisherProfile?.payoutWiseId ?? ""}
+        payoutBankDetails={isBankDetailsRecord(bankRaw) ? bankRaw : null}
+        defaultPayoutMethod={defaultPayoutMethod}
       />
     </div>
   );

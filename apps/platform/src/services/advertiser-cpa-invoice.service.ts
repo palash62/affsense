@@ -3,6 +3,7 @@ import { addDays } from "date-fns";
 import { prisma } from "@/lib/prisma";
 import { Errors } from "@/lib/errors";
 import { invoiceWeekStart, resolveInvoicePeriod } from "@/lib/affiliate-invoice-period";
+import { getPlatformSettings } from "@/services/wallet.service";
 
 function round4(value: number): number {
   return Math.round(value * 10_000) / 10_000;
@@ -29,6 +30,7 @@ export type SerializedAdvertiserCpaInvoice = {
   number: string;
   advertiserId: string;
   advertiserName: string;
+  advertiserEmail: string;
   periodStart: string;
   periodEnd: string;
   issuedAt: string;
@@ -66,7 +68,7 @@ function serializeInvoice(row: {
   paymentMethod: PayoutMethod | null;
   paymentReference: string | null;
   adminNote: string | null;
-  advertiser?: { name: string } | null;
+  advertiser?: { name: string; email?: string } | null;
   lines: {
     id: string;
     offerId: string | null;
@@ -80,6 +82,7 @@ function serializeInvoice(row: {
     number: row.number,
     advertiserId: row.advertiserId,
     advertiserName: row.advertiser?.name ?? "Advertiser",
+    advertiserEmail: row.advertiser?.email ?? "",
     periodStart: row.periodStart.toISOString(),
     periodEnd: row.periodEnd.toISOString(),
     issuedAt: row.issuedAt.toISOString(),
@@ -104,6 +107,7 @@ function serializeInvoice(row: {
 
 export type GenerateAdvertiserCpaInvoicesResult = {
   periodEnd: string;
+  minimumAmount: number;
   created: number;
   skipped: number;
   failed: number;
@@ -113,19 +117,19 @@ export type GenerateAdvertiserCpaInvoicesResult = {
 };
 
 /**
- * Raise AR invoices for offer-owner advertisers for conversions in the last
- * completed Mon–Sun week that are not yet billed (advertiserInvoiceId null).
- * Amount = sum of offer.revenue per conversion. No wallet debit (offline pay).
+ * Raise AR invoices for offer-owner advertisers for all unbilled conversions
+ * through the end of the last completed Mon–Sun week (carry-forward).
+ * Amount = sum of offer.revenue per conversion. Skips owners below
+ * minAdvertiserWithdrawAmount. No wallet debit (offline pay).
  */
 export async function generateAdvertiserCpaInvoices(
   runAt: Date = new Date(),
   timezone = "UTC",
 ): Promise<GenerateAdvertiserCpaInvoicesResult> {
+  const settings = await getPlatformSettings();
+  const minimumAmount = settings.minAdvertiserWithdrawAmount;
+
   const { periodEnd, periodEndExclusive } = resolveInvoicePeriod(runAt, timezone);
-  const periodStart = invoiceWeekStart(
-    new Date(periodEndExclusive.getTime() - 7 * 24 * 60 * 60 * 1000),
-    timezone,
-  );
   const periodKey = periodEnd.toISOString();
   const issuedAt = new Date();
   const dueAt = addDays(issuedAt, 7);
@@ -133,12 +137,13 @@ export async function generateAdvertiserCpaInvoices(
   const unbilled = await prisma.cpaOfferConversion.findMany({
     where: {
       advertiserInvoiceId: null,
-      createdAt: { gte: periodStart, lt: periodEndExclusive },
+      createdAt: { lt: periodEndExclusive },
       offer: { ownerAdvertiserId: { not: null } },
     },
     select: {
       id: true,
       offerId: true,
+      createdAt: true,
       offer: {
         select: {
           name: true,
@@ -152,7 +157,13 @@ export async function generateAdvertiserCpaInvoices(
   const byOwner = new Map<
     string,
     {
-      conversions: { id: string; offerId: string; offerName: string; revenue: number }[];
+      conversions: {
+        id: string;
+        offerId: string;
+        offerName: string;
+        revenue: number;
+        createdAt: Date;
+      }[];
     }
   >();
 
@@ -165,12 +176,14 @@ export async function generateAdvertiserCpaInvoices(
       offerId: row.offerId,
       offerName: row.offer.name,
       revenue: Number(row.offer.revenue ?? 0),
+      createdAt: row.createdAt,
     });
     byOwner.set(ownerId, bucket);
   }
 
   const result: GenerateAdvertiserCpaInvoicesResult = {
     periodEnd: periodEnd.toISOString(),
+    minimumAmount,
     created: 0,
     skipped: 0,
     failed: 0,
@@ -183,10 +196,16 @@ export async function generateAdvertiserCpaInvoices(
     const total = round4(
       bucket.conversions.reduce((sum, c) => sum + c.revenue, 0),
     );
-    if (total <= 0) {
+    if (total < minimumAmount || total <= 0) {
       result.skipped += 1;
       continue;
     }
+
+    const earliest = bucket.conversions.reduce(
+      (min, c) => (c.createdAt < min ? c.createdAt : min),
+      bucket.conversions[0].createdAt,
+    );
+    const periodStart = invoiceWeekStart(earliest, timezone);
 
     const byOffer = new Map<
       string,
@@ -292,7 +311,7 @@ export async function listAdvertiserCpaInvoicesForAdvertiser(
     prisma.advertiserCpaInvoice.findMany({
       where,
       include: {
-        advertiser: { select: { name: true } },
+        advertiser: { select: { name: true, email: true } },
         lines: { orderBy: { description: "asc" } },
       },
       orderBy: { issuedAt: "desc" },
@@ -333,7 +352,7 @@ export async function listAdvertiserCpaInvoicesForAdmin(opts: {
     prisma.advertiserCpaInvoice.findMany({
       where,
       include: {
-        advertiser: { select: { name: true } },
+        advertiser: { select: { name: true, email: true } },
         lines: { orderBy: { description: "asc" } },
       },
       orderBy: { issuedAt: "desc" },
@@ -358,13 +377,129 @@ export async function getAdvertiserCpaInvoiceForAdvertiser(
   const row = await prisma.advertiserCpaInvoice.findFirst({
     where: { id: invoiceId, advertiserId },
     include: {
-      advertiser: { select: { name: true } },
+      advertiser: { select: { name: true, email: true } },
       lines: { orderBy: { description: "asc" } },
     },
   });
   return row ? serializeInvoice(row) : null;
 }
 
+export async function getAdvertiserCpaInvoiceForAdmin(
+  invoiceId: string,
+): Promise<SerializedAdvertiserCpaInvoice | null> {
+  const row = await prisma.advertiserCpaInvoice.findFirst({
+    where: { id: invoiceId },
+    include: {
+      advertiser: { select: { name: true, email: true } },
+      lines: { orderBy: { description: "asc" } },
+    },
+  });
+  return row ? serializeInvoice(row) : null;
+}
+
+/**
+ * Advertiser submits offline payment proof → PENDING_APPROVAL for admin.
+ */
+export async function submitAdvertiserCpaInvoicePayment(
+  invoiceId: string,
+  advertiserId: string,
+  input: { method: PayoutMethod; reference: string; note?: string | null },
+): Promise<SerializedAdvertiserCpaInvoice> {
+  const existing = await prisma.advertiserCpaInvoice.findFirst({
+    where: { id: invoiceId, advertiserId },
+  });
+  if (!existing) throw Errors.notFound("Invoice");
+  if (existing.status === "PAID") throw Errors.validation("Invoice is already paid");
+  if (existing.status === "CANCELLED") throw Errors.validation("Invoice is cancelled");
+  if (existing.status === "PENDING_APPROVAL") {
+    throw Errors.validation("Payment is already awaiting admin approval");
+  }
+  if (existing.status !== "UNPAID") {
+    throw Errors.validation("Invoice cannot accept payment submission");
+  }
+
+  const reference = input.reference.trim();
+  if (!reference) throw Errors.validation("Payment reference is required");
+
+  const row = await prisma.advertiserCpaInvoice.update({
+    where: { id: invoiceId },
+    data: {
+      status: "PENDING_APPROVAL",
+      paidAt: null,
+      paymentMethod: input.method,
+      paymentReference: reference,
+      adminNote: input.note?.trim() || existing.adminNote,
+    },
+    include: {
+      advertiser: { select: { name: true, email: true } },
+      lines: { orderBy: { description: "asc" } },
+    },
+  });
+
+  return serializeInvoice(row);
+}
+
+/** Admin approves advertiser-submitted payment → PAID. */
+export async function approveAdvertiserCpaInvoicePayment(
+  invoiceId: string,
+  note?: string | null,
+): Promise<SerializedAdvertiserCpaInvoice> {
+  const existing = await prisma.advertiserCpaInvoice.findUnique({
+    where: { id: invoiceId },
+  });
+  if (!existing) throw Errors.notFound("Invoice");
+  if (existing.status !== "PENDING_APPROVAL") {
+    throw Errors.validation("Only payments awaiting approval can be approved");
+  }
+
+  const row = await prisma.advertiserCpaInvoice.update({
+    where: { id: invoiceId },
+    data: {
+      status: "PAID",
+      paidAt: new Date(),
+      adminNote: note?.trim() || existing.adminNote,
+    },
+    include: {
+      advertiser: { select: { name: true, email: true } },
+      lines: { orderBy: { description: "asc" } },
+    },
+  });
+
+  return serializeInvoice(row);
+}
+
+/** Admin rejects submission → back to UNPAID so advertiser can resubmit. */
+export async function rejectAdvertiserCpaInvoicePayment(
+  invoiceId: string,
+  reason?: string | null,
+): Promise<SerializedAdvertiserCpaInvoice> {
+  const existing = await prisma.advertiserCpaInvoice.findUnique({
+    where: { id: invoiceId },
+  });
+  if (!existing) throw Errors.notFound("Invoice");
+  if (existing.status !== "PENDING_APPROVAL") {
+    throw Errors.validation("Only payments awaiting approval can be rejected");
+  }
+
+  const row = await prisma.advertiserCpaInvoice.update({
+    where: { id: invoiceId },
+    data: {
+      status: "UNPAID",
+      paidAt: null,
+      paymentMethod: null,
+      paymentReference: null,
+      adminNote: reason?.trim() || existing.adminNote,
+    },
+    include: {
+      advertiser: { select: { name: true, email: true } },
+      lines: { orderBy: { description: "asc" } },
+    },
+  });
+
+  return serializeInvoice(row);
+}
+
+/** @deprecated Prefer approve after advertiser submit; kept for edge-case admin force-pay. */
 export async function payAdvertiserCpaInvoice(
   invoiceId: string,
   input: { method: PayoutMethod; reference?: string | null; note?: string | null },
@@ -386,7 +521,7 @@ export async function payAdvertiserCpaInvoice(
       adminNote: input.note?.trim() || existing.adminNote,
     },
     include: {
-      advertiser: { select: { name: true } },
+      advertiser: { select: { name: true, email: true } },
       lines: { orderBy: { description: "asc" } },
     },
   });
@@ -418,7 +553,7 @@ export async function cancelAdvertiserCpaInvoice(
         cancelReason: reason?.trim() || null,
       },
       include: {
-        advertiser: { select: { name: true } },
+        advertiser: { select: { name: true, email: true } },
         lines: { orderBy: { description: "asc" } },
       },
     });

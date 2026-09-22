@@ -93,6 +93,7 @@ export function AdminCpaOffersFilters() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All status</SelectItem>
+              <SelectItem value="PENDING">Pending</SelectItem>
               <SelectItem value="ACTIVE">Active</SelectItem>
               <SelectItem value="PAUSED">Paused</SelectItem>
               <SelectItem value="ARCHIVED">Archived</SelectItem>

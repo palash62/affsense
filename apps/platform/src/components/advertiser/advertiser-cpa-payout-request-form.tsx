@@ -23,34 +23,17 @@ import type { BankPayoutDetails } from "@/lib/payout-payment-details";
 
 type PayoutMethod = "WISE" | "BANK_TRANSFER" | "STRIPE_CONNECT";
 
-export type CpaMinPayoutSettings = {
-  wise: number;
-  bankTransfer: number;
-  stripeConnect: number;
-};
-
-function minForMethod(method: PayoutMethod, mins: CpaMinPayoutSettings) {
-  if (method === "WISE") return mins.wise;
-  if (method === "BANK_TRANSFER") return mins.bankTransfer;
-  return mins.stripeConnect;
-}
-
-export function lowestCpaMinPayout(mins: CpaMinPayoutSettings) {
-  return Math.min(mins.wise, mins.bankTransfer, mins.stripeConnect);
-}
-
 export function AdvertiserCpaPayoutRequestForm({
   availableBalance,
-  minPayoutSettings,
+  minWithdrawAmount,
 }: {
   availableBalance: number;
-  minPayoutSettings: CpaMinPayoutSettings;
+  minWithdrawAmount: number;
 }) {
   const router = useRouter();
   const [method, setMethod] = useState<PayoutMethod>("WISE");
-  const minPayoutAmount = minForMethod(method, minPayoutSettings);
   const [amount, setAmount] = useState(
-    Math.max(minPayoutAmount, Math.min(availableBalance, minPayoutAmount)),
+    Math.max(minWithdrawAmount, Math.min(availableBalance, minWithdrawAmount)),
   );
   const [email, setEmail] = useState("");
   const [bankDetails, setBankDetails] = useState<BankPayoutDetails>(EMPTY_BANK_DETAILS);
@@ -58,15 +41,15 @@ export function AdvertiserCpaPayoutRequestForm({
   const [error, setError] = useState("");
 
   useEffect(() => {
-    setAmount((prev) => Math.max(minPayoutAmount, Math.min(availableBalance, prev)));
-  }, [minPayoutAmount, availableBalance]);
+    setAmount((prev) => Math.max(minWithdrawAmount, Math.min(availableBalance, prev)));
+  }, [minWithdrawAmount, availableBalance]);
 
   const paymentDetails = useMemo(() => {
     if (method === "BANK_TRANSFER") return bankDetails;
     return { email: email.trim() };
   }, [method, email, bankDetails]);
 
-  const canSubmit = availableBalance >= minPayoutAmount && !loading;
+  const canSubmit = availableBalance >= minWithdrawAmount && !loading;
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -141,13 +124,13 @@ export function AdvertiserCpaPayoutRequestForm({
               type="number"
               value={amount}
               onChange={(e) => setAmount(Number(e.target.value))}
-              min={minPayoutAmount}
+              min={minWithdrawAmount}
               max={availableBalance}
               required
               disabled={!canSubmit}
             />
             <p className="text-xs text-muted-foreground">
-              Minimum payout for this method: {formatCurrency(minPayoutAmount)}
+              Minimum withdrawal: {formatCurrency(minWithdrawAmount)}
             </p>
           </div>
 

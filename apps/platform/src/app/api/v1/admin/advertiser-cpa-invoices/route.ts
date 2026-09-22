@@ -1,10 +1,11 @@
 import { withAuth, parsePagination } from "@/lib/api-handler";
 import { errorResponse } from "@/lib/errors";
 import {
+  approveAdvertiserCpaInvoicePayment,
   cancelAdvertiserCpaInvoice,
   generateAdvertiserCpaInvoices,
   listAdvertiserCpaInvoicesForAdmin,
-  payAdvertiserCpaInvoice,
+  rejectAdvertiserCpaInvoicePayment,
 } from "@/services/advertiser-cpa-invoice.service";
 import { z } from "zod";
 
@@ -18,7 +19,13 @@ export async function GET(request: Request) {
       const data = await listAdvertiserCpaInvoicesForAdmin({
         page,
         limit,
-        status: status as "UNPAID" | "PAID" | "CANCELLED" | "ALL" | undefined,
+        status: status as
+          | "UNPAID"
+          | "PENDING_APPROVAL"
+          | "PAID"
+          | "CANCELLED"
+          | "ALL"
+          | undefined,
         advertiserId,
       });
       return Response.json({ data });
@@ -60,12 +67,10 @@ export async function POST(request: Request) {
   }, ["ADMIN"]);
 }
 
-const paySchema = z.object({
+const patchSchema = z.object({
   invoiceId: z.string().trim().min(1),
-  method: z.enum(["WISE", "BANK_TRANSFER", "STRIPE_CONNECT", "PAYPAL"]),
-  reference: z.string().trim().max(200).optional().nullable(),
+  action: z.enum(["approve", "reject", "cancel"]),
   note: z.string().trim().max(5000).optional().nullable(),
-  action: z.enum(["pay", "cancel"]).default("pay"),
   cancelReason: z.string().trim().max(5000).optional().nullable(),
 });
 
@@ -73,7 +78,7 @@ export async function PATCH(request: Request) {
   return withAuth(async () => {
     try {
       const body = await request.json().catch(() => null);
-      const parsed = paySchema.safeParse(body);
+      const parsed = patchSchema.safeParse(body);
       if (!parsed.success) {
         return Response.json(
           {
@@ -95,11 +100,18 @@ export async function PATCH(request: Request) {
         return Response.json({ data });
       }
 
-      const data = await payAdvertiserCpaInvoice(parsed.data.invoiceId, {
-        method: parsed.data.method,
-        reference: parsed.data.reference,
-        note: parsed.data.note,
-      });
+      if (parsed.data.action === "reject") {
+        const data = await rejectAdvertiserCpaInvoicePayment(
+          parsed.data.invoiceId,
+          parsed.data.note,
+        );
+        return Response.json({ data });
+      }
+
+      const data = await approveAdvertiserCpaInvoicePayment(
+        parsed.data.invoiceId,
+        parsed.data.note,
+      );
       return Response.json({ data });
     } catch (error) {
       return errorResponse(error);

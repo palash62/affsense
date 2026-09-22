@@ -2,8 +2,11 @@
 
 import { Fragment, useEffect, useState } from "react";
 import { ChevronDown, ChevronRight, Receipt } from "lucide-react";
+import { AdvertiserCpaInvoicePayDialog } from "@/components/advertiser/advertiser-cpa-invoice-pay-dialog";
 import { AffiliateInvoiceStatusBadge, formatCurrency } from "@/components/admin/admin-ui";
+import { AffiliateInvoiceDownloadButton } from "@/components/invoices/affiliate-invoice-download-button";
 import { RoleHero } from "@/components/layout/role-hero";
+import { Button } from "@/components/ui/button";
 import { formatInvoicePeriod } from "@/lib/affiliate-invoice-period";
 import { formatUserDateTime } from "@/lib/user-timezone";
 import type { SerializedAdvertiserCpaInvoice } from "@/services/advertiser-cpa-invoice.service";
@@ -20,6 +23,7 @@ export function AdvertiserCpaInvoicesList({ timezone = "UTC" }: { timezone?: str
   const [items, setItems] = useState<SerializedAdvertiserCpaInvoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [payInvoice, setPayInvoice] = useState<SerializedAdvertiserCpaInvoice | null>(null);
 
   useEffect(() => {
     void (async () => {
@@ -36,7 +40,7 @@ export function AdvertiserCpaInvoicesList({ timezone = "UTC" }: { timezone?: str
       <RoleHero
         eyebrow="Advertiser Portal"
         title="CPA Invoices"
-        description="Amounts owed for conversions on your CPA offers. Pay offline — admin marks invoices paid."
+        description="Amounts owed for conversions on your CPA offers. Pay offline using admin receive details, then submit for approval."
       />
 
       <div className="overflow-hidden rounded-xl border border-border bg-card">
@@ -63,6 +67,7 @@ export function AdvertiserCpaInvoicesList({ timezone = "UTC" }: { timezone?: str
                   <TableHead className="h-11 px-4 text-muted-foreground">Due</TableHead>
                   <TableHead className="h-11 px-4 text-right text-muted-foreground">Amount</TableHead>
                   <TableHead className="h-11 px-4 text-muted-foreground">Status</TableHead>
+                  <TableHead className="h-11 px-4 text-right text-muted-foreground">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -111,10 +116,31 @@ export function AdvertiserCpaInvoicesList({ timezone = "UTC" }: { timezone?: str
                         <TableCell className="px-4 py-4">
                           <AffiliateInvoiceStatusBadge status={invoice.status} />
                         </TableCell>
+                        <TableCell
+                          className="px-4 py-4 text-right"
+                          onClick={(e) => e.stopPropagation()}
+                          onKeyDown={(e) => e.stopPropagation()}
+                        >
+                          <div className="flex items-center justify-end gap-2">
+                            <AffiliateInvoiceDownloadButton
+                              href={`/advertiser/invoices/${invoice.id}/print`}
+                              stopPropagation
+                            />
+                            {invoice.status === "UNPAID" ? (
+                              <Button
+                                size="sm"
+                                className="h-8"
+                                onClick={() => setPayInvoice(invoice)}
+                              >
+                                Pay
+                              </Button>
+                            ) : null}
+                          </div>
+                        </TableCell>
                       </TableRow>
                       {open ? (
                         <TableRow className="border-border bg-muted/20 hover:bg-muted/20">
-                          <TableCell colSpan={6} className="px-6 py-4">
+                          <TableCell colSpan={7} className="px-6 py-4">
                             <ul className="space-y-2 text-sm">
                               {invoice.lines.map((line) => (
                                 <li
@@ -130,6 +156,14 @@ export function AdvertiserCpaInvoicesList({ timezone = "UTC" }: { timezone?: str
                                 </li>
                               ))}
                             </ul>
+                            {invoice.paymentReference ? (
+                              <p className="mt-3 text-xs text-muted-foreground">
+                                Submitted reference: {invoice.paymentReference}
+                                {invoice.paymentMethod
+                                  ? ` (${invoice.paymentMethod.replaceAll("_", " ")})`
+                                  : ""}
+                              </p>
+                            ) : null}
                           </TableCell>
                         </TableRow>
                       ) : null}
@@ -141,6 +175,17 @@ export function AdvertiserCpaInvoicesList({ timezone = "UTC" }: { timezone?: str
           </div>
         )}
       </div>
+
+      <AdvertiserCpaInvoicePayDialog
+        invoice={payInvoice}
+        open={Boolean(payInvoice)}
+        onOpenChange={(next) => {
+          if (!next) setPayInvoice(null);
+        }}
+        onSubmitted={(updated) => {
+          setItems((prev) => prev.map((row) => (row.id === updated.id ? updated : row)));
+        }}
+      />
     </div>
   );
 }

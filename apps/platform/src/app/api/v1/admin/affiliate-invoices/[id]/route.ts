@@ -6,12 +6,7 @@ import {
   payAffiliateInvoice,
 } from "@/services/affiliate-invoice.service";
 
-const PAYOUT_METHODS = new Set<PayoutMethod>([
-  "WISE",
-  "BANK_TRANSFER",
-  "STRIPE_CONNECT",
-  "PAYPAL",
-]);
+const PAYOUT_METHODS = new Set<PayoutMethod>(["WISE", "BANK_TRANSFER"]);
 
 export async function PATCH(
   request: Request,
