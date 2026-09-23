@@ -1,0 +1,989 @@
+.affsensePremium {
+  --black: #0b1f3a;
+  --sidebar: #0b1f3a;
+  --charcoal: #163456;
+  --orange: #ff6b6b;
+  --orange2: #ff8585;
+  --red: #ff8585;
+  --green: #16a34a;
+  --green-bg: #eaf8ef;
+  --page: #fff5f2;
+  --soft: #fff0ec;
+  --white: #fff;
+  --text: #0b1f3a;
+  --secondary: #64748b;
+  --muted: #a3a3a3;
+  --border: #f1d9d5;
+  --orange-bg: #ffe8e4;
+  --shadow: 0 16px 45px rgba(11, 31, 58, 0.08);
+
+  margin: 0;
+  font-family: var(--font-inter), Inter, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  background: #fff;
+  color: var(--text);
+  line-height: 1.55;
+  min-height: 100vh;
+}
+
+.affsensePremium *,
+.affsensePremium *::before,
+.affsensePremium *::after {
+  box-sizing: border-box;
+}
+
+.affsensePremium a {
+  text-decoration: none;
+  color: inherit;
+}
+
+.affsensePremium .container {
+  width: min(1180px, calc(100% - 40px));
+  margin: auto;
+}
+
+.affsensePremium .nav {
+  position: sticky;
+  top: 0;
+  z-index: 60;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(15px);
+  border-bottom: 1px solid var(--border);
+}
+
+.affsensePremium .navin {
+  height: 74px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.affsensePremium .logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 27px;
+  font-weight: 800;
+  letter-spacing: -1.4px;
+}
+
+.affsensePremium .logoMark {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-size: 13px;
+  background: linear-gradient(135deg, #d66b80, #7e55db);
+}
+
+.affsensePremium .logoWord {
+  color: var(--black);
+}
+
+.affsensePremium .logoWord span {
+  background: linear-gradient(90deg, var(--orange), var(--red));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.affsensePremium .navlinks {
+  display: flex;
+  align-items: center;
+  gap: 26px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #555;
+}
+
+.affsensePremium .navlinks a:hover {
+  color: var(--orange);
+}
+
+.affsensePremium .navbtns {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+}
+
+.affsensePremium .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 19px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  border: 1px solid transparent;
+  transition: 0.2s;
+  cursor: pointer;
+}
+
+.affsensePremium .btn:hover {
+  transform: translateY(-2px);
+}
+
+.affsensePremium .btnPrimary {
+  color: #fff;
+  background: linear-gradient(135deg, var(--orange), var(--red));
+  box-shadow: 0 10px 24px rgba(255, 107, 107, 0.25);
+}
+
+.affsensePremium .btnLight {
+  background: #fff;
+  border-color: #ddd;
+  color: #333;
+}
+
+.affsensePremium .mobileMenuToggle {
+  display: none;
+  width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  background: #fff;
+  color: #333;
+  cursor: pointer;
+}
+
+.affsensePremium .mobileNavPanel {
+  display: none;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 20px 20px;
+  border-top: 1px solid var(--border);
+  background: #fff;
+}
+
+.affsensePremium .mobileNavPanel.isOpen {
+  display: flex;
+}
+
+.affsensePremium .mobileNavPanel a {
+  padding: 12px 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #444;
+  border-radius: 10px;
+}
+
+.affsensePremium .mobileNavPanel a:hover {
+  background: var(--orange-bg);
+  color: var(--orange);
+}
+
+.affsensePremium .mobileNavActions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.affsensePremium .mobileNavActions .btn {
+  width: 100%;
+}
+
+.affsensePremium .hero {
+  padding: 78px 0 72px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 12% 10%, rgba(255, 107, 107, 0.1), transparent 28%),
+    radial-gradient(circle at 90% 25%, rgba(11, 31, 58, 0.06), transparent 25%),
+    linear-gradient(180deg, #fff, #fff5f2);
+}
+
+.affsensePremium .heroGrid {
+  display: grid;
+  grid-template-columns: 1.02fr 0.98fr;
+  gap: 58px;
+  align-items: center;
+}
+
+.affsensePremium .badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: var(--orange-bg);
+  border: 1px solid #f1d9d5;
+  color: #ff6b6b;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.25px;
+}
+
+.affsensePremium .badgeDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+}
+
+.affsensePremium h1 {
+  font-size: 57px;
+  line-height: 1.04;
+  letter-spacing: -3px;
+  margin: 19px 0;
+  color: var(--black);
+}
+
+.affsensePremium .grad {
+  background: linear-gradient(90deg, var(--orange), var(--red));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.affsensePremium .hero p {
+  font-size: 17px;
+  color: var(--secondary);
+  max-width: 640px;
+  margin: 0 0 27px;
+}
+
+.affsensePremium .heroBtns {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.affsensePremium .checksInline {
+  display: flex;
+  gap: 17px;
+  flex-wrap: wrap;
+  margin-top: 20px;
+  font-size: 11px;
+  color: #686868;
+}
+
+.affsensePremium .checksInline span::before {
+  content: "✓";
+  color: var(--green);
+  font-weight: 900;
+  margin-right: 6px;
+}
+
+.affsensePremium .dashboard {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  box-shadow: 0 28px 70px rgba(0, 0, 0, 0.13);
+  overflow: hidden;
+}
+
+.affsensePremium .dashTop {
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 15px;
+  border-bottom: 1px solid var(--border);
+}
+
+.affsensePremium .dashLogo {
+  font-weight: 800;
+  font-size: 13px;
+}
+
+.affsensePremium .dashLogo span {
+  color: var(--orange);
+}
+
+.affsensePremium .dashUser {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  font-size: 9px;
+  color: #666;
+}
+
+.affsensePremium .avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #e56a6a, #9b55e7);
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-weight: 800;
+}
+
+.affsensePremium .dashBody {
+  display: grid;
+  grid-template-columns: 92px 1fr;
+  min-height: 330px;
+}
+
+.affsensePremium .dashSide {
+  background: var(--sidebar);
+  padding: 13px 8px;
+}
+
+.affsensePremium .sideItem {
+  height: 29px;
+  border-radius: 6px;
+  color: #8d8d8d;
+  font-size: 7.5px;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  margin-bottom: 4px;
+}
+
+.affsensePremium .sideItem.active {
+  background: var(--charcoal);
+  color: #fff;
+  border-left: 2px solid var(--orange);
+}
+
+.affsensePremium .dashMain {
+  background: var(--page);
+  padding: 14px;
+}
+
+.affsensePremium .dashTitle {
+  font-size: 14px;
+  font-weight: 800;
+  margin-bottom: 10px;
+}
+
+.affsensePremium .dashCards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 7px;
+}
+
+.affsensePremium .dashCard {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-top: 2px solid var(--orange);
+  border-radius: 8px;
+  padding: 9px;
+}
+
+.affsensePremium .dashCard small {
+  font-size: 7px;
+  color: #777;
+  display: block;
+}
+
+.affsensePremium .dashCard strong {
+  font-size: 13px;
+}
+
+.affsensePremium .dashCard em {
+  font-style: normal;
+  font-size: 6.5px;
+  color: var(--green);
+  display: block;
+}
+
+.affsensePremium .chart {
+  height: 143px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  margin-top: 9px;
+  padding: 10px;
+  position: relative;
+  overflow: hidden;
+}
+
+.affsensePremium .chart b {
+  font-size: 8px;
+}
+
+.affsensePremium .chart svg {
+  position: absolute;
+  left: 9px;
+  bottom: 8px;
+  width: calc(100% - 18px);
+  height: 100px;
+}
+
+.affsensePremium .metricbar {
+  border-block: 1px solid var(--border);
+  background: #fff;
+}
+
+.affsensePremium .metrics {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.affsensePremium .metric {
+  text-align: center;
+  padding: 23px;
+  border-right: 1px solid var(--border);
+}
+
+.affsensePremium .metric:last-child {
+  border-right: 0;
+}
+
+.affsensePremium .metric strong {
+  display: block;
+  font-size: 20px;
+}
+
+.affsensePremium .metric span {
+  font-size: 11px;
+  color: var(--secondary);
+}
+
+.affsensePremium .section {
+  padding: 88px 0;
+}
+
+.affsensePremium .soft {
+  background: var(--page);
+}
+
+.affsensePremium .center {
+  text-align: center;
+}
+
+.affsensePremium .kicker {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--orange);
+  font-weight: 800;
+}
+
+.affsensePremium h2 {
+  font-size: 39px;
+  line-height: 1.15;
+  letter-spacing: -1.7px;
+  margin: 9px 0 13px;
+  color: var(--black);
+}
+
+.affsensePremium .lead {
+  font-size: 15px;
+  color: var(--secondary);
+  max-width: 760px;
+  margin: 0 auto 40px;
+}
+
+.affsensePremium .opportunities {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
+}
+
+.affsensePremium .opp {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 26px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.025);
+}
+
+.affsensePremium .opp::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(var(--orange), var(--red));
+}
+
+.affsensePremium .oppTop {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  align-items: flex-start;
+}
+
+.affsensePremium .oppIcon {
+  width: 48px;
+  height: 48px;
+  border-radius: 13px;
+  background: var(--orange-bg);
+  display: grid;
+  place-items: center;
+  font-size: 21px;
+}
+
+.affsensePremium .oppTag {
+  font-size: 9px;
+  font-weight: 800;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: var(--green-bg);
+  color: var(--green);
+}
+
+.affsensePremium .opp h3 {
+  font-size: 19px;
+  margin: 15px 0 7px;
+}
+
+.affsensePremium .opp > p {
+  font-size: 13px;
+  color: var(--secondary);
+  margin: 0 0 17px;
+}
+
+.affsensePremium .miniList {
+  display: grid;
+  gap: 9px;
+}
+
+.affsensePremium .miniItem {
+  display: flex;
+  gap: 8px;
+  font-size: 11px;
+  color: #555;
+}
+
+.affsensePremium .miniCheck {
+  color: var(--green);
+  font-weight: 900;
+}
+
+.affsensePremium .earnBox {
+  margin-top: 18px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--page);
+  border: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  align-items: center;
+}
+
+.affsensePremium .earnBox span {
+  font-size: 10px;
+  color: var(--secondary);
+}
+
+.affsensePremium .earnBox strong {
+  font-size: 13px;
+  color: var(--green);
+}
+
+.affsensePremium .marketGrid {
+  display: grid;
+  grid-template-columns: 0.95fr 1.05fr;
+  gap: 48px;
+  align-items: center;
+}
+
+.affsensePremium .copy p {
+  color: var(--secondary);
+  font-size: 14px;
+}
+
+.affsensePremium .featureList {
+  display: grid;
+  gap: 12px;
+  margin-top: 22px;
+}
+
+.affsensePremium .feature {
+  display: flex;
+  gap: 11px;
+}
+
+.affsensePremium .circleCheck {
+  width: 23px;
+  height: 23px;
+  flex: 0 0 23px;
+  border-radius: 50%;
+  background: var(--green-bg);
+  color: var(--green);
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.affsensePremium .feature b {
+  display: block;
+  font-size: 13px;
+}
+
+.affsensePremium .feature span {
+  font-size: 11px;
+  color: var(--secondary);
+}
+
+.affsensePremium .marketCard {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 19px;
+  padding: 18px;
+  box-shadow: var(--shadow);
+}
+
+.affsensePremium .marketHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.affsensePremium .marketHead b {
+  font-size: 15px;
+}
+
+.affsensePremium .live {
+  font-size: 9px;
+  font-weight: 800;
+  background: var(--green-bg);
+  color: var(--green);
+  padding: 5px 8px;
+  border-radius: 999px;
+}
+
+.affsensePremium .offer {
+  display: grid;
+  grid-template-columns: 45px 1fr auto;
+  gap: 11px;
+  align-items: center;
+  padding: 12px 0;
+  border-top: 1px solid var(--border);
+}
+
+.affsensePremium .thumb {
+  width: 45px;
+  height: 45px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #0b1f3a, #ff6b6b);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.affsensePremium .offer b {
+  display: block;
+  font-size: 12px;
+}
+
+.affsensePremium .offer small {
+  font-size: 10px;
+  color: var(--secondary);
+}
+
+.affsensePremium .offerPay {
+  text-align: right;
+}
+
+.affsensePremium .offerPay strong {
+  display: block;
+  color: var(--green);
+  font-size: 13px;
+}
+
+.affsensePremium .offerPay span {
+  font-size: 9px;
+  color: var(--secondary);
+}
+
+.affsensePremium .steps {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.affsensePremium .step {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 22px;
+}
+
+.affsensePremium .stepNum {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--orange), var(--red));
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 800;
+  margin-bottom: 14px;
+}
+
+.affsensePremium .step h3 {
+  font-size: 15px;
+  margin: 0 0 6px;
+}
+
+.affsensePremium .step p {
+  font-size: 12px;
+  color: var(--secondary);
+  margin: 0;
+}
+
+.affsensePremium .dark {
+  background: linear-gradient(135deg, #0b1f3a, #0b1f3a 60%, #163456);
+  color: #fff;
+  border-radius: 24px;
+  padding: 46px;
+  display: grid;
+  grid-template-columns: 1.08fr 0.92fr;
+  gap: 35px;
+  align-items: center;
+}
+
+.affsensePremium .dark h2 {
+  color: #fff;
+  font-size: 36px;
+}
+
+.affsensePremium .dark p {
+  color: #b9b9b9;
+  font-size: 14px;
+}
+
+.affsensePremium .balance {
+  background: #181818;
+  border: 1px solid #333;
+  border-radius: 17px;
+  padding: 23px;
+}
+
+.affsensePremium .balance small {
+  font-size: 10px;
+  color: #999;
+}
+
+.affsensePremium .balance strong {
+  font-size: 38px;
+  display: block;
+  margin: 4px 0 12px;
+}
+
+.affsensePremium .balanceRow {
+  display: flex;
+  justify-content: space-between;
+  border-top: 1px solid #333;
+  padding-top: 12px;
+  margin-top: 12px;
+  font-size: 11px;
+  color: #c8c8c8;
+}
+
+.affsensePremium .backend {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+.affsensePremium .backCard {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 23px;
+}
+
+.affsensePremium .backCard h3 {
+  font-size: 16px;
+  margin: 0 0 7px;
+}
+
+.affsensePremium .backCard p {
+  font-size: 12px;
+  color: var(--secondary);
+  margin: 0;
+}
+
+.affsensePremium .faq {
+  max-width: 860px;
+  margin: auto;
+  display: grid;
+  gap: 10px;
+}
+
+.affsensePremium details {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0 18px;
+}
+
+.affsensePremium summary {
+  padding: 17px 0;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.affsensePremium details p {
+  font-size: 12px;
+  color: var(--secondary);
+  margin: 0 0 17px;
+}
+
+.affsensePremium .final {
+  padding: 84px 0;
+  text-align: center;
+  background:
+    radial-gradient(circle at 50% 0, rgba(255, 107, 107, 0.12), transparent 34%), #fff5f2;
+}
+
+.affsensePremium .final p {
+  max-width: 680px;
+  margin: 0 auto 23px;
+  color: var(--secondary);
+  font-size: 14px;
+}
+
+.affsensePremium footer {
+  background: var(--sidebar);
+  color: #b8b8b8;
+  padding: 40px 0;
+}
+
+.affsensePremium .foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 25px;
+}
+
+.affsensePremium .foot .logoWord {
+  color: #fff;
+}
+
+.affsensePremium .footlinks {
+  display: flex;
+  gap: 19px;
+  flex-wrap: wrap;
+  font-size: 11px;
+}
+
+.affsensePremium .legal {
+  font-size: 9px;
+  color: #777;
+  margin-top: 22px;
+  max-width: 930px;
+}
+
+@media (max-width: 960px) {
+  .affsensePremium .navlinks {
+    display: none;
+  }
+
+  .affsensePremium .mobileMenuToggle {
+    display: inline-flex;
+  }
+
+  .affsensePremium .heroGrid,
+  .affsensePremium .marketGrid,
+  .affsensePremium .dark {
+    grid-template-columns: 1fr;
+  }
+
+  .affsensePremium .opportunities {
+    grid-template-columns: 1fr;
+  }
+
+  .affsensePremium .steps {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .affsensePremium h1 {
+    font-size: 47px;
+  }
+
+  .affsensePremium .metrics {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 620px) {
+  .affsensePremium .container {
+    width: calc(100% - 28px);
+  }
+
+  .affsensePremium .navin {
+    height: 66px;
+  }
+
+  .affsensePremium .navbtns .btnLight {
+    display: none;
+  }
+
+  .affsensePremium .hero {
+    padding: 45px 0 52px;
+  }
+
+  .affsensePremium .heroGrid {
+    gap: 35px;
+  }
+
+  .affsensePremium h1 {
+    font-size: 38px;
+    letter-spacing: -1.9px;
+  }
+
+  .affsensePremium .hero p {
+    font-size: 15px;
+  }
+
+  .affsensePremium .heroBtns .btn {
+    width: 100%;
+  }
+
+  .affsensePremium .dashBody {
+    grid-template-columns: 72px 1fr;
+  }
+
+  .affsensePremium .dashCards {
+    grid-template-columns: 1fr;
+  }
+
+  .affsensePremium .metric,
+  .affsensePremium .metrics {
+    border-right: 0;
+  }
+
+  .affsensePremium .metrics,
+  .affsensePremium .steps,
+  .affsensePremium .backend {
+    grid-template-columns: 1fr;
+  }
+
+  .affsensePremium .section {
+    padding: 63px 0;
+  }
+
+  .affsensePremium h2 {
+    font-size: 30px;
+  }
+
+  .affsensePremium .dark {
+    padding: 27px;
+  }
+
+  .affsensePremium .dark h2 {
+    font-size: 29px;
+  }
+
+  .affsensePremium .foot {
+    display: block;
+  }
+
+  .affsensePremium .footlinks {
+    margin-top: 17px;
+  }
+}

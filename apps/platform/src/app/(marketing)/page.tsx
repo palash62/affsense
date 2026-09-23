@@ -1,12 +1,12 @@
 import { redirect } from "next/navigation";
 import { getDashboardPath } from "@/lib/auth";
 import { getSession } from "@/lib/session";
-import { Preview2LandingPage } from "@/modules/marketing";
+import { AffsensePremiumLandingPage } from "@/modules/marketing";
 
 export const metadata = {
-  title: "LeadVix — Verified Pay Per Lead Network",
+  title: "Affsense — One Free Account. Multiple Ways to Earn Online.",
   description:
-    "LeadVix is an AI-powered Pay Per Lead network with verified opt-ins, flexible offer support, built-in CPA offers, an in-house autoresponder, funnels and campaign optimization.",
+    "Join Affsense free and access digital product commissions, CPA offers, paid tasks, Offer Wall opportunities and direct referral rewards from one dashboard.",
 };
 
 export default async function HomePage() {
@@ -16,5 +16,5 @@ export default async function HomePage() {
     redirect(getDashboardPath(session.user.role));
   }
 
-  return <Preview2LandingPage />;
+  return <AffsensePremiumLandingPage />;
 }
