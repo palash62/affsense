@@ -177,7 +177,7 @@ const BACKEND_CARDS = [
   },
 ] as const;
 
-const FAQS = [
+const FAQS: { q: string; a: string; open?: boolean }[] = [
   {
     q: "Is Affsense free to join?",
     a: "Yes. The planned member account is free. Individual campaigns or earning opportunities may have eligibility, geographic, traffic-source or verification requirements.",
@@ -211,7 +211,7 @@ const FAQS = [
     q: "Does Affsense guarantee income?",
     a: "No. Earnings depend on actual qualifying activity, conversions, traffic, task availability, eligibility and other factors. No specific income or result is guaranteed.",
   },
-] as const;
+];
 
 const SIDE_ITEMS = [
   "Dashboard",
