@@ -35,8 +35,6 @@ import {
   Share2,
   ShoppingBag,
   Receipt,
-  GraduationCap,
-  HelpCircle,
   LayoutGrid,
 } from "lucide-react";
 import { ASSIGNABLE_STAFF_MENU_HREFS, parseStaffMenuAccess, STAFF_USERS_PATH } from "@/lib/admin-portal";
@@ -208,6 +206,7 @@ export const ADVERTISER_NAV: NavItem[] = [
   { label: "Invoices", href: "/advertiser/invoices", icon: Receipt },
   { label: "Referrals", href: "/advertiser/referal_link", icon: Gift },
   { label: "Support", href: "/advertiser/support", icon: LifeBuoy },
+  { label: "Announcements", href: "/advertiser/announcements", icon: Bell },
   { label: "Tutorials", href: "/advertiser/tutorials", icon: PlayCircle },
   { label: "Settings", href: "/advertiser/settings", icon: Settings },
 ];
@@ -280,7 +279,6 @@ export const PUBLISHER_NAV: AdminNavEntry[] = [
   { kind: "section", label: "ACCOUNT" },
   { kind: "item", item: { label: "Earnings & Payouts", href: "/publisher/earnings", icon: Wallet } },
   { kind: "item", item: { label: "Invoices", href: "/publisher/invoices", icon: FileText } },
-  { kind: "item", item: { label: "Transactions", href: "/publisher/transactions", icon: Receipt } },
   { kind: "item", item: { label: "Profile Settings", href: "/publisher/settings", icon: Settings } },
   { kind: "item", item: { label: "Support", href: "/publisher/support", icon: LifeBuoy } },
 
@@ -304,8 +302,6 @@ export const PUBLISHER_NAV: AdminNavEntry[] = [
   },
 
   { kind: "section", label: "RESOURCES" },
-  { kind: "item", item: { label: "Training Center", href: "/publisher/training", icon: GraduationCap } },
-  { kind: "item", item: { label: "Help Center", href: "/publisher/help", icon: HelpCircle } },
   { kind: "item", item: { label: "Announcements", href: "/publisher/announcements", icon: Bell } },
 ];
 

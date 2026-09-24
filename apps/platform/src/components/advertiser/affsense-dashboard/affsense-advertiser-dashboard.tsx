@@ -296,7 +296,17 @@ export function AffsenseAdvertiserDashboard({ data }: { data: AffsenseAdvertiser
         <aside className="space-y-4 xl:col-span-4">
           <AdvertiserReferralCard referralCode={data.referralCode} />
           <DashboardCard>
-            <DashboardCardTitle>Announcements</DashboardCardTitle>
+            <div className="flex items-start justify-between gap-2">
+              <DashboardCardTitle>Announcements</DashboardCardTitle>
+              <ButtonLink
+                href="/advertiser/announcements"
+                variant="ghost"
+                size="sm"
+                className="h-8 text-xs text-muted-foreground"
+              >
+                View all
+              </ButtonLink>
+            </div>
             <div className="mt-4">
               <AnnouncementsFeed
                 items={data.announcements}

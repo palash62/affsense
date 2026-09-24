@@ -175,7 +175,7 @@ export function Header({ role, title, breadcrumbs, premium, onOpenMobileNav }: H
           </DropdownMenu>
         )}
 
-        {premium && <ThemeSwitcher />}
+        {premium && (role === "ADMIN" || role === "PLATFORM_MANAGER") && <ThemeSwitcher />}
 
         <ButtonLink
           href={notificationsHref}

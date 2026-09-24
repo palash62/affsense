@@ -140,7 +140,7 @@ export function AffsensePublisherDashboard({ data }: { data: AffsensePublisherDa
           trend={kpis.earningsTrend}
           icon={DollarSign}
           accent="navy"
-          footer={{ href: "/publisher/transactions", linkLabel: "View transactions" }}
+          footer={{ href: "/publisher/earnings", linkLabel: "View earnings" }}
         />
       </div>
 

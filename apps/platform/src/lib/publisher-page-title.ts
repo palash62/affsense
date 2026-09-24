@@ -62,7 +62,6 @@ export function getPublisherPageMeta(
     },
     "/publisher/payouts": { title: "Payouts", subtitle: "Request and track payouts" },
     "/publisher/payouts/request": { title: "Request Payout", subtitle: "Submit a payout request" },
-    "/publisher/transactions": { title: "Transactions", subtitle: "View your transaction history" },
     "/publisher/settings": {
       title: "Profile Settings",
       subtitle: "Manage your profile, traffic details, and account security",
@@ -76,8 +75,6 @@ export function getPublisherPageMeta(
     "/publisher/reports/tasks": { title: "Task Reports" },
     "/publisher/reports/referrals": { title: "Referral Reports" },
     "/publisher/reports/payouts": { title: "Payout Reports" },
-    "/publisher/training": { title: "Training Center" },
-    "/publisher/help": { title: "Help Center" },
     "/publisher/announcements": {
       title: "Announcements",
       subtitle: "Platform updates and news for affiliates",
