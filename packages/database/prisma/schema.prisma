@@ -367,8 +367,12 @@ model AdvertiserProfile {
 model PublisherProfile {
   id            String    @id @default(cuid())
   userId        String    @unique @map("user_id")
+  /// Public affiliate username chosen at signup
+  username      String?   @unique
   website       String?
   trafficSource String?   @map("traffic_source")
+  /// Structured signup application (heardFrom, experience, trafficMethods, contacts, etc.)
+  applicationProfile Json? @map("application_profile")
   country       String?
   addressLine1  String?   @map("address_line_1")
   addressLine2  String?   @map("address_line_2")

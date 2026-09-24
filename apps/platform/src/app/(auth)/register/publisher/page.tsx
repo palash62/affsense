@@ -1,10 +1,5 @@
-import { Suspense } from "react";
-import { PublisherRegisterForm } from "./publisher-register-form";
+import { redirect } from "next/navigation";
 
-export default function PublisherRegisterPage() {
-  return (
-    <Suspense fallback={<div className="flex min-h-screen items-center justify-center text-muted-foreground">Loading...</div>}>
-      <PublisherRegisterForm />
-    </Suspense>
-  );
+export default function PublisherRegisterRedirectPage() {
+  redirect("/register");
 }

@@ -35,6 +35,12 @@ export const publisherRegisterSchema = z.object({
   email: z.string().email(),
   password: strongPasswordSchema,
   name: z.string().trim().min(2, "Name must be at least 2 characters"),
+  username: z
+    .string()
+    .trim()
+    .min(3, "Username must be at least 3 characters")
+    .max(40, "Username must be at most 40 characters")
+    .regex(/^[a-zA-Z0-9_]+$/, "Username can only contain letters, numbers, and underscores"),
   website: z
     .string()
     .trim()
@@ -42,13 +48,33 @@ export const publisherRegisterSchema = z.object({
     .refine((val) => !val || z.string().url().safeParse(val).success, {
       message: "Enter a valid website URL",
     }),
-  trafficSource: z.string().trim().max(120).optional(),
+  trafficSource: z.string().trim().max(500).optional(),
   country: z.string().trim().max(120).optional(),
+  phone: z.string().trim().max(40).optional(),
   addressLine1: z.string().trim().max(160).optional(),
   addressLine2: z.string().trim().max(160).optional(),
   city: z.string().trim().max(120).optional(),
   state: z.string().trim().max(120).optional(),
   postalCode: z.string().trim().max(40).optional(),
+  referralRef: z.string().trim().max(64).optional(),
+  applicationProfile: z
+    .object({
+      heardFrom: z.string().trim().min(1).max(120),
+      experience: z.string().trim().min(1).max(80),
+      promotionGoal: z.string().trim().min(1).max(80),
+      trafficMethods: z.array(z.string().trim().min(1).max(80)).min(1).max(30),
+      currentNetworks: z.string().trim().max(240).optional().nullable(),
+      monthlyTraffic: z.string().trim().max(80).optional().nullable(),
+      promotionPlan: z.string().trim().min(20).max(4000),
+      telegram: z.string().trim().max(120).optional().nullable(),
+      whatsapp: z.string().trim().max(40).optional().nullable(),
+      facebookUrl: z.string().trim().max(500).optional().nullable(),
+    })
+    .refine(
+      (p) => Boolean(p.telegram?.trim() || p.whatsapp?.trim() || p.facebookUrl?.trim()),
+      { message: "Provide at least one contact method (Telegram, WhatsApp, or Facebook)." },
+    )
+    .optional(),
 });
 
 export const loginSchema = z.object({

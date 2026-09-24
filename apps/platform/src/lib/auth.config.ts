@@ -46,6 +46,7 @@ const publicPaths = [
   "/login",
   "/register",
   "/register/publisher",
+  "/register/advertiser",
   "/forgot-password",
   "/reset-password",
   "/verify-email",
@@ -146,6 +147,7 @@ export const authConfig = {
         "/login",
         "/register",
         "/register/publisher",
+        "/register/advertiser",
         "/forgot-password",
       ];
 

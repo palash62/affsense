@@ -249,9 +249,9 @@ export function RegisterForm() {
         </Link>
       </p>
       <p className="authMuted mt-2 text-center text-sm">
-        Want to publish leads?{" "}
-        <Link href="/register/publisher" className="authLink hover:underline">
-          Apply as publisher
+        Want to buy leads?{" "}
+        <Link href="/register/advertiser" className="authLink hover:underline">
+          Create advertiser account
         </Link>
       </p>
     </AuthLayout>

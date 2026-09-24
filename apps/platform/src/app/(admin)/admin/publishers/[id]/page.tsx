@@ -144,6 +144,15 @@ export default async function AdminPublisherDetailPage({ params }: PageProps) {
               </div>
             </div>
           </div>
+          {profile?.username && (
+            <div className="flex items-start gap-3">
+              <Link2 className="mt-0.5 h-4 w-4 text-muted-foreground" />
+              <div>
+                <p className="text-xs text-muted-foreground">Username</p>
+                <p className="text-sm font-medium text-foreground">@{profile.username}</p>
+              </div>
+            </div>
+          )}
           {profile?.website && (
             <div className="flex items-start gap-3">
               <Globe className="mt-0.5 h-4 w-4 text-muted-foreground" />
@@ -180,6 +189,99 @@ export default async function AdminPublisherDetailPage({ params }: PageProps) {
           )}
         </div>
       </PageSection>
+
+      {(() => {
+        const app =
+          profile?.applicationProfile &&
+          typeof profile.applicationProfile === "object" &&
+          !Array.isArray(profile.applicationProfile)
+            ? (profile.applicationProfile as Record<string, unknown>)
+            : null;
+        if (!app) return null;
+        const methods = Array.isArray(app.trafficMethods)
+          ? app.trafficMethods.map(String)
+          : [];
+        return (
+          <PageSection
+            title="Signup application"
+            description="Details submitted during two-step registration"
+            icon={Share2}
+            gradient="leads"
+          >
+            <div className="grid gap-4 px-6 py-5 sm:grid-cols-2">
+              {typeof app.heardFrom === "string" && (
+                <div>
+                  <p className="text-xs text-muted-foreground">Heard from</p>
+                  <p className="text-sm font-medium text-foreground">{app.heardFrom}</p>
+                </div>
+              )}
+              {typeof app.experience === "string" && (
+                <div>
+                  <p className="text-xs text-muted-foreground">Experience</p>
+                  <p className="text-sm font-medium text-foreground">{app.experience}</p>
+                </div>
+              )}
+              {typeof app.promotionGoal === "string" && (
+                <div>
+                  <p className="text-xs text-muted-foreground">Promotion goal</p>
+                  <p className="text-sm font-medium text-foreground">{app.promotionGoal}</p>
+                </div>
+              )}
+              {typeof app.monthlyTraffic === "string" && app.monthlyTraffic && (
+                <div>
+                  <p className="text-xs text-muted-foreground">Monthly traffic</p>
+                  <p className="text-sm font-medium text-foreground">{app.monthlyTraffic}</p>
+                </div>
+              )}
+              {methods.length > 0 && (
+                <div className="sm:col-span-2">
+                  <p className="text-xs text-muted-foreground">Traffic methods</p>
+                  <p className="text-sm font-medium text-foreground">{methods.join(", ")}</p>
+                </div>
+              )}
+              {typeof app.currentNetworks === "string" && app.currentNetworks && (
+                <div className="sm:col-span-2">
+                  <p className="text-xs text-muted-foreground">Current networks</p>
+                  <p className="text-sm font-medium text-foreground">{app.currentNetworks}</p>
+                </div>
+              )}
+              {typeof app.promotionPlan === "string" && (
+                <div className="sm:col-span-2">
+                  <p className="text-xs text-muted-foreground">Promotion plan</p>
+                  <p className="whitespace-pre-wrap text-sm font-medium text-foreground">
+                    {app.promotionPlan}
+                  </p>
+                </div>
+              )}
+              {typeof app.telegram === "string" && app.telegram && (
+                <div>
+                  <p className="text-xs text-muted-foreground">Telegram</p>
+                  <p className="text-sm font-medium text-foreground">{app.telegram}</p>
+                </div>
+              )}
+              {typeof app.whatsapp === "string" && app.whatsapp && (
+                <div>
+                  <p className="text-xs text-muted-foreground">WhatsApp</p>
+                  <p className="text-sm font-medium text-foreground">{app.whatsapp}</p>
+                </div>
+              )}
+              {typeof app.facebookUrl === "string" && app.facebookUrl && (
+                <div className="sm:col-span-2">
+                  <p className="text-xs text-muted-foreground">Facebook</p>
+                  <a
+                    href={app.facebookUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm font-medium text-[var(--theme-primary)] hover:underline"
+                  >
+                    {app.facebookUrl}
+                  </a>
+                </div>
+              )}
+            </div>
+          </PageSection>
+        );
+      })()}
 
       <PageSection
         title="Special tier payouts"

@@ -14,8 +14,26 @@ import {
 
 type PublisherRegisterInput = z.infer<typeof publisherRegisterSchema>;
 
+async function resolvePublisherReferrerId(referralRef?: string | null) {
+  if (!referralRef?.trim()) return null;
+
+  const ref = referralRef.trim();
+  const byCode = await prisma.user.findUnique({
+    where: { referralCode: ref.toUpperCase() },
+    select: { id: true, role: true },
+  });
+  if (byCode?.role === "PUBLISHER") return byCode.id;
+
+  const byId = await prisma.user.findUnique({
+    where: { id: ref },
+    select: { id: true, role: true },
+  });
+  return byId?.role === "PUBLISHER" ? byId.id : null;
+}
+
 export async function registerPublisherAccount(data: PublisherRegisterInput) {
   const email = data.email.trim().toLowerCase();
+  const username = data.username.trim().toLowerCase();
   const deliverability = await validateEmailDeliverability(email);
   if (!deliverability.ok) {
     throw new AppError("VALIDATION_INVALID_EMAIL", deliverability.reason, 422);
@@ -30,7 +48,37 @@ export async function registerPublisherAccount(data: PublisherRegisterInput) {
     throw new AppError("AUTH_EMAIL_EXISTS", "Email already registered", 422);
   }
 
+  const usernameTaken = await prisma.publisherProfile.findUnique({
+    where: { username },
+    select: { id: true },
+  });
+  if (usernameTaken) {
+    throw new AppError("AUTH_USERNAME_EXISTS", "Username is already taken", 422);
+  }
+
+  const referredById = await resolvePublisherReferrerId(data.referralRef);
   const passwordHash = await bcrypt.hash(data.password, 12);
+  const trafficMethods = data.applicationProfile?.trafficMethods ?? [];
+  const trafficSource =
+    data.trafficSource?.trim() ||
+    (trafficMethods.length > 0 ? trafficMethods.join(", ") : undefined);
+  const phone =
+    data.phone?.trim() || data.applicationProfile?.whatsapp?.trim() || undefined;
+
+  const applicationProfile = data.applicationProfile
+    ? {
+        heardFrom: data.applicationProfile.heardFrom,
+        experience: data.applicationProfile.experience,
+        promotionGoal: data.applicationProfile.promotionGoal,
+        trafficMethods,
+        currentNetworks: data.applicationProfile.currentNetworks?.trim() || null,
+        monthlyTraffic: data.applicationProfile.monthlyTraffic?.trim() || null,
+        promotionPlan: data.applicationProfile.promotionPlan,
+        telegram: data.applicationProfile.telegram?.trim() || null,
+        whatsapp: data.applicationProfile.whatsapp?.trim() || null,
+        facebookUrl: data.applicationProfile.facebookUrl?.trim() || null,
+      }
+    : undefined;
 
   const user = await prisma.$transaction(async (tx) => {
     return tx.user.create({
@@ -40,11 +88,16 @@ export async function registerPublisherAccount(data: PublisherRegisterInput) {
         name: data.name.trim(),
         role: "PUBLISHER",
         status: "PENDING",
+        country: data.country?.trim() || undefined,
+        phone,
+        referredById: referredById ?? undefined,
         wallet: { create: {} },
         publisherProfile: {
           create: {
+            username,
             website: data.website?.trim() || undefined,
-            trafficSource: data.trafficSource?.trim() || undefined,
+            trafficSource,
+            applicationProfile,
             country: data.country?.trim() || undefined,
             addressLine1: data.addressLine1?.trim() || undefined,
             addressLine2: data.addressLine2?.trim() || undefined,
@@ -94,7 +147,7 @@ export async function registerPublisherAccount(data: PublisherRegisterInput) {
     title: "New publisher application",
     message: `${user.name} (${user.email}) signed up as a publisher and is awaiting email verification.`,
     actionPath: "/admin/publishers",
-    metadata: { userId: user.id, role: user.role },
+    metadata: { userId: user.id, role: user.role, username },
   });
 
   const emailDelivery = {

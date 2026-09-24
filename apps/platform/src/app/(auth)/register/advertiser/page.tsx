@@ -1,8 +1,8 @@
 import { Suspense } from "react";
-import { TwoStepRegisterForm } from "./two-step-register-form";
+import { RegisterForm } from "../register-form";
 import { PromotionAttributionCapture } from "@/modules/marketing/components/promotion-attribution-capture";
 
-export default function RegisterPage() {
+export default function AdvertiserRegisterPage() {
   return (
     <Suspense
       fallback={
@@ -10,7 +10,7 @@ export default function RegisterPage() {
       }
     >
       <PromotionAttributionCapture />
-      <TwoStepRegisterForm />
+      <RegisterForm />
     </Suspense>
   );
 }
