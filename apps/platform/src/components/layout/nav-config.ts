@@ -31,7 +31,6 @@ import {
   Tags,
   Bell,
   Building2,
-  Image,
   Ticket,
   Share2,
   ShoppingBag,
@@ -40,7 +39,7 @@ import {
   HelpCircle,
   LayoutGrid,
 } from "lucide-react";
-import { STAFF_USERS_PATH } from "@/lib/admin-portal";
+import { ASSIGNABLE_STAFF_MENU_HREFS, parseStaffMenuAccess, STAFF_USERS_PATH } from "@/lib/admin-portal";
 
 export interface NavItem {
   label: string;
@@ -164,8 +163,6 @@ export const ADMIN_NAV: AdminNavEntry[] = [
       ],
     },
   },
-  { kind: "item", item: { label: "Wallets", href: "/admin/wallets", icon: Wallet } },
-  { kind: "item", item: { label: "Payouts", href: "/admin/payout-center", icon: Wallet } },
   { kind: "item", item: { label: "Invoices", href: "/admin/invoices", icon: Receipt } },
   {
     kind: "item",
@@ -173,7 +170,6 @@ export const ADMIN_NAV: AdminNavEntry[] = [
   },
 
   { kind: "section", label: "MARKETING" },
-  { kind: "item", item: { label: "Promotions", href: "/admin/promotions", icon: Megaphone } },
   {
     kind: "item",
     item: { label: "Email Campaigns", href: "/admin/bulk-email", icon: Mail },
@@ -182,7 +178,6 @@ export const ADMIN_NAV: AdminNavEntry[] = [
     kind: "item",
     item: { label: "Announcements", href: "/admin/announcements", icon: Bell },
   },
-  { kind: "item", item: { label: "Banners", href: "/admin/banners", icon: Image } },
 
   { kind: "section", label: "SETTINGS" },
   {
@@ -287,6 +282,7 @@ export const PUBLISHER_NAV: AdminNavEntry[] = [
   { kind: "item", item: { label: "Invoices", href: "/publisher/invoices", icon: FileText } },
   { kind: "item", item: { label: "Transactions", href: "/publisher/transactions", icon: Receipt } },
   { kind: "item", item: { label: "Profile Settings", href: "/publisher/settings", icon: Settings } },
+  { kind: "item", item: { label: "Support", href: "/publisher/support", icon: LifeBuoy } },
 
   { kind: "section", label: "REPORTS" },
   {
@@ -317,6 +313,106 @@ function asNavEntries(items: NavItem[]): AdminNavEntry[] {
   return items.map((item) => ({ kind: "item" as const, item }));
 }
 
+export function getAssignableStaffMenuOptions(): { href: string; label: string }[] {
+  const options: { href: string; label: string }[] = [];
+  const allowed = new Set<string>(ASSIGNABLE_STAFF_MENU_HREFS);
+
+  for (const entry of ADMIN_NAV) {
+    if (entry.kind !== "item") continue;
+    const { item } = entry;
+
+    if (item.href === "/admin" || item.href === STAFF_USERS_PATH) continue;
+
+    // Users group: expose Affiliates + Advertisers only (never Manager).
+    if (item.children?.some((child) => child.href === STAFF_USERS_PATH)) {
+      for (const child of item.children) {
+        if (child.href === STAFF_USERS_PATH) continue;
+        if (!allowed.has(child.href)) continue;
+        options.push({ href: child.href, label: child.label });
+      }
+      continue;
+    }
+
+    if (allowed.has(item.href)) {
+      options.push({ href: item.href, label: item.label });
+    }
+  }
+
+  return options;
+}
+
+function filterAdminNavForManager(staffMenuAccess: string[]): AdminNavEntry[] {
+  const allowed = new Set(parseStaffMenuAccess(staffMenuAccess));
+  const entries: AdminNavEntry[] = [
+    { kind: "item", item: { label: "Dashboard", href: "/admin", icon: LayoutDashboard } },
+  ];
+
+  let pendingSection: AdminNavEntry | null = null;
+
+  for (const entry of ADMIN_NAV) {
+    if (entry.kind === "section") {
+      pendingSection = entry;
+      continue;
+    }
+
+    const { item } = entry;
+    if (item.href === "/admin") continue;
+
+    // Users group: only Affiliates / Advertisers when granted; never Manager.
+    if (item.children?.some((child) => child.href === STAFF_USERS_PATH)) {
+      const children = item.children.filter(
+        (child) => child.href !== STAFF_USERS_PATH && allowed.has(child.href),
+      );
+      if (children.length === 0) continue;
+      if (pendingSection) {
+        entries.push(pendingSection);
+        pendingSection = null;
+      }
+      entries.push({
+        kind: "item",
+        item: {
+          ...item,
+          href: children[0]!.href,
+          children,
+        },
+      });
+      continue;
+    }
+
+    const itemGranted = allowed.has(item.href);
+    if (!itemGranted) continue;
+
+    if (pendingSection) {
+      entries.push(pendingSection);
+      pendingSection = null;
+    }
+
+    if (item.children?.length) {
+      entries.push({
+        kind: "item",
+        item: {
+          ...item,
+          children: item.children.filter(
+            (child) =>
+              child.href === item.href ||
+              child.href.startsWith(`${item.href}/`) ||
+              // CPA Offers children include /admin/cpa-offers/* routes
+              (item.href === "/admin/offer-network" &&
+                (child.href.startsWith("/admin/cpa-offers") ||
+                  child.href.startsWith("/admin/offer-network"))) ||
+              // Commissions includes referrals
+              (item.href === "/admin/commissions" && child.href === "/admin/referrals"),
+          ),
+        },
+      });
+    } else {
+      entries.push(entry);
+    }
+  }
+
+  return entries;
+}
+
 export function getNavForRole(
   role: UserRole,
   options?: {
@@ -328,21 +424,8 @@ export function getNavForRole(
   switch (role) {
     case "ADMIN":
       return ADMIN_NAV;
-    case "PLATFORM_MANAGER": {
-      const allowed = new Set(options?.staffMenuAccess ?? []);
-      const legacyChildren = ADMIN_LEGACY_NAV.filter((item) => {
-        if (item.href === STAFF_USERS_PATH) return false;
-        return allowed.has(item.href);
-      });
-      const entries: AdminNavEntry[] = [
-        { kind: "item", item: { label: "Dashboard", href: "/admin", icon: LayoutDashboard } },
-      ];
-      // Assigned legacy routes stay available as flat items (Old Menu section hidden).
-      for (const item of legacyChildren) {
-        entries.push({ kind: "item", item });
-      }
-      return entries;
-    }
+    case "PLATFORM_MANAGER":
+      return filterAdminNavForManager(options?.staffMenuAccess ?? []);
     case "ADVERTISER": {
       let items = ADVERTISER_NAV;
       if (options?.canAccessCpaOffers === false) {

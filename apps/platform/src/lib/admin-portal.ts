@@ -5,31 +5,34 @@ export const ADMIN_PORTAL_ROLES: UserRole[] = ["ADMIN", "PLATFORM_MANAGER"];
 
 export const STAFF_USERS_PATH = "/admin/users";
 
-/** Top-level admin nav hrefs that may be granted to Platform Managers. */
+/** Top-level Affsense admin nav hrefs that may be granted to Platform Managers. */
 export const ASSIGNABLE_STAFF_MENU_HREFS = [
-  "/admin/profit",
-  "/admin/advertisers",
   "/admin/publishers",
-  "/admin/campaigns",
-  "/admin/cpa-offers",
-  "/admin/bulk-email",
-  "/admin/leads",
-  "/admin/fraud",
-  "/admin/wallets",
-  "/admin/payouts",
+  "/admin/advertisers",
+  "/admin/digital-products",
+  "/admin/get-paid-tasks",
+  "/admin/offer-wall",
+  "/admin/offer-network",
+  "/admin/commissions",
   "/admin/invoices",
-  "/admin/referrals",
-  "/admin/promotion",
-  "/admin/reports",
-  "/admin/support",
+  "/admin/support-tickets",
+  "/admin/bulk-email",
+  "/admin/announcements",
   "/admin/settings",
-  "/admin/audit-log",
+  "/admin/system-logs",
   "/admin/themes",
-  "/admin/funnel-templates",
-  "/admin/tutorials",
 ] as const;
 
 export type AssignableStaffMenuHref = (typeof ASSIGNABLE_STAFF_MENU_HREFS)[number];
+
+/** Legacy keys previously stored in staffMenuAccess → current assignable hrefs. */
+const LEGACY_STAFF_MENU_HREF_MAP: Record<string, AssignableStaffMenuHref> = {
+  "/admin/support": "/admin/support-tickets",
+  "/admin/cpa-offers": "/admin/offer-network",
+  "/admin/referrals": "/admin/commissions",
+};
+
+const ASSIGNABLE_SET = new Set<string>(ASSIGNABLE_STAFF_MENU_HREFS);
 
 export function isAdminPortalRole(role: UserRole | string | null | undefined): boolean {
   return role === "ADMIN" || role === "PLATFORM_MANAGER";
@@ -37,10 +40,14 @@ export function isAdminPortalRole(role: UserRole | string | null | undefined): b
 
 export function parseStaffMenuAccess(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
-  const allowed = new Set<string>(ASSIGNABLE_STAFF_MENU_HREFS);
-  return value
-    .filter((v): v is string => typeof v === "string" && allowed.has(v))
-    .filter((v, i, arr) => arr.indexOf(v) === i);
+  const normalized: string[] = [];
+  for (const v of value) {
+    if (typeof v !== "string") continue;
+    const mapped = LEGACY_STAFF_MENU_HREF_MAP[v] ?? v;
+    if (!ASSIGNABLE_SET.has(mapped)) continue;
+    if (!normalized.includes(mapped)) normalized.push(mapped);
+  }
+  return normalized;
 }
 
 /** Whether a PLATFORM_MANAGER (or admin) may open this admin pathname. */
@@ -64,24 +71,22 @@ export function canAccessAdminPath(
     if (path === href || path.startsWith(`${href}/`)) return true;
   }
 
-  // CPA submenu includes Global Postback as a sibling href under the CPA group.
-  if (
-    access.includes("/admin/cpa-offers") &&
-    (path === "/admin/global-postback" || path.startsWith("/admin/global-postback/"))
-  ) {
-    return true;
+  // CPA Offers grant covers legacy CPA admin routes and global postback.
+  if (access.includes("/admin/offer-network")) {
+    if (
+      path === "/admin/cpa-offers" ||
+      path.startsWith("/admin/cpa-offers/") ||
+      path === "/admin/global-postback" ||
+      path.startsWith("/admin/global-postback/")
+    ) {
+      return true;
+    }
   }
 
-  // Legacy finance/support routes map to the new admin menu paths.
+  // Commissions grant covers referrals.
   if (
-    access.includes("/admin/payouts") &&
-    (path === "/admin/payout-center" || path.startsWith("/admin/payout-center/"))
-  ) {
-    return true;
-  }
-  if (
-    access.includes("/admin/support") &&
-    (path === "/admin/support-tickets" || path.startsWith("/admin/support-tickets/"))
+    access.includes("/admin/commissions") &&
+    (path === "/admin/referrals" || path.startsWith("/admin/referrals/"))
   ) {
     return true;
   }

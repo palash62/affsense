@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { Headphones, Send, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { isAdminPortalRole } from "@/lib/admin-portal";
 import { cn } from "@/lib/utils";
 
 export interface TicketMessageItem {
@@ -62,14 +63,14 @@ export function TicketConversation({
       {messages.length > 0 ? (
         <div className="space-y-3">
           {messages.map((message) => {
-            const isAdmin = message.sender?.role === "ADMIN";
+            const isStaff = isAdminPortalRole(message.sender?.role);
 
             return (
               <div
                 key={message.id}
                 className={cn(
                   "rounded-xl border p-4",
-                  isAdmin
+                  isStaff
                     ? "border-[color-mix(in_srgb,var(--theme-primary)_25%,transparent)] bg-[var(--theme-primary-soft)]"
                     : "border-border bg-white",
                 )}
@@ -78,18 +79,18 @@ export function TicketConversation({
                   <div
                     className={cn(
                       "flex h-9 w-9 shrink-0 items-center justify-center rounded-full",
-                      isAdmin ? "bg-card text-[var(--theme-primary)]" : "bg-muted text-muted-foreground",
+                      isStaff ? "bg-card text-[var(--theme-primary)]" : "bg-muted text-muted-foreground",
                     )}
                   >
-                    {isAdmin ? <Headphones className="h-4 w-4" /> : <User className="h-4 w-4" />}
+                    {isStaff ? <Headphones className="h-4 w-4" /> : <User className="h-4 w-4" />}
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div>
                         <p className="text-sm font-semibold text-foreground">
-                          {isAdmin ? "Support Team" : (message.sender?.name ?? "You")}
+                          {isStaff ? "Support Team" : (message.sender?.name ?? "You")}
                         </p>
-                        {isAdmin && message.sender?.name && (
+                        {isStaff && message.sender?.name && (
                           <p className="text-xs text-muted-foreground">{message.sender.name}</p>
                         )}
                       </div>

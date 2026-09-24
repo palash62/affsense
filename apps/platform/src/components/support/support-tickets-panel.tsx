@@ -33,6 +33,7 @@ import {
   SUPPORT_STATUS_STYLES,
   truncateTicketMessage,
 } from "@/lib/support-tickets";
+import { isAdminPortalRole } from "@/lib/admin-portal";
 import { cn } from "@/lib/utils";
 
 interface TicketMessage {
@@ -72,7 +73,7 @@ export function SupportTicketsPanel() {
     const open = tickets.filter((t) => t.status === "OPEN" || t.status === "IN_PROGRESS").length;
     const resolved = tickets.filter((t) => t.status === "RESOLVED" || t.status === "CLOSED").length;
     const withAdminReply = tickets.filter((t) =>
-      t.messages?.some((m) => m.sender?.role === "ADMIN"),
+      t.messages?.some((m) => isAdminPortalRole(m.sender?.role)),
     ).length;
     return { total: tickets.length, open, resolved, withAdminReply };
   }, [tickets]);
@@ -284,7 +285,9 @@ export function SupportTicketsPanel() {
               ) : (
                 tickets.map((ticket) => {
                   const lastMessage = ticket.messages?.[ticket.messages.length - 1];
-                  const hasAdminReply = ticket.messages?.some((m) => m.sender?.role === "ADMIN");
+                  const hasAdminReply = ticket.messages?.some((m) =>
+                    isAdminPortalRole(m.sender?.role),
+                  );
                   const isExpanded = expandedId === ticket.id;
                   const isClosed = ticket.status === "CLOSED";
 
@@ -331,7 +334,7 @@ export function SupportTicketsPanel() {
                           {lastMessage ? (
                             <>
                               <span className="font-medium text-foreground">
-                                {lastMessage.sender?.role === "ADMIN" ? "Support: " : "You: "}
+                                {isAdminPortalRole(lastMessage.sender?.role) ? "Support: " : "You: "}
                               </span>
                               {truncateTicketMessage(lastMessage.body, 60)}
                             </>

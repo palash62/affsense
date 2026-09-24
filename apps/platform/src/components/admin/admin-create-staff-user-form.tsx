@@ -6,13 +6,10 @@ import { Check, Copy, Loader2, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ADMIN_LEGACY_NAV } from "@/components/layout/nav-config";
-import { ASSIGNABLE_STAFF_MENU_HREFS } from "@/lib/admin-portal";
+import { getAssignableStaffMenuOptions } from "@/components/layout/nav-config";
 import { cn } from "@/lib/utils";
 
-const MENU_OPTIONS = ADMIN_LEGACY_NAV.filter((item) =>
-  (ASSIGNABLE_STAFF_MENU_HREFS as readonly string[]).includes(item.href),
-).map((item) => ({ href: item.href, label: item.label }));
+const MENU_OPTIONS = getAssignableStaffMenuOptions();
 
 export function AdminCreateStaffUserForm({
   onCreated,

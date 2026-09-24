@@ -201,14 +201,6 @@ export function getAdminPageMeta(
     };
   }
 
-  if (path === "/admin/promotions") {
-    return {
-      title: "Promotion",
-      subtitle:
-        "Create tracked UTM links and measure clicks, visits, advertiser signups, and deposit revenue",
-    };
-  }
-
   if (path === "/admin/announcements") {
     return {
       title: "Announcements",
@@ -222,7 +214,6 @@ export function getAdminPageMeta(
     "/admin/tasks": "Tasks (Quick Earn)",
     "/admin/referral-program": "Referrals",
     "/admin/email-campaigns": "Email Campaigns",
-    "/admin/banners": "Banners",
     "/admin/general-settings": "General Settings",
     "/admin/system-logs": "System Logs",
     "/admin/old-menu": "Old Menu",

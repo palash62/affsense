@@ -26,7 +26,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ADMIN_LEGACY_NAV } from "@/components/layout/nav-config";
+import { getAssignableStaffMenuOptions } from "@/components/layout/nav-config";
 import { PageHeader } from "@/components/layout/page-header";
 import { cn } from "@/lib/utils";
 
@@ -41,8 +41,7 @@ interface PageProps {
 }
 
 function menuLabels(access: string[]) {
-  const items = Array.isArray(ADMIN_LEGACY_NAV) ? ADMIN_LEGACY_NAV : [];
-  const map = new Map(items.map((n) => [n.href, n.label]));
+  const map = new Map(getAssignableStaffMenuOptions().map((n) => [n.href, n.label]));
   return access.map((href) => map.get(href) ?? href);
 }
 

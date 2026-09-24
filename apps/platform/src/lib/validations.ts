@@ -647,24 +647,20 @@ export const adminCreateAdvertiserSchema = z.object({
 });
 
 const assignableStaffMenuHrefSchema = z.enum([
-  "/admin/profit",
-  "/admin/advertisers",
   "/admin/publishers",
-  "/admin/campaigns",
-  "/admin/cpa-offers",
+  "/admin/advertisers",
+  "/admin/digital-products",
+  "/admin/get-paid-tasks",
+  "/admin/offer-wall",
+  "/admin/offer-network",
+  "/admin/commissions",
+  "/admin/invoices",
+  "/admin/support-tickets",
   "/admin/bulk-email",
-  "/admin/leads",
-  "/admin/fraud",
-  "/admin/wallets",
-  "/admin/payouts",
-  "/admin/referrals",
-  "/admin/reports",
-  "/admin/support",
+  "/admin/announcements",
   "/admin/settings",
-  "/admin/audit-log",
+  "/admin/system-logs",
   "/admin/themes",
-  "/admin/funnel-templates",
-  "/admin/tutorials",
 ]);
 
 export const adminCreateStaffUserSchema = z.object({
@@ -1436,19 +1432,6 @@ export const advertiserGlobalPostbackSchema = z.object({
   status: z.enum(["ACTIVE", "INACTIVE"]),
   endpoint: z.string().trim().max(20_000).optional().default(""),
 });
-
-export const promotionSchema = z.object({
-  name: z.string().trim().min(2, "Name must be at least 2 characters"),
-  utmSource: z.string().trim().min(1, "UTM source is required").max(120),
-  utmMedium: z.string().trim().max(120).optional().nullable(),
-  utmCampaign: z.string().trim().min(1, "UTM campaign is required").max(120),
-  utmContent: z.string().trim().max(120).optional().nullable(),
-  utmTerm: z.string().trim().max(120).optional().nullable(),
-  landingPath: z.string().trim().max(500).optional(),
-  isActive: z.boolean().optional(),
-});
-
-export const promotionUpdateSchema = promotionSchema.partial();
 
 export const promotionVisitSchema = z.object({
   utmSource: z.string().trim().min(1).max(120),

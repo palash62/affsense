@@ -67,14 +67,27 @@ describe("Validation utilities", () => {
 });
 
 describe("adminUpdateStaffUserSchema", () => {
-  it("accepts Promotion and Support menu hrefs", () => {
+  it("accepts assignable Support and marketing menu hrefs", () => {
     const result = adminUpdateStaffUserSchema.safeParse({
-      menuAccess: ["/admin/promotion", "/admin/support"],
+      menuAccess: ["/admin/support-tickets", "/admin/bulk-email"],
     });
     expect(result.success).toBe(true);
     if (result.success) {
-      expect(result.data.menuAccess).toEqual(["/admin/promotion", "/admin/support"]);
+      expect(result.data.menuAccess).toEqual(["/admin/support-tickets", "/admin/bulk-email"]);
     }
+  });
+
+  it("rejects removed promotion and banner menu hrefs", () => {
+    expect(
+      adminUpdateStaffUserSchema.safeParse({
+        menuAccess: ["/admin/promotions"],
+      }).success,
+    ).toBe(false);
+    expect(
+      adminUpdateStaffUserSchema.safeParse({
+        menuAccess: ["/admin/banners"],
+      }).success,
+    ).toBe(false);
   });
 
   it("rejects unknown menu hrefs", () => {
