@@ -94,7 +94,7 @@ export function DigitalProductCard({
               {product.name}
             </h3>
             <p className="mt-1 truncate text-xs text-muted-foreground">
-              {product.category} · {product.niche} · {product.productType}
+              {product.category} · {product.productType}
             </p>
           </div>
 

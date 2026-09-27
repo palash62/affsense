@@ -46,7 +46,6 @@ export type SerializedDigitalProduct = {
   name: string;
   category: string;
   categoryId: string;
-  niche: string;
   productType: string;
   status: "Active" | "Draft";
   price: number;
@@ -80,7 +79,6 @@ export type SerializedPublisherDigitalProduct = {
   id: string;
   name: string;
   category: string;
-  niche: string;
   productType: string;
   price: number;
   frontEndCommission: number;
@@ -135,7 +133,6 @@ function serializeProduct(row: {
   categoryId: string;
   shortDescription: string;
   productType: string;
-  niche: string;
   status: DigitalProductStatus;
   featured: boolean;
   isNew: boolean;
@@ -168,7 +165,6 @@ function serializeProduct(row: {
     name: row.name,
     category: row.category.name,
     categoryId: row.categoryId,
-    niche: row.niche,
     productType: row.productType,
     status: mapProductStatus(row.status),
     price: Number(row.price),
@@ -199,7 +195,6 @@ function serializePublisherProduct(row: ProductRow): SerializedPublisherDigitalP
     id: full.id,
     name: full.name,
     category: full.category,
-    niche: full.niche,
     productType: full.productType,
     price: full.price,
     frontEndCommission: full.frontEndCommission,
@@ -235,7 +230,6 @@ function buildProductWhere(filters: DigitalProductListFilters): Prisma.DigitalPr
     const q = filters.q.trim();
     where.OR = [
       { name: { contains: q } },
-      { niche: { contains: q } },
       { vendor: { contains: q } },
       { category: { name: { contains: q } } },
     ];
@@ -406,7 +400,7 @@ export async function createDigitalProduct(input: {
   category: string;
   shortDescription: string;
   productType: string;
-  niche: string;
+  niche?: string;
   status: string;
   featured?: boolean;
   isNew?: boolean;
@@ -435,7 +429,7 @@ export async function createDigitalProduct(input: {
       categoryId: category.id,
       shortDescription: input.shortDescription,
       productType: input.productType,
-      niche: input.niche,
+      niche: input.niche ?? "",
       status: toInputStatus(input.status),
       featured: input.featured ?? false,
       isNew: input.isNew ?? false,

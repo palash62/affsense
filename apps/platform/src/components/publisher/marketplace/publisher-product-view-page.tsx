@@ -105,10 +105,6 @@ export function PublisherProductViewPage({
                 <dt className="text-xs text-muted-foreground">Category</dt>
                 <dd className="truncate font-medium text-foreground">{product.category}</dd>
               </div>
-              <div>
-                <dt className="text-xs text-muted-foreground">Niche</dt>
-                <dd className="truncate font-medium text-foreground">{product.niche}</dd>
-              </div>
               {product.vendor ? (
                 <div>
                   <dt className="text-xs text-muted-foreground">Vendor</dt>

@@ -70,10 +70,6 @@ export function OfferSummaryPanel({
           <dd className="font-medium text-foreground">{values.productType || "—"}</dd>
         </div>
         <div className="flex justify-between gap-2">
-          <dt className="text-muted-foreground">Niche</dt>
-          <dd className="font-medium text-foreground">{values.niche || "—"}</dd>
-        </div>
-        <div className="flex justify-between gap-2">
           <dt className="text-muted-foreground">Vendor</dt>
           <dd className="truncate font-medium text-foreground">{values.vendor || "—"}</dd>
         </div>

@@ -14,7 +14,6 @@ export interface DigitalProductListItem {
   id: string;
   name: string;
   category: string;
-  niche: string;
   productType: string;
   status: DigitalProductStatus;
   price: number;
@@ -38,7 +37,6 @@ export interface DigitalProductFormValues {
   category: string;
   shortDescription: string;
   productType: string;
-  niche: string;
   status: DigitalProductStatus;
   featured: boolean;
   isNew: boolean;
@@ -60,14 +58,6 @@ export const DIGITAL_PRODUCT_TYPES = [
   "Software License",
 ] as const;
 
-export const DIGITAL_PRODUCT_NICHES = [
-  "Productivity",
-  "Business",
-  "Health & Wellness",
-  "Personal Finance",
-  "Technology",
-] as const;
-
 export const SHORT_DESCRIPTION_MAX = 160;
 
 export const DEFAULT_FORM_VALUES: DigitalProductFormValues = {
@@ -75,7 +65,6 @@ export const DEFAULT_FORM_VALUES: DigitalProductFormValues = {
   category: "",
   shortDescription: "",
   productType: "Digital Download",
-  niche: "Productivity",
   status: "Draft",
   featured: false,
   isNew: false,

@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Copy, Info, Plus, Send, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/layout/page-header";
 import {
   DEFAULT_FORM_VALUES,
-  DIGITAL_PRODUCT_NICHES,
   DIGITAL_PRODUCT_TYPES,
   SHORT_DESCRIPTION_MAX,
   AFFILIATE_TRACKING_SAMPLE_VALUE,
@@ -77,10 +77,16 @@ export function DigitalProductForm({ productId }: { productId?: string }) {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loadKey, setLoadKey] = useState(0);
   const [categories, setCategories] = useState<string[]>([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/v1/admin/digital-products/categories")
-      .then((r) => r.json())
+    const ac = new AbortController();
+    fetch("/api/v1/admin/digital-products/categories", { signal: ac.signal })
+      .then(async (res) => {
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(json.error?.message ?? "Could not load categories");
+        return json;
+      })
       .then((json) => {
         setCategories(
           (json.data ?? [])
@@ -88,7 +94,14 @@ export function DigitalProductForm({ productId }: { productId?: string }) {
             .map((c: { name: string }) => c.name),
         );
       })
-      .catch(() => {});
+      .catch((err: unknown) => {
+        if (ac.signal.aborted) return;
+        toast.error(err instanceof Error ? err.message : "Could not load categories");
+      })
+      .finally(() => {
+        if (!ac.signal.aborted) setCategoriesLoading(false);
+      });
+    return () => ac.abort();
   }, []);
 
   useEffect(() => {
@@ -109,7 +122,6 @@ export function DigitalProductForm({ productId }: { productId?: string }) {
           category: data.category ?? "",
           shortDescription: data.shortDescription ?? "",
           productType: data.productType ?? "Digital Download",
-          niche: data.niche ?? "Productivity",
           status: data.status === "Active" ? "Active" : "Draft",
           featured: Boolean(data.featured),
           isNew: Boolean(data.isNew),
@@ -168,9 +180,18 @@ export function DigitalProductForm({ productId }: { productId?: string }) {
   const trackingParamLabel =
     values.affiliateTrackingParam.trim() || "affsense_id";
 
+  const categoryOptions = useMemo(() => {
+    const current = values.category.trim();
+    if (!current || categories.includes(current)) return categories;
+    return [current, ...categories];
+  }, [categories, values.category]);
+
   const canPublish = useMemo(
-    () => values.name.trim().length >= 2 && values.salesPageUrl.trim().length >= 1,
-    [values.name, values.salesPageUrl],
+    () =>
+      values.name.trim().length >= 2 &&
+      values.category.trim().length >= 1 &&
+      values.salesPageUrl.trim().length >= 1,
+    [values.name, values.category, values.salesPageUrl],
   );
 
   function patch(partial: Partial<DigitalProductFormValues>) {
@@ -207,7 +228,6 @@ export function DigitalProductForm({ productId }: { productId?: string }) {
         category: values.category,
         shortDescription: values.shortDescription,
         productType: values.productType,
-        niche: values.niche,
         status,
         featured: values.featured,
         isNew: values.isNew,
@@ -262,7 +282,7 @@ export function DigitalProductForm({ productId }: { productId?: string }) {
 
   function handlePublish() {
     if (!canPublish) {
-      toast.error("Fill in product name and sales page URL");
+      toast.error("Fill in product name, category, and sales page URL");
       return;
     }
     void persistProduct("Active", isEdit ? "Offer updated" : "Offer published");
@@ -334,20 +354,34 @@ export function DigitalProductForm({ productId }: { productId?: string }) {
               <div className="space-y-2">
                 <FieldLabel required>Category</FieldLabel>
                 <Select
-                  value={values.category}
+                  value={values.category || null}
                   onValueChange={(v) => patch({ category: v ?? values.category })}
+                  disabled={categoriesLoading && categoryOptions.length === 0}
                 >
                   <SelectTrigger className="h-10 w-full rounded-md bg-card">
-                    <SelectValue />
+                    <SelectValue
+                      placeholder={categoriesLoading ? "Loading categories..." : "Select category"}
+                    />
                   </SelectTrigger>
                   <SelectContent>
-                    {categories.map((cat) => (
+                    {categoryOptions.map((cat) => (
                       <SelectItem key={cat} value={cat}>
                         {cat}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+                {!categoriesLoading && categories.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">
+                    No active categories.{" "}
+                    <Link
+                      href="/admin/digital-products/categories"
+                      className="font-medium text-[var(--theme-primary)] hover:underline"
+                    >
+                      Add a category
+                    </Link>
+                  </p>
+                ) : null}
               </div>
             </div>
 
@@ -382,7 +416,7 @@ export function DigitalProductForm({ productId }: { productId?: string }) {
               </p>
             </div>
 
-            <div className="mt-5 grid gap-5 md:grid-cols-3">
+            <div className="mt-5 grid gap-5 md:grid-cols-2">
               <div className="space-y-2">
                 <FieldLabel required>Product Type</FieldLabel>
                 <Select
@@ -396,24 +430,6 @@ export function DigitalProductForm({ productId }: { productId?: string }) {
                     {DIGITAL_PRODUCT_TYPES.map((type) => (
                       <SelectItem key={type} value={type}>
                         {type}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <FieldLabel required>Niche</FieldLabel>
-                <Select
-                  value={values.niche}
-                  onValueChange={(v) => patch({ niche: v ?? values.niche })}
-                >
-                  <SelectTrigger className="h-10 w-full rounded-md bg-card">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {DIGITAL_PRODUCT_NICHES.map((niche) => (
-                      <SelectItem key={niche} value={niche}>
-                        {niche}
                       </SelectItem>
                     ))}
                   </SelectContent>
