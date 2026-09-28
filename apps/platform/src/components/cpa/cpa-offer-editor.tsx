@@ -68,6 +68,7 @@ type EditorValues = {
   approvalTime: string;
   cookieDuration: string;
   trackingUrl: string;
+  previewUrl: string;
   statusActive: boolean;
   visibility: "PUBLIC" | "PRIVATE";
   countries: string[];
@@ -278,6 +279,7 @@ function valuesFromOffer(
     approvalTime: details.approvalTime || "24 hours",
     cookieDuration: details.cookieDuration || "30 days",
     trackingUrl: offer?.trackingUrl ?? "",
+    previewUrl: offer?.previewUrl && offer.previewUrl !== "#" ? offer.previewUrl : "",
     statusActive: offer?.status === "ACTIVE",
     visibility: offer?.visibility ?? "PUBLIC",
     countries: countriesFromStorage(offer?.country ?? ""),
@@ -425,7 +427,7 @@ export function CpaOfferEditor({
         category: values.category.trim(),
         country: countriesToStorage(values.countries),
         trackingUrl: values.trackingUrl.trim(),
-        previewUrl: values.trackingUrl.trim() || "#",
+        previewUrl: values.previewUrl.trim() || "#",
         thumbnailUrl: values.thumbnailUrl.trim() || null,
         description: values.description.trim() || null,
         details: buildDetails(values, false),
@@ -444,7 +446,7 @@ export function CpaOfferEditor({
       category: values.category.trim(),
       country: countriesToStorage(values.countries),
       trackingUrl: values.trackingUrl.trim(),
-      previewUrl: values.trackingUrl.trim() || "#",
+      previewUrl: values.previewUrl.trim() || "#",
       thumbnailUrl: values.thumbnailUrl.trim() || null,
       description: values.description.trim() || null,
       details: buildDetails(values, true),
@@ -845,12 +847,26 @@ export function CpaOfferEditor({
                   </SelectContent>
                 </Select>
               </Field>
-              <Field label="Offer URL / Landing Page" required className="lg:col-span-2">
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Field
+                label="Offer URL"
+                required
+                hint="Destination used for tracking. Not shown to affiliates."
+              >
                 <Input
                   className="h-10 w-full"
                   value={values.trackingUrl}
                   onChange={(e) => patch({ trackingUrl: e.target.value })}
                   placeholder="https://example.com/offer"
+                />
+              </Field>
+              <Field label="Preview URL" hint="Landing page affiliates can preview.">
+                <Input
+                  className="h-10 w-full"
+                  value={values.previewUrl}
+                  onChange={(e) => patch({ previewUrl: e.target.value })}
+                  placeholder="https://example.com/preview"
                 />
               </Field>
             </div>
