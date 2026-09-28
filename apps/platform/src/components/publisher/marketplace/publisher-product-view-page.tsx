@@ -97,8 +97,13 @@ export function PublisherProductViewPage({
               </div>
               <div>
                 <dt className="text-xs text-muted-foreground">Front end commission</dt>
-                <dd className="font-medium text-[var(--theme-success)]">
+                <dd className="flex items-center gap-1.5 font-medium text-[var(--theme-success)]">
                   {product.frontEndCommission}%
+                  {product.hasCommissionPlan ? (
+                    <span className="rounded-md bg-emerald-50 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700">
+                      Your custom rate
+                    </span>
+                  ) : null}
                 </dd>
               </div>
               <div>

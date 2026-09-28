@@ -5,9 +5,9 @@ export async function GET(
   _request: Request,
   context: { params: Promise<{ id: string }> },
 ) {
-  return withAuth(async () => {
+  return withAuth(async (session) => {
     const { id } = await context.params;
-    const product = await getPublisherDigitalProduct(id);
+    const product = await getPublisherDigitalProduct(id, session.user.id);
     if (!product) {
       return Response.json(
         { error: { code: "NOT_FOUND", message: "Product not found", status: 404 } },

@@ -85,6 +85,11 @@ function PublisherMarketplaceCard({
           <span className="inline-flex rounded-md bg-[var(--theme-primary-soft)] px-1.5 py-0.5 text-[11px] font-semibold text-[var(--theme-primary)]">
             {product.frontEndCommission}% commission
           </span>
+          {product.hasCommissionPlan ? (
+            <span className="inline-flex rounded-md bg-emerald-50 px-1.5 py-0.5 text-[11px] font-semibold text-emerald-700">
+              Your rate
+            </span>
+          ) : null}
         </div>
 
         {product.vendor ? (

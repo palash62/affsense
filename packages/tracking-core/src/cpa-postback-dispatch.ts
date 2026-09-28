@@ -243,6 +243,8 @@ export async function dispatchCpaConversionPostbacks(input: {
   publisherId?: string | null;
   clickId: string | null;
   payout: Prisma.Decimal | number | string | null;
+  /** Payout for the publisher postback; defaults to `payout`. */
+  publisherPayout?: Prisma.Decimal | number | string | null;
   source?: string | null;
   subId?: string | null;
 }) {
@@ -273,6 +275,11 @@ export async function dispatchCpaConversionPostbacks(input: {
   }
 
   if (input.publisherId) {
-    await dispatchPublisherGlobal(input.conversionId, input.publisherId, macroContext);
+    const publisherPayout =
+      input.publisherPayout !== undefined ? input.publisherPayout : input.payout;
+    await dispatchPublisherGlobal(input.conversionId, input.publisherId, {
+      ...macroContext,
+      payout: publisherPayout != null ? String(publisherPayout) : "",
+    });
   }
 }

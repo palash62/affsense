@@ -12,7 +12,19 @@ import {
 } from "@/lib/clickfunnels-webhook-payload";
 import { DIGITAL_PRODUCT_CLICK_ATTRIBUTION_WINDOW_MS } from "@/lib/clickfunnels-webhook-attribution";
 import { derivePageSlugFromUrl } from "@/lib/digital-product-page-slug";
-import { loadDigitalProductCommissionLookup } from "@/lib/digital-product-commission";
+import {
+  applyDigitalCommissionSnapshot,
+  loadDigitalProductCommissionLookup,
+  loadPublisherDigitalPlanRates,
+  type DigitalCommissionPlanRates,
+  type DigitalCommissionSnapshot,
+} from "@/lib/digital-product-commission";
+
+const DIGITAL_COMMISSION_SNAPSHOT_SELECT = {
+  commissionAmount: true,
+  commissionRate: true,
+  digitalCommissionPlanId: true,
+} as const;
 
 export type SerializedDigitalProductUpsell = {
   id: string;
@@ -93,6 +105,8 @@ export type SerializedPublisherDigitalProduct = {
   affiliateTrackingParam: string | null;
   previewUrl: string | null;
   upsells: Array<{ name: string; price: number; commissionPct: number }>;
+  /** True when commission rates come from the viewing publisher's custom plan. */
+  hasCommissionPlan: boolean;
 };
 
 function mapProductStatus(status: DigitalProductStatus): "Active" | "Draft" {
@@ -189,7 +203,10 @@ function serializeProduct(row: {
 
 type ProductRow = Parameters<typeof serializeProduct>[0];
 
-function serializePublisherProduct(row: ProductRow): SerializedPublisherDigitalProduct {
+function serializePublisherProduct(
+  row: ProductRow,
+  plan?: DigitalCommissionPlanRates,
+): SerializedPublisherDigitalProduct {
   const full = serializeProduct(row);
   return {
     id: full.id,
@@ -197,7 +214,7 @@ function serializePublisherProduct(row: ProductRow): SerializedPublisherDigitalP
     category: full.category,
     productType: full.productType,
     price: full.price,
-    frontEndCommission: full.frontEndCommission,
+    frontEndCommission: plan ? plan.frontEndCommission : full.frontEndCommission,
     upsellCommission: full.upsellCommission,
     featured: full.featured,
     isNew: full.isNew,
@@ -211,8 +228,9 @@ function serializePublisherProduct(row: ProductRow): SerializedPublisherDigitalP
     upsells: full.upsells.map((u) => ({
       name: u.name,
       price: u.price,
-      commissionPct: u.commissionPct,
+      commissionPct: plan?.upsellRates.get(u.id) ?? u.commissionPct,
     })),
+    hasCommissionPlan: Boolean(plan),
   };
 }
 
@@ -260,7 +278,10 @@ export async function listDigitalProducts(filters: DigitalProductListFilters = {
   };
 }
 
-export async function listPublisherDigitalProducts(filters: DigitalProductListFilters = {}) {
+export async function listPublisherDigitalProducts(
+  filters: DigitalProductListFilters = {},
+  publisherId?: string,
+) {
   const page = filters.page ?? 1;
   const limit = filters.limit ?? 100;
   const where = buildProductWhere({ ...filters, activeOnly: true });
@@ -277,8 +298,11 @@ export async function listPublisherDigitalProducts(filters: DigitalProductListFi
     }),
     prisma.digitalProduct.count({ where }),
   ]);
+  const plans = publisherId
+    ? await loadPublisherDigitalPlanRates(publisherId, rows.map((row) => row.id))
+    : new Map<string, DigitalCommissionPlanRates>();
   return {
-    items: rows.map(serializePublisherProduct),
+    items: rows.map((row) => serializePublisherProduct(row, plans.get(row.id))),
     total,
     page,
     limit,
@@ -286,7 +310,7 @@ export async function listPublisherDigitalProducts(filters: DigitalProductListFi
   };
 }
 
-export async function getPublisherDigitalProduct(id: string) {
+export async function getPublisherDigitalProduct(id: string, publisherId?: string) {
   const row = await prisma.digitalProduct.findFirst({
     where: { id, status: "ACTIVE" },
     include: {
@@ -295,7 +319,10 @@ export async function getPublisherDigitalProduct(id: string) {
     },
   });
   if (!row) return null;
-  return serializePublisherProduct(row);
+  const plans = publisherId
+    ? await loadPublisherDigitalPlanRates(publisherId, [row.id])
+    : undefined;
+  return serializePublisherProduct(row, plans?.get(row.id));
 }
 
 export async function getDigitalProductById(id: string) {
@@ -378,20 +405,32 @@ async function replaceProductUpsells(
   productId: string,
   upsells: ReturnType<typeof normalizeUpsellInputs>,
 ) {
+  // Update in place by page slug so upsell ids (and commission plan rates) survive edits.
   await prisma.$transaction(async (tx) => {
-    await tx.digitalProductUpsell.deleteMany({ where: { productId } });
-    if (upsells.length === 0) return;
-    await tx.digitalProductUpsell.createMany({
-      data: upsells.map((row) => ({
-        productId,
+    const existing = await tx.digitalProductUpsell.findMany({
+      where: { productId },
+      select: { id: true, pageSlug: true },
+    });
+    const idBySlug = new Map(existing.map((row) => [row.pageSlug, row.id]));
+    await tx.digitalProductUpsell.deleteMany({
+      where: { productId, pageSlug: { notIn: upsells.map((row) => row.pageSlug) } },
+    });
+    for (const row of upsells) {
+      const data = {
         name: row.name,
         pageUrl: row.pageUrl,
         pageSlug: row.pageSlug,
         price: row.price,
         commissionPct: row.commissionPct,
         sortOrder: row.sortOrder,
-      })),
-    });
+      };
+      const id = idBySlug.get(row.pageSlug);
+      if (id) {
+        await tx.digitalProductUpsell.update({ where: { id }, data });
+      } else {
+        await tx.digitalProductUpsell.create({ data: { productId, ...data } });
+      }
+    }
   });
 }
 
@@ -722,43 +761,29 @@ export function dedupeDigitalProductWebhookEventsByOrderId<
   return [...best.values()];
 }
 
+type SummaryOrderRow = DigitalCommissionSnapshot & {
+  publisherId: string | null;
+  eventType: string;
+  payloadJson: unknown;
+};
+
 function summarizeDigitalProductOrders(
-  rows: Array<{
-    publisherId: string | null;
-    eventType: string;
-    payloadJson: unknown;
-    orderId: string | null;
-  }>,
+  rows: Array<SummaryOrderRow & { orderId: string | null }>,
   commissionLookup: Awaited<ReturnType<typeof loadDigitalProductCommissionLookup>>,
 ): DigitalProductOrderSummary {
   // Collapse by order id so retries don't inflate revenue / affiliate sales.
   // Caller should pass newest-first; first attributed row wins, else first seen.
-  const best = new Map<
-    string,
-    {
-      publisherId: string | null;
-      eventType: string;
-      payloadJson: unknown;
-    }
-  >();
+  const best = new Map<string, SummaryOrderRow>();
   for (const [idx, ev] of rows.entries()) {
     const fields = extractOrderFields(ev.payloadJson);
     const orderId = fields.orderId ?? `idx-${idx}`;
     const existing = best.get(orderId);
     if (!existing) {
-      best.set(orderId, {
-        publisherId: ev.publisherId,
-        eventType: ev.eventType,
-        payloadJson: ev.payloadJson,
-      });
+      best.set(orderId, ev);
       continue;
     }
     if (!existing.publisherId && ev.publisherId) {
-      best.set(orderId, {
-        publisherId: ev.publisherId,
-        eventType: ev.eventType,
-        payloadJson: ev.payloadJson,
-      });
+      best.set(orderId, ev);
     }
   }
 
@@ -778,7 +803,10 @@ function summarizeDigitalProductOrders(
     }
     if (ev.publisherId) {
       affiliateSales += 1;
-      const resolved = commissionLookup.resolve(fields.pageSlug, amount);
+      const resolved = applyDigitalCommissionSnapshot(
+        commissionLookup.resolve(fields.pageSlug, amount),
+        ev,
+      );
       totalCommissions += resolved.commission ?? 0;
     }
   }
@@ -828,26 +856,32 @@ export async function listDigitalProductOrders(opts: {
     publisher: { select: { id: true, name: true, email: true } },
     payloadJson: true,
     createdAt: true,
+    ...DIGITAL_COMMISSION_SNAPSHOT_SELECT,
   } as const;
 
   const commissionLookup = await loadDigitalProductCommissionLookup();
 
-  const mapRow = (row: {
-    id: string;
-    eventType: string;
-    status: string;
-    leadEmail: string | null;
-    leadName: string | null;
-    affiliateRef: string | null;
-    publisherId: string | null;
-    publisher: { id: string; name: string; email: string } | null;
-    payloadJson: unknown;
-    createdAt: Date;
-  }): DigitalProductOrderRow => {
+  const mapRow = (
+    row: DigitalCommissionSnapshot & {
+      id: string;
+      eventType: string;
+      status: string;
+      leadEmail: string | null;
+      leadName: string | null;
+      affiliateRef: string | null;
+      publisherId: string | null;
+      publisher: { id: string; name: string; email: string } | null;
+      payloadJson: unknown;
+      createdAt: Date;
+    },
+  ): DigitalProductOrderRow => {
     const fields = extractOrderFields(row.payloadJson);
     const leadFallback = extractLeadFromClickFunnelsPayload(row.payloadJson);
     const amount = fields.amount;
-    const resolved = commissionLookup.resolve(fields.pageSlug, amount);
+    const resolved = applyDigitalCommissionSnapshot(
+      commissionLookup.resolve(fields.pageSlug, amount),
+      row,
+    );
     const commission =
       amount != null && row.publisherId ? resolved.commission : null;
     return {
@@ -885,7 +919,12 @@ export async function listDigitalProductOrders(opts: {
     }),
     prisma.webhookEvent.findMany({
       where: { ...where, status: "PROCESSED" },
-      select: { publisherId: true, eventType: true, payloadJson: true },
+      select: {
+        publisherId: true,
+        eventType: true,
+        payloadJson: true,
+        ...DIGITAL_COMMISSION_SNAPSHOT_SELECT,
+      },
       orderBy: { createdAt: "desc" },
       take: 5000,
     }),
@@ -904,9 +943,7 @@ export async function listDigitalProductOrders(opts: {
     : allForSummary;
   const summary = summarizeDigitalProductOrders(
     summarySource.map((ev) => ({
-      publisherId: ev.publisherId,
-      eventType: ev.eventType,
-      payloadJson: ev.payloadJson,
+      ...ev,
       orderId: extractOrderFields(ev.payloadJson).orderId,
     })),
     commissionLookup,
@@ -1027,6 +1064,7 @@ export async function getPublisherCommissionReport(opts: {
       status: true,
       payloadJson: true,
       createdAt: true,
+      ...DIGITAL_COMMISSION_SNAPSHOT_SELECT,
     },
   });
 
@@ -1034,7 +1072,10 @@ export async function getPublisherCommissionReport(opts: {
 
   const mapped: PublisherCommissionRow[] = events.map((row) => {
     const fields = extractOrderFields(row.payloadJson);
-    const resolved = commissionLookup.resolve(fields.pageSlug, fields.amount);
+    const resolved = applyDigitalCommissionSnapshot(
+      commissionLookup.resolve(fields.pageSlug, fields.amount),
+      row,
+    );
     const orderType =
       resolved.orderType ??
       classifyCommissionType(fields.orderType ?? row.eventType, row.eventType);
@@ -1609,6 +1650,7 @@ export async function listDigitalProductAffiliateProductReportForAdmin(
         subId: true,
         src: true,
         createdAt: true,
+        ...DIGITAL_COMMISSION_SNAPSHOT_SELECT,
       },
       take: 10000,
     }),
@@ -1679,7 +1721,10 @@ export async function listDigitalProductAffiliateProductReportForAdmin(
     if (type.includes("refund")) continue;
 
     const amount = fields.amount ?? 0;
-    const resolved = commissionLookup.resolve(fields.pageSlug, amount);
+    const resolved = applyDigitalCommissionSnapshot(
+      commissionLookup.resolve(fields.pageSlug, amount),
+      ev,
+    );
     const productName =
       (resolved.productName ?? fields.product?.trim()) || "Unknown product";
     const nameKey = normalizeProductNameKey(productName);

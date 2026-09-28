@@ -338,6 +338,8 @@ model User {
   publisherTaskSubmissions PublisherTaskSubmission[]
   cpaOfferAccessRequests PublisherCpaOfferAccess[] @relation("PublisherCpaOfferAccess")
   reviewedCpaOfferAccessRequests PublisherCpaOfferAccess[] @relation("ReviewedCpaOfferAccess")
+  cpaCommissionPlanMemberships CpaOfferCommissionPlanMember[]
+  digitalCommissionPlanMemberships DigitalProductCommissionPlanMember[]
   webhookEvents            WebhookEvent[] @relation("WebhookEventPublisher")
   offerwallConversions     OfferwallConversion[]
   offerwallClicks          OfferwallClick[]
@@ -1651,6 +1653,8 @@ model CpaOffer {
   cpaEarnings     CpaEarning[]
   optinPages      AdvertiserOptinPage[]
   publisherAccessRequests PublisherCpaOfferAccess[]
+  commissionPlans CpaOfferCommissionPlan[]
+  commissionPlanMembers CpaOfferCommissionPlanMember[]
   createdBy       User?          @relation("CpaOfferCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
   ownerAdvertiser User?          @relation("AdvertiserOwnedCpaOffers", fields: [ownerAdvertiserId], references: [id], onDelete: SetNull)
 
@@ -1661,6 +1665,37 @@ model CpaOffer {
   @@index([createdByUserId])
   @@index([ownerAdvertiserId])
   @@map("cpa_offers")
+}
+
+model CpaOfferCommissionPlan {
+  id        String   @id @default(cuid())
+  offerId   String   @map("offer_id")
+  name      String
+  payout    Decimal  @db.Decimal(10, 2)
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  offer     CpaOffer @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  members   CpaOfferCommissionPlanMember[]
+
+  @@index([offerId])
+  @@map("cpa_offer_commission_plans")
+}
+
+model CpaOfferCommissionPlanMember {
+  id          String                 @id @default(cuid())
+  planId      String                 @map("plan_id")
+  offerId     String                 @map("offer_id")
+  publisherId String                 @map("publisher_id")
+  createdAt   DateTime               @default(now()) @map("created_at")
+  plan        CpaOfferCommissionPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  offer       CpaOffer               @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  publisher   User                   @relation(fields: [publisherId], references: [id], onDelete: Cascade)
+
+  @@unique([offerId, publisherId])
+  @@index([planId])
+  @@index([publisherId])
+  @@map("cpa_offer_commission_plan_members")
 }
 
 model CpaOfferCategory {
@@ -1915,11 +1950,58 @@ model DigitalProduct {
   category              DigitalProductCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   clicks                DigitalProductClick[]
   upsells               DigitalProductUpsell[]
+  commissionPlans       DigitalProductCommissionPlan[]
+  commissionPlanMembers DigitalProductCommissionPlanMember[]
 
   @@index([status])
   @@index([categoryId])
   @@index([featured])
   @@map("digital_products")
+}
+
+model DigitalProductCommissionPlan {
+  id                 String         @id @default(cuid())
+  productId          String         @map("product_id")
+  name               String
+  frontEndCommission Decimal        @map("front_end_commission") @db.Decimal(5, 2)
+  isActive           Boolean        @default(true) @map("is_active")
+  createdAt          DateTime       @default(now()) @map("created_at")
+  updatedAt          DateTime       @updatedAt @map("updated_at")
+  product            DigitalProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+  upsellRates        DigitalProductCommissionPlanUpsell[]
+  members            DigitalProductCommissionPlanMember[]
+
+  @@index([productId])
+  @@map("digital_product_commission_plans")
+}
+
+model DigitalProductCommissionPlanUpsell {
+  id            String                       @id @default(cuid())
+  planId        String                       @map("plan_id")
+  upsellId      String                       @map("upsell_id")
+  commissionPct Decimal                      @map("commission_pct") @db.Decimal(5, 2)
+  plan          DigitalProductCommissionPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  upsell        DigitalProductUpsell         @relation(fields: [upsellId], references: [id], onDelete: Cascade)
+
+  @@unique([planId, upsellId])
+  @@index([upsellId])
+  @@map("digital_product_commission_plan_upsells")
+}
+
+model DigitalProductCommissionPlanMember {
+  id          String                       @id @default(cuid())
+  planId      String                       @map("plan_id")
+  productId   String                       @map("product_id")
+  publisherId String                       @map("publisher_id")
+  createdAt   DateTime                     @default(now()) @map("created_at")
+  plan        DigitalProductCommissionPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  product     DigitalProduct               @relation(fields: [productId], references: [id], onDelete: Cascade)
+  publisher   User                         @relation(fields: [publisherId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, publisherId], map: "dp_commission_plan_members_product_publisher_key")
+  @@index([planId])
+  @@index([publisherId])
+  @@map("digital_product_commission_plan_members")
 }
 
 model DigitalProductUpsell {
@@ -1934,6 +2016,7 @@ model DigitalProductUpsell {
   createdAt     DateTime       @default(now()) @map("created_at")
   updatedAt     DateTime       @updatedAt @map("updated_at")
   product       DigitalProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+  commissionPlanRates DigitalProductCommissionPlanUpsell[]
 
   @@unique([productId, pageSlug])
   @@index([pageSlug])
@@ -2162,6 +2245,11 @@ model WebhookEvent {
   subId        String?            @map("sub_id")
   src          String?
   payloadJson  Json               @map("payload_json")
+  digitalProductId        String?  @map("digital_product_id")
+  saleAmount              Decimal? @map("sale_amount") @db.Decimal(10, 2)
+  commissionRate          Decimal? @map("commission_rate") @db.Decimal(5, 2)
+  commissionAmount        Decimal? @map("commission_amount") @db.Decimal(10, 2)
+  digitalCommissionPlanId String?  @map("digital_commission_plan_id")
   createdAt    DateTime           @default(now()) @map("created_at")
   publisher    User?              @relation("WebhookEventPublisher", fields: [publisherId], references: [id], onDelete: SetNull)
   click        DigitalProductClick? @relation(fields: [clickId], references: [id], onDelete: SetNull)

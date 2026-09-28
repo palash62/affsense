@@ -11,6 +11,11 @@ import {
 } from "@/components/cpa/cpa-country-multi-select";
 import { BuilderImageUpload } from "@/modules/page-builder/components/editor/builder-image-upload";
 import { PageHeader } from "@/components/layout/page-header";
+import { CommissionPlansSection } from "@/components/admin/commission-plans/commission-plans-section";
+import {
+  saveCommissionPlanDrafts,
+  type CommissionPlanDraft,
+} from "@/components/admin/commission-plans/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -337,6 +342,7 @@ export function CpaOfferEditor({
   const cpaOffersHref = isAdmin ? "/admin/cpa-offers" : "/advertiser/cpa-offers";
   const cancelHref = isAdmin ? "/admin/offer-network" : "/advertiser/cpa-offers";
   const [saving, setSaving] = useState<"draft" | "publish" | null>(null);
+  const [planDrafts, setPlanDrafts] = useState<CommissionPlanDraft[]>([]);
   const [values, setValues] = useState<EditorValues>(() =>
     valuesFromOffer(offer, advertiserLabelDefault),
   );
@@ -488,6 +494,18 @@ export function CpaOfferEditor({
       const body = await res.json().catch(() => null);
       if (!res.ok) {
         throw new Error(readApiErrorMessage(body, "Unable to save offer", res.status));
+      }
+      const createdId: string | undefined = body?.data?.id;
+      if (role === "ADMIN" && mode !== "edit" && createdId && planDrafts.length > 0) {
+        const failed = await saveCommissionPlanDrafts("cpa", createdId, planDrafts);
+        if (failed > 0) {
+          toast.error(
+            `Offer saved, but ${failed} commission plan${failed === 1 ? "" : "s"} could not be saved. Retry from the edit page.`,
+          );
+          router.push(`/admin/cpa-offers/${createdId}/edit`);
+          router.refresh();
+          return;
+        }
       }
       if (role === "ADVERTISER") {
         toast.success(
@@ -1161,6 +1179,19 @@ export function CpaOfferEditor({
               </div>
             </Field>
           </SectionCard>
+
+          {role === "ADMIN" ? (
+            <SectionCard step={6} title="Commission Plans (Optional)">
+              <CommissionPlansSection
+                kind="cpa"
+                entityId={mode === "edit" && offer ? offer.id : undefined}
+                drafts={planDrafts}
+                onDraftsChange={setPlanDrafts}
+                payoutSuffix={amountSuffix}
+                defaultPayout={values.payout}
+              />
+            </SectionCard>
+          ) : null}
         </div>
 
         <aside className="space-y-4 xl:sticky xl:top-24 xl:self-start">

@@ -3,6 +3,7 @@ import { Prisma } from "@prisma/client";
 import {
   buildPlatformCpaSaleNotifyUrl,
   getInternalServiceToken,
+  selectCpaPublisherPayout,
 } from "@cpl/shared";
 import {
   dispatchCpaConversionPostbacks,
@@ -135,13 +136,28 @@ async function createConversionAndDispatch(input: {
   // Network-reported ?payout= is kept in rawQuery for audit only.
   const effectivePayout = offer?.payout ?? input.payout ?? null;
 
+  const publisherId = input.attribution.publisherId;
+  const planMember = publisherId
+    ? await prisma.cpaOfferCommissionPlanMember.findUnique({
+        where: { offerId_publisherId: { offerId: input.offerId, publisherId } },
+        select: { plan: { select: { payout: true, isActive: true } } },
+      })
+    : null;
+  const publisherSelection = selectCpaPublisherPayout(
+    effectivePayout != null ? Number(effectivePayout) : null,
+    planMember?.plan ?? null,
+  );
+  const publisherPayout = publisherSelection.fromPlan
+    ? new Prisma.Decimal(publisherSelection.payout!)
+    : effectivePayout;
+
   const event = await prisma.cpaOfferConversion.create({
     data: {
       offerId: input.offerId,
       clickId: input.attribution.attributedClickId ?? undefined,
       advertiserId: input.attribution.advertiserId ?? undefined,
       clickRecordId: input.attribution.clickRecordId ?? undefined,
-      payout: effectivePayout ?? undefined,
+      payout: publisherPayout ?? undefined,
       rawQuery: input.rawPayload,
     },
   });
@@ -192,6 +208,7 @@ async function createConversionAndDispatch(input: {
       publisherId: input.attribution.publisherId,
       clickId: input.attribution.attributedClickId,
       payout: effectivePayout,
+      publisherPayout,
       source: input.attribution.source,
       subId: input.attribution.subId,
     });

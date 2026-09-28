@@ -2,6 +2,7 @@ import { substitutePostbackMacros, type PostbackMacroContext } from "@cpl/shared
 import { assertSafeOutboundUrl } from "@cpl/tracking-core";
 import { extractOrderFieldsFromClickFunnelsPayload } from "@/lib/clickfunnels-webhook-payload";
 import {
+  applyDigitalCommissionSnapshot,
   DIGITAL_PRODUCT_FALLBACK_COMMISSION_RATE,
   loadDigitalProductCommissionLookup,
 } from "@/lib/digital-product-commission";
@@ -137,6 +138,9 @@ export async function dispatchDigitalProductPublisherPostback(
       subId: true,
       src: true,
       payloadJson: true,
+      commissionAmount: true,
+      commissionRate: true,
+      digitalCommissionPlanId: true,
     },
   });
 
@@ -185,7 +189,7 @@ export async function dispatchDigitalProductPublisherPostback(
 
   const amount = fields.amount ?? 0;
   const lookup = await loadDigitalProductCommissionLookup();
-  const resolved = lookup.resolve(fields.pageSlug, amount);
+  const resolved = applyDigitalCommissionSnapshot(lookup.resolve(fields.pageSlug, amount), event);
   const payout = resolved.commission ?? Math.round(amount * DIGITAL_PRODUCT_FALLBACK_COMMISSION_RATE * 100) / 100;
   const context = buildMacroContext({
     publisherId: event.publisherId,

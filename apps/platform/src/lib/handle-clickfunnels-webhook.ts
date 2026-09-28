@@ -4,7 +4,39 @@ import {
 } from "@/services/clickfunnels-webhook-settings.service";
 import { sanitizeWebhookPayload } from "@/lib/clickfunnels-webhook-settings";
 import { resolveDigitalProductWebhookAttribution } from "@/lib/clickfunnels-webhook-attribution";
-import { extractLeadFromClickFunnelsPayload } from "@/lib/clickfunnels-webhook-payload";
+import {
+  extractLeadFromClickFunnelsPayload,
+  extractOrderFieldsFromClickFunnelsPayload,
+} from "@/lib/clickfunnels-webhook-payload";
+import {
+  loadDigitalProductCommissionLookup,
+  resolveDigitalProductCommissionForPublisher,
+} from "@/lib/digital-product-commission";
+
+async function buildCommissionSnapshot(body: unknown, publisherId: string | null) {
+  if (!publisherId) return null;
+  try {
+    const fields = extractOrderFieldsFromClickFunnelsPayload(body);
+    const lookup = await loadDigitalProductCommissionLookup();
+    const resolved = await resolveDigitalProductCommissionForPublisher(
+      lookup,
+      fields.pageSlug,
+      fields.amount,
+      publisherId,
+    );
+    if (resolved.matched === "fallback" || resolved.commission == null) return null;
+    return {
+      digitalProductId: resolved.productId,
+      saleAmount: fields.amount,
+      commissionRate: Math.round(resolved.rate * 10000) / 100,
+      commissionAmount: resolved.commission,
+      digitalCommissionPlanId: resolved.planId ?? null,
+    };
+  } catch (error) {
+    console.error("[clickfunnels-webhook] commission snapshot failed", error);
+    return null;
+  }
+}
 
 function extractSecret(
   request: Request,
@@ -90,7 +122,9 @@ export async function handleClickFunnelsWebhookPost(request: Request): Promise<R
       platformParam: input.config?.affiliateTrackingParam ?? "affsense_id",
       requestUrl,
     });
+    const snapshot = await buildCommissionSnapshot(body, attribution.publisherId);
     const created = await createWebhookEvent({
+      ...snapshot,
       eventType: input.eventType,
       status: input.status,
       leadEmail: input.leadEmail,

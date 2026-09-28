@@ -19,6 +19,9 @@ vi.mock("@/lib/prisma", () => ({
       upsert: vi.fn(),
       update: vi.fn(),
     },
+    cpaOfferCommissionPlanMember: {
+      findMany: vi.fn(),
+    },
   },
 }));
 
@@ -53,6 +56,7 @@ const baseOffer = {
 describe("publisher CPA offer access", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(prisma.cpaOfferCommissionPlanMember.findMany).mockResolvedValue([]);
   });
 
   it("public offers are promotable without access row", async () => {

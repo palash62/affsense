@@ -224,6 +224,7 @@ export function PublisherCpaOffersList() {
               offer={offer}
               href={`/publisher/cpa-offers/${offer.id}`}
               showVisibility
+              customRate={offer.hasCommissionPlan}
               footer={
                 <div className="flex w-full justify-center">
                   <OfferAccessFooter

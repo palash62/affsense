@@ -51,6 +51,8 @@ type CpaOfferCardProps = {
   showAdvertiser?: boolean;
   /** Show public/private visibility badge. */
   showVisibility?: boolean;
+  /** Payout comes from the viewing publisher's custom commission plan. */
+  customRate?: boolean;
   footer?: ReactNode;
   className?: string;
 };
@@ -61,6 +63,7 @@ export function CpaOfferCard({
   showRevenue = false,
   showAdvertiser = false,
   showVisibility = false,
+  customRate = false,
   footer,
   className,
 }: CpaOfferCardProps) {
@@ -151,8 +154,13 @@ export function CpaOfferCard({
           </div>
         ) : null}
         <div className={showRevenue ? undefined : "col-span-2"}>
-          <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+          <p className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
             Payout
+            {customRate ? (
+              <span className="rounded-md bg-emerald-50 px-1.5 py-0.5 text-[10px] font-semibold normal-case tracking-normal text-emerald-700">
+                Your rate
+              </span>
+            ) : null}
           </p>
           <p className="font-mono text-sm font-semibold tabular-nums text-[var(--theme-success)]">
             ${offer.payout}

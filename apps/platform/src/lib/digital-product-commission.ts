@@ -14,6 +14,16 @@ export type ResolvedDigitalProductCommission = {
   productId: string | null;
   upsellId: string | null;
   matched: "upsell" | "front_end" | "fallback";
+  /** Set when a publisher commission plan replaced the product rate. */
+  planId?: string | null;
+};
+
+export type DigitalCommissionPlanRates = {
+  planId: string;
+  isActive?: boolean;
+  frontEndCommission: number;
+  /** Upsell id → commission %. Upsells without an entry keep the product rate. */
+  upsellRates: Map<string, number>;
 };
 
 function roundMoney(value: number): number {
@@ -238,4 +248,97 @@ export async function resolveDigitalProductCommission(input: {
 }): Promise<ResolvedDigitalProductCommission> {
   const lookup = await loadDigitalProductCommissionLookup();
   return lookup.resolve(input.pageSlug, input.amount);
+}
+
+/** Replace the matched front-end / upsell rate with the publisher's plan rate. */
+export function applyDigitalCommissionPlan(
+  resolved: ResolvedDigitalProductCommission,
+  plan: DigitalCommissionPlanRates | null | undefined,
+  amount: number | null | undefined,
+): ResolvedDigitalProductCommission {
+  if (!plan || plan.isActive === false) return resolved;
+
+  let pct: number | undefined;
+  if (resolved.matched === "front_end") {
+    pct = plan.frontEndCommission;
+  } else if (resolved.matched === "upsell" && resolved.upsellId) {
+    pct = plan.upsellRates.get(resolved.upsellId);
+  }
+  if (pct == null || !Number.isFinite(pct)) return resolved;
+
+  const money = amount != null && Number.isFinite(amount) ? amount : null;
+  const rate = pct / 100;
+  return {
+    ...resolved,
+    rate,
+    commission: money != null ? roundMoney(money * rate) : null,
+    planId: plan.planId,
+  };
+}
+
+/** Active plan rates for one publisher, keyed by product id. */
+export async function loadPublisherDigitalPlanRates(
+  publisherId: string,
+  productIds: string[],
+): Promise<Map<string, DigitalCommissionPlanRates>> {
+  const map = new Map<string, DigitalCommissionPlanRates>();
+  if (!publisherId || productIds.length === 0) return map;
+  const rows = await prisma.digitalProductCommissionPlanMember.findMany({
+    where: { publisherId, productId: { in: productIds }, plan: { isActive: true } },
+    select: {
+      productId: true,
+      plan: {
+        select: {
+          id: true,
+          frontEndCommission: true,
+          upsellRates: { select: { upsellId: true, commissionPct: true } },
+        },
+      },
+    },
+  });
+  for (const row of rows) {
+    map.set(row.productId, {
+      planId: row.plan.id,
+      isActive: true,
+      frontEndCommission: Number(row.plan.frontEndCommission),
+      upsellRates: new Map(row.plan.upsellRates.map((r) => [r.upsellId, Number(r.commissionPct)])),
+    });
+  }
+  return map;
+}
+
+/** Resolve commission, then apply the publisher's active plan for the matched product. */
+export async function resolveDigitalProductCommissionForPublisher(
+  lookup: DigitalProductCommissionLookup,
+  pageSlug: string | null | undefined,
+  amount: number | null | undefined,
+  publisherId: string | null | undefined,
+): Promise<ResolvedDigitalProductCommission> {
+  const resolved = lookup.resolve(pageSlug, amount);
+  if (!publisherId || !resolved.productId || resolved.matched === "fallback") return resolved;
+  const plans = await loadPublisherDigitalPlanRates(publisherId, [resolved.productId]);
+  return applyDigitalCommissionPlan(resolved, plans.get(resolved.productId), amount);
+}
+
+export type DigitalCommissionSnapshot = {
+  commissionAmount?: { toString(): string } | number | null;
+  commissionRate?: { toString(): string } | number | null;
+  digitalCommissionPlanId?: string | null;
+};
+
+/** Prefer the commission saved at sale time; old events keep the recalculated value. */
+export function applyDigitalCommissionSnapshot(
+  resolved: ResolvedDigitalProductCommission,
+  snapshot: DigitalCommissionSnapshot | null | undefined,
+): ResolvedDigitalProductCommission {
+  if (snapshot?.commissionAmount == null) return resolved;
+  const commission = Number(snapshot.commissionAmount);
+  if (!Number.isFinite(commission)) return resolved;
+  const ratePct = snapshot.commissionRate != null ? Number(snapshot.commissionRate) : null;
+  return {
+    ...resolved,
+    commission,
+    rate: ratePct != null && Number.isFinite(ratePct) ? ratePct / 100 : resolved.rate,
+    planId: snapshot.digitalCommissionPlanId ?? resolved.planId ?? null,
+  };
 }

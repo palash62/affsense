@@ -103,8 +103,13 @@ export function PublisherCpaOfferDetailPage({
                 </span>
               </div>
               <div>
-                <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                <p className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
                   Payout
+                  {localOffer.hasCommissionPlan ? (
+                    <span className="rounded-md bg-emerald-50 px-1.5 py-0.5 text-[10px] font-semibold normal-case tracking-normal text-emerald-700">
+                      Your custom rate
+                    </span>
+                  ) : null}
                 </p>
                 <p className="font-mono text-lg font-semibold tabular-nums text-[var(--theme-success)]">
                   {payoutLabel}

@@ -15,7 +15,7 @@ export default async function PublisherMarketplaceProductPage({
   if (!session?.user?.id) redirect("/login");
 
   const { id } = await params;
-  const product = await getPublisherDigitalProduct(id);
+  const product = await getPublisherDigitalProduct(id, session.user.id);
   if (!product) notFound();
 
   return (

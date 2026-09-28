@@ -37,6 +37,12 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { BuilderImageUpload } from "@/modules/page-builder/components/editor/builder-image-upload";
 import { cn } from "@/lib/utils";
+import { CommissionPlansSection } from "@/components/admin/commission-plans/commission-plans-section";
+import {
+  saveCommissionPlanDrafts,
+  type CommissionPlanDraft,
+  type PlanUpsellOption,
+} from "@/components/admin/commission-plans/types";
 
 function SectionHeader({ number, title }: { number: number; title: string }) {
   return (
@@ -78,6 +84,7 @@ export function DigitalProductForm({ productId }: { productId?: string }) {
   const [loadKey, setLoadKey] = useState(0);
   const [categories, setCategories] = useState<string[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
+  const [planDrafts, setPlanDrafts] = useState<CommissionPlanDraft[]>([]);
 
   useEffect(() => {
     const ac = new AbortController();
@@ -186,6 +193,22 @@ export function DigitalProductForm({ productId }: { productId?: string }) {
     return [current, ...categories];
   }, [categories, values.category]);
 
+  const planUpsellOptions = useMemo<PlanUpsellOption[]>(() => {
+    const seen = new Set<string>();
+    const out: PlanUpsellOption[] = [];
+    for (const upsell of values.upsells) {
+      const pageSlug = derivePageSlugFromUrl(upsell.pageUrl);
+      if (!pageSlug || seen.has(pageSlug)) continue;
+      seen.add(pageSlug);
+      out.push({
+        pageSlug,
+        name: upsell.name.trim(),
+        commissionPct: Number(upsell.commissionPct) || 0,
+      });
+    }
+    return out;
+  }, [values.upsells]);
+
   const canPublish = useMemo(
     () =>
       values.name.trim().length >= 2 &&
@@ -259,9 +282,20 @@ export function DigitalProductForm({ productId }: { productId?: string }) {
           body: JSON.stringify(payload),
         },
       );
+      const json = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const json = await res.json().catch(() => ({}));
         throw new Error(json.error?.message ?? "Could not save product");
+      }
+      const createdId: string | undefined = json?.data?.id;
+      if (!productId && createdId && planDrafts.length > 0) {
+        const failed = await saveCommissionPlanDrafts("digital", createdId, planDrafts);
+        if (failed > 0) {
+          toast.error(
+            `Product saved, but ${failed} commission plan${failed === 1 ? "" : "s"} could not be saved. Retry from the edit page.`,
+          );
+          router.push(`/admin/digital-products/${createdId}/edit`);
+          return;
+        }
       }
       toast.success(successMessage);
       router.push("/admin/digital-products");
@@ -743,6 +777,18 @@ export function DigitalProductForm({ productId }: { productId?: string }) {
                 Add upsell {values.upsells.length + 1}
               </Button>
             </div>
+          </DashboardCard>
+
+          <DashboardCard>
+            <SectionHeader number={5} title="Commission Plans (Optional)" />
+            <CommissionPlansSection
+              kind="digital"
+              entityId={productId}
+              drafts={planDrafts}
+              onDraftsChange={setPlanDrafts}
+              defaultFrontEnd={values.frontEndCommission}
+              upsells={planUpsellOptions}
+            />
           </DashboardCard>
         </div>
 

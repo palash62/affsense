@@ -618,6 +618,54 @@ export const adminPublisherSpecialPayoutSchema = z
     }
   });
 
+const commissionPlanNameSchema = z.string().trim().min(1, "Plan name is required").max(120);
+const commissionPlanPublisherIdsSchema = z
+  .array(z.string().trim().min(1))
+  .max(500, "Too many affiliates in one plan")
+  .transform((ids) => [...new Set(ids)]);
+
+export const cpaCommissionPlanSchema = z.object({
+  name: commissionPlanNameSchema,
+  payout: z.number().min(0, "Payout cannot be negative").max(100000),
+  isActive: z.boolean().optional().default(true),
+  publisherIds: commissionPlanPublisherIdsSchema.optional().default([]),
+});
+
+export const cpaCommissionPlanUpdateSchema = z.object({
+  name: commissionPlanNameSchema.optional(),
+  payout: z.number().min(0, "Payout cannot be negative").max(100000).optional(),
+  isActive: z.boolean().optional(),
+  publisherIds: commissionPlanPublisherIdsSchema.optional(),
+});
+
+const commissionPctSchema = z.number().min(0, "Commission cannot be negative").max(100, "Commission cannot exceed 100%");
+
+const digitalCommissionPlanUpsellRateSchema = z.object({
+  pageSlug: z.string().trim().min(1),
+  commissionPct: commissionPctSchema,
+});
+
+export const digitalCommissionPlanSchema = z.object({
+  name: commissionPlanNameSchema,
+  frontEndCommission: commissionPctSchema,
+  isActive: z.boolean().optional().default(true),
+  upsellRates: z.array(digitalCommissionPlanUpsellRateSchema).optional().default([]),
+  publisherIds: commissionPlanPublisherIdsSchema.optional().default([]),
+});
+
+export const digitalCommissionPlanUpdateSchema = z.object({
+  name: commissionPlanNameSchema.optional(),
+  frontEndCommission: commissionPctSchema.optional(),
+  isActive: z.boolean().optional(),
+  upsellRates: z.array(digitalCommissionPlanUpsellRateSchema).optional(),
+  publisherIds: commissionPlanPublisherIdsSchema.optional(),
+});
+
+export type CpaCommissionPlanInput = z.infer<typeof cpaCommissionPlanSchema>;
+export type CpaCommissionPlanUpdateInput = z.infer<typeof cpaCommissionPlanUpdateSchema>;
+export type DigitalCommissionPlanInput = z.infer<typeof digitalCommissionPlanSchema>;
+export type DigitalCommissionPlanUpdateInput = z.infer<typeof digitalCommissionPlanUpdateSchema>;
+
 export const adminCreatePublisherSchema = z.object({
   name: z.string().trim().min(2, "Name must be at least 2 characters"),
   email: z.string().trim().email("Enter a valid email address"),

@@ -229,6 +229,11 @@ export async function createWebhookEvent(input: {
   subId?: string | null;
   src?: string | null;
   payloadJson: unknown;
+  digitalProductId?: string | null;
+  saleAmount?: number | null;
+  commissionRate?: number | null;
+  commissionAmount?: number | null;
+  digitalCommissionPlanId?: string | null;
 }) {
   return prisma.webhookEvent.create({
     data: {
@@ -244,6 +249,11 @@ export async function createWebhookEvent(input: {
       subId: input.subId ?? null,
       src: input.src ?? null,
       payloadJson: input.payloadJson as never,
+      digitalProductId: input.digitalProductId ?? null,
+      saleAmount: input.saleAmount ?? null,
+      commissionRate: input.commissionRate ?? null,
+      commissionAmount: input.commissionAmount ?? null,
+      digitalCommissionPlanId: input.digitalCommissionPlanId ?? null,
     },
   });
 }

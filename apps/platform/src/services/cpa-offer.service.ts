@@ -9,6 +9,7 @@ import {
 import { prisma } from "@/lib/prisma";
 import { Errors } from "@/lib/errors";
 import { parseUserAgent } from "@/lib/publisher-leads";
+import { getPublisherCpaPlanPayouts } from "@/services/commission-plan.service";
 import {
   cpaOfferDetailsToJson,
   parseCpaOfferDetails,
@@ -52,6 +53,8 @@ export type SerializedPublisherCpaOffer = SerializedCpaOffer & {
   accessStatus: PublisherCpaOfferAccessState;
   adminNote: string | null;
   canPromote: boolean;
+  /** True when `payout` comes from this publisher's custom commission plan. */
+  hasCommissionPlan: boolean;
 };
 
 export type PublisherCpaOfferListResult = {
@@ -256,12 +259,16 @@ function serializePublisherCpaOffer(
     createdByUserId?: string | null;
   },
   access: { status: PublisherCpaOfferAccessStatus; adminNote: string | null } | null | undefined,
+  planPayout?: number,
 ): SerializedPublisherCpaOffer {
   const base = serializeCpaOffer(row);
   const resolved = resolvePublisherAccess(base.visibility, access);
+  const hasCommissionPlan = planPayout != null;
   return {
     ...base,
+    ...(hasCommissionPlan ? { payout: String(planPayout) } : {}),
     ...resolved,
+    hasCommissionPlan,
   };
 }
 
@@ -284,17 +291,21 @@ export async function listPublisherCpaOffers(
   ]);
 
   const offerIds = rows.map((row) => row.id);
-  const accessRows =
+  const [accessRows, planPayouts] = await Promise.all([
     offerIds.length === 0
       ? []
-      : await prisma.publisherCpaOfferAccess.findMany({
+      : prisma.publisherCpaOfferAccess.findMany({
           where: { publisherId, offerId: { in: offerIds } },
           select: { offerId: true, status: true, adminNote: true },
-        });
+        }),
+    getPublisherCpaPlanPayouts(publisherId, offerIds),
+  ]);
   const accessByOfferId = new Map(accessRows.map((row) => [row.offerId, row]));
 
   return {
-    items: rows.map((row) => serializePublisherCpaOffer(row, accessByOfferId.get(row.id))),
+    items: rows.map((row) =>
+      serializePublisherCpaOffer(row, accessByOfferId.get(row.id), planPayouts.get(row.id)),
+    ),
     total,
     page,
     limit,
@@ -315,12 +326,15 @@ export async function getPublisherCpaOfferById(
   });
   if (!row) return null;
 
-  const access = await prisma.publisherCpaOfferAccess.findUnique({
-    where: { publisherId_offerId: { publisherId, offerId: row.id } },
-    select: { status: true, adminNote: true },
-  });
+  const [access, planPayouts] = await Promise.all([
+    prisma.publisherCpaOfferAccess.findUnique({
+      where: { publisherId_offerId: { publisherId, offerId: row.id } },
+      select: { status: true, adminNote: true },
+    }),
+    getPublisherCpaPlanPayouts(publisherId, [row.id]),
+  ]);
 
-  return serializePublisherCpaOffer(row, access);
+  return serializePublisherCpaOffer(row, access, planPayouts.get(row.id));
 }
 
 export async function publisherCanPromoteCpaOffer(
