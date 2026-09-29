@@ -183,7 +183,7 @@ export function AdminGlobalPostbackForm({ embedded = false }: { embedded?: boole
         <h2 className="text-base font-semibold text-foreground">CPA Postback URL Info</h2>
         <p className="mt-1 text-sm text-muted-foreground">
           These settings apply platform-wide to inbound CPA network postbacks and optional parallel
-          delivery. Inbound postbacks hit the <strong>tracking domain</strong> (not leadvix.io).
+          delivery. Inbound postbacks hit the <strong>tracking domain</strong> (not affsense.com).
         </p>
 
         <div className="mt-6 space-y-5">

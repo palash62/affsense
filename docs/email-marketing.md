@@ -30,7 +30,7 @@ Environment variables:
 ```
 MAILGUN_API_KEY=
 MAILGUN_DOMAIN=mg.yourplatform.com
-MAILGUN_FROM=LeadVix <noreply@mg.yourplatform.com>
+MAILGUN_FROM=Affsense <noreply@mg.yourplatform.com>
 MAILGUN_API_BASE=https://api.mailgun.net
 MAILGUN_WEBHOOK_SIGNING_KEY=
 APP_URL=https://yourapp.com

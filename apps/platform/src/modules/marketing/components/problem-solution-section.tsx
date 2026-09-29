@@ -18,7 +18,7 @@ export function ProblemSolutionSection() {
 
         <div className="box">
           <h3>
-            Meet <span className="purple">LeadVix</span>
+            Meet <span className="purple">Affsense</span>
           </h3>
           <p>
             A smarter Pay Per Lead platform designed to help advertisers pay for valid, verified lead

@@ -61,7 +61,7 @@ export function FeaturesSection() {
         <div className="section-title">
           <h2>Everything You Need To Run Better Pay Per Lead Campaigns</h2>
           <p>
-            LeadVix combines funnel creation, verified lead buying, API integrations, smart scoring,
+            Affsense combines funnel creation, verified lead buying, API integrations, smart scoring,
             reporting, and AI optimization into one performance marketing platform.
           </p>
         </div>

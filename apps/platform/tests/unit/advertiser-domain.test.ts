@@ -29,8 +29,8 @@ vi.mock("@/lib/platform-host", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/platform-host")>();
   return {
     ...actual,
-    getPlatformHost: () => "leadvix.io",
-    isPlatformHost: (host: string) => host === "leadvix.io" || host === "www.leadvix.io",
+    getPlatformHost: () => "affsense.com",
+    isPlatformHost: (host: string) => host === "affsense.com" || host === "www.affsense.com",
   };
 });
 
@@ -73,7 +73,7 @@ describe("advertiser-domain.service", () => {
   });
 
   it("rejects platform domains", async () => {
-    await expect(addAdvertiserDomain("adv-1", "leadvix.io")).rejects.toMatchObject({
+    await expect(addAdvertiserDomain("adv-1", "affsense.com")).rejects.toMatchObject({
       code: "VALIDATION_ERROR",
     });
   });
@@ -85,7 +85,7 @@ describe("advertiser-domain.service", () => {
       domain: "www.brand.com",
       status: "PENDING",
     });
-    dnsMock.resolveCname.mockResolvedValue(["leadvix.io"]);
+    dnsMock.resolveCname.mockResolvedValue(["affsense.com"]);
     prismaMock.advertiserDomain.update.mockResolvedValue({
       id: "dom-1",
       domain: "www.brand.com",
@@ -185,7 +185,7 @@ describe("buildFunnelPublicUrl", () => {
     expect(
       buildFunnelPublicUrl({
         slug: "sales",
-        appUrl: "https://leadvix.io",
+        appUrl: "https://affsense.com",
         customDomain: "www.brand.com",
       }),
     ).toBe("https://www.brand.com");
@@ -196,8 +196,8 @@ describe("buildFunnelPublicUrl", () => {
     expect(
       buildFunnelPublicUrl({
         slug: "sales",
-        appUrl: "https://leadvix.io",
+        appUrl: "https://affsense.com",
       }),
-    ).toBe("https://leadvix.io/o/sales");
+    ).toBe("https://affsense.com/o/sales");
   });
 });

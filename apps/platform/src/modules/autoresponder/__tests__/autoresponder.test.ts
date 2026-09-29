@@ -137,7 +137,7 @@ describe("buildAutoresponderTestEmail", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-07-20T12:00:00.000Z"));
     const stamp = Date.now();
-    expect(buildSystemeTestEmail("user@leadvix.io")).toBe(`user+cpl-test-${stamp}@leadvix.io`);
+    expect(buildSystemeTestEmail("user@affsense.com")).toBe(`user+cpl-test-${stamp}@affsense.com`);
     vi.useRealTimers();
   });
 });

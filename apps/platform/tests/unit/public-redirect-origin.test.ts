@@ -30,37 +30,37 @@ describe("getPublicRedirectOrigin", () => {
   });
 
   it("uses AUTH_URL when request.url is the Docker listen address", () => {
-    process.env.AUTH_URL = "https://leadvix.io";
+    process.env.AUTH_URL = "https://affsense.com";
     const request = new Request(
       "https://0.0.0.0:3000/api/v1/admin/impersonate/start?redirectTo=/publisher",
     );
 
-    expect(getPublicRedirectOrigin(request)).toBe("https://leadvix.io");
+    expect(getPublicRedirectOrigin(request)).toBe("https://affsense.com");
     expect(buildPublicRedirectUrl(request, "/publisher").href).toBe(
-      "https://leadvix.io/publisher",
+      "https://affsense.com/publisher",
     );
   });
 
   it("does not use 0.0.0.0 even if AUTH_URL is a listen address", () => {
     process.env.AUTH_URL = "https://0.0.0.0:3000";
-    process.env.APP_URL = "https://leadvix.io";
+    process.env.APP_URL = "https://affsense.com";
     const request = new Request("https://0.0.0.0:3000/publisher");
 
     expect(buildPublicRedirectUrl(request, "/publisher").href).toBe(
-      "https://leadvix.io/publisher",
+      "https://affsense.com/publisher",
     );
   });
 
   it("falls back to x-forwarded-host when env URLs are unset", () => {
     const request = new Request("https://0.0.0.0:3000/api/v1/admin/impersonate/start", {
       headers: {
-        "x-forwarded-host": "leadvix.io",
+        "x-forwarded-host": "affsense.com",
         "x-forwarded-proto": "https",
       },
     });
 
     expect(buildPublicRedirectUrl(request, "/publisher").href).toBe(
-      "https://leadvix.io/publisher",
+      "https://affsense.com/publisher",
     );
   });
 

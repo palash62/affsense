@@ -5,7 +5,7 @@
 	}
 }
 
-leadvix.io {
+affsense.com {
 	request_body {
 		max_size 10MB
 	}
@@ -26,8 +26,8 @@ leadvix.io {
 	}
 }
 
-www.leadvix.io {
-	redir https://leadvix.io{uri} permanent
+www.affsense.com {
+	redir https://affsense.com{uri} permanent
 }
 
 track.leadtb.com {

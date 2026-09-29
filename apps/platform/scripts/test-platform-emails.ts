@@ -1,5 +1,5 @@
 /**
- * Test LeadVix transactional email templates (Mailgun preferred, SMTP fallback).
+ * Test Affsense transactional email templates (Mailgun preferred, SMTP fallback).
  * Run: npm run test:emails --workspace @cpl/platform
  *
  * Optional: TEST_EMAIL_TO=someone@example.com npm run test:emails --workspace @cpl/platform
@@ -9,11 +9,15 @@ import { resolve } from "node:path";
 import {
   renderAdminAlertEmail,
   renderApprovedEmail,
+  renderCredentialsEmail,
   renderEmailVerificationEmail,
   renderGenericEmail,
+  renderLoginOtpEmail,
   renderPasswordResetEmail,
+  renderRejectedEmail,
   renderWelcomeEmail,
 } from "@/lib/email/templates";
+import { lowBalanceAlertCopy } from "@/lib/low-balance-alerts";
 import type { EmailTemplateId } from "@/lib/email/types";
 import { PLATFORM_EMAILS } from "@/lib/email/addresses";
 import { getMailgunConfig, isMailgunConfigured } from "@/lib/email/mailgun";
@@ -156,7 +160,7 @@ async function main() {
         ...base,
         title: "Password changed",
         message:
-          "Your LeadVix password was changed successfully. If this was not you, contact support immediately.",
+          "Your Affsense password was changed successfully. If this was not you, contact support immediately.",
       }),
     ),
   );
@@ -171,6 +175,96 @@ async function main() {
         message: `Admin alert test at ${stamp}. Sent to ${TEST_TO} for verification.`,
         actionUrl: `${appUrl}/admin/settings`,
         actionLabel: "Open settings",
+      }),
+    ),
+  );
+
+  results.push(
+    await sendTemplate(
+      "login code (OTP)",
+      "generic",
+      renderLoginOtpEmail({ ...base, code: "482913", expiresMinutes: 10 }),
+    ),
+  );
+
+  results.push(
+    await sendTemplate(
+      "login details (admin-created account)",
+      "credentials",
+      renderCredentialsEmail({ ...base, email: TEST_TO, tempPassword: "Temp-Pass-1234" }),
+    ),
+  );
+
+  results.push(
+    await sendTemplate(
+      "rejected (publisher application)",
+      "rejected",
+      renderRejectedEmail({
+        ...base,
+        itemLabel: "Publisher account",
+        reason: "Test rejection reason — traffic source could not be verified.",
+      }),
+    ),
+  );
+
+  const campaignName = "Email Test Campaign";
+  const campaignUrl = `${appUrl}/advertiser/campaigns/test-campaign`;
+  results.push(
+    await sendTemplate(
+      "campaign approved",
+      "approved",
+      renderApprovedEmail({
+        ...base,
+        itemLabel: `campaign "${campaignName}"`,
+        statusLabel: "approved",
+        details: "Your campaign is now active and can receive traffic.",
+        actionUrl: campaignUrl,
+        actionLabel: "View campaign",
+        subject: `Campaign approved — ${campaignName} is now active`,
+      }),
+    ),
+  );
+
+  results.push(
+    await sendTemplate(
+      "campaign rejected",
+      "rejected",
+      renderRejectedEmail({
+        ...base,
+        itemLabel: `campaign "${campaignName}"`,
+        reason: "Test rejection reason — landing page is missing a privacy policy.",
+        details: "You can update the campaign and resubmit it for review.",
+        actionUrl: campaignUrl,
+        actionLabel: "View campaign",
+        subject: `Campaign not approved — ${campaignName}`,
+      }),
+    ),
+  );
+
+  const lowBalance = lowBalanceAlertCopy(10, 8.5);
+  results.push(
+    await sendTemplate(
+      "low wallet balance (generic notice)",
+      "generic",
+      renderGenericEmail({
+        ...base,
+        title: lowBalance.title,
+        message: lowBalance.message,
+        actionUrl: `${appUrl}/advertiser/wallet`,
+        actionLabel: "Add funds",
+      }),
+    ),
+  );
+
+  results.push(
+    await sendTemplate(
+      "support reply (generic notice)",
+      "generic",
+      renderGenericEmail({
+        ...base,
+        title: "Support reply",
+        message: 'Admin replied to your ticket "Email test ticket".',
+        actionUrl: `${appUrl}/advertiser/support`,
       }),
     ),
   );

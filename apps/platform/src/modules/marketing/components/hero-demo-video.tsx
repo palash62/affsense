@@ -16,7 +16,7 @@ export function HeroDemoVideo() {
         {playing ? (
           <iframe
             src={`https://www.youtube.com/embed/${DEMO_VIDEO_ID}?autoplay=1&rel=0&modestbranding=1`}
-            title="LeadVix demo video"
+            title="Affsense demo video"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             allowFullScreen
             referrerPolicy="strict-origin-when-cross-origin"
@@ -26,7 +26,7 @@ export function HeroDemoVideo() {
             type="button"
             className="hero-video-poster"
             onClick={() => setPlaying(true)}
-            aria-label="Play LeadVix demo video"
+            aria-label="Play Affsense demo video"
           >
             <img
               src={thumbSrc}

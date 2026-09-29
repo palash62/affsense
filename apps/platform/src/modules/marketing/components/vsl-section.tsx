@@ -13,14 +13,14 @@ export function VslSection() {
           <div className="video-box">
             <iframe
               src={DEMO_EMBED_URL}
-              title="LeadVix demo video"
+              title="Affsense demo video"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
               allowFullScreen
             />
           </div>
           <div>
             <div className="badge">Watch The Demo</div>
-            <h2>See How LeadVix Helps You Launch Smarter Lead Campaigns</h2>
+            <h2>See How Affsense Helps You Launch Smarter Lead Campaigns</h2>
             <p className="vsl-desc">
               Discover how advertisers can launch campaigns, use pre-made funnels, connect autoresponders,
               verify leads, bid CPL, and optimize performance with AI.

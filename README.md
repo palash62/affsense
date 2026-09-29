@@ -30,7 +30,7 @@ This project is split into two deployable services on one server:
 
 | Domain | App | Port | Package |
 |--------|-----|------|---------|
-| **leadvix.io** | Main Platform | 3000 | `apps/platform` |
+| **affsense.com** | Main Platform | 3000 | `apps/platform` |
 | **track.leadtb.com** | Tracking Service | 3001 | `apps/tracking` |
 
 Shared packages: `packages/database`, `packages/shared`, `packages/tracking-core`
@@ -72,7 +72,7 @@ npm run db:push
 npm run db:seed
 
 # Development (both services)
-npm run dev:platform   # http://localhost:3000 — leadvix.io
+npm run dev:platform   # http://localhost:3000 — affsense.com
 npm run dev:tracking   # http://localhost:3001 — track.leadtb.com
 ```
 
@@ -119,7 +119,7 @@ AUTH_URL="http://localhost:3020"
 ```
 cpl/
 ├── apps/
-│   ├── platform/          # leadvix.io — admin, advertiser, publisher, API
+│   ├── platform/          # affsense.com — admin, advertiser, publisher, API
 │   └── tracking/          # track.leadtb.com — clicks, redirects, pixel, postback
 ├── packages/
 │   ├── database/          # Prisma schema + client

@@ -9,7 +9,7 @@ export function CtaSection() {
             Stop Buying Clicks. Start Buying <span className="purple">Verified Leads.</span>
           </h2>
           <p>
-            Join LeadVix today and start building smarter Pay Per Lead campaigns with verified leads,
+            Join Affsense today and start building smarter Pay Per Lead campaigns with verified leads,
             flexible CPL bidding, pre-made funnels, and AI optimization.
           </p>
           <br />

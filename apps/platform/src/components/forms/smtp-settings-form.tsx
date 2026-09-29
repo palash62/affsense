@@ -206,7 +206,7 @@ export function SmtpSettingsForm() {
               id="smtpFrom"
               value={settings.from}
               onChange={(e) => setSettings({ ...settings, from: e.target.value })}
-              placeholder='Affsense <noreply@leadvix.io>'
+              placeholder='Affsense <noreply@affsense.com>'
             />
           </div>
           <div className="space-y-2">
@@ -216,7 +216,7 @@ export function SmtpSettingsForm() {
               type="email"
               value={settings.adminAlertEmail}
               onChange={(e) => setSettings({ ...settings, adminAlertEmail: e.target.value })}
-              placeholder="admin@leadvix.io"
+              placeholder="admin@affsense.com"
             />
           </div>
           <div className="space-y-2">
@@ -226,7 +226,7 @@ export function SmtpSettingsForm() {
               type="email"
               value={settings.supportEmail}
               onChange={(e) => setSettings({ ...settings, supportEmail: e.target.value })}
-              placeholder="support@leadvix.io"
+              placeholder="support@affsense.com"
             />
           </div>
           <div className="space-y-2">
@@ -236,7 +236,7 @@ export function SmtpSettingsForm() {
               type="url"
               value={settings.appUrl}
               onChange={(e) => setSettings({ ...settings, appUrl: e.target.value })}
-              placeholder="http://leadvix.io"
+              placeholder="http://affsense.com"
             />
           </div>
         </div>

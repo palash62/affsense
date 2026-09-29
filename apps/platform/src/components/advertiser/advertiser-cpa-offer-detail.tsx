@@ -181,9 +181,9 @@ export function AdvertiserCpaOfferDetail({ offerId }: { offerId: string }) {
 
         <section className="space-y-5 rounded-xl border border-border bg-card p-5">
           <h2 className="text-sm font-semibold text-foreground">Tracking</h2>
-          <CopyUrlField label="Leadvix tracking URL" value={platformTrackingUrl} />
+          <CopyUrlField label="Affsense tracking URL" value={platformTrackingUrl} />
           <p className="text-xs text-muted-foreground">
-            Use the Leadvix tracking URL in your ads (not the raw network URL below). Networks
+            Use the Affsense tracking URL in your ads (not the raw network URL below). Networks
             fire conversions to the platform Global Postback URL using the click id injected on
             redirect — include {"{click_id}"} or {"[click_id]"} in the offer&apos;s network URL
             when configuring the offer in admin.

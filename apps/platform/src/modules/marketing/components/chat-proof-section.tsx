@@ -6,22 +6,22 @@ import Image from "next/image";
 const CHATS = [
   {
     src: "/marketing/testimonials/chat-carlos.png",
-    alt: "Messenger chat: advertiser gets a sale from only 6 LeadVix leads",
+    alt: "Messenger chat: advertiser gets a sale from only 6 Affsense leads",
     caption: "Sale from 6 leads",
   },
   {
     src: "/marketing/testimonials/chat-campaign-update.png",
-    alt: "Campaign update: 22 opt-ins and 2 OLSP sales on LeadVix",
+    alt: "Campaign update: 22 opt-ins and 2 OLSP sales on Affsense",
     caption: "22 opt-ins → 2 sales",
   },
   {
     src: "/marketing/testimonials/chat-aditya.png",
-    alt: "Messenger chat: advertiser closes a sale after 81 LeadVix leads",
+    alt: "Messenger chat: advertiser closes a sale after 81 Affsense leads",
     caption: "81 leads, sale closed",
   },
   {
     src: "/marketing/testimonials/chat-chris.png",
-    alt: "Messenger chat: advertiser loves LeadVix leads and reports more sales",
+    alt: "Messenger chat: advertiser loves Affsense leads and reports more sales",
     caption: "Loving the leads",
   },
 ] as const;
@@ -67,13 +67,13 @@ export function ChatProofSection() {
           <span className="badge">Client messages</span>
           <h2>Our Clients&apos; Results</h2>
           <p>
-            Real messages from advertisers using LeadVix. Results shown are from individual clients
+            Real messages from advertisers using Affsense. Results shown are from individual clients
             and may not represent what you will achieve.
           </p>
           <p className="chat-proof-disclaimer">
             <strong>Results not typical.</strong> Individual results vary based on offer, budget,
             funnel, traffic quality, and experience. These chats are testimonials from specific
-            clients and are not a guarantee of earnings or sales. LeadVix does not promise income.
+            clients and are not a guarantee of earnings or sales. Affsense does not promise income.
           </p>
         </div>
 

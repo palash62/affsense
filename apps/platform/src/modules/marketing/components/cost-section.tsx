@@ -27,7 +27,7 @@ export function CostSection() {
           </div>
 
           <div className="cost-card highlight">
-            <div className="badge">LeadVix Verified Leads</div>
+            <div className="badge">Affsense Verified Leads</div>
             <h3>Pay For Verified Leads</h3>
             <div className="price-big">
               $0.70–$2.50 <span>/ lead</span>

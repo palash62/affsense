@@ -73,7 +73,7 @@ export async function getDefaultFromEmail(): Promise<string> {
     const match = mailgun.from.match(/<([^>]+)>/);
     return match?.[1] ?? mailgun.from;
   }
-  return "noreply@mg.leadvix.io";
+  return "noreply@mg.affsense.com";
 }
 
 export async function getMarketingProviderName(): Promise<string> {

@@ -94,7 +94,7 @@ export function Preview2LandingPage() {
             <nav>
               <Link href="/" className="brand" onClick={closeMenu}>
                 <span className="brandmark">✦</span>
-                <span>LeadVix</span>
+                <span>Affsense</span>
               </Link>
               <div className="nav-links">
                 {SECTION_LINKS.map((link) => (
@@ -153,7 +153,7 @@ export function Preview2LandingPage() {
               <h1 style={{"marginTop":"22px"}}>Stop Paying for Clicks.<br />Start Paying for <span className="gradient">Verified Leads.</span></h1>
               <p className="lead">
                 Generate verified opt-ins for your own product, affiliate offer, individual program, make-money-online offer,
-                business opportunity or other compatible campaign — or use LeadVix{'\''}s built-in high-converting CPA offers to start monetizing immediately.
+                business opportunity or other compatible campaign — or use Affsense{'\''}s built-in high-converting CPA offers to start monetizing immediately.
               </p>
       
               <div className="proof-pills">
@@ -171,7 +171,7 @@ export function Preview2LandingPage() {
                 <div className="vsl-frame">
                   <iframe
                     src="https://www.youtube.com/embed/_TaHJPGSQ6Q?si=HqEZyKG2Gv-ITkhb"
-                    title="LeadVix Presentation"
+                    title="Affsense Presentation"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                     referrerPolicy="strict-origin-when-cross-origin"
                     allowFullScreen></iframe>
@@ -183,7 +183,7 @@ export function Preview2LandingPage() {
                 <a href="#demo" className="btn btn-secondary">Watch Product Demo ↓</a>
               </div>
       
-              <p className="video-note">Watch this first to understand how LeadVix works and why Pay Per Lead changes the economics of paid traffic.</p>
+              <p className="video-note">Watch this first to understand how Affsense works and why Pay Per Lead changes the economics of paid traffic.</p>
             </div>
           </section>
       
@@ -208,10 +208,10 @@ export function Preview2LandingPage() {
           <section className="section" id="offers">
             <div className="container">
               <div className="section-head reveal">
-                <div className="eyebrow"><i /> Use LeadVix Your Way</div>
+                <div className="eyebrow"><i /> Use Affsense Your Way</div>
                 <h2>Bring Your Own Offer —<br /><span className="gradient">Or Use One of Ours.</span></h2>
                 <p className="lead">
-                  LeadVix is not limited to our in-house CPA offers. You can generate verified leads for your own product,
+                  Affsense is not limited to our in-house CPA offers. You can generate verified leads for your own product,
                   affiliate offer, individual program, MMO offer, business opportunity or other compatible campaign.
                 </p>
               </div>
@@ -220,7 +220,7 @@ export function Preview2LandingPage() {
                 <article className="choice own">
                   <div className="choice-icon">🎯</div>
                   <h3>Use Your Own Product or Offer</h3>
-                  <p>Already have something to promote? Connect your existing offer to the LeadVix funnel and start building your list with verified leads.</p>
+                  <p>Already have something to promote? Connect your existing offer to the Affsense funnel and start building your list with verified leads.</p>
                   <div className="choice-tags">
                     <span className="choice-tag">Your Product</span>
                     <span className="choice-tag">Affiliate Offer</span>
@@ -230,7 +230,7 @@ export function Preview2LandingPage() {
                   </div>
                   <div className="choice-path">
                     <span className="path-chip">Your Offer</span><span className="path-arrow">→</span>
-                    <span className="path-chip">LeadVix Funnel</span><span className="path-arrow">→</span>
+                    <span className="path-chip">Affsense Funnel</span><span className="path-arrow">→</span>
                     <span className="path-chip">Verified Leads</span><span className="path-arrow">→</span>
                     <span className="path-chip">Follow-Up</span>
                   </div>
@@ -238,13 +238,13 @@ export function Preview2LandingPage() {
       
                 <article className="choice market">
                   <div className="choice-icon">🛍</div>
-                  <h3>Use LeadVix{'\''}s Built-In CPA Offers</h3>
+                  <h3>Use Affsense{'\''}s Built-In CPA Offers</h3>
                   <p>Don{'\''}t have an offer ready? Choose from built-in high-converting CPA offers and integrate one into your opt-in funnel in just a few clicks.</p>
                   <div className="choice-tags">
                     <span className="choice-tag">High-Converting Offers</span>
                     <span className="choice-tag">Few-Click Integration</span>
                     <span className="choice-tag">Fast Monetization</span>
-                    <span className="choice-tag">Built Into LeadVix</span>
+                    <span className="choice-tag">Built Into Affsense</span>
                   </div>
                   <div className="choice-path">
                     <span className="path-chip">Choose CPA Offer</span><span className="path-arrow">→</span>
@@ -261,9 +261,9 @@ export function Preview2LandingPage() {
             <div className="container">
               <div className="section-head reveal">
                 <div className="eyebrow"><i /> See Exactly What Happens</div>
-                <h2>Traffic Comes In.<br /><span className="gradient">LeadVix Handles the Rest of the Flow.</span></h2>
+                <h2>Traffic Comes In.<br /><span className="gradient">Affsense Handles the Rest of the Flow.</span></h2>
                 <p className="lead">
-                  The visitor reaches your opt-in page, submits their email, LeadVix verifies the lead live, adds the accepted lead to your autoresponder,
+                  The visitor reaches your opt-in page, submits their email, Affsense verifies the lead live, adds the accepted lead to your autoresponder,
                   and then sends the visitor to your thank-you page or directly to your offer.
                 </p>
               </div>
@@ -278,7 +278,7 @@ export function Preview2LandingPage() {
                   <div className="journey-card">
                     <div className="journey-icon">🚦</div>
                     <b>1. Traffic Reaches Your Opt-In Page</b>
-                    <p>Visitors from LeadVix traffic sources land on your campaign's opt-in funnel.</p>
+                    <p>Visitors from Affsense traffic sources land on your campaign's opt-in funnel.</p>
                     <span className="micro-status blue">Visitor Arrived</span>
                   </div>
       
@@ -291,7 +291,7 @@ export function Preview2LandingPage() {
       
                   <div className="journey-card">
                     <div className="journey-icon">🛡</div>
-                    <b>3. LeadVix Verifies the Lead Live</b>
+                    <b>3. Affsense Verifies the Lead Live</b>
                     <p>Email validity, duplicates, targeting and campaign rules are checked before the lead is accepted.</p>
                     <span className="micro-status verified">Verified ✓</span>
                   </div>
@@ -299,7 +299,7 @@ export function Preview2LandingPage() {
                   <div className="journey-card">
                     <div className="journey-icon">✉</div>
                     <b>4. Lead Is Added to Your Autoresponder</b>
-                    <p>The verified lead enters the LeadVix in-house autoresponder or your connected external email platform.</p>
+                    <p>The verified lead enters the Affsense in-house autoresponder or your connected external email platform.</p>
                     <span className="micro-status orange">Follow-Up Starts</span>
                   </div>
       
@@ -348,7 +348,7 @@ export function Preview2LandingPage() {
                 </article>
       
                 <article className="compare ppl reveal">
-                  <div className="compare-label">LeadVix Pay Per Lead</div>
+                  <div className="compare-label">Affsense Pay Per Lead</div>
                   <h3>Pay for the Action You Actually Want</h3>
                   <div className="money-card">
                     <div className="money-row"><div className="money-icon">🎯</div><div><b>Set your CPL</b><small>Control your target lead cost</small></div><span className="money-value">Controlled</span></div>
@@ -367,7 +367,7 @@ export function Preview2LandingPage() {
           <section className="section-sm">
             <div className="container">
               <div className="section-head reveal">
-                <div className="eyebrow"><i /> The Full LeadVix Stack</div>
+                <div className="eyebrow"><i /> The Full Affsense Stack</div>
                 <h2>Everything You Need to Turn<br /><span className="gradient">Verified Leads Into Revenue.</span></h2>
               </div>
       
@@ -386,7 +386,7 @@ export function Preview2LandingPage() {
                 <article className="feature blue">
                   <div className="ficon">🛍</div>
                   <h3>Built-In CPA Offers Marketplace</h3>
-                  <p>Don{'\''}t have an offer? Choose from LeadVix{'\''}s high-converting in-house CPA offers and connect one to your funnel in a few clicks.</p>
+                  <p>Don{'\''}t have an offer? Choose from Affsense{'\''}s high-converting in-house CPA offers and connect one to your funnel in a few clicks.</p>
                   <div className="mini-ui">
                     <div className="mini-row"><span>Offer selected</span><span style={{"color":"#6151ef"}}>Ready</span></div>
                     <div className="mini-row"><span>Funnel connected</span><span style={{"color":"#16a66d"}}>✓</span></div>
@@ -397,7 +397,7 @@ export function Preview2LandingPage() {
                 <article className="feature orange">
                   <div className="ficon">✉</div>
                   <h3>In-House Autoresponder</h3>
-                  <p>Build automated follow-up sequences directly inside LeadVix, or connect GetResponse, AWeber, Systeme.io or webhook.</p>
+                  <p>Build automated follow-up sequences directly inside Affsense, or connect GetResponse, AWeber, Systeme.io or webhook.</p>
                   <div className="mini-ui">
                     <div className="mini-row"><span>Welcome email</span><span style={{"color":"#16a66d"}}>Sent</span></div>
                     <div className="mini-row"><span>Follow-up #2</span><span style={{"color":"#6151ef"}}>Scheduled</span></div>
@@ -423,9 +423,9 @@ export function Preview2LandingPage() {
           <section className="section" id="features">
             <div className="container">
               <div className="section-head reveal">
-                <div className="eyebrow"><i /> Complete LeadVix Feature Set</div>
+                <div className="eyebrow"><i /> Complete Affsense Feature Set</div>
                 <h2>Everything Built to Help You<br /><span className="gradient">Acquire, Verify, Follow Up & Monetize Leads.</span></h2>
-                <p className="lead">LeadVix combines campaign buying, funnel tools, verification, monetization, email follow-up, analytics and optimization in one advertiser platform.</p>
+                <p className="lead">Affsense combines campaign buying, funnel tools, verification, monetization, email follow-up, analytics and optimization in one advertiser platform.</p>
               </div>
       
               <div className="all-features-grid stagger">
@@ -450,7 +450,7 @@ export function Preview2LandingPage() {
                 <article className="all-feature">
                   <div className="af-icon">🧲</div>
                   <h3>Built-In Funnel Builder</h3>
-                  <p>Create and launch opt-in funnels inside LeadVix without needing a separate page builder.</p>
+                  <p>Create and launch opt-in funnels inside Affsense without needing a separate page builder.</p>
                 </article>
       
                 <article className="all-feature">
@@ -510,7 +510,7 @@ export function Preview2LandingPage() {
                 <article className="all-feature">
                   <div className="af-icon">✉</div>
                   <h3>In-House Autoresponder</h3>
-                  <p>Build and run automated email follow-up sequences directly inside LeadVix.</p>
+                  <p>Build and run automated email follow-up sequences directly inside Affsense.</p>
                 </article>
       
                 <article className="all-feature">
@@ -564,7 +564,7 @@ export function Preview2LandingPage() {
                 <div className="eyebrow"><i /> Optional Built-In CPA Marketplace</div>
                 <h2 style={{"marginTop":"20px"}}>No Offer Yet?<br /><span className="gradient">Choose One and Start Monetizing Faster.</span></h2>
                 <p className="lead">
-                  The marketplace is optional. If you already have your own offer, use it. If you don't, LeadVix gives you access to built-in high-converting CPA offers that can be connected to your opt-in funnel in just a few clicks.
+                  The marketplace is optional. If you already have your own offer, use it. If you don't, Affsense gives you access to built-in high-converting CPA offers that can be connected to your opt-in funnel in just a few clicks.
                 </p>
                 <div className="flowline">
                   <span className="flowtag">Choose CPA Offer</span><span className="arrow">→</span>
@@ -572,12 +572,12 @@ export function Preview2LandingPage() {
                   <span className="flowtag">Launch</span><span className="arrow">→</span>
                   <span className="flowtag">Monetize</span>
                 </div>
-                <div style={{"marginTop":"27px"}}><Link href="/register" className="btn btn-primary">Access LeadVix Marketplace →</Link></div>
+                <div style={{"marginTop":"27px"}}><Link href="/register" className="btn btn-primary">Access Affsense Marketplace →</Link></div>
               </div>
       
               <div className="visual-panel reveal">
                 <div className="panel-head">
-                  <div><small style={{"color":"#8691a5"}}>LEADVIX MARKETPLACE</small><h3>High-Converting CPA Offers</h3></div>
+                  <div><small style={{"color":"#8691a5"}}>AFFSENSE MARKETPLACE</small><h3>High-Converting CPA Offers</h3></div>
                   <span className="tag">Optional</span>
                 </div>
                 <div className="offer-grid">
@@ -606,16 +606,16 @@ export function Preview2LandingPage() {
               </div>
       
               <div className="reveal">
-                <div className="eyebrow"><i /> Follow Up Inside LeadVix</div>
+                <div className="eyebrow"><i /> Follow Up Inside Affsense</div>
                 <h2 style={{"marginTop":"20px"}}>The Lead Is the Start.<br /><span className="gradient">The Follow-Up Creates More Value.</span></h2>
-                <p className="lead">Once the lead is verified, it can enter LeadVix{'\''}s in-house autoresponder automatically. You can also connect GetResponse, AWeber, Systeme.io or your own webhook.</p>
+                <p className="lead">Once the lead is verified, it can enter Affsense{'\''}s in-house autoresponder automatically. You can also connect GetResponse, AWeber, Systeme.io or your own webhook.</p>
                 <div className="flowline">
                   <span className="flowtag">Lead Verified</span><span className="arrow">→</span>
                   <span className="flowtag">Added to List</span><span className="arrow">→</span>
                   <span className="flowtag">Sequence Starts</span><span className="arrow">→</span>
                   <span className="flowtag">Automated Follow-Up</span>
                 </div>
-                <div style={{"marginTop":"27px"}}><Link href="/register" className="btn btn-primary">Start Using LeadVix →</Link></div>
+                <div style={{"marginTop":"27px"}}><Link href="/register" className="btn btn-primary">Start Using Affsense →</Link></div>
               </div>
             </div>
           </section>
@@ -624,15 +624,15 @@ export function Preview2LandingPage() {
             <div className="container">
               <div className="section-head reveal">
                 <div className="eyebrow"><i /> Product Demo</div>
-                <h2>You{'\''}ve Seen the Process.<br /><span className="gradient">Now See the LeadVix Platform in Action.</span></h2>
-                <p className="lead">Watch the platform walkthrough to see campaign setup, funnels, integrations and the advertiser workflow inside LeadVix.</p>
+                <h2>You{'\''}ve Seen the Process.<br /><span className="gradient">Now See the Affsense Platform in Action.</span></h2>
+                <p className="lead">Watch the platform walkthrough to see campaign setup, funnels, integrations and the advertiser workflow inside Affsense.</p>
               </div>
       
               <div className="demo-shell reveal">
                 <div className="demo-frame">
                   <iframe
                     src="https://www.youtube-nocookie.com/embed/723b7GEcZ7o?autoplay=0&controls=1&playsinline=1&rel=0"
-                    title="LeadVix Platform Demo"
+                    title="Affsense Platform Demo"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                     allowFullScreen></iframe>
                 </div>
@@ -646,14 +646,14 @@ export function Preview2LandingPage() {
             <div className="container">
               <div className="section-head reveal">
                 <div className="eyebrow"><i /> Advertiser Feedback</div>
-                <h2>Real Campaign Conversations.<br /><span className="gradient">Real LeadVix Advertiser Feedback.</span></h2>
+                <h2>Real Campaign Conversations.<br /><span className="gradient">Real Affsense Advertiser Feedback.</span></h2>
               </div>
       
               <div className="results-grid stagger">
-                <article className="result"><div className="result-img"><img loading="lazy" src="https://leadvix.io/marketing/testimonials/chat-carlos.png" alt="LeadVix advertiser testimonial" /></div><div className="result-cap"><b>Sale from 6 leads</b><span>Individual advertiser result</span></div></article>
-                <article className="result"><div className="result-img"><img loading="lazy" src="https://leadvix.io/marketing/testimonials/chat-campaign-update.png" alt="LeadVix campaign update" /></div><div className="result-cap"><b>22 opt-ins → 2 sales</b><span>Individual advertiser result</span></div></article>
-                <article className="result"><div className="result-img"><img loading="lazy" src="https://leadvix.io/marketing/testimonials/chat-aditya.png" alt="LeadVix advertiser result" /></div><div className="result-cap"><b>81 leads, sale closed</b><span>Individual advertiser result</span></div></article>
-                <article className="result"><div className="result-img"><img loading="lazy" src="https://leadvix.io/marketing/testimonials/chat-chris.png" alt="LeadVix advertiser feedback" /></div><div className="result-cap"><b>Positive lead feedback</b><span>Individual advertiser feedback</span></div></article>
+                <article className="result"><div className="result-img"><img loading="lazy" src="https://affsense.com/marketing/testimonials/chat-carlos.png" alt="Affsense advertiser testimonial" /></div><div className="result-cap"><b>Sale from 6 leads</b><span>Individual advertiser result</span></div></article>
+                <article className="result"><div className="result-img"><img loading="lazy" src="https://affsense.com/marketing/testimonials/chat-campaign-update.png" alt="Affsense campaign update" /></div><div className="result-cap"><b>22 opt-ins → 2 sales</b><span>Individual advertiser result</span></div></article>
+                <article className="result"><div className="result-img"><img loading="lazy" src="https://affsense.com/marketing/testimonials/chat-aditya.png" alt="Affsense advertiser result" /></div><div className="result-cap"><b>81 leads, sale closed</b><span>Individual advertiser result</span></div></article>
+                <article className="result"><div className="result-img"><img loading="lazy" src="https://affsense.com/marketing/testimonials/chat-chris.png" alt="Affsense advertiser feedback" /></div><div className="result-cap"><b>Positive lead feedback</b><span>Individual advertiser feedback</span></div></article>
               </div>
       
               <p className="disclaimer">Results shown are individual examples and are not typical or guaranteed. Performance depends on offer, niche, funnel, targeting, budget, follow-up, market conditions and experience.</p>
@@ -664,12 +664,12 @@ export function Preview2LandingPage() {
             <div className="container">
               <div className="cta reveal">
                 <div className="eyebrow"><i /> Your Offer. Your Funnel. Your Leads.</div>
-                <h2 style={{"marginTop":"22px"}}>Use Your Own Offer — Or Start With One of Ours.<br /><span className="gradient">LeadVix Handles the Lead Generation Flow.</span></h2>
+                <h2 style={{"marginTop":"22px"}}>Use Your Own Offer — Or Start With One of Ours.<br /><span className="gradient">Affsense Handles the Lead Generation Flow.</span></h2>
                 <p>
                   Generate verified opt-ins for your own product, affiliate offer, program or business opportunity, or choose a built-in CPA offer.
-                  LeadVix connects the opt-in, verification, autoresponder and offer redirect process in one advertiser platform.
+                  Affsense connects the opt-in, verification, autoresponder and offer redirect process in one advertiser platform.
                 </p>
-                <Link href="/register" className="btn btn-primary">Create My LeadVix Account →</Link>
+                <Link href="/register" className="btn btn-primary">Create My Affsense Account →</Link>
               </div>
             </div>
           </section>
@@ -679,7 +679,7 @@ export function Preview2LandingPage() {
           <div className="container">
             <div className="footer-top">
               <div className="footer-brand">
-                <Link href="/" className="brand"><span className="brandmark">✦</span><span>LeadVix</span></Link>
+                <Link href="/" className="brand"><span className="brandmark">✦</span><span>Affsense</span></Link>
                 <p>AI-powered Pay Per Lead advertising with verified opt-ins, flexible offer support, built-in CPA offers, an in-house autoresponder, funnels, integrations and campaign optimization.</p>
               </div>
               <div className="footer-links">
@@ -707,7 +707,7 @@ export function Preview2LandingPage() {
             </div>
       
             <div className="copy">
-              <span>© 2026 LeadVix. All rights reserved.</span>
+              <span>© 2026 Affsense. All rights reserved.</span>
               <span>Lead costs and campaign results vary by niche, targeting, country tier and market conditions.</span>
             </div>
           </div>

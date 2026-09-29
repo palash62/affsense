@@ -40,7 +40,7 @@ export function AdvertiserCpaInvoiceDocument({
         <article className="rounded-xl border border-border bg-card p-8 shadow-sm print:rounded-none print:border-0 print:shadow-none">
           <header className="flex flex-wrap items-start justify-between gap-6 border-b border-border pb-6">
             <div>
-              <p className="text-2xl font-semibold tracking-tight text-foreground">LeadVix</p>
+              <p className="text-2xl font-semibold tracking-tight text-foreground">Affsense</p>
               <p className="mt-1 text-sm text-muted-foreground">{PLATFORM_EMAILS.support}</p>
             </div>
             <div className="text-right">

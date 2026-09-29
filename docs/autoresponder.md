@@ -82,7 +82,7 @@ Example:
 }
 ```
 
-Leave the template blank to keep the default LeadVix payload (recommended for Zapier / Make / n8n).
+Leave the template blank to keep the default Affsense payload (recommended for Zapier / Make / n8n).
 
 ### Zapier / Make bridge
 

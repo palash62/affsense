@@ -8,7 +8,7 @@ Both services run on one server with Nginx routing by domain.
 |---|---|
 | OS + Nginx | ~300MB |
 | MySQL 8 | ~512MB |
-| Platform (leadvix.io) | ~900MB |
+| Platform (affsense.com) | ~900MB |
 | Tracking (track.leadtb.com) | ~280MB |
 | Buffer | ~1GB |
 
@@ -37,9 +37,9 @@ Build order: tracking first (lighter), then platform.
 ## Nginx virtual hosts
 
 ```bash
-sudo cp deploy/nginx/platform.conf /etc/nginx/sites-available/leadvix.io
+sudo cp deploy/nginx/platform.conf /etc/nginx/sites-available/affsense.com
 sudo cp deploy/nginx/tracking.conf /etc/nginx/sites-available/track.leadtb.com
-sudo ln -sf /etc/nginx/sites-available/leadvix.io /etc/nginx/sites-enabled/
+sudo ln -sf /etc/nginx/sites-available/affsense.com /etc/nginx/sites-enabled/
 sudo ln -sf /etc/nginx/sites-available/track.leadtb.com /etc/nginx/sites-enabled/
 sudo nginx -t && sudo systemctl reload nginx
 ```
@@ -64,7 +64,7 @@ cp .env.example apps/tracking/.env
 ```
 
 Set:
-- `NEXT_PUBLIC_PLATFORM_URL=https://leadvix.io`
+- `NEXT_PUBLIC_PLATFORM_URL=https://affsense.com`
 - `NEXT_PUBLIC_TRACKING_URL=https://track.leadtb.com`
 - Same `DATABASE_URL` and `INTERNAL_SERVICE_TOKEN` in both apps
 
@@ -72,7 +72,7 @@ Set:
 
 | Domain | Service | Port |
 |---|---|---|
-| leadvix.io | Platform | 3000 |
+| affsense.com | Platform | 3000 |
 | track.leadtb.com | Tracking | 3001 |
 
 See [SERVICE-ARCHITECTURE.md](./SERVICE-ARCHITECTURE.md) for API boundaries.

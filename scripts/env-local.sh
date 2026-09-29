@@ -37,17 +37,13 @@ TRACKING_URL="http://localhost:3001"
 NEXT_PUBLIC_PLATFORM_URL="$LOCAL_PLATFORM_URL"
 NEXT_PUBLIC_TRACKING_URL="http://localhost:3001"
 PORT=$LOCAL_PLATFORM_PORT
-# Transactional email (uncomment one provider to test locally):
-# Mailgun (preferred):
-# MAILGUN_API_KEY="key-..."
-# MAILGUN_DOMAIN="mg.example.com"
-# MAILGUN_FROM="LeadVix <noreply@mg.example.com>"
-# SMTP (e.g. Mailtrap):
-# SMTP_HOST="sandbox.smtp.mailtrap.io"
+# Transactional email (uncomment to test locally):
+# SendGrid SMTP (leave MAILGUN_API_KEY unset, otherwise Mailgun is used first):
+# SMTP_HOST="smtp.sendgrid.net"
 # SMTP_PORT="587"
-# SMTP_USER="..."
-# SMTP_PASS="..."
-# SMTP_FROM="LeadVix <noreply@leadvix.local>"
+# SMTP_USER="apikey"
+# SMTP_PASS="SG...."
+# SMTP_FROM="Affsense <noreply@affsense.com>"
 EOF
 
 cat > "$ROOT/apps/tracking/.env" <<EOF

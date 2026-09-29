@@ -64,7 +64,7 @@ describe("getEmailProviderStatus", () => {
       port: 587,
       secure: false,
       from: "noreply@example.com",
-      appUrl: "https://leadvix.io",
+      appUrl: "https://affsense.com",
     });
     getTransporterForConfigMock.mockReturnValue({ sendMail: vi.fn() });
 

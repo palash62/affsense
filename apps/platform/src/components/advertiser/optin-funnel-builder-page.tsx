@@ -19,7 +19,7 @@ function resolveCustomDomainBase(funnel: SerializedOptinFunnel | null | undefine
   if (!funnel?.isPublished) return null;
   if (funnel.customDomain?.status !== "VERIFIED") return null;
   const appUrl =
-    typeof window !== "undefined" ? window.location.origin : "https://leadvix.io";
+    typeof window !== "undefined" ? window.location.origin : "https://affsense.com";
   return buildFunnelPublicUrl({
     slug: funnel.slug,
     appUrl,

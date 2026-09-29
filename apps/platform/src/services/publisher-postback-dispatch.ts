@@ -60,7 +60,7 @@ async function fireHttpGet(url: string): Promise<{ ok: boolean; status: number; 
       method: "GET",
       redirect: "manual",
       signal: controller.signal,
-      headers: { "User-Agent": "LeadVix-Publisher-Postback/1.0" },
+      headers: { "User-Agent": "Affsense-Publisher-Postback/1.0" },
     });
     if (res.status >= 200 && res.status < 400) {
       return { ok: true, status: res.status };

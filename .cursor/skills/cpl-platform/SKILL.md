@@ -1,10 +1,10 @@
 ---
 name: cpl-platform
 description: >-
-  LeadFlow CPL monorepo — platform (leadvix.io) and tracking (track.leadtb.com)
+  LeadFlow CPL monorepo — platform (affsense.com) and tracking (track.leadtb.com)
   apps, Prisma/MySQL, NextAuth, advertiser email module, and local dev workflow.
   Use when working in this repo, adding CPL features, fixing auth/sessions, email
-  UI, campaigns/leads/wallet, or when the user mentions CPL, LeadFlow, or leadvix.
+  UI, campaigns/leads/wallet, or when the user mentions CPL, LeadFlow, or affsense.
 ---
 
 # CPL Platform

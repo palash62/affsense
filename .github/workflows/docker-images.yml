@@ -42,11 +42,11 @@ jobs:
           NODE_ENV: production
           DATABASE_URL: mysql://build:build@127.0.0.1:3306/build
           AUTH_SECRET: ci-docker-build-placeholder-min-32-chars
-          AUTH_URL: https://leadvix.io
-          APP_URL: https://leadvix.io
-          PLATFORM_URL: https://leadvix.io
+          AUTH_URL: https://affsense.com
+          APP_URL: https://affsense.com
+          PLATFORM_URL: https://affsense.com
           TRACKING_URL: https://track.leadtb.com
-          NEXT_PUBLIC_PLATFORM_URL: https://leadvix.io
+          NEXT_PUBLIC_PLATFORM_URL: https://affsense.com
           NEXT_PUBLIC_TRACKING_URL: https://track.leadtb.com
           INTERNAL_SERVICE_TOKEN: ci-internal-service-token-placeholder
 

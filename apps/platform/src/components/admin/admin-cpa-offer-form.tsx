@@ -309,7 +309,7 @@ export function AdminCpaOfferForm({ mode, offer }: AdminCpaOfferFormProps) {
         <FieldRow
           label="Network Tracking URL"
           required
-          help="Destination URL for the platform redirect. If the network supports click macros, include {click_id} or [click_id] (e.g. sub1=[click_id]) — Leadvix replaces these with the platform click id."
+          help="Destination URL for the platform redirect. If the network supports click macros, include {click_id} or [click_id] (e.g. sub1=[click_id]) — Affsense replaces these with the platform click id."
         >
           <Input
             value={values.trackingUrl}

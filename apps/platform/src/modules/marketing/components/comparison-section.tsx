@@ -16,7 +16,7 @@ export function ComparisonSection() {
 
         <div className="box">
           <h3>
-            <span className="purple">LeadVix</span> Pay Per Lead
+            <span className="purple">Affsense</span> Pay Per Lead
           </h3>
           <ul>
             <li>✅ Buy verified leads from $0.70–$2.50</li>

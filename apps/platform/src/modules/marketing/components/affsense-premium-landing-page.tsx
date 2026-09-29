@@ -625,7 +625,7 @@ export function AffsensePremiumLandingPage() {
               <a href="/privacy.html">Privacy</a>
               <a href="/termsofservice.html">Affiliate Terms</a>
               <a href="#legal">Earnings Disclaimer</a>
-              <a href="mailto:support@leadvix.io">Support</a>
+              <a href="mailto:support@affsense.com">Support</a>
               <Link href="/login">Login</Link>
             </div>
           </div>

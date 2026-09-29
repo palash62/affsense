@@ -32,7 +32,7 @@ async function main() {
   }
 
   const admins: Array<{ email: string; name: string }> = [
-    { email: "admin@leadvix.io", name: "Admin" },
+    { email: "admin@affsense.com", name: "Admin" },
     { email: "ppalash62@gmail.com", name: "Palash" },
     { email: "affsensellc@gmail.com", name: "Affsense LLC" },
   ];

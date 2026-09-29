@@ -98,10 +98,10 @@ function htmlPage(title: string, body: string, extra = ""): string {
 
 function loginHtml(error?: string) {
   return htmlPage(
-    "Sign in — LeadVix",
+    "Sign in — Affsense",
     `${error ? `<div class="err">${error}</div>` : ""}
      <h1>Welcome back</h1>
-     <p class="sub">Sign in to your LeadVix account</p>
+     <p class="sub">Sign in to your Affsense account</p>
      <form method="POST" action="/login">
        <label for="email">Email</label>
        <input id="email" name="email" type="email" required placeholder="admin@cpl.local"/>
@@ -116,7 +116,7 @@ function loginHtml(error?: string) {
 function dashboardHtml(user: SessionUser) {
   const dash = ROLE_ROUTES[user.role];
   return htmlPage(
-    "Dashboard — LeadVix",
+    "Dashboard — Affsense",
     `<span class="badge">Lite mode</span>
      <h1>Hello, ${user.name}</h1>
      <p class="sub">Signed in as ${user.email} (${user.role})</p>

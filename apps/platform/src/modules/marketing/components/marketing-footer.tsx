@@ -7,7 +7,7 @@ export function MarketingFooter() {
           <a href="/terms">Terms of Service</a>
           <a href="/contact">Contact</a>
         </nav>
-        <p>© 2026 LeadVix. All rights reserved.</p>
+        <p>© 2026 Affsense. All rights reserved.</p>
       </div>
     </footer>
   );

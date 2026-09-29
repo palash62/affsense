@@ -6,7 +6,7 @@ describe("shouldApplyViewAs", () => {
     expect(
       shouldApplyViewAs(
         "/api/v1/admin/users",
-        "https://leadvix.io/admin/advertisers",
+        "https://affsense.com/admin/advertisers",
         "ADVERTISER",
       ),
     ).toBe(false);
@@ -16,7 +16,7 @@ describe("shouldApplyViewAs", () => {
     expect(
       shouldApplyViewAs(
         "/api/v1/admin/users",
-        "https://leadvix.io/admin/publishers",
+        "https://affsense.com/admin/publishers",
         "PUBLISHER",
       ),
     ).toBe(false);
@@ -26,7 +26,7 @@ describe("shouldApplyViewAs", () => {
     expect(
       shouldApplyViewAs(
         "/api/v1/campaigns",
-        "https://leadvix.io/advertiser/campaigns",
+        "https://affsense.com/advertiser/campaigns",
         "ADVERTISER",
       ),
     ).toBe(true);

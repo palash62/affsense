@@ -10,7 +10,7 @@ export const CUSTOM_CODE_SANDBOX =
   "allow-scripts allow-forms allow-popups" as const;
 
 /** postMessage type used by the iframe height reporter. */
-export const CUSTOM_CODE_RESIZE_MESSAGE = "leadvix-custom-code-resize" as const;
+export const CUSTOM_CODE_RESIZE_MESSAGE = "affsense-custom-code-resize" as const;
 
 const BASE_STYLE = `html, body { margin: 0; }`;
 

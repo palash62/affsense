@@ -68,7 +68,7 @@ export async function fireGlobalPostbackTest(input: {
     method: "GET",
     redirect: "manual",
     signal: AbortSignal.timeout(15_000),
-    headers: { "User-Agent": "LeadVix-Admin-Postback-Test/1.0" },
+    headers: { "User-Agent": "Affsense-Admin-Postback-Test/1.0" },
   });
 
   const body = await res.json().catch(() => null);

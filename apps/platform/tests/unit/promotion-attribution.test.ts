@@ -19,7 +19,7 @@ describe("promotion attribution helpers", () => {
   });
 
   it("builds landing URLs with unencoded brace macros", () => {
-    const url = buildPromotionUrl("https://leadvix.io", {
+    const url = buildPromotionUrl("https://affsense.com", {
       landingPath: "/",
       utmSource: "facebook",
       utmMedium: "paid",
@@ -47,8 +47,8 @@ describe("promotion attribution helpers", () => {
   });
 
   it("formats tracked click URLs", () => {
-    expect(buildPromotionClickUrl("https://leadvix.io", "promo_123")).toBe(
-      "https://leadvix.io/api/v1/promo/click/promo_123",
+    expect(buildPromotionClickUrl("https://affsense.com", "promo_123")).toBe(
+      "https://affsense.com/api/v1/promo/click/promo_123",
     );
   });
 

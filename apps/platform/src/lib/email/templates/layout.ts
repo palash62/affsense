@@ -7,7 +7,7 @@ export function emailLayout(content: string, appUrl: string) {
     <tr><td align="center">
       <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;">
         <tr><td style="background:linear-gradient(135deg,#6366f1,#8b5cf6);padding:20px 24px;">
-          <p style="margin:0;color:#fff;font-size:18px;font-weight:600;">LeadVix</p>
+          <p style="margin:0;color:#fff;font-size:18px;font-weight:600;">Affsense</p>
         </td></tr>
         <tr><td style="padding:24px;color:#334155;font-size:15px;line-height:1.6;">${content}</td></tr>
         <tr><td style="padding:16px 24px;border-top:1px solid #f1f5f9;background:#f8fafc;">

@@ -2,7 +2,7 @@
 
 export function MailgunMarketingInfo() {
   const appUrl =
-    typeof window !== "undefined" ? window.location.origin : "https://leadvix.io";
+    typeof window !== "undefined" ? window.location.origin : "https://affsense.com";
   const webhookUrl = `${appUrl}/api/v1/webhooks/mailgun`;
 
   return (
