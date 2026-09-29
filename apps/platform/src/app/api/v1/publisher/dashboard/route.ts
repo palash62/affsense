@@ -1,6 +1,7 @@
 import { withAuth } from "@/lib/api-handler";
 import {
   getAffsensePublisherDashboard,
+  parsePublisherDashboardSource,
   type PublisherDashboardPeriod,
 } from "@/services/publisher-dashboard.service";
 
@@ -15,7 +16,8 @@ export async function GET(request: Request) {
   return withAuth(async (session) => {
     const { searchParams } = new URL(request.url);
     const period = parsePeriod(searchParams.get("period"));
-    const data = await getAffsensePublisherDashboard(session.user.id, period);
+    const source = parsePublisherDashboardSource(searchParams.get("source"));
+    const data = await getAffsensePublisherDashboard(session.user.id, period, source);
     return Response.json({ data });
   }, ["PUBLISHER"]);
 }

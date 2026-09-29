@@ -5,12 +5,13 @@ import { Suspense } from "react";
 import { getSession } from "@/lib/session";
 import {
   getAffsensePublisherDashboard,
+  parsePublisherDashboardSource,
   type PublisherDashboardPeriod,
 } from "@/services/publisher-dashboard.service";
 import { AffsensePublisherDashboard } from "@/components/publisher/affsense-dashboard/affsense-publisher-dashboard";
 
 interface PageProps {
-  searchParams: Promise<{ period?: string }>;
+  searchParams: Promise<{ period?: string; source?: string }>;
 }
 
 function parsePeriod(value: string | undefined): PublisherDashboardPeriod {
@@ -26,7 +27,8 @@ export default async function PublisherDashboardPage({ searchParams }: PageProps
 
   const params = await searchParams;
   const period = parsePeriod(params.period);
-  const data = await getAffsensePublisherDashboard(session.user.id, period);
+  const source = parsePublisherDashboardSource(params.source);
+  const data = await getAffsensePublisherDashboard(session.user.id, period, source);
 
   return (
     <Suspense fallback={null}>

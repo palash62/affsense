@@ -463,6 +463,10 @@ export function SidebarNavList({
           );
         }
 
+        if (entry.kind === "divider") {
+          return <div key={`divider-${index}`} className="my-3 border-t border-white/10" />;
+        }
+
         const item = entry.item;
         if (item.children?.length) {
           return (

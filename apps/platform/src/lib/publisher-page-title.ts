@@ -16,7 +16,7 @@ export function getPublisherPageMeta(
   }
 
   const exact: Record<string, { title: string; subtitle?: string }> = {
-    "/publisher/marketplace": { title: "Marketplace", subtitle: "Browse products to promote" },
+    "/publisher/marketplace": { title: "Digital Products", subtitle: "Browse products to promote" },
     "/publisher/marketplace/report": {
       title: "Marketplace Report",
       subtitle: "Product performance — clicks, orders, conversion rate, and EPC",
@@ -50,7 +50,7 @@ export function getPublisherPageMeta(
       title: "CPA Postback",
       subtitle: "S2S callback when your CPA offers convert",
     },
-    "/publisher/promotions": { title: "My Promotions", subtitle: "Manage your active promotions" },
+    "/publisher/promotions": { title: "My Links", subtitle: "Manage your active promotions" },
     "/publisher/referrals": { title: "Referrals", subtitle: "Invite affiliates and earn commissions" },
     "/publisher/earnings": {
       title: "Earnings & Payouts",
@@ -91,7 +91,7 @@ export function getPublisherPageMeta(
   if (exact[path]) return exact[path];
 
   const prefixes: Array<[string, string]> = [
-    ["/publisher/marketplace/", "Marketplace"],
+    ["/publisher/marketplace/", "Digital Products"],
     ["/publisher/payouts/", "Payouts"],
     ["/publisher/reports/", "Reports"],
     ["/publisher/earnings/", "Earnings"],

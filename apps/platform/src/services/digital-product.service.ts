@@ -993,6 +993,7 @@ export type PublisherCommissionChartPoint = {
   label: string;
   sales: number;
   commission: number;
+  orders: number;
 };
 
 export type PublisherCommissionSlice = {
@@ -1137,15 +1138,16 @@ export async function getPublisherCommissionReport(opts: {
     upsellCount: 0,
   };
 
-  const byDay = new Map<string, { sales: number; commission: number }>();
+  const byDay = new Map<string, { sales: number; commission: number; orders: number }>();
   const byType = new Map<string, number>();
   const byProduct = new Map<string, number>();
+  const productStatsMap = new Map<string, { orders: number; commission: number }>();
 
   for (const row of filtered) {
     const amount = row.amount ?? 0;
     const commission = row.commission ?? 0;
     const day = dayKey(row.date);
-    const bucket = byDay.get(day) ?? { sales: 0, commission: 0 };
+    const bucket = byDay.get(day) ?? { sales: 0, commission: 0, orders: 0 };
 
     if (row.orderType === "Refund") {
       kpis.refunds += amount;
@@ -1155,8 +1157,15 @@ export async function getPublisherCommissionReport(opts: {
       kpis.commission += commission;
       bucket.sales += amount;
       bucket.commission += commission;
+      bucket.orders += 1;
       byType.set(row.orderType, (byType.get(row.orderType) ?? 0) + commission);
-      if (row.product) byProduct.set(row.product, (byProduct.get(row.product) ?? 0) + commission);
+      if (row.product) {
+        byProduct.set(row.product, (byProduct.get(row.product) ?? 0) + commission);
+        const stats = productStatsMap.get(row.product) ?? { orders: 0, commission: 0 };
+        stats.orders += 1;
+        stats.commission += commission;
+        productStatsMap.set(row.product, stats);
+      }
       if (row.orderType === "Front End") kpis.frontEndCount += 1;
       if (row.orderType === "Upsell") kpis.upsellCount += 1;
     }
@@ -1172,12 +1181,13 @@ export async function getPublisherCommissionReport(opts: {
   const last = new Date(seriesEnd.getFullYear(), seriesEnd.getMonth(), seriesEnd.getDate());
   while (cursor <= last) {
     const key = dayKey(cursor);
-    const bucket = byDay.get(key) ?? { sales: 0, commission: 0 };
+    const bucket = byDay.get(key) ?? { sales: 0, commission: 0, orders: 0 };
     series.push({
       date: key,
       label: cursor.toLocaleDateString("en-GB", { day: "2-digit", month: "short" }),
       sales: bucket.sales,
       commission: bucket.commission,
+      orders: bucket.orders,
     });
     cursor.setDate(cursor.getDate() + 1);
   }
@@ -1196,11 +1206,14 @@ export async function getPublisherCommissionReport(opts: {
   const safePage = Math.min(page, totalPages);
   const items = filtered.slice((safePage - 1) * limit, safePage * limit);
 
+  const productStats = [...productStatsMap.entries()].map(([name, stats]) => ({ name, ...stats }));
+
   return {
     kpis,
     series,
     typeSlices,
     productSlices,
+    productStats,
     items,
     total,
     page: safePage,

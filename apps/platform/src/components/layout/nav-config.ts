@@ -49,6 +49,7 @@ export interface NavItem {
 
 export type AdminNavEntry =
   | { kind: "section"; label: string }
+  | { kind: "divider" }
   | { kind: "item"; item: NavItem };
 
 /** Legacy admin routes preserved under Old Menu (also used for staff menu assignment UI). */
@@ -220,12 +221,11 @@ export const PUBLISHER_LEGACY_NAV: NavItem[] = [
 ];
 
 export const PUBLISHER_NAV: AdminNavEntry[] = [
-  { kind: "section", label: "EARN" },
   { kind: "item", item: { label: "Dashboard", href: "/publisher", icon: LayoutDashboard } },
   {
     kind: "item",
     item: {
-      label: "Marketplace",
+      label: "Digital Products",
       href: "/publisher/marketplace",
       icon: ShoppingBag,
       children: [
@@ -239,11 +239,14 @@ export const PUBLISHER_NAV: AdminNavEntry[] = [
   {
     kind: "item",
     item: {
-      label: "Get Paid Tasks",
-      href: "/publisher/get-paid-tasks",
-      icon: ListTodo,
+      label: "CPA Offers",
+      href: "/publisher/cpa-offers",
+      icon: Store,
       children: [
-        { label: "Paid Task", href: "/publisher/get-paid-tasks", icon: ListTodo },
+        { label: "Browse Offers", href: "/publisher/cpa-offers", icon: Store },
+        { label: "Report", href: "/publisher/cpa-offers/report", icon: BarChart3 },
+        { label: "Report Log", href: "/publisher/cpa-offers/report-log", icon: ScrollText },
+        { label: "Postback", href: "/publisher/cpa-offers/postback", icon: Webhook },
       ],
     },
   },
@@ -262,27 +265,17 @@ export const PUBLISHER_NAV: AdminNavEntry[] = [
   {
     kind: "item",
     item: {
-      label: "CPA Offers",
-      href: "/publisher/cpa-offers",
-      icon: Store,
+      label: "Get Paid Tasks",
+      href: "/publisher/get-paid-tasks",
+      icon: ListTodo,
       children: [
-        { label: "Browse Offers", href: "/publisher/cpa-offers", icon: Store },
-        { label: "Report", href: "/publisher/cpa-offers/report", icon: BarChart3 },
-        { label: "Report Log", href: "/publisher/cpa-offers/report-log", icon: ScrollText },
-        { label: "Postback", href: "/publisher/cpa-offers/postback", icon: Webhook },
+        { label: "Paid Task", href: "/publisher/get-paid-tasks", icon: ListTodo },
       ],
     },
   },
-  { kind: "item", item: { label: "My Promotions", href: "/publisher/promotions", icon: Percent } },
-  { kind: "item", item: { label: "Referrals", href: "/publisher/referrals", icon: Gift } },
 
-  { kind: "section", label: "ACCOUNT" },
-  { kind: "item", item: { label: "Earnings & Payouts", href: "/publisher/earnings", icon: Wallet } },
-  { kind: "item", item: { label: "Invoices", href: "/publisher/invoices", icon: FileText } },
-  { kind: "item", item: { label: "Profile Settings", href: "/publisher/settings", icon: Settings } },
-  { kind: "item", item: { label: "Support", href: "/publisher/support", icon: LifeBuoy } },
-
-  { kind: "section", label: "REPORTS" },
+  { kind: "divider" },
+  { kind: "item", item: { label: "My Links", href: "/publisher/promotions", icon: Link2 } },
   {
     kind: "item",
     item: {
@@ -300,8 +293,23 @@ export const PUBLISHER_NAV: AdminNavEntry[] = [
       ],
     },
   },
+  {
+    kind: "item",
+    item: {
+      label: "Wallet",
+      href: "/publisher/earnings",
+      icon: Wallet,
+      children: [
+        { label: "Earnings & Payouts", href: "/publisher/earnings", icon: Banknote },
+        { label: "Invoices", href: "/publisher/invoices", icon: FileText },
+      ],
+    },
+  },
+  { kind: "item", item: { label: "Referrals", href: "/publisher/referrals", icon: Gift } },
 
-  { kind: "section", label: "RESOURCES" },
+  { kind: "divider" },
+  { kind: "item", item: { label: "Help Center", href: "/publisher/support", icon: LifeBuoy } },
+  { kind: "item", item: { label: "Settings", href: "/publisher/settings", icon: Settings } },
   { kind: "item", item: { label: "Announcements", href: "/publisher/announcements", icon: Bell } },
 ];
 
@@ -350,6 +358,7 @@ function filterAdminNavForManager(staffMenuAccess: string[]): AdminNavEntry[] {
       pendingSection = entry;
       continue;
     }
+    if (entry.kind !== "item") continue;
 
     const { item } = entry;
     if (item.href === "/admin") continue;
