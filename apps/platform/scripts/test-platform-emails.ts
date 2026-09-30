@@ -120,6 +120,14 @@ async function main() {
 
   results.push(
     await sendTemplate(
+      "welcome (publisher, pending review)",
+      "welcome",
+      renderWelcomeEmail({ ...base, role: "PUBLISHER" }),
+    ),
+  );
+
+  results.push(
+    await sendTemplate(
       "email_verification",
       "email_verification",
       renderEmailVerificationEmail({

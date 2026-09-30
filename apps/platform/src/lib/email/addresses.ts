@@ -10,6 +10,7 @@ export const PLATFORM_EMAILS = {
   noreply: mailgunFromAddress(),
   support: process.env.SUPPORT_EMAIL?.trim() || "support@affsense.com",
   admin: process.env.ADMIN_ALERT_EMAIL?.trim() || "admin@affsense.com",
+  supportTelegram: process.env.SUPPORT_TELEGRAM?.trim().replace(/^@/, "") || "yuvrajlushte",
   fromDisplay:
     process.env.MAILGUN_FROM?.trim() ||
     process.env.SMTP_FROM?.trim() ||

@@ -10,6 +10,7 @@ import {
   renderWelcomeEmail,
 } from "@/lib/email/templates";
 import type { EmailTemplateId } from "@/lib/email/types";
+import { PLATFORM_EMAILS } from "@/lib/email/addresses";
 import { prisma } from "@/lib/prisma";
 import { sendEmail, getAdminAlertEmail } from "@/services/email.service";
 import { getResolvedEmailConfig } from "@/services/smtp-settings.service";
@@ -71,7 +72,7 @@ export async function notifyWelcome(user: { id: string; email: string; name: str
     notificationTitle: "Welcome to Affsense",
     notificationBody: isAdvertiser
       ? "Check your email and verify your address to activate your account."
-      : "Your account is pending review. We will notify you when it is activated.",
+      : `Your account is pending review. We will notify you when it is activated. Want faster approval? Contact support at ${PLATFORM_EMAILS.support} or on Telegram @${PLATFORM_EMAILS.supportTelegram}.`,
   });
 }
 
