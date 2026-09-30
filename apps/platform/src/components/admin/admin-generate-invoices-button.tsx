@@ -32,7 +32,7 @@ export function AdminGenerateInvoicesButton() {
         toast.info(
           data.skipped > 0
             ? `No invoices raised. ${data.skipped} affiliate${data.skipped === 1 ? "" : "s"} below the $${data.minimumAmount} minimum.`
-            : "No uninvoiced earnings for the last completed week.",
+            : "No uninvoiced earnings to bill.",
         );
       } else {
         toast.success(

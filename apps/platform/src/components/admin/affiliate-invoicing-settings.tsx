@@ -26,6 +26,7 @@ type SettingsState = {
   netTermDays: number;
   timezone: string;
   startAt: string;
+  weeklyCycle: boolean;
 };
 
 /** `datetime-local` needs `yyyy-MM-ddTHH:mm`, not a full ISO string. */
@@ -67,6 +68,7 @@ export function AffiliateInvoicingSettingsForm() {
           netTermDays: settings.netTermDays,
           timezone: settings.timezone,
           startAt: settings.startAt,
+          weeklyCycle: settings.weeklyCycle,
         }),
       });
       const json = await res.json().catch(() => ({}));
@@ -116,6 +118,33 @@ export function AffiliateInvoicingSettingsForm() {
               While enabled, affiliates are paid through invoices and cannot request payouts
               themselves.
             </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Weekly cycle (Monday to Sunday)</Label>
+            <Select
+              value={settings.weeklyCycle ? "on" : "off"}
+              onValueChange={(v) => {
+                if (v) setSettings({ ...settings, weeklyCycle: v === "on" });
+              }}
+            >
+              <SelectTrigger className="max-w-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="on">On</SelectItem>
+                <SelectItem value="off">Off</SelectItem>
+              </SelectContent>
+            </Select>
+            {settings.weeklyCycle ? (
+              <p className="text-xs text-muted-foreground">
+                Invoices cover the last completed Monday-to-Sunday week.
+              </p>
+            ) : (
+              <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                Testing mode: Generate invoices bills all earnings up to now.
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">

@@ -28,6 +28,7 @@ export async function updateAffiliateInvoicingSettings(
     netTermDays?: number;
     timezone?: string;
     startAt?: string;
+    weeklyCycle?: boolean;
   },
   adminId: string,
 ) {
@@ -52,6 +53,7 @@ export async function updateAffiliateInvoicingSettings(
         netTermDays: next.netTermDays,
         timezone: next.timezone,
         startAt: next.startAt,
+        weeklyCycle: next.weeklyCycle,
       },
     },
   });

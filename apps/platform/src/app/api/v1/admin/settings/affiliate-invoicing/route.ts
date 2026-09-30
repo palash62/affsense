@@ -24,6 +24,7 @@ export async function PATCH(request: Request) {
           netTermDays: typeof body.netTermDays === "number" ? body.netTermDays : undefined,
           timezone: typeof body.timezone === "string" ? body.timezone : undefined,
           startAt: typeof body.startAt === "string" ? body.startAt : undefined,
+          weeklyCycle: typeof body.weeklyCycle === "boolean" ? body.weeklyCycle : undefined,
         },
         session.user.id,
       );

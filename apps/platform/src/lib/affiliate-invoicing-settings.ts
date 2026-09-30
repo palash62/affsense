@@ -14,6 +14,11 @@ export type AffiliateInvoicingConfig = {
    * not re-billed for money already withdrawn through the old payout flow.
    */
   startAt: string;
+  /**
+   * When false, a run bills all uninvoiced earnings up to the run instant instead
+   * of the last completed Monday-to-Sunday week (testing mode).
+   */
+  weeklyCycle: boolean;
 };
 
 export type AffiliateInvoicingSettingsApi = Omit<AffiliateInvoicingConfig, "version">;
@@ -25,6 +30,7 @@ export const DEFAULT_AFFILIATE_INVOICING_CONFIG: AffiliateInvoicingConfig = {
   netTermDays: 7,
   timezone: "UTC",
   startAt: "",
+  weeklyCycle: true,
 };
 
 export function clampInvoiceMinimumAmount(value: unknown): number {
@@ -67,6 +73,7 @@ export function parseAffiliateInvoicingConfig(value: unknown): AffiliateInvoicin
     timezone:
       coerceString(raw.timezone).trim() || DEFAULT_AFFILIATE_INVOICING_CONFIG.timezone,
     startAt: normalizeStartAt(raw.startAt),
+    weeklyCycle: raw.weeklyCycle !== false,
   };
 }
 
@@ -79,6 +86,7 @@ export function toAffiliateInvoicingSettingsApi(
     netTermDays: config.netTermDays,
     timezone: config.timezone,
     startAt: config.startAt,
+    weeklyCycle: config.weeklyCycle,
   };
 }
 
@@ -90,11 +98,13 @@ export function mergeAffiliateInvoicingUpdate(
     netTermDays?: number;
     timezone?: string;
     startAt?: string;
+    weeklyCycle?: boolean;
   },
 ): AffiliateInvoicingConfig {
   const next: AffiliateInvoicingConfig = { ...existing };
 
   if (typeof input.enabled === "boolean") next.enabled = input.enabled;
+  if (typeof input.weeklyCycle === "boolean") next.weeklyCycle = input.weeklyCycle;
   if (typeof input.minimumAmount === "number") {
     next.minimumAmount = clampInvoiceMinimumAmount(input.minimumAmount);
   }

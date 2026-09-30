@@ -84,7 +84,9 @@ export async function generateAffiliateInvoices(
   const platformSettings = await getPlatformSettings();
   const minimumAmount = platformSettings.minPayoutAmount;
 
-  const { periodEnd, periodEndExclusive } = resolveInvoicePeriod(runAt, config.timezone);
+  const { periodEnd, periodEndExclusive } = config.weeklyCycle
+    ? resolveInvoicePeriod(runAt, config.timezone)
+    : { periodEnd: runAt, periodEndExclusive: new Date(runAt.getTime() + 1) };
   const startAt = config.startAt ? new Date(config.startAt) : null;
 
   const createdAtFilter: Prisma.DateTimeFilter = { lt: periodEndExclusive };
@@ -123,6 +125,7 @@ export async function generateAffiliateInvoices(
         minimumAmount,
         netTermDays: config.netTermDays,
         timezone: config.timezone,
+        weeklyCycle: config.weeklyCycle,
         issuedAt: runAt,
         adminId,
       });
@@ -159,6 +162,7 @@ async function createInvoiceForWallet(
     minimumAmount: number;
     netTermDays: number;
     timezone: string;
+    weeklyCycle: boolean;
     issuedAt: Date;
     adminId?: string;
   },
@@ -205,7 +209,9 @@ async function createInvoiceForWallet(
     total = round4(total);
     if (total < options.minimumAmount || total <= 0) return null;
 
-    const periodStart = invoiceWeekStart(entries[0].createdAt, options.timezone);
+    const periodStart = options.weeklyCycle
+      ? invoiceWeekStart(entries[0].createdAt, options.timezone)
+      : entries[0].createdAt;
     const number = await nextInvoiceNumber(tx, options.issuedAt);
 
     const profile = await tx.publisherProfile.findUnique({
