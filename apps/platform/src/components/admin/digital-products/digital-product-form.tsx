@@ -21,6 +21,7 @@ import {
 } from "./digital-product-types";
 import { OfferSummaryPanel } from "./offer-summary-panel";
 import { WebhookStatusPanel } from "./webhook-status-panel";
+import { ClickFunnelsProductPicker, useClickFunnelsProducts } from "./clickfunnels-product-picker";
 import { PromoMaterialsPanel } from "./promo-materials-panel";
 import { DashboardCard, DashboardCardTitle } from "@/components/admin/affsense-dashboard/dashboard-card";
 import { Button } from "@/components/ui/button";
@@ -86,6 +87,7 @@ export function DigitalProductForm({ productId }: { productId?: string }) {
   const [categories, setCategories] = useState<string[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [planDrafts, setPlanDrafts] = useState<CommissionPlanDraft[]>([]);
+  const { state: cfProducts, reload: reloadCfProducts } = useClickFunnelsProducts();
 
   useEffect(() => {
     const ac = new AbortController();
@@ -142,6 +144,8 @@ export function DigitalProductForm({ productId }: { productId?: string }) {
           price: String(data.price ?? ""),
           vendor: data.vendor ?? "",
           webhookSecret: "",
+          cfProductId: data.cfProductId ?? "",
+          cfProductName: data.cfProductName ?? "",
           upsells: Array.isArray(data.upsells)
             ? data.upsells.map(
                 (u: {
@@ -149,12 +153,16 @@ export function DigitalProductForm({ productId }: { productId?: string }) {
                   pageUrl?: string;
                   price?: number;
                   commissionPct?: number;
+                  cfProductId?: string | null;
+                  cfProductName?: string | null;
                 }): DigitalProductUpsellFormValues => ({
                   name: u.name ?? "",
                   pageUrl: u.pageUrl ?? "",
                   price: u.price == null ? "" : String(u.price),
                   commissionPct:
                     u.commissionPct == null ? "50" : String(u.commissionPct),
+                  cfProductId: u.cfProductId ?? "",
+                  cfProductName: u.cfProductName ?? "",
                 }),
               )
             : [],
@@ -293,6 +301,8 @@ export function DigitalProductForm({ productId }: { productId?: string }) {
         price: Number(values.price) || 0,
         vendor: values.vendor,
         imageUrl: imageUrl.trim() || null,
+        cfProductId: values.cfProductId.trim() || null,
+        cfProductName: values.cfProductName.trim() || null,
         upsells: values.upsells
           .filter((u) => u.name.trim() || u.pageUrl.trim())
           .map((u) => ({
@@ -300,6 +310,8 @@ export function DigitalProductForm({ productId }: { productId?: string }) {
             pageUrl: u.pageUrl.trim(),
             price: Number(u.price) || 0,
             commissionPct: Number(u.commissionPct) || 0,
+            cfProductId: u.cfProductId.trim() || null,
+            cfProductName: u.cfProductName.trim() || null,
           })),
         salesPages: values.salesPages
           .filter((p) => p.name.trim() || p.pageUrl.trim())
@@ -648,6 +660,21 @@ export function DigitalProductForm({ productId }: { productId?: string }) {
                   </Button>
                 </div>
                 <div className="space-y-2">
+                  <FieldLabel>ClickFunnels product (front end)</FieldLabel>
+                  <ClickFunnelsProductPicker
+                    state={cfProducts}
+                    onReload={reloadCfProducts}
+                    cfProductId={values.cfProductId}
+                    cfProductName={values.cfProductName}
+                    onChange={(next) => patch(next)}
+                    ariaLabel="ClickFunnels front end product"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Webhook sales are credited to this product only when the ClickFunnels
+                    product ID matches.
+                  </p>
+                </div>
+                <div className="space-y-2">
                   <FieldLabel required>Affiliate Tracking Parameter</FieldLabel>
                   <Input
                     value={values.affiliateTrackingParam}
@@ -861,6 +888,17 @@ export function DigitalProductForm({ productId }: { productId?: string }) {
                             %
                           </span>
                         </div>
+                      </div>
+                      <div className="space-y-2">
+                        <FieldLabel>ClickFunnels product</FieldLabel>
+                        <ClickFunnelsProductPicker
+                          state={cfProducts}
+                          onReload={reloadCfProducts}
+                          cfProductId={upsell.cfProductId}
+                          cfProductName={upsell.cfProductName}
+                          onChange={(next) => patchUpsell(index, next)}
+                          ariaLabel={`Upsell ${index + 1} ClickFunnels product`}
+                        />
                       </div>
                     </div>
                   </div>

@@ -31,8 +31,32 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import {
+  ClickFunnelsApiConnectionCard,
+  type ClickFunnelsApiState,
+} from "@/components/admin/clickfunnels-api-connection-card";
 
 const PAGE_SIZE = 20;
+
+const EMPTY_API_STATE: ClickFunnelsApiState = {
+  apiTokenConfigured: false,
+  apiTokenMasked: "",
+  apiWorkspaceId: "",
+  apiWorkspaceSubdomain: "",
+  apiWorkspaceName: "",
+};
+
+function toApiState(data: Record<string, unknown> | null | undefined): ClickFunnelsApiState {
+  if (!data) return EMPTY_API_STATE;
+  return {
+    apiTokenConfigured: Boolean(data.apiTokenConfigured),
+    apiTokenMasked: typeof data.apiTokenMasked === "string" ? data.apiTokenMasked : "",
+    apiWorkspaceId: typeof data.apiWorkspaceId === "string" ? data.apiWorkspaceId : "",
+    apiWorkspaceSubdomain:
+      typeof data.apiWorkspaceSubdomain === "string" ? data.apiWorkspaceSubdomain : "",
+    apiWorkspaceName: typeof data.apiWorkspaceName === "string" ? data.apiWorkspaceName : "",
+  };
+}
 
 type ActivityFilters = {
   q: string;
@@ -63,6 +87,7 @@ type SettingsState = {
   secretHeaderName: string;
   notes: string;
   summary: Summary;
+  api: ClickFunnelsApiState;
 };
 
 type ActivityItem = {
@@ -241,6 +266,7 @@ export function ClickFunnelsWebhookSettingsForm() {
       secretHeaderName: data.secretHeaderName ?? "X-Affsense-Secret",
       notes: data.notes ?? "",
       summary: data.summary ?? EMPTY_SUMMARY,
+      api: toApiState(data),
     });
     setDraftSecret("");
   }, []);
@@ -294,6 +320,7 @@ export function ClickFunnelsWebhookSettingsForm() {
         secretHeaderName: data.secretHeaderName,
         notes: data.notes ?? "",
         summary: data.summary ?? settings.summary,
+        api: toApiState(data),
       });
       setDraftSecret("");
       toast.success("Webhook settings saved");
@@ -638,6 +665,11 @@ export function ClickFunnelsWebhookSettingsForm() {
         </div>
       </DashboardCard>
 
+      <ClickFunnelsApiConnectionCard
+        value={settings.api}
+        onChange={(api) => setSettings((prev) => (prev ? { ...prev, api } : prev))}
+      />
+
       {/* Test */}
       <DashboardCard>
         <DashboardCardTitle>Test Webhook</DashboardCardTitle>
@@ -800,6 +832,11 @@ export function ClickFunnelsWebhookSettingsForm() {
                     </td>
                     <td className="px-5 py-3">
                       <EventStatusPill status={row.status} />
+                      {row.status !== "PROCESSED" && row.errorMessage ? (
+                        <p className="mt-1 max-w-[220px] truncate text-xs text-muted-foreground" title={row.errorMessage}>
+                          {row.errorMessage}
+                        </p>
+                      ) : null}
                     </td>
                     <td className="px-5 py-3 text-right">
                       <Button
@@ -900,8 +937,17 @@ export function ClickFunnelsWebhookSettingsForm() {
                 </div>
                 {detail.errorMessage ? (
                   <div>
-                    <dt className="text-xs font-medium text-muted-foreground">Error</dt>
-                    <dd className="mt-0.5 text-destructive">{detail.errorMessage}</dd>
+                    <dt className="text-xs font-medium text-muted-foreground">
+                      {detail.status === "FAILED" ? "Error" : "Reason"}
+                    </dt>
+                    <dd
+                      className={cn(
+                        "mt-0.5",
+                        detail.status === "FAILED" ? "text-destructive" : "text-foreground",
+                      )}
+                    >
+                      {detail.errorMessage}
+                    </dd>
                   </div>
                 ) : null}
               </dl>

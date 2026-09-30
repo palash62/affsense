@@ -54,7 +54,9 @@ function StatusBadge({ status }: { status: string | null }) {
         ? "Failed"
         : lower === "duplicate"
           ? "Duplicate"
-          : status;
+          : lower === "ignored"
+            ? "Rejected"
+            : status;
 
   return (
     <span className={cn("inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold", cls)}>
@@ -95,7 +97,26 @@ function formatUsd(n: number | null) {
   return `$${n.toFixed(2)}`;
 }
 
-export function DigitalProductOrdersTable({ rows }: { rows: DigitalProductOrderRow[] }) {
+function RecurringBadge({ isRecurring }: { isRecurring?: boolean }) {
+  return (
+    <span
+      className={cn(
+        "inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold",
+        isRecurring ? "bg-sky-100 text-sky-700" : "bg-slate-100 text-slate-600",
+      )}
+    >
+      {isRecurring ? "Recurring" : "Initial"}
+    </span>
+  );
+}
+
+export function DigitalProductOrdersTable({
+  rows,
+  showReason = false,
+}: {
+  rows: DigitalProductOrderRow[];
+  showReason?: boolean;
+}) {
   const [payloadRow, setPayloadRow] = useState<DigitalProductOrderRow | null>(null);
 
   if (rows.length === 0) {
@@ -127,6 +148,9 @@ export function DigitalProductOrdersTable({ rows }: { rows: DigitalProductOrderR
               <TableHead className="whitespace-nowrap px-4 py-3 text-xs">Source</TableHead>
               <TableHead className="whitespace-nowrap px-4 py-3 text-xs">Sub ID</TableHead>
               <TableHead className="whitespace-nowrap px-4 py-3 text-xs">Status</TableHead>
+              {showReason ? (
+                <TableHead className="whitespace-nowrap px-4 py-3 text-xs">Reason</TableHead>
+              ) : null}
               <TableHead className="whitespace-nowrap px-4 py-3 text-xs">Payment</TableHead>
               <TableHead className="px-4 py-3 text-xs">Action</TableHead>
             </TableRow>
@@ -157,7 +181,10 @@ export function DigitalProductOrdersTable({ rows }: { rows: DigitalProductOrderR
                   {row.funnel ?? "—"}
                 </TableCell>
                 <TableCell className="whitespace-nowrap px-4 py-3">
-                  <OrderTypeBadge type={row.orderType} />
+                  <div className="flex flex-col items-start gap-1">
+                    <OrderTypeBadge type={row.orderType} />
+                    <RecurringBadge isRecurring={row.isRecurring} />
+                  </div>
                 </TableCell>
                 <TableCell className="whitespace-nowrap px-4 py-3 text-right text-xs font-semibold text-foreground">
                   {formatUsd(row.amount)}
@@ -188,6 +215,14 @@ export function DigitalProductOrdersTable({ rows }: { rows: DigitalProductOrderR
                 <TableCell className="whitespace-nowrap px-4 py-3">
                   <StatusBadge status={row.webhookStatus} />
                 </TableCell>
+                {showReason ? (
+                  <TableCell
+                    className="max-w-[220px] truncate px-4 py-3 text-xs text-muted-foreground"
+                    title={row.reason ?? undefined}
+                  >
+                    {row.reason ?? "—"}
+                  </TableCell>
+                ) : null}
                 <TableCell className="whitespace-nowrap px-4 py-3">
                   <PaymentBadge status={row.paymentStatus} />
                 </TableCell>
@@ -241,6 +276,22 @@ export function DigitalProductOrdersTable({ rows }: { rows: DigitalProductOrderR
               <span>{payloadRow?.webhookStatus ?? "—"}</span>
               <span className="text-muted-foreground">Payment</span>
               <span>{payloadRow?.paymentStatus ?? "—"}</span>
+              {payloadRow?.reason ? (
+                <>
+                  <span className="text-muted-foreground">Reason</span>
+                  <span className="text-xs">{payloadRow.reason}</span>
+                </>
+              ) : null}
+              <span className="text-muted-foreground">Billing</span>
+              <span>{payloadRow?.isRecurring ? "Recurring" : "Initial"}</span>
+              <span className="text-muted-foreground">CF Product ID</span>
+              <span className="font-mono text-xs">{payloadRow?.cfProductId ?? "—"}</span>
+              <span className="text-muted-foreground">CF Order ID</span>
+              <span className="font-mono text-xs">{payloadRow?.cfOrderId ?? "—"}</span>
+              <span className="text-muted-foreground">CF Subscription ID</span>
+              <span className="font-mono text-xs">{payloadRow?.cfSubscriptionId ?? "—"}</span>
+              <span className="text-muted-foreground">Click ID</span>
+              <span className="break-all font-mono text-xs">{payloadRow?.clickId ?? "—"}</span>
             </div>
           </div>
         </DialogContent>

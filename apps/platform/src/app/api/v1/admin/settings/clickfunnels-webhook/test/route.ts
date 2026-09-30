@@ -67,7 +67,7 @@ export async function POST() {
       return Response.json({
         data: {
           ok: true,
-          message: "Test event processed successfully",
+          message: "Test event received — endpoint and secret are working (not counted as a conversion)",
           summary: activity.summary,
         },
       });

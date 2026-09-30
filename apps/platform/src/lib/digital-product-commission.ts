@@ -328,11 +328,103 @@ export async function resolveDigitalProductCommissionForPublisher(
   return applyDigitalCommissionPlan(resolved, plans.get(resolved.productId), amount);
 }
 
+/**
+ * Commission for a sale already identified by CF product mapping (no amount/slug guessing).
+ * Returns the fallback shape when the product or upsell no longer exists.
+ */
+export async function resolveDigitalProductCommissionById(input: {
+  productId: string;
+  upsellId?: string | null;
+  amount: number | null | undefined;
+  publisherId?: string | null;
+}): Promise<ResolvedDigitalProductCommission> {
+  const money = input.amount != null && Number.isFinite(input.amount) ? input.amount : null;
+  let resolved: ResolvedDigitalProductCommission | null = null;
+
+  if (input.upsellId) {
+    const upsell = await prisma.digitalProductUpsell.findFirst({
+      where: { id: input.upsellId, productId: input.productId },
+      select: { id: true, name: true, pageSlug: true, price: true, commissionPct: true, productId: true },
+    });
+    if (upsell) {
+      resolved = fromUpsell(
+        {
+          id: upsell.id,
+          name: upsell.name,
+          pageSlug: upsell.pageSlug,
+          price: Number(upsell.price),
+          commissionPct: Number(upsell.commissionPct),
+          productId: upsell.productId,
+        },
+        money,
+      );
+    }
+  } else {
+    const product = await prisma.digitalProduct.findUnique({
+      where: { id: input.productId },
+      select: { id: true, name: true, price: true, frontEndCommission: true },
+    });
+    if (product) {
+      resolved = fromFrontEnd(
+        {
+          id: product.id,
+          name: product.name,
+          pageSlug: null,
+          price: Number(product.price),
+          frontEndCommission: Number(product.frontEndCommission),
+        },
+        money,
+      );
+    }
+  }
+
+  if (!resolved) {
+    return {
+      commission: null,
+      rate: 0,
+      orderType: null,
+      productName: null,
+      productId: null,
+      upsellId: null,
+      matched: "fallback",
+    };
+  }
+  if (!input.publisherId) return resolved;
+  const plans = await loadPublisherDigitalPlanRates(input.publisherId, [input.productId]);
+  return applyDigitalCommissionPlan(resolved, plans.get(input.productId), money);
+}
+
 export type DigitalCommissionSnapshot = {
+  /** Product identified at ingest (CF product mapping); wins over slug/amount guessing. */
+  digitalProductId?: string | null;
   commissionAmount?: { toString(): string } | number | null;
   commissionRate?: { toString(): string } | number | null;
   digitalCommissionPlanId?: string | null;
 };
+
+/**
+ * Resolve a stored webhook event's product. Events identified at ingest keep their
+ * product even when the slug/amount lookup would guess a different one.
+ */
+export function resolveDigitalProductForEvent(
+  lookup: DigitalProductCommissionLookup,
+  productNameById: Map<string, string>,
+  event: { digitalProductId?: string | null },
+  pageSlug: string | null | undefined,
+  amount: number | null | undefined,
+): ResolvedDigitalProductCommission {
+  const resolved = lookup.resolve(pageSlug, amount);
+  const storedId = event.digitalProductId;
+  if (!storedId || resolved.productId === storedId) return resolved;
+  return {
+    ...resolved,
+    productId: storedId,
+    productName: productNameById.get(storedId) ?? resolved.productName,
+    upsellId: null,
+    orderType: null,
+    matched: "front_end",
+  };
+}
 
 /** Prefer the commission saved at sale time; old events keep the recalculated value. */
 export function applyDigitalCommissionSnapshot(

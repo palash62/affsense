@@ -58,6 +58,7 @@ export async function GET(request: Request) {
         to: to && !Number.isNaN(to.getTime()) ? to : undefined,
         page: parsed.data.page,
         limit: parsed.data.limit ?? 15,
+        includeRejected: searchParams.get("includeRejected") === "1",
       });
 
       return Response.json({ data });

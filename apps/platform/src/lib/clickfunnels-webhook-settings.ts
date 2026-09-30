@@ -10,6 +10,11 @@ export type ClickFunnelsWebhookConfig = {
   webhookSecret: string;
   secretHeaderName: string;
   notes: string;
+  /** ClickFunnels 2.0 API access token (Bearer). */
+  apiToken: string;
+  apiWorkspaceId: string;
+  apiWorkspaceSubdomain: string;
+  apiWorkspaceName: string;
 };
 
 export type ClickFunnelsWebhookSettingsApi = {
@@ -20,6 +25,11 @@ export type ClickFunnelsWebhookSettingsApi = {
   webhookSecretConfigured: boolean;
   secretHeaderName: string;
   notes: string;
+  apiTokenConfigured: boolean;
+  apiTokenMasked: string;
+  apiWorkspaceId: string;
+  apiWorkspaceSubdomain: string;
+  apiWorkspaceName: string;
 };
 
 export const DEFAULT_CLICKFUNNELS_WEBHOOK_CONFIG: ClickFunnelsWebhookConfig = {
@@ -30,10 +40,18 @@ export const DEFAULT_CLICKFUNNELS_WEBHOOK_CONFIG: ClickFunnelsWebhookConfig = {
   webhookSecret: "",
   secretHeaderName: "X-Affsense-Secret",
   notes: "",
+  apiToken: "",
+  apiWorkspaceId: "",
+  apiWorkspaceSubdomain: "",
+  apiWorkspaceName: "",
 };
 
 export function generateWebhookSecret(): string {
   return randomBytes(32).toString("hex");
+}
+
+function str(value: unknown): string {
+  return typeof value === "string" ? value.trim() : typeof value === "number" ? String(value) : "";
 }
 
 export function parseClickFunnelsWebhookConfig(value: unknown): ClickFunnelsWebhookConfig {
@@ -59,7 +77,18 @@ export function parseClickFunnelsWebhookConfig(value: unknown): ClickFunnelsWebh
         ? raw.secretHeaderName.trim()
         : DEFAULT_CLICKFUNNELS_WEBHOOK_CONFIG.secretHeaderName,
     notes: typeof raw.notes === "string" ? raw.notes : "",
+    apiToken: str(raw.apiToken),
+    apiWorkspaceId: str(raw.apiWorkspaceId),
+    apiWorkspaceSubdomain: str(raw.apiWorkspaceSubdomain),
+    apiWorkspaceName: str(raw.apiWorkspaceName),
   };
+}
+
+export function maskApiToken(token: string): string {
+  const value = token.trim();
+  if (!value) return "";
+  if (value.length <= 8) return "••••";
+  return `${value.slice(0, 4)}••••••••${value.slice(-4)}`;
 }
 
 export function toClickFunnelsWebhookSettingsApi(
@@ -75,20 +104,33 @@ export function toClickFunnelsWebhookSettingsApi(
     webhookSecretConfigured: Boolean(secret),
     secretHeaderName: config.secretHeaderName,
     notes: config.notes,
+    apiTokenConfigured: Boolean(config.apiToken),
+    apiTokenMasked: maskApiToken(config.apiToken),
+    apiWorkspaceId: config.apiWorkspaceId,
+    apiWorkspaceSubdomain: config.apiWorkspaceSubdomain,
+    apiWorkspaceName: config.apiWorkspaceName,
   };
 }
 
+export type ClickFunnelsWebhookUpdateInput = {
+  enabled?: boolean;
+  name?: string;
+  affiliateTrackingParam?: string;
+  webhookSecret?: string;
+  regenerateSecret?: boolean;
+  secretHeaderName?: string;
+  notes?: string;
+  /** Non-empty value replaces the stored token; empty keeps it. */
+  apiToken?: string;
+  clearApiToken?: boolean;
+  apiWorkspaceId?: string;
+  apiWorkspaceSubdomain?: string;
+  apiWorkspaceName?: string;
+};
+
 export function mergeClickFunnelsWebhookUpdate(
   existing: ClickFunnelsWebhookConfig,
-  input: {
-    enabled?: boolean;
-    name?: string;
-    affiliateTrackingParam?: string;
-    webhookSecret?: string;
-    regenerateSecret?: boolean;
-    secretHeaderName?: string;
-    notes?: string;
-  },
+  input: ClickFunnelsWebhookUpdateInput,
 ): ClickFunnelsWebhookConfig {
   let webhookSecret = existing.webhookSecret;
   if (input.regenerateSecret) {
@@ -96,6 +138,30 @@ export function mergeClickFunnelsWebhookUpdate(
   } else if (typeof input.webhookSecret === "string" && input.webhookSecret.trim()) {
     webhookSecret = input.webhookSecret.trim();
   }
+
+  let apiToken = existing.apiToken;
+  let apiWorkspaceId = existing.apiWorkspaceId;
+  let apiWorkspaceSubdomain = existing.apiWorkspaceSubdomain;
+  let apiWorkspaceName = existing.apiWorkspaceName;
+  if (input.clearApiToken) {
+    apiToken = "";
+    apiWorkspaceId = "";
+    apiWorkspaceSubdomain = "";
+    apiWorkspaceName = "";
+  } else if (typeof input.apiToken === "string" && input.apiToken.trim()) {
+    const next = input.apiToken.trim();
+    if (next !== apiToken) {
+      apiToken = next;
+      apiWorkspaceId = "";
+      apiWorkspaceSubdomain = "";
+      apiWorkspaceName = "";
+    }
+  }
+  if (typeof input.apiWorkspaceId === "string") apiWorkspaceId = input.apiWorkspaceId.trim();
+  if (typeof input.apiWorkspaceSubdomain === "string") {
+    apiWorkspaceSubdomain = input.apiWorkspaceSubdomain.trim().toLowerCase();
+  }
+  if (typeof input.apiWorkspaceName === "string") apiWorkspaceName = input.apiWorkspaceName.trim();
 
   return {
     version: 1,
@@ -114,11 +180,15 @@ export function mergeClickFunnelsWebhookUpdate(
         ? input.secretHeaderName.trim()
         : existing.secretHeaderName,
     notes: typeof input.notes === "string" ? input.notes : existing.notes,
+    apiToken,
+    apiWorkspaceId,
+    apiWorkspaceSubdomain,
+    apiWorkspaceName,
   };
 }
 
 /** Sanitize payload for storage: drop secret-like keys, truncate large strings. */
-export function sanitizeWebhookPayload(payload: unknown, maxDepth = 4): unknown {
+export function sanitizeWebhookPayload(payload: unknown, maxDepth = 6): unknown {
   if (payload == null) return null;
   if (typeof payload === "string") {
     return payload.length > 2000 ? `${payload.slice(0, 2000)}…` : payload;

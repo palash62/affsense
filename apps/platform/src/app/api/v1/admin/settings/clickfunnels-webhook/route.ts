@@ -34,6 +34,16 @@ export async function PATCH(request: Request) {
           secretHeaderName:
             typeof body.secretHeaderName === "string" ? body.secretHeaderName : undefined,
           notes: typeof body.notes === "string" ? body.notes : undefined,
+          apiToken: typeof body.apiToken === "string" ? body.apiToken : undefined,
+          clearApiToken: body.clearApiToken === true,
+          apiWorkspaceId:
+            typeof body.apiWorkspaceId === "string" || typeof body.apiWorkspaceId === "number"
+              ? String(body.apiWorkspaceId)
+              : undefined,
+          apiWorkspaceSubdomain:
+            typeof body.apiWorkspaceSubdomain === "string" ? body.apiWorkspaceSubdomain : undefined,
+          apiWorkspaceName:
+            typeof body.apiWorkspaceName === "string" ? body.apiWorkspaceName : undefined,
         },
         session.user.id,
       );

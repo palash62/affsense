@@ -345,6 +345,7 @@ model User {
   offerwallClicks          OfferwallClick[]
   digitalProductPostbackDeliveries DigitalProductPostbackDelivery[]
   publisherDigitalProductClicks DigitalProductClick[] @relation("PublisherDigitalProductClicks")
+  publisherDigitalSubscriptionAttributions DigitalProductSubscriptionAttribution[] @relation("PublisherDigitalSubscriptionAttributions")
   promotion              Promotion? @relation(fields: [promotionId], references: [id], onDelete: SetNull)
   createdPromotions      Promotion[] @relation("PromotionCreatedBy")
 
@@ -1953,6 +1954,8 @@ model DigitalProduct {
   salesPages            DigitalProductSalesPage[]
   commissionPlans       DigitalProductCommissionPlan[]
   commissionPlanMembers DigitalProductCommissionPlanMember[]
+  cfMappings            DigitalProductCfMapping[]
+  subscriptionAttributions DigitalProductSubscriptionAttribution[]
 
   @@index([status])
   @@index([categoryId])
@@ -2018,10 +2021,50 @@ model DigitalProductUpsell {
   updatedAt     DateTime       @updatedAt @map("updated_at")
   product       DigitalProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
   commissionPlanRates DigitalProductCommissionPlanUpsell[]
+  cfMappings          DigitalProductCfMapping[]
 
   @@unique([productId, pageSlug])
   @@index([pageSlug])
   @@map("digital_product_upsells")
+}
+
+/// Links a ClickFunnels product to an Affsense digital product front end (upsellId null) or upsell.
+model DigitalProductCfMapping {
+  id            String                @id @default(cuid())
+  cfProductId   String                @unique @map("cf_product_id")
+  cfProductName String?               @map("cf_product_name")
+  productId     String                @map("product_id")
+  upsellId      String?               @map("upsell_id")
+  createdAt     DateTime              @default(now()) @map("created_at")
+  updatedAt     DateTime              @updatedAt @map("updated_at")
+  product       DigitalProduct        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  upsell        DigitalProductUpsell? @relation(fields: [upsellId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@index([upsellId])
+  @@map("digital_product_cf_mappings")
+}
+
+/// Original affiliate attribution for a ClickFunnels subscription; renewals inherit it.
+model DigitalProductSubscriptionAttribution {
+  id                     String         @id @default(cuid())
+  cfSubscriptionId       String         @unique @map("cf_subscription_id")
+  productId              String         @map("product_id")
+  upsellId               String?        @map("upsell_id")
+  publisherId            String         @map("publisher_id")
+  clickId                String?        @map("click_id")
+  subId                  String?        @map("sub_id")
+  src                    String?
+  affiliateRef           String?        @map("affiliate_ref")
+  originalOrderId        String?        @map("original_order_id")
+  originalWebhookEventId String?        @map("original_webhook_event_id")
+  createdAt              DateTime       @default(now()) @map("created_at")
+  product                DigitalProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+  publisher              User           @relation("PublisherDigitalSubscriptionAttributions", fields: [publisherId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@index([publisherId])
+  @@map("digital_product_subscription_attributions")
 }
 
 model DigitalProductSalesPage {
@@ -2271,6 +2314,11 @@ model WebhookEvent {
   commissionRate          Decimal? @map("commission_rate") @db.Decimal(5, 2)
   commissionAmount        Decimal? @map("commission_amount") @db.Decimal(10, 2)
   digitalCommissionPlanId String?  @map("digital_commission_plan_id")
+  externalEventKey        String?  @unique @map("external_event_key")
+  cfProductId             String?  @map("cf_product_id")
+  cfOrderId               String?  @map("cf_order_id")
+  cfSubscriptionId        String?  @map("cf_subscription_id")
+  isRecurring             Boolean  @default(false) @map("is_recurring")
   createdAt    DateTime           @default(now()) @map("created_at")
   publisher    User?              @relation("WebhookEventPublisher", fields: [publisherId], references: [id], onDelete: SetNull)
   click        DigitalProductClick? @relation(fields: [clickId], references: [id], onDelete: SetNull)

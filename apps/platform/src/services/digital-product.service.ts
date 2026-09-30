@@ -16,11 +16,19 @@ import {
   applyDigitalCommissionSnapshot,
   loadDigitalProductCommissionLookup,
   loadPublisherDigitalPlanRates,
+  resolveDigitalProductForEvent,
   type DigitalCommissionPlanRates,
   type DigitalCommissionSnapshot,
 } from "@/lib/digital-product-commission";
 
+async function loadDigitalProductNameMap(): Promise<Map<string, string>> {
+  const rows = await prisma.digitalProduct.findMany({ select: { id: true, name: true } });
+  return new Map(rows.map((row) => [row.id, row.name]));
+}
+
 const DIGITAL_COMMISSION_SNAPSHOT_SELECT = {
+  digitalProductId: true,
+  externalEventKey: true,
   commissionAmount: true,
   commissionRate: true,
   digitalCommissionPlanId: true,
@@ -34,6 +42,8 @@ export type SerializedDigitalProductUpsell = {
   price: number;
   commissionPct: number;
   sortOrder: number;
+  cfProductId: string | null;
+  cfProductName: string | null;
 };
 
 export type DigitalProductUpsellInput = {
@@ -41,7 +51,11 @@ export type DigitalProductUpsellInput = {
   pageUrl: string;
   price: number;
   commissionPct: number;
+  cfProductId?: string | null;
+  cfProductName?: string | null;
 };
+
+type CfMappingRow = { cfProductId: string; cfProductName: string | null; upsellId: string | null };
 
 export type SerializedDigitalProductSalesPage = {
   id: string;
@@ -85,6 +99,9 @@ export type SerializedDigitalProduct = {
   affiliateTrackingParam: string | null;
   previewUrl: string | null;
   webhookSecret: string | null;
+  /** ClickFunnels product mapped to this product's front end. */
+  cfProductId: string | null;
+  cfProductName: string | null;
   upsells: SerializedDigitalProductUpsell[];
   salesPages: SerializedDigitalProductSalesPage[];
   createdAt: string;
@@ -134,15 +151,19 @@ function toInputStatus(status: string): DigitalProductStatus {
   return status.toLowerCase() === "draft" ? "DRAFT" : "ACTIVE";
 }
 
-function serializeUpsell(row: {
-  id: string;
-  name: string;
-  pageUrl: string;
-  pageSlug: string;
-  price: Prisma.Decimal;
-  commissionPct: Prisma.Decimal;
-  sortOrder: number;
-}): SerializedDigitalProductUpsell {
+function serializeUpsell(
+  row: {
+    id: string;
+    name: string;
+    pageUrl: string;
+    pageSlug: string;
+    price: Prisma.Decimal;
+    commissionPct: Prisma.Decimal;
+    sortOrder: number;
+  },
+  mappings: CfMappingRow[] = [],
+): SerializedDigitalProductUpsell {
+  const mapping = mappings.find((m) => m.upsellId === row.id);
   return {
     id: row.id,
     name: row.name,
@@ -151,6 +172,8 @@ function serializeUpsell(row: {
     price: Number(row.price),
     commissionPct: Number(row.commissionPct),
     sortOrder: row.sortOrder,
+    cfProductId: mapping?.cfProductId ?? null,
+    cfProductName: mapping?.cfProductName ?? null,
   };
 }
 
@@ -187,7 +210,10 @@ function serializeProduct(row: {
     sortOrder: number;
   }>;
   salesPages?: Array<{ id: string; name: string; pageUrl: string }>;
+  cfMappings?: CfMappingRow[];
 }): SerializedDigitalProduct {
+  const mappings = row.cfMappings ?? [];
+  const frontEndMapping = mappings.find((m) => !m.upsellId);
   return {
     id: row.id,
     name: row.name,
@@ -209,7 +235,9 @@ function serializeProduct(row: {
     affiliateTrackingParam: row.affiliateTrackingParam,
     previewUrl: row.previewUrl,
     webhookSecret: row.webhookSecret,
-    upsells: (row.upsells ?? []).map(serializeUpsell),
+    cfProductId: frontEndMapping?.cfProductId ?? null,
+    cfProductName: frontEndMapping?.cfProductName ?? null,
+    upsells: (row.upsells ?? []).map((upsell) => serializeUpsell(upsell, mappings)),
     salesPages: (row.salesPages ?? []).map((page) => ({
       id: page.id,
       name: page.name,
@@ -347,6 +375,10 @@ export async function getPublisherDigitalProduct(id: string, publisherId?: strin
   return serializePublisherProduct(row, plans?.get(row.id));
 }
 
+const CF_MAPPINGS_INCLUDE = {
+  select: { cfProductId: true, cfProductName: true, upsellId: true },
+} as const;
+
 export async function getDigitalProductById(id: string) {
   const row = await prisma.digitalProduct.findUnique({
     where: { id },
@@ -354,31 +386,42 @@ export async function getDigitalProductById(id: string) {
       category: true,
       upsells: { orderBy: { sortOrder: "asc" } },
       salesPages: { orderBy: { sortOrder: "asc" } },
+      cfMappings: CF_MAPPINGS_INCLUDE,
     },
   });
   if (!row) throw Errors.notFound("Digital product");
   return serializeProduct(row);
 }
 
-function normalizeUpsellInputs(raw: DigitalProductUpsellInput[] | undefined): Array<{
+type NormalizedUpsellInput = {
   name: string;
   pageUrl: string;
   pageSlug: string;
   price: number;
   commissionPct: number;
   sortOrder: number;
-}> {
+  cfProductId: string | null;
+  cfProductName: string | null;
+};
+
+function normalizeCfProductId(value: unknown): string | null {
+  if (typeof value === "number" && Number.isFinite(value)) return String(value);
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  return trimmed ? trimmed.slice(0, 191) : null;
+}
+
+function normalizeCfProductName(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  return trimmed ? trimmed.slice(0, 191) : null;
+}
+
+function normalizeUpsellInputs(raw: DigitalProductUpsellInput[] | undefined): NormalizedUpsellInput[] {
   if (!raw?.length) return [];
 
   const seen = new Set<string>();
-  const out: Array<{
-    name: string;
-    pageUrl: string;
-    pageSlug: string;
-    price: number;
-    commissionPct: number;
-    sortOrder: number;
-  }> = [];
+  const out: NormalizedUpsellInput[] = [];
 
   raw.forEach((item, index) => {
     const name = typeof item.name === "string" ? item.name.trim() : "";
@@ -411,6 +454,7 @@ function normalizeUpsellInputs(raw: DigitalProductUpsellInput[] | undefined): Ar
       throw Errors.validation("Upsell commission must be between 0 and 100", "upsells");
     }
 
+    const cfProductId = normalizeCfProductId(item.cfProductId);
     out.push({
       name,
       pageUrl,
@@ -418,10 +462,87 @@ function normalizeUpsellInputs(raw: DigitalProductUpsellInput[] | undefined): Ar
       price,
       commissionPct,
       sortOrder: index,
+      cfProductId,
+      cfProductName: cfProductId ? normalizeCfProductName(item.cfProductName) : null,
     });
   });
 
   return out;
+}
+
+/** Validate CF product IDs are unique in this product and not mapped to another product. */
+async function assertCfMappingsAvailable(
+  productId: string | null,
+  frontEndCfProductId: string | null,
+  upsells: NormalizedUpsellInput[],
+) {
+  const ids = [frontEndCfProductId, ...upsells.map((u) => u.cfProductId)].filter(
+    (v): v is string => Boolean(v),
+  );
+  const seen = new Set<string>();
+  for (const id of ids) {
+    if (seen.has(id)) {
+      throw Errors.validation(
+        `ClickFunnels product ${id} is selected more than once on this product`,
+        "cfProductId",
+      );
+    }
+    seen.add(id);
+  }
+  if (ids.length === 0) return;
+  const taken = await prisma.digitalProductCfMapping.findMany({
+    where: {
+      cfProductId: { in: ids },
+      ...(productId ? { productId: { not: productId } } : {}),
+    },
+    select: { cfProductId: true, product: { select: { name: true } } },
+  });
+  if (taken.length > 0) {
+    const first = taken[0]!;
+    throw Errors.validation(
+      `ClickFunnels product ${first.cfProductId} is already mapped to "${first.product.name}"`,
+      "cfProductId",
+    );
+  }
+}
+
+/** Replace all CF mappings for a product (front end + upsells matched by page slug). */
+async function syncProductCfMappings(
+  productId: string,
+  frontEnd: { cfProductId: string | null; cfProductName: string | null },
+  upsells: NormalizedUpsellInput[],
+) {
+  await prisma.$transaction(async (tx) => {
+    const upsellRows = await tx.digitalProductUpsell.findMany({
+      where: { productId },
+      select: { id: true, pageSlug: true },
+    });
+    const upsellIdBySlug = new Map(upsellRows.map((row) => [row.pageSlug, row.id]));
+    const rows: Array<{ cfProductId: string; cfProductName: string | null; upsellId: string | null }> =
+      [];
+    if (frontEnd.cfProductId) {
+      rows.push({
+        cfProductId: frontEnd.cfProductId,
+        cfProductName: frontEnd.cfProductName,
+        upsellId: null,
+      });
+    }
+    for (const upsell of upsells) {
+      const upsellId = upsellIdBySlug.get(upsell.pageSlug);
+      if (!upsell.cfProductId || !upsellId) continue;
+      rows.push({
+        cfProductId: upsell.cfProductId,
+        cfProductName: upsell.cfProductName,
+        upsellId,
+      });
+    }
+    await tx.digitalProductCfMapping.deleteMany({ where: { productId } });
+    if (rows.length > 0) {
+      await tx.digitalProductCfMapping.createMany({
+        data: rows.map((row) => ({ ...row, productId })),
+      });
+    }
+  });
 }
 
 async function replaceProductUpsells(
@@ -555,6 +676,8 @@ export async function createDigitalProduct(input: {
   thumbTone?: string;
   upsells?: DigitalProductUpsellInput[];
   salesPages?: DigitalProductSalesPageInput[];
+  cfProductId?: string | null;
+  cfProductName?: string | null;
 }) {
   const upsells = normalizeUpsellInputs(input.upsells);
   const salesPages = normalizeSalesPageInputs(
@@ -562,6 +685,11 @@ export async function createDigitalProduct(input: {
     input.salesPageUrl,
     upsells.map((u) => u.pageSlug),
   );
+  const frontEndCf = {
+    cfProductId: normalizeCfProductId(input.cfProductId),
+    cfProductName: normalizeCfProductName(input.cfProductName),
+  };
+  await assertCfMappingsAvailable(null, frontEndCf.cfProductId, upsells);
   const category = await prisma.digitalProductCategory.upsert({
     where: { name: input.category },
     create: { name: input.category, status: "ACTIVE" },
@@ -603,13 +731,9 @@ export async function createDigitalProduct(input: {
           : undefined,
       salesPages: salesPages.length > 0 ? { create: salesPages } : undefined,
     },
-    include: {
-      category: true,
-      upsells: { orderBy: { sortOrder: "asc" } },
-      salesPages: { orderBy: { sortOrder: "asc" } },
-    },
   });
-  return serializeProduct(row);
+  await syncProductCfMappings(row.id, frontEndCf, upsells);
+  return getDigitalProductById(row.id);
 }
 
 export async function updateDigitalProduct(
@@ -636,16 +760,50 @@ export async function updateDigitalProduct(
     thumbTone: string;
     upsells: DigitalProductUpsellInput[];
     salesPages: DigitalProductSalesPageInput[];
+    cfProductId: string | null;
+    cfProductName: string | null;
   }>,
 ) {
   const existing = await prisma.digitalProduct.findUnique({
     where: { id },
-    include: { upsells: { select: { pageSlug: true } } },
+    include: {
+      upsells: { select: { id: true, pageSlug: true } },
+      cfMappings: CF_MAPPINGS_INCLUDE,
+    },
   });
   if (!existing) throw Errors.notFound("Digital product");
 
   const hasUpsells = Object.prototype.hasOwnProperty.call(input, "upsells");
   const upsells = hasUpsells ? normalizeUpsellInputs(input.upsells) : null;
+  const hasFrontEndCf = Object.prototype.hasOwnProperty.call(input, "cfProductId");
+  const shouldSyncCf = hasFrontEndCf || hasUpsells;
+  const existingFrontEndCf = existing.cfMappings.find((m) => !m.upsellId);
+  const frontEndCf = hasFrontEndCf
+    ? {
+        cfProductId: normalizeCfProductId(input.cfProductId),
+        cfProductName: normalizeCfProductName(input.cfProductName),
+      }
+    : {
+        cfProductId: existingFrontEndCf?.cfProductId ?? null,
+        cfProductName: existingFrontEndCf?.cfProductName ?? null,
+      };
+  // Keep existing upsell mappings when only the front end changes.
+  const upsellsForCf: NormalizedUpsellInput[] =
+    upsells ??
+    existing.upsells.map((u, index) => {
+      const mapping = existing.cfMappings.find((m) => m.upsellId === u.id);
+      return {
+        name: "",
+        pageUrl: "",
+        pageSlug: u.pageSlug,
+        price: 0,
+        commissionPct: 0,
+        sortOrder: index,
+        cfProductId: mapping?.cfProductId ?? null,
+        cfProductName: mapping?.cfProductName ?? null,
+      };
+    });
+  if (shouldSyncCf) await assertCfMappingsAvailable(id, frontEndCf.cfProductId, upsellsForCf);
   const salesPages = Object.prototype.hasOwnProperty.call(input, "salesPages")
     ? normalizeSalesPageInputs(
         input.salesPages,
@@ -690,13 +848,9 @@ export async function updateDigitalProduct(
       imageUrl: input.imageUrl,
       thumbTone: input.thumbTone,
     },
-    include: {
-      category: true,
-      upsells: { orderBy: { sortOrder: "asc" } },
-      salesPages: { orderBy: { sortOrder: "asc" } },
-    },
   });
-  return serializeProduct(row);
+  if (shouldSyncCf) await syncProductCfMappings(row.id, frontEndCf, upsellsForCf);
+  return getDigitalProductById(row.id);
 }
 
 export async function deleteDigitalProduct(id: string) {
@@ -776,6 +930,15 @@ export type DigitalProductOrderRow = {
   eventType: string;
   webhookStatus: string;
   paymentStatus: string | null;
+  /** Ingest idempotency key; dedupe uses it before order id. */
+  dedupeKey?: string | null;
+  isRecurring?: boolean;
+  cfProductId?: string | null;
+  cfOrderId?: string | null;
+  cfSubscriptionId?: string | null;
+  clickId?: string | null;
+  /** Rejection / duplicate reason for non-PROCESSED events. */
+  reason?: string | null;
 };
 
 export type DigitalProductOrderSummary = {
@@ -826,7 +989,7 @@ export function dedupeDigitalProductOrderRows(
 ): DigitalProductOrderRow[] {
   const best = new Map<string, DigitalProductOrderRow>();
   for (const row of rows) {
-    const key = row.orderId?.trim() || row.id;
+    const key = row.dedupeKey || row.orderId?.trim() || row.id;
     const existing = best.get(key);
     if (!existing || preferOrderRow(row, existing)) {
       best.set(key, row);
@@ -844,6 +1007,7 @@ export type DigitalProductWebhookEventForDedupe = {
   src?: string | null;
   createdAt: Date;
   status?: string | null;
+  externalEventKey?: string | null;
 };
 
 /** Prefer PROCESSED + attributed + tracking params + newest when collapsing CF retries. */
@@ -873,7 +1037,7 @@ export function dedupeDigitalProductWebhookEventsByOrderId<
   const best = new Map<string, T>();
   for (const [idx, ev] of events.entries()) {
     const fields = extractOrderFields(ev.payloadJson);
-    const key = fields.orderId?.trim() || ev.id || `idx-${idx}`;
+    const key = ev.externalEventKey || fields.orderId?.trim() || ev.id || `idx-${idx}`;
     const existing = best.get(key);
     if (!existing || preferWebhookEventForOrderIdDedupe(ev, existing)) {
       best.set(key, ev);
@@ -886,18 +1050,20 @@ type SummaryOrderRow = DigitalCommissionSnapshot & {
   publisherId: string | null;
   eventType: string;
   payloadJson: unknown;
+  externalEventKey?: string | null;
 };
 
 function summarizeDigitalProductOrders(
   rows: Array<SummaryOrderRow & { orderId: string | null }>,
   commissionLookup: Awaited<ReturnType<typeof loadDigitalProductCommissionLookup>>,
+  productNameById: Map<string, string>,
 ): DigitalProductOrderSummary {
   // Collapse by order id so retries don't inflate revenue / affiliate sales.
   // Caller should pass newest-first; first attributed row wins, else first seen.
   const best = new Map<string, SummaryOrderRow>();
   for (const [idx, ev] of rows.entries()) {
     const fields = extractOrderFields(ev.payloadJson);
-    const orderId = fields.orderId ?? `idx-${idx}`;
+    const orderId = ev.externalEventKey || fields.orderId || `idx-${idx}`;
     const existing = best.get(orderId);
     if (!existing) {
       best.set(orderId, ev);
@@ -925,7 +1091,7 @@ function summarizeDigitalProductOrders(
     if (ev.publisherId) {
       affiliateSales += 1;
       const resolved = applyDigitalCommissionSnapshot(
-        commissionLookup.resolve(fields.pageSlug, amount),
+        resolveDigitalProductForEvent(commissionLookup, productNameById, ev, fields.pageSlug, amount),
         ev,
       );
       totalCommissions += resolved.commission ?? 0;
@@ -950,13 +1116,18 @@ export async function listDigitalProductOrders(opts: {
   eventType?: string;
   page?: number;
   limit?: number;
+  /** Include IGNORED / DUPLICATE / FAILED webhook events (with their reason). */
+  includeRejected?: boolean;
 } = {}) {
   const page = Math.max(1, opts.page ?? 1);
   const limit = Math.min(100, Math.max(1, opts.limit ?? 15));
   const skip = (page - 1) * limit;
   const subIdFilter = opts.subId?.trim() || undefined;
 
-  const where: Prisma.WebhookEventWhereInput = {};
+  // Only Affsense-attributed conversions are orders; rejected events are opt-in.
+  const where: Prisma.WebhookEventWhereInput = opts.includeRejected
+    ? {}
+    : { status: "PROCESSED", publisherId: { not: null } };
   if (opts.from || opts.to) {
     where.createdAt = {
       ...(opts.from ? { gte: opts.from } : {}),
@@ -977,10 +1148,19 @@ export async function listDigitalProductOrders(opts: {
     publisher: { select: { id: true, name: true, email: true } },
     payloadJson: true,
     createdAt: true,
+    errorMessage: true,
+    isRecurring: true,
+    cfProductId: true,
+    cfOrderId: true,
+    cfSubscriptionId: true,
+    clickId: true,
     ...DIGITAL_COMMISSION_SNAPSHOT_SELECT,
   } as const;
 
-  const commissionLookup = await loadDigitalProductCommissionLookup();
+  const [commissionLookup, productNameById] = await Promise.all([
+    loadDigitalProductCommissionLookup(),
+    loadDigitalProductNameMap(),
+  ]);
 
   const mapRow = (
     row: DigitalCommissionSnapshot & {
@@ -994,13 +1174,20 @@ export async function listDigitalProductOrders(opts: {
       publisher: { id: string; name: string; email: string } | null;
       payloadJson: unknown;
       createdAt: Date;
+      errorMessage: string | null;
+      isRecurring: boolean;
+      cfProductId: string | null;
+      cfOrderId: string | null;
+      cfSubscriptionId: string | null;
+      clickId: string | null;
+      externalEventKey?: string | null;
     },
   ): DigitalProductOrderRow => {
     const fields = extractOrderFields(row.payloadJson);
     const leadFallback = extractLeadFromClickFunnelsPayload(row.payloadJson);
     const amount = fields.amount;
     const resolved = applyDigitalCommissionSnapshot(
-      commissionLookup.resolve(fields.pageSlug, amount),
+      resolveDigitalProductForEvent(commissionLookup, productNameById, row, fields.pageSlug, amount),
       row,
     );
     const commission =
@@ -1026,6 +1213,13 @@ export async function listDigitalProductOrders(opts: {
       eventType: row.eventType,
       webhookStatus: row.status,
       paymentStatus: fields.paymentStatus,
+      dedupeKey: row.externalEventKey ?? null,
+      isRecurring: row.isRecurring,
+      cfProductId: row.cfProductId,
+      cfOrderId: row.cfOrderId,
+      cfSubscriptionId: row.cfSubscriptionId,
+      clickId: row.clickId,
+      reason: row.status === "PROCESSED" ? null : row.errorMessage,
     };
   };
 
@@ -1039,7 +1233,7 @@ export async function listDigitalProductOrders(opts: {
       select,
     }),
     prisma.webhookEvent.findMany({
-      where: { ...where, status: "PROCESSED" },
+      where: { ...where, status: "PROCESSED", publisherId: { not: null } },
       select: {
         publisherId: true,
         eventType: true,
@@ -1068,6 +1262,7 @@ export async function listDigitalProductOrders(opts: {
       orderId: extractOrderFields(ev.payloadJson).orderId,
     })),
     commissionLookup,
+    productNameById,
   );
 
   const total = dedupedItems.length;
@@ -1190,12 +1385,21 @@ export async function getPublisherCommissionReport(opts: {
     },
   });
 
-  const commissionLookup = await loadDigitalProductCommissionLookup();
+  const [commissionLookup, productNameById] = await Promise.all([
+    loadDigitalProductCommissionLookup(),
+    loadDigitalProductNameMap(),
+  ]);
 
   const mapped: PublisherCommissionRow[] = events.map((row) => {
     const fields = extractOrderFields(row.payloadJson);
     const resolved = applyDigitalCommissionSnapshot(
-      commissionLookup.resolve(fields.pageSlug, fields.amount),
+      resolveDigitalProductForEvent(
+        commissionLookup,
+        productNameById,
+        row,
+        fields.pageSlug,
+        fields.amount,
+      ),
       row,
     );
     const orderType =
@@ -1751,6 +1955,7 @@ export async function listDigitalProductAffiliateProductReportForAdmin(
   });
   const commissionLookup = await loadDigitalProductCommissionLookup();
   const productById = new Map(catalogProducts.map((p) => [p.id, p]));
+  const productNameById = new Map(catalogProducts.map((p) => [p.id, p.name]));
   const productIdByName = new Map<string, string>();
   for (const p of catalogProducts) {
     const key = normalizeProductNameKey(p.name);
@@ -1856,7 +2061,7 @@ export async function listDigitalProductAffiliateProductReportForAdmin(
 
     const amount = fields.amount ?? 0;
     const resolved = applyDigitalCommissionSnapshot(
-      commissionLookup.resolve(fields.pageSlug, amount),
+      resolveDigitalProductForEvent(commissionLookup, productNameById, ev, fields.pageSlug, amount),
       ev,
     );
     const productName =

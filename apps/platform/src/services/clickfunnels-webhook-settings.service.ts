@@ -7,6 +7,7 @@ import {
   parseClickFunnelsWebhookConfig,
   toClickFunnelsWebhookSettingsApi,
   type ClickFunnelsWebhookConfig,
+  type ClickFunnelsWebhookUpdateInput,
 } from "@/lib/clickfunnels-webhook-settings";
 
 export async function loadClickFunnelsWebhookConfig(): Promise<ClickFunnelsWebhookConfig> {
@@ -23,15 +24,7 @@ export async function getClickFunnelsWebhookSettingsForAdmin() {
 }
 
 export async function updateClickFunnelsWebhookSettings(
-  input: {
-    enabled?: boolean;
-    name?: string;
-    affiliateTrackingParam?: string;
-    webhookSecret?: string;
-    regenerateSecret?: boolean;
-    secretHeaderName?: string;
-    notes?: string;
-  },
+  input: ClickFunnelsWebhookUpdateInput,
   adminId: string,
 ) {
   const existing = await loadClickFunnelsWebhookConfig();
@@ -59,6 +52,10 @@ export async function updateClickFunnelsWebhookSettings(
           input.regenerateSecret ||
             (typeof input.webhookSecret === "string" && input.webhookSecret.trim()),
         ),
+        apiTokenUpdated: Boolean(
+          input.clearApiToken || (typeof input.apiToken === "string" && input.apiToken.trim()),
+        ),
+        apiWorkspaceId: next.apiWorkspaceId || null,
       },
     },
   });
@@ -234,6 +231,11 @@ export async function createWebhookEvent(input: {
   commissionRate?: number | null;
   commissionAmount?: number | null;
   digitalCommissionPlanId?: string | null;
+  externalEventKey?: string | null;
+  cfProductId?: string | null;
+  cfOrderId?: string | null;
+  cfSubscriptionId?: string | null;
+  isRecurring?: boolean;
 }) {
   return prisma.webhookEvent.create({
     data: {
@@ -254,6 +256,11 @@ export async function createWebhookEvent(input: {
       commissionRate: input.commissionRate ?? null,
       commissionAmount: input.commissionAmount ?? null,
       digitalCommissionPlanId: input.digitalCommissionPlanId ?? null,
+      externalEventKey: input.externalEventKey ?? null,
+      cfProductId: input.cfProductId?.slice(0, 191) ?? null,
+      cfOrderId: input.cfOrderId?.slice(0, 191) ?? null,
+      cfSubscriptionId: input.cfSubscriptionId?.slice(0, 191) ?? null,
+      isRecurring: input.isRecurring ?? false,
     },
   });
 }

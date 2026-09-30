@@ -116,9 +116,10 @@ export async function loadDigitalProductAffiliateParamNames(): Promise<string[]>
 }
 
 /**
- * Resolve publisher from webhook payload; fall back to recent DigitalProductClick
- * for the matched product when the tracking param is missing from CF.
- * Also attach clickId / subId / src from the matched click for reporting.
+ * Resolve publisher from the affiliate tracking param in the webhook payload.
+ * Sales without the param are NOT attributed — a recent click by some publisher is
+ * never enough (organic sales and renewals would be credited to the latest clicker).
+ * clickId / subId / src come from that publisher's own click on the same product.
  */
 export type DigitalProductWebhookAttribution = {
   publisherId: string | null;
@@ -133,6 +134,8 @@ export async function resolveDigitalProductWebhookAttribution(input: {
   platformParam?: string | null;
   requestUrl?: URL;
   at?: Date;
+  /** Product resolved from the CF product mapping; omit to fall back to the catalog lookup. */
+  productId?: string | null;
 }): Promise<DigitalProductWebhookAttribution> {
   const productParams = await loadDigitalProductAffiliateParamNames();
   const paramNames = buildAffiliateParamCandidates(input.platformParam, productParams);
@@ -143,76 +146,50 @@ export async function resolveDigitalProductWebhookAttribution(input: {
   );
   const fromRef = await resolvePublisherFromAffiliateRef(affiliateRef);
 
-  const fields = extractOrderFieldsFromClickFunnelsPayload(input.body);
-  const lookup = await loadDigitalProductCommissionLookup();
-  const resolved = lookup.resolve(fields.pageSlug, fields.amount);
-  const at = input.at ?? new Date();
-  const windowStart = new Date(at.getTime() - DIGITAL_PRODUCT_CLICK_ATTRIBUTION_WINDOW_MS);
+  if (!fromRef.publisherId) {
+    return {
+      publisherId: null,
+      affiliateRef: fromRef.affiliateRef,
+      clickId: null,
+      subId: null,
+      src: null,
+    };
+  }
 
-  if (fromRef.publisherId) {
-    if (!resolved.productId) {
-      return {
-        publisherId: fromRef.publisherId,
-        affiliateRef: fromRef.affiliateRef,
-        clickId: null,
-        subId: null,
-        src: null,
-      };
-    }
+  let productId = input.productId;
+  if (productId === undefined) {
+    const fields = extractOrderFieldsFromClickFunnelsPayload(input.body);
+    const lookup = await loadDigitalProductCommissionLookup();
+    productId = lookup.resolve(fields.pageSlug, fields.amount).productId;
+  }
 
-    const click = await prisma.digitalProductClick.findFirst({
-      where: {
-        productId: resolved.productId,
-        publisherId: fromRef.publisherId,
-        createdAt: { gte: windowStart, lte: at },
-      },
-      orderBy: { createdAt: "desc" },
-      select: { id: true, subId: true, src: true },
-    });
-
+  if (!productId) {
     return {
       publisherId: fromRef.publisherId,
       affiliateRef: fromRef.affiliateRef,
-      clickId: click?.id ?? null,
-      subId: click?.subId ?? null,
-      src: click?.src ?? null,
-    };
-  }
-
-  if (!resolved.productId) {
-    return {
-      publisherId: null,
-      affiliateRef: fromRef.affiliateRef,
       clickId: null,
       subId: null,
       src: null,
     };
   }
 
+  const at = input.at ?? new Date();
+  const windowStart = new Date(at.getTime() - DIGITAL_PRODUCT_CLICK_ATTRIBUTION_WINDOW_MS);
   const click = await prisma.digitalProductClick.findFirst({
     where: {
-      productId: resolved.productId,
+      productId,
+      publisherId: fromRef.publisherId,
       createdAt: { gte: windowStart, lte: at },
     },
     orderBy: { createdAt: "desc" },
-    select: { id: true, publisherId: true, subId: true, src: true },
+    select: { id: true, subId: true, src: true },
   });
 
-  if (!click?.publisherId) {
-    return {
-      publisherId: null,
-      affiliateRef: fromRef.affiliateRef,
-      clickId: null,
-      subId: null,
-      src: null,
-    };
-  }
-
   return {
-    publisherId: click.publisherId,
-    affiliateRef: fromRef.affiliateRef ?? click.publisherId,
-    clickId: click.id,
-    subId: click.subId,
-    src: click.src,
+    publisherId: fromRef.publisherId,
+    affiliateRef: fromRef.affiliateRef,
+    clickId: click?.id ?? null,
+    subId: click?.subId ?? null,
+    src: click?.src ?? null,
   };
 }

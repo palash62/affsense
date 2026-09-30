@@ -46,7 +46,7 @@ describe("resolveDigitalProductWebhookAttribution click enrichment", () => {
     });
   });
 
-  it("copies subId/src/clickId when fallback click matches product", async () => {
+  it("does not attribute a sale without an affiliate ref to a recent clicker", async () => {
     resolvePublisherFromAffiliateRefMock.mockResolvedValue({
       publisherId: null,
       affiliateRef: null,
@@ -67,16 +67,34 @@ describe("resolveDigitalProductWebhookAttribution click enrichment", () => {
     });
 
     expect(result).toEqual({
-      publisherId: "pub-1",
-      affiliateRef: "pub-1",
-      clickId: "click-1",
-      subId: "profile",
-      src: "facebook",
+      publisherId: null,
+      affiliateRef: null,
+      clickId: null,
+      subId: null,
+      src: null,
     });
+    expect(digitalProductClickFindFirst).not.toHaveBeenCalled();
+  });
+
+  it("uses the mapped productId for click enrichment instead of the catalog lookup", async () => {
+    resolvePublisherFromAffiliateRefMock.mockResolvedValue({
+      publisherId: "pub-37",
+      affiliateRef: "37e34b6q",
+    });
+    digitalProductClickFindFirst.mockResolvedValue(null);
+
+    const result = await resolveDigitalProductWebhookAttribution({
+      body: { affsense_id: "37e34b6q", purchase: { products: [{ amount_cents: 995 }] } },
+      at: new Date("2026-09-10T12:00:00.000Z"),
+      productId: "prod-mapped",
+    });
+
+    expect(result.publisherId).toBe("pub-37");
+    expect(result.clickId).toBeNull();
+    expect(loadDigitalProductCommissionLookupMock).not.toHaveBeenCalled();
     expect(digitalProductClickFindFirst).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: expect.objectContaining({ productId: "prod-1" }),
-        select: { id: true, publisherId: true, subId: true, src: true },
+        where: expect.objectContaining({ productId: "prod-mapped", publisherId: "pub-37" }),
       }),
     );
   });

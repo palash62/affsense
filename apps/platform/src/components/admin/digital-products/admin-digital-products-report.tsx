@@ -113,6 +113,7 @@ export function AdminDigitalProductsReport({
   const [draft, setDraft] = useState<AppliedFilters>(emptyFilters);
   const [applied, setApplied] = useState<AppliedFilters>(emptyFilters);
   const [page, setPage] = useState(1);
+  const [showRejected, setShowRejected] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -139,6 +140,7 @@ export function AdminDigitalProductsReport({
     }
     if (tab === "orders") {
       if (applied.eventType.trim()) params.set("eventType", applied.eventType.trim());
+      if (showRejected) params.set("includeRejected", "1");
     } else {
       if (applied.q.trim()) params.set("q", applied.q.trim());
       if (applied.productId.trim()) params.set("productId", applied.productId.trim());
@@ -156,7 +158,7 @@ export function AdminDigitalProductsReport({
       setOrdersResult(body.data ?? null);
     }
     setLoading(false);
-  }, [page, applied, tab]);
+  }, [page, applied, tab, showRejected]);
 
   useEffect(() => {
     void load();
@@ -408,14 +410,30 @@ export function AdminDigitalProductsReport({
             description={
               loading
                 ? "Loading…"
-                : `${(ordersResult?.total ?? 0).toLocaleString()} webhook events in range`
+                : showRejected
+                  ? `${(ordersResult?.total ?? 0).toLocaleString()} webhook events in range (including rejected)`
+                  : `${(ordersResult?.total ?? 0).toLocaleString()} valid conversions in range`
             }
             icon={BarChart3}
+            actions={
+              <label className="flex cursor-pointer items-center gap-2 text-xs font-medium text-muted-foreground">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 rounded border-border accent-primary"
+                  checked={showRejected}
+                  onChange={(e) => {
+                    setShowRejected(e.target.checked);
+                    setPage(1);
+                  }}
+                />
+                Show rejected events
+              </label>
+            }
           >
             {loading ? (
               <p className="px-6 py-10 text-center text-sm text-muted-foreground">Loading orders…</p>
             ) : (
-              <DigitalProductOrdersTable rows={orderItems} />
+              <DigitalProductOrdersTable rows={orderItems} showReason={showRejected} />
             )}
             {totalPages > 1 ? (
               <div className="flex items-center justify-between border-t border-border px-5 py-3">

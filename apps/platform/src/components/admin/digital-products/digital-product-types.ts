@@ -32,6 +32,8 @@ export interface DigitalProductUpsellFormValues {
   pageUrl: string;
   price: string;
   commissionPct: string;
+  cfProductId: string;
+  cfProductName: string;
 }
 
 export interface DigitalProductSalesPageFormValues {
@@ -55,6 +57,8 @@ export interface DigitalProductFormValues {
   price: string;
   vendor: string;
   webhookSecret: string;
+  cfProductId: string;
+  cfProductName: string;
   upsells: DigitalProductUpsellFormValues[];
   salesPages: DigitalProductSalesPageFormValues[];
 }
@@ -84,6 +88,8 @@ export const DEFAULT_FORM_VALUES: DigitalProductFormValues = {
   price: "",
   vendor: "",
   webhookSecret: "",
+  cfProductId: "",
+  cfProductName: "",
   upsells: [],
   salesPages: [],
 };
@@ -94,6 +100,8 @@ export function emptyUpsellFormValues(): DigitalProductUpsellFormValues {
     pageUrl: "",
     price: "",
     commissionPct: "50",
+    cfProductId: "",
+    cfProductName: "",
   };
 }
 

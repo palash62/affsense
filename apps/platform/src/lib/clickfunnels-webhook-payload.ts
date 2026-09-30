@@ -203,6 +203,102 @@ export function extractOrderFieldsFromClickFunnelsPayload(payload: unknown): {
   };
 }
 
+export type ClickFunnelsIdentifiers = {
+  /** CF product IDs referenced by the order, in payload order (deduped). */
+  productIds: string[];
+  orderId: string | null;
+  /** Charge / invoice / transaction id for this specific payment. */
+  paymentId: string | null;
+  /** Subscription key — explicit subscription id, or `order:<id>` for CF 2.0 subscription orders. */
+  subscriptionKey: string | null;
+  /** Payload explicitly marks this as a rebill / renewal. */
+  renewalHint: boolean;
+  isRefund: boolean;
+};
+
+function pushId(out: string[], value: unknown) {
+  const id =
+    typeof value === "number" && Number.isFinite(value)
+      ? String(value)
+      : typeof value === "string" && value.trim()
+        ? value.trim()
+        : null;
+  if (id && !out.includes(id)) out.push(id);
+}
+
+function collectProductIdsFromItem(out: string[], item: Record<string, unknown> | null) {
+  if (!item) return;
+  const variant = asRecord(item.products_variant) ?? asRecord(item.variant);
+  pushId(out, variant?.product_id);
+  pushId(out, item.product_id);
+  pushId(out, item.original_product_id);
+  const product = asRecord(item.product);
+  pushId(out, product?.id);
+}
+
+const RENEWAL_PATTERN = /renew|rebill|recurring|subscription_cycle|subscription-cycle|installment/i;
+
+/** Identify the CF product(s), order, payment and subscription behind a webhook. */
+export function extractClickFunnelsIdentifiers(payload: unknown): ClickFunnelsIdentifiers {
+  const { root, data, order, purchase, lineItems } = unwrapClickFunnelsPayload(payload);
+
+  const productIds: string[] = [];
+  for (const item of lineItems) collectProductIdsFromItem(productIds, item);
+  for (const source of [purchase, root, data, order]) {
+    const products = source?.products;
+    if (Array.isArray(products)) {
+      for (const p of products) {
+        const rec = asRecord(p);
+        if (!rec) continue;
+        pushId(productIds, rec.id);
+        pushId(productIds, rec.product_id);
+      }
+    }
+  }
+  const productObj = asRecord(root.product) ?? asRecord(data?.product);
+  pushId(productIds, productObj?.id);
+  for (const source of [root, data, order, purchase]) pushId(productIds, source?.product_id);
+
+  const fields = extractOrderFieldsFromClickFunnelsPayload(payload);
+  const orderId =
+    pickString(data, ["order_id"]) ??
+    (order?.id != null ? String(order.id) : null) ??
+    fields.orderId;
+
+  const eventType = pickString(root, ["event_type", "event", "eventType", "type"]) ?? "";
+  const isInvoiceEvent = /invoice/i.test(eventType);
+  const paymentId =
+    pickString(root, ["charge_id", "transaction_id", "invoice_id", "payment_id"]) ??
+    pickString(purchase, ["charge_id", "transaction_id", "invoice_id"]) ??
+    pickString(data, ["charge_id", "transaction_id", "invoice_id", "payment_id"]) ??
+    (isInvoiceEvent ? pickString(data, ["id", "public_id"]) : null);
+
+  const subscription = asRecord(data?.subscription) ?? asRecord(root.subscription);
+  const explicitSubscription =
+    pickString(root, ["subscription_id"]) ??
+    pickString(purchase, ["subscription_id"]) ??
+    pickString(data, ["subscription_id"]) ??
+    pickString(order, ["subscription_id"]) ??
+    (subscription ? pickString(subscription, ["id", "public_id"]) : null);
+  const orderType = pickString(order, ["order_type", "type"]) ?? "";
+  const subscriptionKey =
+    explicitSubscription ??
+    (orderId && /subscription/i.test(orderType) ? `order:${orderId}` : null);
+
+  const hintSources = [
+    eventType,
+    pickString(data, ["invoice_type", "billing_reason", "reason", "type"]) ?? "",
+    pickString(root, ["billing_reason", "purchase_type"]) ?? "",
+    pickString(purchase, ["billing_reason", "purchase_type"]) ?? "",
+  ].join(" ");
+  const renewalHint = RENEWAL_PATTERN.test(hintSources);
+  const isRefund = /refund|chargeback/i.test(
+    `${eventType} ${fields.orderType ?? ""} ${fields.paymentStatus ?? ""}`,
+  );
+
+  return { productIds, orderId, paymentId, subscriptionKey, renewalHint, isRefund };
+}
+
 /** Resolve CF page_slug from explicit fields or landing/page URLs. */
 export function extractPageSlugFromClickFunnelsPayload(payload: unknown): string | null {
   const { root, data, order, lineItems } = unwrapClickFunnelsPayload(payload);

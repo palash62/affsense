@@ -18,6 +18,7 @@ interface PageSectionProps {
   children: React.ReactNode;
   className?: string;
   contentClassName?: string;
+  actions?: React.ReactNode;
 }
 
 export function PageSection({
@@ -28,6 +29,7 @@ export function PageSection({
   children,
   className,
   contentClassName,
+  actions,
 }: PageSectionProps) {
   return (
     <div className={cn("premium-card overflow-hidden", className)}>
@@ -43,6 +45,7 @@ export function PageSection({
               <CardDescription className="mt-0.5">{description}</CardDescription>
             )}
           </div>
+          {actions ? <div className="ml-auto">{actions}</div> : null}
         </div>
       </CardHeader>
       <CardContent className={cn("p-0", contentClassName)}>{children}</CardContent>

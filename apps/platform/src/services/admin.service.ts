@@ -1733,7 +1733,7 @@ export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
     }),
     prisma.cpaOfferClick.count({ where: { createdAt: { gte: since30d } } }),
     prisma.webhookEvent.count({
-      where: { status: "PROCESSED", createdAt: { gte: since30d } },
+      where: { status: "PROCESSED", publisherId: { not: null }, createdAt: { gte: since30d } },
     }),
     prisma.digitalProductPostbackDelivery.aggregate({
       _sum: { payout: true },
