@@ -1,10 +1,24 @@
 "use client";
 
+import { useCallback, useState } from "react";
+import { buildDigitalProductTrackingUrl } from "@cpl/shared";
 import { Copy, ExternalLink, Package, Pencil, Sparkles, Star } from "lucide-react";
 import { toast } from "sonner";
+import {
+  AffiliateTrackingLinkCard,
+  type AffiliateTrackingExtras,
+} from "@/components/admin/affiliate-tracking-link-card";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { ButtonLink } from "@/components/ui/button-link";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import type { SerializedDigitalProduct } from "@/services/digital-product.service";
 import {
@@ -45,15 +59,37 @@ function Stat({ label, children }: { label: string; children: React.ReactNode })
   );
 }
 
-export function AdminDigitalProductDetailPage({ product }: { product: SerializedDigitalProduct }) {
+const MAIN_PAGE_ID = "main";
+
+export function AdminDigitalProductDetailPage({
+  product,
+  trackingBaseUrl,
+}: {
+  product: SerializedDigitalProduct;
+  trackingBaseUrl: string;
+}) {
   const letter = (product.name.trim()[0] || "?").toUpperCase();
   const trackingParam = product.affiliateTrackingParam?.trim() || "affsense_id";
   const salesPages = [
     ...(product.salesPageUrl?.trim()
-      ? [{ id: "main", name: "Main sales page", pageUrl: product.salesPageUrl.trim() }]
+      ? [{ id: MAIN_PAGE_ID, name: "Main sales page", pageUrl: product.salesPageUrl.trim() }]
       : []),
     ...product.salesPages.filter((page) => page.pageUrl.trim()),
   ];
+
+  const [selectedPageId, setSelectedPageId] = useState(salesPages[0]?.id ?? MAIN_PAGE_ID);
+  const selectedPage = salesPages.find((page) => page.id === selectedPageId) ?? salesPages[0];
+  const pageId = selectedPage && selectedPage.id !== MAIN_PAGE_ID ? selectedPage.id : undefined;
+
+  const buildAffiliateUrl = useCallback(
+    (publisherId: string, extras: AffiliateTrackingExtras) =>
+      buildDigitalProductTrackingUrl(
+        product.id,
+        { publisherId, src: extras.src, subId: extras.subId, pageId },
+        trackingBaseUrl,
+      ),
+    [product.id, pageId, trackingBaseUrl],
+  );
 
   return (
     <div className="space-y-5">
@@ -134,6 +170,43 @@ export function AdminDigitalProductDetailPage({ product }: { product: Serialized
           </div>
         </div>
       </section>
+
+      <AffiliateTrackingLinkCard
+        description="Pick an affiliate to get the exact tracking link they would use for this product."
+        buildUrl={buildAffiliateUrl}
+        unavailableMessage={
+          salesPages.length === 0
+            ? "Add a sales page URL to this product before generating tracking links."
+            : undefined
+        }
+      >
+        {salesPages.length > 1 ? (
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium text-foreground">Sales page</Label>
+            <Select
+              value={selectedPage?.id ?? null}
+              onValueChange={(v) => {
+                if (v) setSelectedPageId(v);
+              }}
+            >
+              <SelectTrigger className="h-10 w-full rounded-lg bg-card">
+                <SelectValue>
+                  {(value: string | null) =>
+                    salesPages.find((page) => page.id === value)?.name ?? "Select sales page"
+                  }
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {salesPages.map((page) => (
+                  <SelectItem key={page.id} value={page.id}>
+                    {page.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        ) : null}
+      </AffiliateTrackingLinkCard>
 
       <Section
         title="Sales pages"

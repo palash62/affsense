@@ -1,7 +1,13 @@
 "use client";
 
+import { useCallback } from "react";
+import { buildCpaOfferTrackingUrl } from "@cpl/shared";
 import { Copy, ExternalLink, Pencil } from "lucide-react";
 import { toast } from "sonner";
+import {
+  AffiliateTrackingLinkCard,
+  type AffiliateTrackingExtras,
+} from "@/components/admin/affiliate-tracking-link-card";
 import { PageHeader } from "@/components/layout/page-header";
 import { CpaOfferGeoFlags } from "@/components/cpa/cpa-offer-geo-flags";
 import {
@@ -44,8 +50,23 @@ function DetailRow({ label, children }: { label: string; children: React.ReactNo
   );
 }
 
-export function AdminCpaOfferDetailPage({ offer }: { offer: SerializedCpaOffer }) {
+export function AdminCpaOfferDetailPage({
+  offer,
+  trackingBaseUrl,
+}: {
+  offer: SerializedCpaOffer;
+  trackingBaseUrl: string;
+}) {
   const letter = (offer.name.trim()[0] || "?").toUpperCase();
+  const buildAffiliateUrl = useCallback(
+    (publisherId: string, extras: AffiliateTrackingExtras) =>
+      buildCpaOfferTrackingUrl(
+        offer.id,
+        { publisherId, src: extras.src, subId: extras.subId },
+        trackingBaseUrl,
+      ),
+    [offer.id, trackingBaseUrl],
+  );
   const percent = offer.payoutType === "PERCENT";
   const margin = Number(offer.revenue) - Number(offer.payout);
   const marginLabel = percent ? `${margin.toFixed(2)}%` : formatCurrency(margin);
@@ -166,7 +187,17 @@ export function AdminCpaOfferDetailPage({ offer }: { offer: SerializedCpaOffer }
           </div>
         </div>
 
-        <CpaOfferTrackingInstructions offer={offer} />
+        <div className="min-w-0 space-y-5">
+          <AffiliateTrackingLinkCard
+            buildUrl={buildAffiliateUrl}
+            warning={
+              offer.visibility === "PRIVATE"
+                ? "This is a private offer. The link only works once the affiliate's access request is approved."
+                : undefined
+            }
+          />
+          <CpaOfferTrackingInstructions offer={offer} />
+        </div>
       </div>
     </div>
   );
