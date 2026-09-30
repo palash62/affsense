@@ -63,6 +63,8 @@ export type PublisherCpaOfferListResult = {
   page: number;
   limit: number;
   totalPages: number;
+  /** Distinct categories across all active offers (ignores current filters). */
+  categories: string[];
 };
 
 export type CpaOfferListResult = {
@@ -280,7 +282,7 @@ export async function listPublisherCpaOffers(
   const limit = Math.min(100, Math.max(1, filters.limit ?? 20));
   const where = buildWhere(filters, { activeOnly: true });
 
-  const [total, rows] = await Promise.all([
+  const [total, rows, categoryRows] = await Promise.all([
     prisma.cpaOffer.count({ where }),
     prisma.cpaOffer.findMany({
       where,
@@ -288,7 +290,16 @@ export async function listPublisherCpaOffers(
       skip: (page - 1) * limit,
       take: limit,
     }),
+    prisma.cpaOffer.findMany({
+      where: { status: "ACTIVE", category: { not: "" } },
+      distinct: ["category"],
+      select: { category: true },
+      orderBy: { category: "asc" },
+    }),
   ]);
+  const categories = [
+    ...new Set(categoryRows.map((row) => row.category.trim()).filter(Boolean)),
+  ];
 
   const offerIds = rows.map((row) => row.id);
   const [accessRows, planPayouts] = await Promise.all([
@@ -310,6 +321,7 @@ export async function listPublisherCpaOffers(
     page,
     limit,
     totalPages: Math.max(1, Math.ceil(total / limit)),
+    categories,
   };
 }
 

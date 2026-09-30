@@ -8,12 +8,20 @@ import { PublisherCpaOfferTrackingLinkDialog } from "@/components/publisher/cpa-
 import { CpaOfferCard, CpaOfferCardGrid } from "@/components/cpa/cpa-offer-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type {
   PublisherCpaOfferListResult,
   SerializedPublisherCpaOffer,
 } from "@/services/cpa-offer.service";
 
 const PAGE_SIZE = 25;
+const ALL_CATEGORIES = "all";
 
 type AppliedFilters = {
   offerId: string;
@@ -106,6 +114,7 @@ export function PublisherCpaOffersList() {
   const [page, setPage] = useState(1);
   const [trackingOffer, setTrackingOffer] = useState<SerializedPublisherCpaOffer | null>(null);
   const [requestingId, setRequestingId] = useState<string | null>(null);
+  const [categories, setCategories] = useState<string[]>([]);
 
   const loadOffers = useCallback(async () => {
     setLoading(true);
@@ -118,7 +127,9 @@ export function PublisherCpaOffersList() {
 
     const res = await fetch(`/api/v1/publisher/cpa-offers?${params}`);
     const body = await res.json().catch(() => ({}));
-    setResult(body.data ?? null);
+    const data: PublisherCpaOfferListResult | null = body.data ?? null;
+    setResult(data);
+    if (Array.isArray(data?.categories)) setCategories(data.categories);
     setLoading(false);
   }, [page, applied]);
 
@@ -148,6 +159,13 @@ export function PublisherCpaOffersList() {
   function applyFilters() {
     setPage(1);
     setApplied({ ...draft });
+  }
+
+  function selectCategory(value: string) {
+    const category = value === ALL_CATEGORIES ? "" : value;
+    setDraft((prev) => ({ ...prev, category }));
+    setApplied((prev) => ({ ...prev, category }));
+    setPage(1);
   }
 
   function clearFilters() {
@@ -180,13 +198,30 @@ export function PublisherCpaOffersList() {
               placeholder="Offer title"
             />
           </div>
-          <div className="w-full space-y-1 sm:w-36">
+          <div className="w-full space-y-1 sm:w-48">
             <label className="text-xs font-medium text-muted-foreground">Category</label>
-            <Input
-              value={draft.category}
-              onChange={(e) => setDraft((prev) => ({ ...prev, category: e.target.value }))}
-              placeholder="Category"
-            />
+            <Select
+              value={draft.category || ALL_CATEGORIES}
+              onValueChange={(v) => {
+                if (v) selectCategory(v);
+              }}
+            >
+              <SelectTrigger className="h-9 w-full" aria-label="Category">
+                <SelectValue placeholder="All categories">
+                  {(value: string | null) =>
+                    !value || value === ALL_CATEGORIES ? "All categories" : value
+                  }
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL_CATEGORIES}>All categories</SelectItem>
+                {categories.map((category) => (
+                  <SelectItem key={category} value={category}>
+                    {category}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="flex flex-wrap gap-2">
             <Button type="button" variant="outline" onClick={clearFilters}>
