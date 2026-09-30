@@ -15,6 +15,7 @@ import {
   derivePageSlugFromUrl,
   emptyUpsellFormValues,
   type DigitalProductFormValues,
+  type DigitalProductSalesPageFormValues,
   type DigitalProductStatus,
   type DigitalProductUpsellFormValues,
 } from "./digital-product-types";
@@ -157,6 +158,14 @@ export function DigitalProductForm({ productId }: { productId?: string }) {
                 }),
               )
             : [],
+          salesPages: Array.isArray(data.salesPages)
+            ? data.salesPages.map(
+                (p: { name?: string; pageUrl?: string }): DigitalProductSalesPageFormValues => ({
+                  name: p.name ?? "",
+                  pageUrl: p.pageUrl ?? "",
+                }),
+              )
+            : [],
         });
         setImageUrl(typeof data.imageUrl === "string" ? data.imageUrl : "");
       })
@@ -242,6 +251,27 @@ export function DigitalProductForm({ productId }: { productId?: string }) {
     }));
   }
 
+  function patchSalesPage(index: number, partial: Partial<DigitalProductSalesPageFormValues>) {
+    setValues((prev) => ({
+      ...prev,
+      salesPages: prev.salesPages.map((row, i) => (i === index ? { ...row, ...partial } : row)),
+    }));
+  }
+
+  function addSalesPage() {
+    setValues((prev) => ({
+      ...prev,
+      salesPages: [...prev.salesPages, { name: "", pageUrl: "" }],
+    }));
+  }
+
+  function removeSalesPage(index: number) {
+    setValues((prev) => ({
+      ...prev,
+      salesPages: prev.salesPages.filter((_, i) => i !== index),
+    }));
+  }
+
   async function persistProduct(status: DigitalProductStatus, successMessage: string) {
     if (saving) return;
     setSaving(true);
@@ -271,6 +301,9 @@ export function DigitalProductForm({ productId }: { productId?: string }) {
             price: Number(u.price) || 0,
             commissionPct: Number(u.commissionPct) || 0,
           })),
+        salesPages: values.salesPages
+          .filter((p) => p.name.trim() || p.pageUrl.trim())
+          .map((p) => ({ name: p.name.trim(), pageUrl: p.pageUrl.trim() })),
       };
       const res = await fetch(
         productId
@@ -544,13 +577,75 @@ export function DigitalProductForm({ productId }: { productId?: string }) {
             <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_240px]">
               <div className="space-y-5">
                 <div className="space-y-2">
-                  <FieldLabel required>Sales Page URL (ClickFunnels)</FieldLabel>
+                  <FieldLabel required>Main Sales Page URL (ClickFunnels)</FieldLabel>
                   <Input
                     value={values.salesPageUrl}
                     onChange={(e) => patch({ salesPageUrl: e.target.value })}
                     placeholder="https://..."
                     className="h-10 rounded-md"
                   />
+                </div>
+                <div className="space-y-3">
+                  <div>
+                    <FieldLabel>Additional sales pages (Optional)</FieldLabel>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Alternate front-end pages for the same product. Publishers pick one and
+                      their tracking link redirects to it. Each URL needs a unique{" "}
+                      <code className="rounded bg-muted px-1">page_slug</code>.
+                    </p>
+                  </div>
+                  {values.salesPages.map((page, index) => {
+                    const slug = derivePageSlugFromUrl(page.pageUrl);
+                    return (
+                      <div
+                        key={`sales-page-${index}`}
+                        className="rounded-xl border border-border bg-muted/20 p-3"
+                      >
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <Input
+                              value={page.name}
+                              onChange={(e) => patchSalesPage(index, { name: e.target.value })}
+                              placeholder="Page name, e.g. VSL page"
+                              aria-label={`Sales page ${index + 1} name`}
+                              className="h-10 rounded-md"
+                            />
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-10 w-10 shrink-0 text-destructive hover:text-destructive"
+                              onClick={() => removeSalesPage(index)}
+                              aria-label={`Remove sales page ${index + 1}`}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                          <Input
+                            value={page.pageUrl}
+                            onChange={(e) => patchSalesPage(index, { pageUrl: e.target.value })}
+                            placeholder="https://yourfunnel.clickfunnels.com/sales-vsl"
+                            aria-label={`Sales page ${index + 1} URL`}
+                            className="h-10 rounded-md"
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            Page slug:{" "}
+                            <code className="rounded bg-muted px-1">{slug ?? "—"}</code>
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-9 gap-1.5"
+                    onClick={addSalesPage}
+                  >
+                    <Plus className="h-4 w-4" />
+                    Add sales page
+                  </Button>
                 </div>
                 <div className="space-y-2">
                   <FieldLabel required>Affiliate Tracking Parameter</FieldLabel>

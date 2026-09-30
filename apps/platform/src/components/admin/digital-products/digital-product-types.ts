@@ -32,6 +32,11 @@ export interface DigitalProductUpsellFormValues {
   commissionPct: string;
 }
 
+export interface DigitalProductSalesPageFormValues {
+  name: string;
+  pageUrl: string;
+}
+
 export interface DigitalProductFormValues {
   name: string;
   category: string;
@@ -49,6 +54,7 @@ export interface DigitalProductFormValues {
   vendor: string;
   webhookSecret: string;
   upsells: DigitalProductUpsellFormValues[];
+  salesPages: DigitalProductSalesPageFormValues[];
 }
 
 export const DIGITAL_PRODUCT_TYPES = [
@@ -77,6 +83,7 @@ export const DEFAULT_FORM_VALUES: DigitalProductFormValues = {
   vendor: "",
   webhookSecret: "",
   upsells: [],
+  salesPages: [],
 };
 
 export function emptyUpsellFormValues(): DigitalProductUpsellFormValues {

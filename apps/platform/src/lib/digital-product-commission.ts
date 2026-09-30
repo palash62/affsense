@@ -156,6 +156,8 @@ export function buildDigitalProductCommissionLookup(input: {
     salesPageUrl: string | null;
     price: number | string;
     frontEndCommission: number | string;
+    /** Additional front-end sales page slugs that credit this product. */
+    salesPageSlugs?: string[];
   }>;
 }): DigitalProductCommissionLookup {
   const upsells: UpsellLookupRow[] = [];
@@ -187,6 +189,10 @@ export function buildDigitalProductCommissionLookup(input: {
     };
     frontEnds.push(entry);
     if (slug && !frontEndBySlug.has(slug)) frontEndBySlug.set(slug, entry);
+    for (const raw of product.salesPageSlugs ?? []) {
+      const extraSlug = normalizePageSlug(raw);
+      if (extraSlug && !frontEndBySlug.has(extraSlug)) frontEndBySlug.set(extraSlug, entry);
+    }
   }
 
   return {
@@ -215,6 +221,7 @@ export async function loadDigitalProductCommissionLookup(): Promise<DigitalProdu
         salesPageUrl: true,
         price: true,
         frontEndCommission: true,
+        salesPages: { select: { pageSlug: true } },
       },
     }),
   ]);
@@ -234,6 +241,7 @@ export async function loadDigitalProductCommissionLookup(): Promise<DigitalProdu
       salesPageUrl: row.salesPageUrl,
       price: Number(row.price),
       frontEndCommission: Number(row.frontEndCommission),
+      salesPageSlugs: row.salesPages.map((page) => page.pageSlug),
     })),
   });
 }

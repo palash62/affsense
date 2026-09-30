@@ -43,6 +43,17 @@ export type DigitalProductUpsellInput = {
   commissionPct: number;
 };
 
+export type SerializedDigitalProductSalesPage = {
+  id: string;
+  name: string;
+  pageUrl: string;
+};
+
+export type DigitalProductSalesPageInput = {
+  name: string;
+  pageUrl: string;
+};
+
 export type DigitalProductListFilters = {
   q?: string;
   status?: string;
@@ -75,6 +86,7 @@ export type SerializedDigitalProduct = {
   previewUrl: string | null;
   webhookSecret: string | null;
   upsells: SerializedDigitalProductUpsell[];
+  salesPages: SerializedDigitalProductSalesPage[];
   createdAt: string;
   updatedAt: string;
 };
@@ -105,6 +117,7 @@ export type SerializedPublisherDigitalProduct = {
   affiliateTrackingParam: string | null;
   previewUrl: string | null;
   upsells: Array<{ name: string; price: number; commissionPct: number }>;
+  salesPages: SerializedDigitalProductSalesPage[];
   /** True when commission rates come from the viewing publisher's custom plan. */
   hasCommissionPlan: boolean;
 };
@@ -173,6 +186,7 @@ function serializeProduct(row: {
     commissionPct: Prisma.Decimal;
     sortOrder: number;
   }>;
+  salesPages?: Array<{ id: string; name: string; pageUrl: string }>;
 }): SerializedDigitalProduct {
   return {
     id: row.id,
@@ -196,6 +210,11 @@ function serializeProduct(row: {
     previewUrl: row.previewUrl,
     webhookSecret: row.webhookSecret,
     upsells: (row.upsells ?? []).map(serializeUpsell),
+    salesPages: (row.salesPages ?? []).map((page) => ({
+      id: page.id,
+      name: page.name,
+      pageUrl: page.pageUrl,
+    })),
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
@@ -230,6 +249,7 @@ function serializePublisherProduct(
       price: u.price,
       commissionPct: plan?.upsellRates.get(u.id) ?? u.commissionPct,
     })),
+    salesPages: full.salesPages,
     hasCommissionPlan: Boolean(plan),
   };
 }
@@ -291,6 +311,7 @@ export async function listPublisherDigitalProducts(
       include: {
         category: true,
         upsells: { orderBy: { sortOrder: "asc" } },
+        salesPages: { orderBy: { sortOrder: "asc" } },
       },
       orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
       skip: (page - 1) * limit,
@@ -316,6 +337,7 @@ export async function getPublisherDigitalProduct(id: string, publisherId?: strin
     include: {
       category: true,
       upsells: { orderBy: { sortOrder: "asc" } },
+      salesPages: { orderBy: { sortOrder: "asc" } },
     },
   });
   if (!row) return null;
@@ -331,6 +353,7 @@ export async function getDigitalProductById(id: string) {
     include: {
       category: true,
       upsells: { orderBy: { sortOrder: "asc" } },
+      salesPages: { orderBy: { sortOrder: "asc" } },
     },
   });
   if (!row) throw Errors.notFound("Digital product");
@@ -434,6 +457,82 @@ async function replaceProductUpsells(
   });
 }
 
+function normalizeSalesPageInputs(
+  raw: DigitalProductSalesPageInput[] | undefined,
+  mainSalesPageUrl: string | null | undefined,
+  upsellSlugs: string[],
+): Array<{ name: string; pageUrl: string; pageSlug: string; sortOrder: number }> {
+  if (!raw?.length) return [];
+
+  const mainSlug = derivePageSlugFromUrl(mainSalesPageUrl);
+  const upsellSlugSet = new Set(upsellSlugs);
+  const seen = new Set<string>();
+  const out: Array<{ name: string; pageUrl: string; pageSlug: string; sortOrder: number }> = [];
+
+  raw.forEach((item) => {
+    const name = typeof item.name === "string" ? item.name.trim() : "";
+    const pageUrl = typeof item.pageUrl === "string" ? item.pageUrl.trim() : "";
+    if (!name && !pageUrl) return;
+    if (!name) throw Errors.validation("Sales page name is required", "salesPages");
+    if (!pageUrl) throw Errors.validation("Sales page URL is required", "salesPages");
+
+    const pageSlug = derivePageSlugFromUrl(pageUrl);
+    if (!pageSlug) {
+      throw Errors.validation(
+        `Could not derive page slug from sales page URL: ${pageUrl}`,
+        "salesPages",
+      );
+    }
+    if (pageSlug === mainSlug) {
+      throw Errors.validation(
+        `Sales page "${name}" uses the same page slug as the main sales page`,
+        "salesPages",
+      );
+    }
+    if (upsellSlugSet.has(pageSlug)) {
+      throw Errors.validation(
+        `Sales page "${name}" uses the same page slug as an upsell`,
+        "salesPages",
+      );
+    }
+    if (seen.has(pageSlug)) {
+      throw Errors.validation(
+        `Duplicate sales page slug "${pageSlug}" on this product`,
+        "salesPages",
+      );
+    }
+    seen.add(pageSlug);
+    out.push({ name, pageUrl, pageSlug, sortOrder: out.length });
+  });
+
+  return out;
+}
+
+async function replaceProductSalesPages(
+  productId: string,
+  salesPages: ReturnType<typeof normalizeSalesPageInputs>,
+) {
+  // Update in place by page slug so page ids (used in publisher links) survive edits.
+  await prisma.$transaction(async (tx) => {
+    const existing = await tx.digitalProductSalesPage.findMany({
+      where: { productId },
+      select: { id: true, pageSlug: true },
+    });
+    const idBySlug = new Map(existing.map((row) => [row.pageSlug, row.id]));
+    await tx.digitalProductSalesPage.deleteMany({
+      where: { productId, pageSlug: { notIn: salesPages.map((row) => row.pageSlug) } },
+    });
+    for (const row of salesPages) {
+      const id = idBySlug.get(row.pageSlug);
+      if (id) {
+        await tx.digitalProductSalesPage.update({ where: { id }, data: row });
+      } else {
+        await tx.digitalProductSalesPage.create({ data: { productId, ...row } });
+      }
+    }
+  });
+}
+
 export async function createDigitalProduct(input: {
   name: string;
   category: string;
@@ -455,8 +554,14 @@ export async function createDigitalProduct(input: {
   imageUrl?: string | null;
   thumbTone?: string;
   upsells?: DigitalProductUpsellInput[];
+  salesPages?: DigitalProductSalesPageInput[];
 }) {
   const upsells = normalizeUpsellInputs(input.upsells);
+  const salesPages = normalizeSalesPageInputs(
+    input.salesPages,
+    input.salesPageUrl,
+    upsells.map((u) => u.pageSlug),
+  );
   const category = await prisma.digitalProductCategory.upsert({
     where: { name: input.category },
     create: { name: input.category, status: "ACTIVE" },
@@ -496,10 +601,12 @@ export async function createDigitalProduct(input: {
               })),
             }
           : undefined,
+      salesPages: salesPages.length > 0 ? { create: salesPages } : undefined,
     },
     include: {
       category: true,
       upsells: { orderBy: { sortOrder: "asc" } },
+      salesPages: { orderBy: { sortOrder: "asc" } },
     },
   });
   return serializeProduct(row);
@@ -528,10 +635,24 @@ export async function updateDigitalProduct(
     imageUrl: string | null;
     thumbTone: string;
     upsells: DigitalProductUpsellInput[];
+    salesPages: DigitalProductSalesPageInput[];
   }>,
 ) {
-  const existing = await prisma.digitalProduct.findUnique({ where: { id } });
+  const existing = await prisma.digitalProduct.findUnique({
+    where: { id },
+    include: { upsells: { select: { pageSlug: true } } },
+  });
   if (!existing) throw Errors.notFound("Digital product");
+
+  const hasUpsells = Object.prototype.hasOwnProperty.call(input, "upsells");
+  const upsells = hasUpsells ? normalizeUpsellInputs(input.upsells) : null;
+  const salesPages = Object.prototype.hasOwnProperty.call(input, "salesPages")
+    ? normalizeSalesPageInputs(
+        input.salesPages,
+        input.salesPageUrl ?? existing.salesPageUrl,
+        (upsells ?? existing.upsells).map((u) => u.pageSlug),
+      )
+    : null;
 
   let categoryId = existing.categoryId;
   if (input.category) {
@@ -543,9 +664,8 @@ export async function updateDigitalProduct(
     categoryId = category.id;
   }
 
-  if (Object.prototype.hasOwnProperty.call(input, "upsells")) {
-    await replaceProductUpsells(id, normalizeUpsellInputs(input.upsells));
-  }
+  if (upsells) await replaceProductUpsells(id, upsells);
+  if (salesPages) await replaceProductSalesPages(id, salesPages);
 
   const row = await prisma.digitalProduct.update({
     where: { id },
@@ -573,6 +693,7 @@ export async function updateDigitalProduct(
     include: {
       category: true,
       upsells: { orderBy: { sortOrder: "asc" } },
+      salesPages: { orderBy: { sortOrder: "asc" } },
     },
   });
   return serializeProduct(row);

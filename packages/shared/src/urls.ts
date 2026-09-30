@@ -15,6 +15,8 @@ export type DigitalProductTrackingParams = {
   src?: string;
   subId?: string;
   campaign?: string;
+  /** Additional front-end sales page id; omit for the main sales page. */
+  pageId?: string;
 };
 
 /**
@@ -82,6 +84,7 @@ export function buildDigitalProductTrackingUrl(
   if (params?.src) url.searchParams.set("src", params.src);
   if (params?.subId) url.searchParams.set("sub_id", params.subId);
   if (params?.campaign) url.searchParams.set("campaign", params.campaign);
+  if (params?.pageId) url.searchParams.set("page", params.pageId);
   return url.toString();
 }
 

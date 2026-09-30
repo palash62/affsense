@@ -28,6 +28,8 @@ async function copyText(text: string, label: string) {
   }
 }
 
+const MAIN_PAGE_ID = "main";
+
 function formatCommissionCell(price: number, percent: number) {
   const amount = (price * percent) / 100;
   return `$${amount.toFixed(2)} (${percent}%)`;
@@ -45,22 +47,39 @@ export function PublisherProductViewPage({
   const [subId, setSubId] = useState("");
   const [campaign, setCampaign] = useState("");
 
+  const [selectedPageId, setSelectedPageId] = useState(MAIN_PAGE_ID);
+
   const sourceValue = source === "other" ? customSource : source === "none" ? "" : source;
 
+  const salesPages = useMemo(() => {
+    const pages: Array<{ id: string; name: string; pageUrl: string }> = [];
+    if (product.salesPageUrl?.trim()) {
+      pages.push({ id: MAIN_PAGE_ID, name: "Main sales page", pageUrl: product.salesPageUrl.trim() });
+    }
+    for (const page of product.salesPages) {
+      if (page.pageUrl.trim()) pages.push(page);
+    }
+    return pages;
+  }, [product.salesPageUrl, product.salesPages]);
+
+  const selectedPage = salesPages.find((page) => page.id === selectedPageId) ?? salesPages[0] ?? null;
+  const pageId = selectedPage && selectedPage.id !== MAIN_PAGE_ID ? selectedPage.id : undefined;
+
   const primaryUrl = useMemo(() => {
-    if (!publisherId.trim() || !product.salesPageUrl?.trim()) return null;
-    return buildDigitalProductTrackingUrl(product.id, { publisherId });
-  }, [product.id, product.salesPageUrl, publisherId]);
+    if (!publisherId.trim() || !selectedPage) return null;
+    return buildDigitalProductTrackingUrl(product.id, { publisherId, pageId });
+  }, [product.id, publisherId, selectedPage, pageId]);
 
   const previewUrl = useMemo(() => {
-    if (!publisherId.trim() || !product.salesPageUrl?.trim()) return null;
+    if (!publisherId.trim() || !selectedPage) return null;
     return buildDigitalProductTrackingUrl(product.id, {
       publisherId,
       src: sourceValue || undefined,
       subId: subId || undefined,
       campaign: campaign || undefined,
+      pageId,
     });
-  }, [product.id, product.salesPageUrl, publisherId, sourceValue, subId, campaign]);
+  }, [product.id, publisherId, selectedPage, pageId, sourceValue, subId, campaign]);
 
   const funnelUrl = product.previewUrl?.trim() || product.salesPageUrl?.trim() || null;
   const letter = (product.name.trim()[0] || "?").toUpperCase();
@@ -146,6 +165,77 @@ export function PublisherProductViewPage({
 
         {primaryUrl ? (
           <div className="mt-4 space-y-5">
+            {salesPages.length > 1 ? (
+              <div>
+                <h3 className="text-sm font-semibold text-foreground">Sales page</h3>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  Choose which sales page your link sends visitors to. Preview each page before
+                  picking one.
+                </p>
+                <div
+                  role="radiogroup"
+                  aria-label="Sales page"
+                  className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3"
+                >
+                  {salesPages.map((page) => {
+                    const selected = page.id === selectedPage?.id;
+                    return (
+                      <div
+                        key={page.id}
+                        role="radio"
+                        aria-checked={selected}
+                        tabIndex={0}
+                        onClick={() => setSelectedPageId(page.id)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            setSelectedPageId(page.id);
+                          }
+                        }}
+                        className={cn(
+                          "flex cursor-pointer items-center justify-between gap-2 rounded-lg border px-3 py-2.5 transition-colors",
+                          selected
+                            ? "border-[var(--theme-primary)] bg-[var(--theme-primary-soft)]"
+                            : "border-border bg-card hover:bg-muted/40",
+                        )}
+                      >
+                        <div className="flex min-w-0 items-center gap-2">
+                          <span
+                            className={cn(
+                              "flex h-4 w-4 shrink-0 items-center justify-center rounded-full border",
+                              selected ? "border-[var(--theme-primary)]" : "border-border",
+                            )}
+                          >
+                            {selected ? (
+                              <span className="h-2 w-2 rounded-full bg-[var(--theme-primary)]" />
+                            ) : null}
+                          </span>
+                          <span
+                            className={cn(
+                              "truncate text-sm font-medium",
+                              selected ? "text-[var(--theme-primary)]" : "text-foreground",
+                            )}
+                          >
+                            {page.name}
+                          </span>
+                        </div>
+                        <a
+                          href={page.pageUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground"
+                        >
+                          Preview
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : null}
+
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
               <Input readOnly value={primaryUrl} className="h-10 font-mono text-xs" />
               <Button
@@ -156,6 +246,18 @@ export function PublisherProductViewPage({
                 <Copy className="h-3.5 w-3.5" />
                 Copy link
               </Button>
+              {selectedPage ? (
+                <ButtonLink
+                  href={selectedPage.pageUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  variant="outline"
+                  className="h-10 shrink-0 gap-1.5"
+                >
+                  Preview page
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </ButtonLink>
+              ) : null}
             </div>
 
             <div>

@@ -34,14 +34,23 @@ export async function GET(
     return NextResponse.json({ error: { code: "GONE" } }, { status: 410 });
   }
 
-  if (!product.salesPageUrl?.trim()) {
+  const requestUrl = new URL(request.url);
+  const pageId = requestUrl.searchParams.get("page")?.trim() || null;
+  const salesPage = pageId
+    ? await prisma.digitalProductSalesPage.findFirst({
+        where: { id: pageId, productId: product.id },
+        select: { id: true, pageUrl: true },
+      })
+    : null;
+  const salesPageUrl = salesPage?.pageUrl?.trim() || product.salesPageUrl?.trim() || null;
+
+  if (!salesPageUrl) {
     return NextResponse.json(
       { error: { code: "GONE", message: "Sales page URL is not configured" } },
       { status: 410 },
     );
   }
 
-  const requestUrl = new URL(request.url);
   const pubId = requestUrl.searchParams.get("pub_id")?.trim() || null;
   const src = sanitizeTrackingParam(requestUrl.searchParams.get("src"));
   const subId = sanitizeTrackingParam(requestUrl.searchParams.get("sub_id"));
@@ -71,6 +80,7 @@ export async function GET(
       data: {
         productId: product.id,
         publisherId: publisher.id,
+        salesPageId: salesPage?.pageUrl?.trim() ? salesPage.id : null,
         src: src?.slice(0, 191) || null,
         subId: subId?.slice(0, 191) || null,
         campaign: campaign?.slice(0, 191) || null,
@@ -83,7 +93,7 @@ export async function GET(
   }
 
   const destination = buildDigitalProductDestinationUrl(
-    product.salesPageUrl,
+    salesPageUrl,
     product.affiliateTrackingParam,
     publisher.id,
     {

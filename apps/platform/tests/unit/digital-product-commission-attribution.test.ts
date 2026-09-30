@@ -99,6 +99,28 @@ describe("digital product commission amount-first resolve", () => {
     expect(resolved.matched).toBe("upsell");
     expect(resolved.productName).toBe("Near");
   });
+
+  it("credits an additional sales page slug to the parent product front end", () => {
+    const multi = buildDigitalProductCommissionLookup({
+      products: [
+        {
+          id: "p-multi",
+          name: "Multi Page Product",
+          salesPageUrl: "https://x.test/sales",
+          price: 27,
+          frontEndCommission: 60,
+          salesPageSlugs: ["sales-vsl", "Sales-Letter"],
+        },
+      ],
+      upsells: [],
+    });
+    for (const slug of ["sales", "sales-vsl", "sales-letter"]) {
+      const resolved = multi.resolve(slug, null);
+      expect(resolved.matched).toBe("front_end");
+      expect(resolved.productId).toBe("p-multi");
+      expect(resolved.rate).toBe(0.6);
+    }
+  });
 });
 
 describe("clickfunnels page slug prefers first_visit", () => {

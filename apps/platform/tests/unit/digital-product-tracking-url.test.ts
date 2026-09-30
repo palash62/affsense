@@ -31,6 +31,22 @@ describe("buildDigitalProductTrackingUrl", () => {
     );
     expect(url.startsWith("https://track.leadtb.com/dp/a%2Fb")).toBe(true);
   });
+
+  it("adds page param only for an additional sales page", () => {
+    const withPage = buildDigitalProductTrackingUrl(
+      "prod1",
+      { publisherId: "pub-1", pageId: "page-2" },
+      "https://track.leadtb.com",
+    );
+    expect(withPage).toContain("page=page-2");
+
+    const main = buildDigitalProductTrackingUrl(
+      "prod1",
+      { publisherId: "pub-1" },
+      "https://track.leadtb.com",
+    );
+    expect(main).not.toContain("page=");
+  });
 });
 
 describe("buildDigitalProductDestinationUrl", () => {

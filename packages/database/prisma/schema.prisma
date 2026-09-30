@@ -1950,6 +1950,7 @@ model DigitalProduct {
   category              DigitalProductCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   clicks                DigitalProductClick[]
   upsells               DigitalProductUpsell[]
+  salesPages            DigitalProductSalesPage[]
   commissionPlans       DigitalProductCommissionPlan[]
   commissionPlanMembers DigitalProductCommissionPlanMember[]
 
@@ -2023,10 +2024,28 @@ model DigitalProductUpsell {
   @@map("digital_product_upsells")
 }
 
+model DigitalProductSalesPage {
+  id        String                @id @default(cuid())
+  productId String                @map("product_id")
+  name      String
+  pageUrl   String                @map("page_url") @db.Text
+  pageSlug  String                @map("page_slug")
+  sortOrder Int                   @default(0) @map("sort_order")
+  createdAt DateTime              @default(now()) @map("created_at")
+  updatedAt DateTime              @updatedAt @map("updated_at")
+  product   DigitalProduct        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  clicks    DigitalProductClick[]
+
+  @@unique([productId, pageSlug])
+  @@index([pageSlug])
+  @@map("digital_product_sales_pages")
+}
+
 model DigitalProductClick {
   id          String         @id @default(cuid())
   productId   String         @map("product_id")
   publisherId String         @map("publisher_id")
+  salesPageId String?        @map("sales_page_id")
   src         String?
   subId       String?        @map("sub_id")
   campaign    String?
@@ -2035,10 +2054,12 @@ model DigitalProductClick {
   createdAt   DateTime       @default(now()) @map("created_at")
   product     DigitalProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
   publisher   User           @relation("PublisherDigitalProductClicks", fields: [publisherId], references: [id], onDelete: Cascade)
+  salesPage   DigitalProductSalesPage? @relation(fields: [salesPageId], references: [id], onDelete: SetNull)
   webhookEvents WebhookEvent[]
 
   @@index([productId, createdAt])
   @@index([publisherId, createdAt])
+  @@index([salesPageId])
   @@map("digital_product_clicks")
 }
 
