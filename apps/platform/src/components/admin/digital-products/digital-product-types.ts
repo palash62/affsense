@@ -23,6 +23,8 @@ export interface DigitalProductListItem {
   thumbTone: string;
   vendor: string;
   imageUrl?: string;
+  salesPageUrl?: string | null;
+  previewUrl?: string | null;
 }
 
 export interface DigitalProductUpsellFormValues {

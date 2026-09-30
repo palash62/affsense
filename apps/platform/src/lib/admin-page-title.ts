@@ -244,6 +244,24 @@ export function getAdminPageMeta(
     return { title: exact[path] };
   }
 
+  const digitalProductDetail = /^\/admin\/digital-products\/([^/]+)$/.exec(path);
+  if (
+    digitalProductDetail &&
+    !["new", "categories", "report", "report-log"].includes(digitalProductDetail[1]!)
+  ) {
+    return { title: "Digital Product Details", subtitle: "Digital Products > Product Details" };
+  }
+
+  const cpaOfferDetail = /^\/admin\/cpa-offers\/([^/]+)$/.exec(path);
+  if (
+    cpaOfferDetail &&
+    !["offers", "report", "report-log", "payouts", "new", "advertiser-invoices"].includes(
+      cpaOfferDetail[1]!,
+    )
+  ) {
+    return { title: "CPA Offer Details", subtitle: "CPA Offers > Offer Details" };
+  }
+
   // Prefix matches for nested legacy/admin routes
   const prefixes: Array<[string, string]> = [
     ["/admin/advertisers/", "Advertisers"],

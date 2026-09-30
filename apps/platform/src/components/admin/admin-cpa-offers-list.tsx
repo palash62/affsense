@@ -2,7 +2,7 @@
 
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { MoreHorizontal, Pencil, Plus, Store, Trash2 } from "lucide-react";
+import { Eye, MoreHorizontal, Pencil, Plus, Store, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { AdminCpaOffersFilters } from "@/components/admin/admin-cpa-offers-filters";
 import { CpaOfferCard, CpaOfferCardGrid } from "@/components/cpa/cpa-offer-card";
@@ -175,6 +175,7 @@ function AdminCpaOffersListInner() {
             <CpaOfferCard
               key={offer.id}
               offer={offer}
+              href={`/admin/cpa-offers/${offer.id}`}
               showRevenue
               showAdvertiser
               showVisibility
@@ -197,6 +198,12 @@ function AdminCpaOffersListInner() {
                       <MoreHorizontal className="h-4 w-4" />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        onClick={() => router.push(`/admin/cpa-offers/${offer.id}`)}
+                      >
+                        <Eye className="mr-2 h-3.5 w-3.5" />
+                        View details
+                      </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => router.push(`/admin/cpa-offers/${offer.id}/edit`)}
                       >

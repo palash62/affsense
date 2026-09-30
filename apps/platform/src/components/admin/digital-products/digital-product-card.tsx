@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Star, Sparkles, Trash2 } from "lucide-react";
+import { ExternalLink, Star, Sparkles, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   AlertDialog,
@@ -41,6 +41,8 @@ export function DigitalProductCard({
 }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const letter = (product.name.trim()[0] || "?").toUpperCase();
+  const detailHref = `/admin/digital-products/${product.id}`;
+  const previewHref = product.previewUrl?.trim() || product.salesPageUrl?.trim() || null;
 
   return (
     <>
@@ -50,7 +52,12 @@ export function DigitalProductCard({
           "shadow-[var(--shadow-card)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[var(--shadow-card-hover)]",
         )}
       >
-        <div className="relative aspect-[16/10] w-full overflow-hidden bg-muted">
+        <Link
+          href={detailHref}
+          prefetch
+          aria-label={`View ${product.name}`}
+          className="relative block aspect-[16/10] w-full overflow-hidden bg-muted focus:outline-none"
+        >
           {product.imageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -62,7 +69,8 @@ export function DigitalProductCard({
             <div
               className={cn(
                 "flex h-full w-full items-center justify-center bg-gradient-to-br text-4xl font-bold text-white",
-                product.thumbTone,
+                product.thumbTone ||
+                  "from-[var(--theme-primary)] to-[var(--theme-accent-purple,#713BFF)]",
               )}
             >
               {letter}
@@ -86,13 +94,15 @@ export function DigitalProductCard({
             </div>
             <StatusPill status={product.status} />
           </div>
-        </div>
+        </Link>
 
         <div className="flex flex-1 flex-col gap-3 p-4">
           <div className="min-w-0">
-            <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-foreground">
-              {product.name}
-            </h3>
+            <Link href={detailHref} className="focus:outline-none">
+              <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-foreground hover:text-[var(--theme-primary)]">
+                {product.name}
+              </h3>
+            </Link>
             <p className="mt-1 truncate text-xs text-muted-foreground">
               {product.category} · {product.productType}
             </p>
@@ -109,14 +119,30 @@ export function DigitalProductCard({
 
           <p className="truncate text-xs text-muted-foreground">{product.vendor}</p>
 
-          <div className="mt-auto flex items-center justify-between">
-            <Link
-              href={`/admin/digital-products/${product.id}/edit`}
-              prefetch
-              className="text-sm font-medium text-[var(--theme-primary)] hover:underline"
-            >
-              Edit
-            </Link>
+          <div className="mt-auto flex items-center justify-between gap-2 border-t border-border pt-3">
+            <div className="flex flex-wrap items-center gap-3 text-sm font-medium">
+              <Link href={detailHref} className="text-[var(--theme-primary)] hover:underline">
+                View
+              </Link>
+              <Link
+                href={`/admin/digital-products/${product.id}/edit`}
+                prefetch
+                className="text-[var(--theme-primary)] hover:underline"
+              >
+                Edit
+              </Link>
+              {previewHref ? (
+                <a
+                  href={previewHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground"
+                >
+                  Preview
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </a>
+              ) : null}
+            </div>
             <Button
               variant="ghost"
               size="icon"
