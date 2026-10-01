@@ -17,9 +17,9 @@ const state = vi.hoisted(() => ({
 }));
 
 const mocks = vi.hoisted(() => {
+  const calls: string[] = [];
   const tx = {
     wallet: {
-      upsert: vi.fn(async () => ({ id: "wallet-1", userId: "pub-1" })),
       findUniqueOrThrow: vi.fn(async () => ({
         id: "wallet-1",
         balance: state.balance,
@@ -30,18 +30,34 @@ const mocks = vi.hoisted(() => {
       }),
     },
     ledgerEntry: {
-      findFirst: vi.fn(async ({ where }: { where: { referenceId: string } }) =>
-        state.ledger.find((row) => row.referenceId === where.referenceId) ?? null,
-      ),
       create: vi.fn(async ({ data }: { data: LedgerRow }) => {
+        calls.push("ledger.create");
         state.ledger.push(data);
       }),
     },
-    $queryRaw: vi.fn(async () => []),
+    $queryRaw: vi.fn(async (strings: TemplateStringsArray, ...values: unknown[]) => {
+      const sql = strings.join("?");
+      if (sql.includes("FROM wallets")) {
+        calls.push("lock.wallet");
+        return [{ id: "wallet-1" }];
+      }
+      calls.push("lock.ledger");
+      return state.ledger
+        .filter((row) => row.referenceId === values[0])
+        .map(() => ({ id: "entry" }));
+    }),
   };
 
   const prisma = {
-    $transaction: vi.fn(async (fn: (client: typeof tx) => Promise<unknown>) => fn(tx)),
+    wallet: {
+      upsert: vi.fn(async () => ({ id: "wallet-1", userId: "pub-1" })),
+    },
+    $transaction: vi.fn(async (fn: (client: typeof tx) => Promise<unknown>) => {
+      // Run transactions one at a time, like the wallet row lock does.
+      const run = mocks.queue.then(() => fn(tx));
+      mocks.queue = run.catch(() => undefined);
+      return run;
+    }),
     webhookEvent: {
       findMany: vi.fn(async () => state.events),
     },
@@ -54,7 +70,7 @@ const mocks = vi.hoisted(() => {
     },
   };
 
-  return { tx, prisma };
+  return { tx, prisma, calls, queue: Promise.resolve() as Promise<unknown> };
 });
 
 vi.mock("@/lib/prisma", () => ({ prisma: mocks.prisma }));
@@ -80,6 +96,45 @@ describe("marketplace commission ledger posting", () => {
     state.ledger = [];
     state.commissions = new Map();
     state.events = [];
+    mocks.calls.length = 0;
+  });
+
+  it("takes the wallet lock before any ledger read or write", async () => {
+    state.commissions.set("evt-1", { publisherId: "pub-1", commission: 3, isRefund: false });
+
+    await recordDigitalProductCommission("evt-1");
+
+    expect(mocks.calls).toEqual(["lock.wallet", "lock.ledger", "ledger.create"]);
+    expect(mocks.prisma.wallet.upsert).toHaveBeenCalledBefore(mocks.prisma.$transaction);
+  });
+
+  it("posts each sale once when reconciles start together", async () => {
+    state.events = [{ id: "evt-a" }, { id: "evt-b" }];
+    state.commissions.set("evt-a", { publisherId: "pub-1", commission: 10, isRefund: false });
+    state.commissions.set("evt-b", { publisherId: "pub-1", commission: 4, isRefund: false });
+
+    const [first, second] = await Promise.all([
+      reconcilePublisherDigitalCommissionsForUser("pub-1"),
+      reconcilePublisherDigitalCommissionsForUser("pub-1"),
+    ]);
+
+    expect(first).toBe(2);
+    expect(second).toBe(2);
+    expect(state.ledger).toHaveLength(2);
+    expect(state.balance).toBe(14);
+  });
+
+  it("does not double-post when two postings of the same sale race", async () => {
+    state.commissions.set("evt-1", { publisherId: "pub-1", commission: 7, isRefund: false });
+
+    const results = await Promise.all([
+      recordDigitalProductCommission("evt-1"),
+      recordDigitalProductCommission("evt-1"),
+    ]);
+
+    expect(results.filter(Boolean)).toHaveLength(1);
+    expect(state.ledger).toHaveLength(1);
+    expect(state.balance).toBe(7);
   });
 
   it("credits a sale once, even when called again", async () => {

@@ -613,16 +613,19 @@ async function postDigitalProductCommission(
 ): Promise<boolean> {
   if (!resolved) return false;
   try {
+    await ensurePublisherWallet(resolved.publisherId);
     return await prisma.$transaction(async (tx) => {
-      await ensurePublisherWallet(resolved.publisherId, tx);
-      // Serialize postings per wallet so concurrent reconciles cannot double-post.
+      // The lock must be the first statement: under REPEATABLE READ the first
+      // plain read fixes the snapshot, and a snapshot taken before another
+      // posting commits would miss its ledger entry and its new balance.
       await tx.$queryRaw`SELECT id FROM wallets WHERE user_id = ${resolved.publisherId} FOR UPDATE`;
 
-      const existing = await tx.ledgerEntry.findFirst({
-        where: { referenceId: eventId, referenceType: { in: DIGITAL_PRODUCT_REFERENCES } },
-        select: { id: true },
-      });
-      if (existing) return false;
+      const existing = await tx.$queryRaw<Array<{ id: string }>>`
+        SELECT id FROM ledger_entries
+        WHERE reference_id = ${eventId}
+          AND reference_type IN (${DIGITAL_PRODUCT_SALE_REFERENCE}, ${DIGITAL_PRODUCT_REFUND_REFERENCE})
+        LIMIT 1 FOR UPDATE`;
+      if (existing.length > 0) return false;
 
       if (resolved.isRefund) {
         await debitWalletAllowNegative(
@@ -680,11 +683,21 @@ async function reconcileDigitalCommissions(
   return recorded;
 }
 
+const digitalReconcilesInFlight = new Map<string, Promise<number>>();
+
 /** Backfill marketplace commissions for one affiliate (safe to call on page load). */
 export async function reconcilePublisherDigitalCommissionsForUser(
   publisherId: string,
 ): Promise<number> {
-  return reconcileDigitalCommissions({ publisherId });
+  // The layout and the page render in parallel; let them share one run.
+  const running = digitalReconcilesInFlight.get(publisherId);
+  if (running) return running;
+
+  const run = reconcileDigitalCommissions({ publisherId }).finally(() => {
+    digitalReconcilesInFlight.delete(publisherId);
+  });
+  digitalReconcilesInFlight.set(publisherId, run);
+  return run;
 }
 
 export async function reconcileAllDigitalCommissions(): Promise<number> {
