@@ -246,6 +246,7 @@ export async function getPublisherDetail(id: string) {
     where: { id, role: "PUBLISHER" },
     select: {
       id: true,
+      memberNo: true,
       email: true,
       name: true,
       status: true,

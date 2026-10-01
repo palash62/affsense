@@ -135,6 +135,12 @@ export function PublisherProductViewPage({
                   <dd className="truncate font-medium text-foreground">{product.vendor}</dd>
                 </div>
               ) : null}
+              {product.lifetimeCookie ? (
+                <div>
+                  <dt className="text-xs text-muted-foreground">Cookie</dt>
+                  <dd className="font-medium text-[var(--theme-success)]">Lifetime</dd>
+                </div>
+              ) : null}
             </dl>
             {funnelUrl ? (
               <ButtonLink

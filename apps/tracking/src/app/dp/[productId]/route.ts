@@ -1,9 +1,11 @@
 import { prisma } from "@cpl/database";
 import {
   buildDigitalProductDestinationUrl,
+  formatMemberId,
   sanitizeTrackingParam,
 } from "@cpl/shared";
 import { NextResponse } from "next/server";
+import { findActivePublisherByRef } from "@/lib/member-ref";
 
 function clientIp(request: Request): string | null {
   const forwarded = request.headers.get("x-forwarded-for");
@@ -23,6 +25,7 @@ export async function GET(
       status: true,
       salesPageUrl: true,
       affiliateTrackingParam: true,
+      isPrivate: true,
     },
   });
 
@@ -63,16 +66,26 @@ export async function GET(
     );
   }
 
-  const publisher = await prisma.user.findFirst({
-    where: { id: pubId, role: "PUBLISHER", status: "ACTIVE" },
-    select: { id: true },
-  });
+  const publisher = await findActivePublisherByRef(pubId);
 
   if (!publisher) {
     return NextResponse.json(
       { error: { code: "FORBIDDEN", message: "Invalid publisher" } },
       { status: 403 },
     );
+  }
+
+  if (product.isPrivate) {
+    const allowed = await prisma.digitalProductAllowedPublisher.findUnique({
+      where: { productId_publisherId: { productId: product.id, publisherId: publisher.id } },
+      select: { id: true },
+    });
+    if (!allowed) {
+      return NextResponse.json(
+        { error: { code: "FORBIDDEN", message: "Access not approved for this product" } },
+        { status: 403 },
+      );
+    }
   }
 
   try {
@@ -95,7 +108,7 @@ export async function GET(
   const destination = buildDigitalProductDestinationUrl(
     salesPageUrl,
     product.affiliateTrackingParam,
-    publisher.id,
+    formatMemberId(publisher.memberNo),
     {
       source: src,
       subid: subId,

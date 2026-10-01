@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import {
   extractClickFunnelsIdentifiers,
+  extractLeadFromClickFunnelsPayload,
   extractPageSlugFromClickFunnelsPayload,
   type ClickFunnelsIdentifiers,
 } from "@/lib/clickfunnels-webhook-payload";
@@ -16,6 +17,7 @@ export const CONVERSION_REJECT_REASONS = {
   PRODUCT_MISMATCH: "Affiliate click was for a different product",
   SUBSCRIPTION_ATTRIBUTION_NOT_FOUND:
     "Recurring payment for a subscription not originally referred through Affsense",
+  PUBLISHER_NOT_ALLOWED: "Affiliate is not allowed to promote this private product",
 } as const;
 
 export type ConversionRejectReason = keyof typeof CONVERSION_REJECT_REASONS;
@@ -40,6 +42,14 @@ export type StoredSubscriptionAttribution = {
   originalOrderId: string | null;
 };
 
+export type LifetimeReferrer = {
+  publisherId: string;
+  clickId: string | null;
+  subId: string | null;
+  src: string | null;
+  affiliateRef: string | null;
+};
+
 export type ConversionValidationDeps = {
   findMappings(cfProductIds: string[]): Promise<Array<{ cfProductId: string; productId: string; upsellId: string | null }>>;
   resolveBySlug(pageSlug: string): Promise<{ productId: string; upsellId: string | null } | null>;
@@ -47,6 +57,10 @@ export type ConversionValidationDeps = {
   resolveAttribution(productId: string): Promise<DigitalProductWebhookAttribution>;
   /** True when the publisher has recent clicks, none of them on `productId`. */
   clickedOnlyOtherProducts(publisherId: string, productId: string, at: Date): Promise<boolean>;
+  /** First affiliate credited for this buyer on a lifetime-cookie product; null otherwise. */
+  findLifetimeReferrer(productId: string, email: string): Promise<LifetimeReferrer | null>;
+  /** False only for a private product the publisher is not allowed on. */
+  publisherAllowedForProduct(productId: string, publisherId: string): Promise<boolean>;
 };
 
 export type ConversionValidationResult = {
@@ -172,8 +186,37 @@ export async function validateClickFunnelsConversion(input: {
     !identifiers.isRefund &&
     (identifiers.renewalHint || (subscription != null && !sameOrderAsOriginal));
 
+  const buyerEmail = extractLeadFromClickFunnelsPayload(input.body).leadEmail?.trim() || null;
+  const findLifetimeReferrer = () =>
+    buyerEmail && !identifiers.isRefund
+      ? deps.findLifetimeReferrer(product.productId, buyerEmail)
+      : Promise.resolve(null);
+  // Refunds still reverse earlier commissions; stored renewals keep their original affiliate.
+  const isBlocked = async (publisherId: string) =>
+    !identifiers.isRefund && !(await deps.publisherAllowedForProduct(product.productId, publisherId));
+  const notAllowed = (publisherId: string, extra?: Partial<ConversionValidationResult>) => ({
+    ...withProduct,
+    ...extra,
+    publisherId: null,
+    affiliateRef: extra?.affiliateRef ?? publisherId,
+    reason: "PUBLISHER_NOT_ALLOWED" as const,
+  });
+
   if (isRecurring) {
     if (!subscription) {
+      const referrer = await findLifetimeReferrer();
+      if (referrer && (await isBlocked(referrer.publisherId))) {
+        return notAllowed(referrer.publisherId, { isRecurring, affiliateRef: referrer.affiliateRef });
+      }
+      if (referrer) {
+        return {
+          ...withProduct,
+          status: "PROCESSED",
+          isRecurring,
+          ...referrer,
+          externalEventKey: buildExternalEventKey({ identifiers, isRecurring, productKey, at }),
+        };
+      }
       return { ...withProduct, isRecurring, reason: "SUBSCRIPTION_ATTRIBUTION_NOT_FOUND" };
     }
     if (subscription.productId !== product.productId) {
@@ -195,6 +238,19 @@ export async function validateClickFunnelsConversion(input: {
 
   const attribution = await deps.resolveAttribution(product.productId);
   if (!attribution.publisherId) {
+    const referrer = await findLifetimeReferrer();
+    if (referrer && (await isBlocked(referrer.publisherId))) {
+      return notAllowed(referrer.publisherId, { affiliateRef: referrer.affiliateRef });
+    }
+    if (referrer) {
+      return {
+        ...withProduct,
+        status: "PROCESSED",
+        ...referrer,
+        externalEventKey: buildExternalEventKey({ identifiers, isRecurring: false, productKey, at }),
+        storeSubscription: Boolean(identifiers.subscriptionKey) && !subscription,
+      };
+    }
     return {
       ...withProduct,
       affiliateRef: attribution.affiliateRef,
@@ -211,6 +267,9 @@ export async function validateClickFunnelsConversion(input: {
       affiliateRef: attribution.affiliateRef,
       reason: "PRODUCT_MISMATCH",
     };
+  }
+  if (await isBlocked(attribution.publisherId)) {
+    return notAllowed(attribution.publisherId, { affiliateRef: attribution.affiliateRef });
   }
 
   return {
@@ -294,6 +353,34 @@ export function createPrismaConversionDeps(ctx: {
         }),
       ]);
       return anyClick > 0 && onProduct === 0;
+    },
+    async findLifetimeReferrer(productId, email) {
+      const product = await prisma.digitalProduct.findUnique({
+        where: { id: productId },
+        select: { lifetimeCookie: true },
+      });
+      if (!product?.lifetimeCookie) return null;
+      const first = await prisma.webhookEvent.findFirst({
+        where: {
+          digitalProductId: productId,
+          leadEmail: email,
+          status: "PROCESSED",
+          publisherId: { not: null },
+        },
+        orderBy: { createdAt: "asc" },
+        select: { publisherId: true, clickId: true, subId: true, src: true, affiliateRef: true },
+      });
+      return first?.publisherId ? { ...first, publisherId: first.publisherId } : null;
+    },
+    async publisherAllowedForProduct(productId, publisherId) {
+      const product = await prisma.digitalProduct.findUnique({
+        where: { id: productId },
+        select: {
+          isPrivate: true,
+          allowedPublishers: { where: { publisherId }, select: { id: true }, take: 1 },
+        },
+      });
+      return !product?.isPrivate || product.allowedPublishers.length > 0;
     },
   };
 }

@@ -54,6 +54,8 @@ enum CpaOfferStatus {
 enum CpaOfferVisibility {
   PUBLIC
   PRIVATE
+  /// Listed only for publishers with APPROVED access (admin-selected); no access requests.
+  HIDDEN
 }
 
 enum PublisherCpaOfferAccessStatus {
@@ -257,6 +259,7 @@ enum SendingIdentityStatus {
 
 model User {
   id            String     @id @default(cuid())
+  memberNo      Int        @unique @default(autoincrement()) @map("member_no")
   email         String     @unique
   passwordHash  String     @map("password_hash")
   name          String
@@ -346,6 +349,7 @@ model User {
   digitalProductPostbackDeliveries DigitalProductPostbackDelivery[]
   publisherDigitalProductClicks DigitalProductClick[] @relation("PublisherDigitalProductClicks")
   publisherDigitalSubscriptionAttributions DigitalProductSubscriptionAttribution[] @relation("PublisherDigitalSubscriptionAttributions")
+  allowedDigitalProducts DigitalProductAllowedPublisher[] @relation("DigitalProductAllowedPublishers")
   promotion              Promotion? @relation(fields: [promotionId], references: [id], onDelete: SetNull)
   createdPromotions      Promotion[] @relation("PromotionCreatedBy")
 
@@ -1937,6 +1941,10 @@ model DigitalProduct {
   isNew                 Boolean              @default(false) @map("is_new")
   salesPageUrl          String?              @map("sales_page_url") @db.Text
   affiliateTrackingParam String?             @map("affiliate_tracking_param")
+  /// Credit a buyer's later purchases of this product to the affiliate who referred them first.
+  lifetimeCookie        Boolean              @default(false) @map("lifetime_cookie")
+  /// Private products are visible only to publishers in allowedPublishers.
+  isPrivate             Boolean              @default(false) @map("is_private")
   previewUrl            String?              @map("preview_url") @db.Text
   frontEndCommission    Decimal              @map("front_end_commission") @db.Decimal(5, 2)
   upsellCommission      Decimal?             @map("upsell_commission") @db.Decimal(5, 2)
@@ -1956,6 +1964,7 @@ model DigitalProduct {
   commissionPlanMembers DigitalProductCommissionPlanMember[]
   cfMappings            DigitalProductCfMapping[]
   subscriptionAttributions DigitalProductSubscriptionAttribution[]
+  allowedPublishers     DigitalProductAllowedPublisher[]
 
   @@index([status])
   @@index([categoryId])
@@ -2043,6 +2052,19 @@ model DigitalProductCfMapping {
   @@index([productId])
   @@index([upsellId])
   @@map("digital_product_cf_mappings")
+}
+
+model DigitalProductAllowedPublisher {
+  id          String         @id @default(cuid())
+  productId   String         @map("product_id")
+  publisherId String         @map("publisher_id")
+  createdAt   DateTime       @default(now()) @map("created_at")
+  product     DigitalProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+  publisher   User           @relation("DigitalProductAllowedPublishers", fields: [publisherId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, publisherId])
+  @@index([publisherId])
+  @@map("digital_product_allowed_publishers")
 }
 
 /// Original affiliate attribution for a ClickFunnels subscription; renewals inherit it.
@@ -2329,6 +2351,7 @@ model WebhookEvent {
   @@index([source])
   @@index([publisherId])
   @@index([clickId])
+  @@index([digitalProductId, leadEmail])
   @@map("webhook_events")
 }
 

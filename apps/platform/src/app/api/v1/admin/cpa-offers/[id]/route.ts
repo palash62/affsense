@@ -1,9 +1,10 @@
 import { withAuth, ADMIN_PORTAL_ROLES } from "@/lib/api-handler";
 import { errorResponse } from "@/lib/errors";
-import { adminCpaOfferUpdateSchema } from "@/lib/validations";
+import { adminCpaOfferUpdateSchema, allowedPublisherIdsSchema } from "@/lib/validations";
 import {
   deleteCpaOffer,
   getCpaOfferById,
+  setCpaOfferAllowedPublishers,
   updateCpaOffer,
 } from "@/services/cpa-offer.service";
 
@@ -23,7 +24,7 @@ export async function GET(_request: Request, context: RouteContext) {
 
 export async function PATCH(request: Request, context: RouteContext) {
   const { id } = await context.params;
-  return withAuth(async () => {
+  return withAuth(async (session) => {
     try {
       const body = await request.json();
       const parsed = adminCpaOfferUpdateSchema.safeParse(body);
@@ -40,7 +41,11 @@ export async function PATCH(request: Request, context: RouteContext) {
         );
       }
 
+      const allowed = allowedPublisherIdsSchema.safeParse(body?.allowedPublisherIds);
       const data = await updateCpaOffer(id, parsed.data);
+      if (allowed.success && allowed.data && data.visibility !== "PUBLIC") {
+        await setCpaOfferAllowedPublishers(id, allowed.data, session.user.id);
+      }
       return Response.json({ data });
     } catch (error) {
       return errorResponse(error);

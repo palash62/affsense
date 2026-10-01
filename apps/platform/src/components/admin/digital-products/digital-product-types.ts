@@ -20,6 +20,7 @@ export interface DigitalProductListItem {
   frontEndCommission: number;
   featured: boolean;
   isNew: boolean;
+  isPrivate?: boolean;
   thumbTone: string;
   vendor: string;
   imageUrl?: string;
@@ -51,6 +52,9 @@ export interface DigitalProductFormValues {
   isNew: boolean;
   salesPageUrl: string;
   affiliateTrackingParam: string;
+  lifetimeCookie: boolean;
+  isPrivate: boolean;
+  allowedAffiliates: Array<{ id: string; name: string; email: string }>;
   previewUrl: string;
   frontEndCommission: string;
   referralReward: string;
@@ -82,6 +86,9 @@ export const DEFAULT_FORM_VALUES: DigitalProductFormValues = {
   isNew: false,
   salesPageUrl: "",
   affiliateTrackingParam: "affsense_id",
+  lifetimeCookie: false,
+  isPrivate: false,
+  allowedAffiliates: [],
   previewUrl: "",
   frontEndCommission: "50",
   referralReward: "",

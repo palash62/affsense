@@ -117,12 +117,16 @@ export function AdminCpaOfferDetailPage({
                 </span>
                 <span
                   className={
-                    offer.visibility === "PRIVATE"
+                    offer.visibility !== "PUBLIC"
                       ? "rounded-md bg-[color-mix(in_srgb,var(--warning)_16%,white)] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--warning)]"
                       : "rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
                   }
                 >
-                  {offer.visibility === "PRIVATE" ? "Private" : "Public"}
+                  {offer.visibility === "HIDDEN"
+                    ? "Hidden"
+                    : offer.visibility === "PRIVATE"
+                      ? "Private"
+                      : "Public"}
                 </span>
               </div>
 
@@ -191,7 +195,9 @@ export function AdminCpaOfferDetailPage({
             warning={
               offer.visibility === "PRIVATE"
                 ? "This is a private offer. The link only works once the affiliate's access request is approved."
-                : undefined
+                : offer.visibility === "HIDDEN"
+                  ? "This is a hidden offer. The link only works for affiliates selected on the offer."
+                  : undefined
             }
           />
           <CpaOfferTrackingInstructions offer={offer} />

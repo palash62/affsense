@@ -130,12 +130,16 @@ export function CpaOfferCard({
           <span
             className={cn(
               "rounded-md px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
-              offer.visibility === "PRIVATE"
+              offer.visibility !== "PUBLIC"
                 ? "bg-[color-mix(in_srgb,var(--warning)_16%,white)] text-[var(--warning)]"
                 : "bg-muted text-muted-foreground",
             )}
           >
-            {offer.visibility === "PRIVATE" ? "Private" : "Public"}
+            {offer.visibility === "HIDDEN"
+              ? "Hidden"
+              : offer.visibility === "PRIVATE"
+                ? "Private"
+                : "Public"}
           </span>
         ) : null}
       </div>

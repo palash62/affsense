@@ -38,7 +38,7 @@ export function AffiliateTrackingLinkCard({
 
   const trackingUrl = useMemo(() => {
     if (!affiliate || unavailableMessage) return null;
-    return buildUrl(affiliate.id, {
+    return buildUrl(affiliate.memberId ?? affiliate.id, {
       src: src.trim() || undefined,
       subId: subId.trim() || undefined,
     });

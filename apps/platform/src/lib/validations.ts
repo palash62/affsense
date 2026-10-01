@@ -1294,7 +1294,7 @@ const optionalHttpUrlSchema = z
   });
 
 const cpaOfferStatusSchema = z.enum(["PENDING", "ACTIVE", "PAUSED", "ARCHIVED"]);
-const cpaOfferVisibilitySchema = z.enum(["PUBLIC", "PRIVATE"]);
+const cpaOfferVisibilitySchema = z.enum(["PUBLIC", "PRIVATE", "HIDDEN"]);
 const cpaRevenueModelSchema = z.enum(["RPA", "RPS", "RPC", "RPI", "RPL", "RPM"]);
 const cpaPayoutModelSchema = z.enum(["CPC", "CPA", "CPS", "CPI", "CPL", "CPM"]);
 const cpaPayoutTypeSchema = z.enum(["FLAT", "PERCENT"]);
@@ -1397,6 +1397,12 @@ export const adminCpaOfferUpdateSchema = z.object({
   status: cpaOfferStatusSchema.optional(),
   visibility: cpaOfferVisibilitySchema.optional(),
 });
+
+/** Admin-only allowlist for private CPA offers and digital products. */
+export const allowedPublisherIdsSchema = z
+  .array(z.string().trim().min(1).max(191))
+  .max(2000)
+  .optional();
 
 export const advertiserCpaOfferCreateSchema = adminCpaOfferCreateSchema
   .omit({

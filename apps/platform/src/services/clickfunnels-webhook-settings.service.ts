@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import type { Prisma, WebhookEventStatus } from "@prisma/client";
+import { parseMemberId } from "@cpl/shared";
 import {
   CLICKFUNNELS_WEBHOOK_SETTINGS_KEY,
   DEFAULT_CLICKFUNNELS_WEBHOOK_CONFIG,
@@ -67,8 +68,9 @@ export async function resolvePublisherFromAffiliateRef(ref: string | null | unde
   const affiliateRef = ref?.trim() || null;
   if (!affiliateRef) return { publisherId: null as string | null, affiliateRef: null as string | null };
 
+  const memberNo = parseMemberId(affiliateRef);
   const user = await prisma.user.findFirst({
-    where: { id: affiliateRef, role: "PUBLISHER" },
+    where: { ...(memberNo ? { memberNo } : { id: affiliateRef }), role: "PUBLISHER" },
     select: { id: true },
   });
 

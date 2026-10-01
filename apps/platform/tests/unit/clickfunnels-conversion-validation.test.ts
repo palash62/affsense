@@ -35,6 +35,8 @@ function makeDeps(overrides: Partial<ConversionValidationDeps> = {}) {
       src: "fb",
     })),
     clickedOnlyOtherProducts: vi.fn(async () => false),
+    findLifetimeReferrer: vi.fn(async () => null),
+    publisherAllowedForProduct: vi.fn(async () => true),
     ...overrides,
   };
   return { deps, subscriptions };
@@ -289,6 +291,165 @@ describe("validateClickFunnelsConversion", () => {
 
     expect(result.status).toBe("IGNORED");
     expect(result.reason).toBe("PRODUCT_MISMATCH");
+  });
+
+  describe("private products", () => {
+    it("ignores a new sale by an affiliate not allowed on the product", async () => {
+      const publisherAllowedForProduct = vi.fn(async () => false);
+      const { deps } = makeDeps({ publisherAllowedForProduct });
+      const result = await validateClickFunnelsConversion({
+        body: cf2Order({ orderId: 9101, productId: PINSTACK_CF_ID }),
+        at: AT,
+        deps,
+      });
+
+      expect(publisherAllowedForProduct).toHaveBeenCalledWith("prod-pinstack", "pub-aff");
+      expect(result.status).toBe("IGNORED");
+      expect(result.reason).toBe("PUBLISHER_NOT_ALLOWED");
+      expect(result.publisherId).toBeNull();
+      expect(result.externalEventKey).toBeNull();
+    });
+
+    it("still credits a stored-subscription renewal after the affiliate is removed", async () => {
+      const { deps, subscriptions } = makeDeps({
+        publisherAllowedForProduct: vi.fn(async () => false),
+      });
+      subscriptions.set("sub-77", {
+        productId: "prod-pinstack",
+        upsellId: null,
+        publisherId: "pub-original",
+        clickId: null,
+        subId: null,
+        src: null,
+        affiliateRef: null,
+        originalOrderId: "7007",
+      });
+      const result = await validateClickFunnelsConversion({
+        body: renewalInvoice({
+          invoiceId: "inv-p1",
+          orderId: 7007,
+          productId: PINSTACK_CF_ID,
+          subscriptionId: "sub-77",
+        }),
+        at: AT,
+        deps,
+      });
+
+      expect(result.status).toBe("PROCESSED");
+      expect(result.publisherId).toBe("pub-original");
+    });
+
+    it("blocks a lifetime referrer who is no longer allowed", async () => {
+      const { deps } = makeDeps({
+        resolveAttribution: vi.fn(async () => ({
+          publisherId: null,
+          affiliateRef: null,
+          clickId: null,
+          subId: null,
+          src: null,
+        })),
+        findLifetimeReferrer: vi.fn(async () => ({
+          publisherId: "pub-first",
+          clickId: null,
+          subId: null,
+          src: null,
+          affiliateRef: "first-ref",
+        })),
+        publisherAllowedForProduct: vi.fn(async () => false),
+      });
+      const body = cf2Order({ orderId: 9102, productId: PINSTACK_CF_ID });
+      const result = await validateClickFunnelsConversion({
+        body: { ...body, data: { ...body.data, contact: { email: "buyer@example.com" } } },
+        at: AT,
+        deps,
+      });
+
+      expect(result.status).toBe("IGNORED");
+      expect(result.reason).toBe("PUBLISHER_NOT_ALLOWED");
+    });
+  });
+
+  describe("lifetime cookie", () => {
+    const noRef = vi.fn(async () => ({
+      publisherId: null,
+      affiliateRef: null,
+      clickId: null,
+      subId: null,
+      src: null,
+    }));
+    const referrer = {
+      publisherId: "pub-first",
+      clickId: "click-first",
+      subId: "first-sub",
+      src: "first-src",
+      affiliateRef: "first-ref",
+    };
+    const withEmail = <T extends { data: Record<string, unknown> }>(body: T) => ({
+      ...body,
+      data: { ...body.data, contact: { email: "buyer@example.com" } },
+    });
+
+    it("credits a repeat purchase without the affiliate ref to the first referrer", async () => {
+      const findLifetimeReferrer = vi.fn(async () => referrer);
+      const { deps } = makeDeps({ resolveAttribution: noRef, findLifetimeReferrer });
+      const result = await validateClickFunnelsConversion({
+        body: withEmail(cf2Order({ orderId: 9001, productId: PINSTACK_CF_ID })),
+        at: AT,
+        deps,
+      });
+
+      expect(findLifetimeReferrer).toHaveBeenCalledWith("prod-pinstack", "buyer@example.com");
+      expect(result.status).toBe("PROCESSED");
+      expect(result.publisherId).toBe("pub-first");
+      expect(result.clickId).toBe("click-first");
+      expect(result.externalEventKey).toBe(`cf:order:9001:${PINSTACK_CF_ID}`);
+    });
+
+    it("keeps crediting the affiliate on the sale when the ref is present", async () => {
+      const findLifetimeReferrer = vi.fn(async () => referrer);
+      const { deps } = makeDeps({ findLifetimeReferrer });
+      const result = await validateClickFunnelsConversion({
+        body: withEmail(cf2Order({ orderId: 9002, productId: PINSTACK_CF_ID })),
+        at: AT,
+        deps,
+      });
+
+      expect(result.publisherId).toBe("pub-aff");
+      expect(findLifetimeReferrer).not.toHaveBeenCalled();
+    });
+
+    it("still rejects an organic sale when there is no earlier referral", async () => {
+      const { deps } = makeDeps({ resolveAttribution: noRef });
+      const result = await validateClickFunnelsConversion({
+        body: withEmail(cf2Order({ orderId: 9003, productId: PINSTACK_CF_ID })),
+        at: AT,
+        deps,
+      });
+
+      expect(result.status).toBe("IGNORED");
+      expect(result.reason).toBe("NO_AFFSENSE_ATTRIBUTION");
+    });
+
+    it("credits a renewal with no stored subscription to the first referrer", async () => {
+      const { deps } = makeDeps({ findLifetimeReferrer: vi.fn(async () => referrer) });
+      const result = await validateClickFunnelsConversion({
+        body: withEmail(
+          renewalInvoice({
+            invoiceId: "inv-9",
+            orderId: 9004,
+            productId: PINSTACK_CF_ID,
+            subscriptionId: "sub-unknown",
+          }),
+        ),
+        at: AT,
+        deps,
+      });
+
+      expect(result.status).toBe("PROCESSED");
+      expect(result.isRecurring).toBe(true);
+      expect(result.publisherId).toBe("pub-first");
+      expect(result.externalEventKey).toBe("cf:renewal:inv-9");
+    });
   });
 });
 

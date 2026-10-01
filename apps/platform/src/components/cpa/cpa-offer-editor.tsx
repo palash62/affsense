@@ -13,6 +13,10 @@ import { BuilderImageUpload } from "@/modules/page-builder/components/editor/bui
 import { PageHeader } from "@/components/layout/page-header";
 import { CommissionPlansSection } from "@/components/admin/commission-plans/commission-plans-section";
 import {
+  AffiliateMultiSelect,
+  type SelectedAffiliate,
+} from "@/components/admin/affiliate-search-select";
+import {
   saveCommissionPlanDrafts,
   type CommissionPlanDraft,
 } from "@/components/admin/commission-plans/types";
@@ -53,6 +57,8 @@ type CpaOfferEditorProps = {
   offer?: SerializedCpaOffer | null;
   advertiserLabelDefault?: string;
   advertisers?: AdvertiserOption[];
+  /** Admin only: affiliates with approved access (Private / Hidden). */
+  allowedAffiliates?: SelectedAffiliate[];
 };
 
 type UrlParam = { key: string; value: string };
@@ -75,7 +81,7 @@ type EditorValues = {
   trackingUrl: string;
   previewUrl: string;
   statusActive: boolean;
-  visibility: "PUBLIC" | "PRIVATE";
+  visibility: "PUBLIC" | "PRIVATE" | "HIDDEN";
   countries: string[];
   disallowedCountries: string[];
   allowedTrafficSources: string[];
@@ -334,8 +340,11 @@ export function CpaOfferEditor({
   offer,
   advertiserLabelDefault = "Platform",
   advertisers = [],
+  allowedAffiliates: initialAllowedAffiliates = [],
 }: CpaOfferEditorProps) {
   const router = useRouter();
+  const [allowedAffiliates, setAllowedAffiliates] =
+    useState<SelectedAffiliate[]>(initialAllowedAffiliates);
   const isAdmin = role === "ADMIN";
   const isEdit = mode === "edit";
   const isPendingReview = isAdmin && offer?.status === "PENDING";
@@ -444,6 +453,9 @@ export function CpaOfferEditor({
         payout,
         status,
         visibility: values.visibility,
+        ...(values.visibility !== "PUBLIC"
+          ? { allowedPublisherIds: allowedAffiliates.map((a) => a.id) }
+          : {}),
       };
     }
     return {
@@ -922,7 +934,14 @@ export function CpaOfferEditor({
               </p>
             </div>
             )}
-            <Field label="Affiliate Visibility" hint="Private offers require affiliate approval before they can promote.">
+            <Field
+              label="Affiliate Visibility"
+              hint={
+                values.visibility === "HIDDEN"
+                  ? "Hidden offers are visible only to the affiliates you select."
+                  : "Private offers require affiliate approval before they can promote."
+              }
+            >
                 <Select
                   value={values.visibility}
                   onValueChange={(value) =>
@@ -930,14 +949,35 @@ export function CpaOfferEditor({
                   }
                 >
                   <SelectTrigger className="h-10 w-full bg-card">
-                    <SelectValue />
+                    <SelectValue>
+                      {(value: string) =>
+                        value === "HIDDEN"
+                          ? "Hidden — only selected affiliates can see it"
+                          : value === "PRIVATE"
+                            ? "Private — affiliates must request access"
+                            : "Public — any affiliate can promote"
+                      }
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="PUBLIC">Public — any affiliate can promote</SelectItem>
                     <SelectItem value="PRIVATE">Private — affiliates must request access</SelectItem>
+                    <SelectItem value="HIDDEN">Hidden — only selected affiliates can see it</SelectItem>
                   </SelectContent>
                 </Select>
               </Field>
+            {isAdmin && values.visibility !== "PUBLIC" ? (
+              <Field
+                label="Allowed affiliates"
+                hint={
+                  values.visibility === "HIDDEN"
+                    ? "Only these affiliates see the offer."
+                    : "These affiliates are approved without requesting access."
+                }
+              >
+                <AffiliateMultiSelect value={allowedAffiliates} onChange={setAllowedAffiliates} />
+              </Field>
+            ) : null}
           </SectionCard>
 
           <SectionCard step={3} title="Targeting & Restrictions">

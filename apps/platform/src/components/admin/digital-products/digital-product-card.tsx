@@ -91,6 +91,11 @@ export function DigitalProductCard({
                   New
                 </span>
               ) : null}
+              {product.isPrivate ? (
+                <span className="inline-flex items-center rounded-full bg-black/45 px-2 py-0.5 text-[11px] font-medium text-white backdrop-blur-sm">
+                  Private
+                </span>
+              ) : null}
             </div>
             <StatusPill status={product.status} />
           </div>

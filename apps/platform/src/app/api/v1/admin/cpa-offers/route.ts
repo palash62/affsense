@@ -2,11 +2,13 @@ import { withAuth, parsePagination, ADMIN_PORTAL_ROLES } from "@/lib/api-handler
 import { errorResponse } from "@/lib/errors";
 import {
   adminCpaOfferCreateSchema,
+  allowedPublisherIdsSchema,
   cpaOfferListQuerySchema,
 } from "@/lib/validations";
 import {
   createCpaOffer,
   listCpaOffersForAdmin,
+  setCpaOfferAllowedPublishers,
 } from "@/services/cpa-offer.service";
 
 export async function GET(request: Request) {
@@ -60,10 +62,14 @@ export async function POST(request: Request) {
         );
       }
 
+      const allowed = allowedPublisherIdsSchema.safeParse(body?.allowedPublisherIds);
       const data = await createCpaOffer({
         ...parsed.data,
         createdByUserId: session.user.id,
       });
+      if (allowed.success && allowed.data && data.visibility !== "PUBLIC") {
+        await setCpaOfferAllowedPublishers(data.id, allowed.data, session.user.id);
+      }
       return Response.json({ data }, { status: 201 });
     } catch (error) {
       return errorResponse(error);

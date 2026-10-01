@@ -4,6 +4,7 @@ import type {
   DigitalProductStatus,
   Prisma,
 } from "@prisma/client";
+import { formatMemberId } from "@cpl/shared";
 import { Errors, AppError } from "@/lib/errors";
 import { parseUserAgent } from "@/lib/publisher-leads";
 import {
@@ -97,6 +98,10 @@ export type SerializedDigitalProduct = {
   shortDescription: string;
   salesPageUrl: string | null;
   affiliateTrackingParam: string | null;
+  lifetimeCookie: boolean;
+  isPrivate: boolean;
+  /** Publishers allowed to see a private product (admin view). */
+  allowedAffiliates: Array<{ id: string; name: string; email: string; memberId: string }>;
   previewUrl: string | null;
   webhookSecret: string | null;
   /** ClickFunnels product mapped to this product's front end. */
@@ -132,6 +137,7 @@ export type SerializedPublisherDigitalProduct = {
   shortDescription: string;
   salesPageUrl: string | null;
   affiliateTrackingParam: string | null;
+  lifetimeCookie: boolean;
   previewUrl: string | null;
   upsells: Array<{ name: string; price: number; commissionPct: number }>;
   salesPages: SerializedDigitalProductSalesPage[];
@@ -188,6 +194,8 @@ function serializeProduct(row: {
   isNew: boolean;
   salesPageUrl: string | null;
   affiliateTrackingParam: string | null;
+  lifetimeCookie: boolean;
+  isPrivate: boolean;
   previewUrl: string | null;
   frontEndCommission: Prisma.Decimal;
   upsellCommission: Prisma.Decimal | null;
@@ -211,6 +219,9 @@ function serializeProduct(row: {
   }>;
   salesPages?: Array<{ id: string; name: string; pageUrl: string }>;
   cfMappings?: CfMappingRow[];
+  allowedPublishers?: Array<{
+    publisher: { id: string; name: string; email: string; memberNo: number };
+  }>;
 }): SerializedDigitalProduct {
   const mappings = row.cfMappings ?? [];
   const frontEndMapping = mappings.find((m) => !m.upsellId);
@@ -233,6 +244,12 @@ function serializeProduct(row: {
     shortDescription: row.shortDescription,
     salesPageUrl: row.salesPageUrl,
     affiliateTrackingParam: row.affiliateTrackingParam,
+    lifetimeCookie: row.lifetimeCookie,
+    isPrivate: row.isPrivate,
+    allowedAffiliates: (row.allowedPublishers ?? []).map(({ publisher: { memberNo, ...p } }) => ({
+      ...p,
+      memberId: formatMemberId(memberNo),
+    })),
     previewUrl: row.previewUrl,
     webhookSecret: row.webhookSecret,
     cfProductId: frontEndMapping?.cfProductId ?? null,
@@ -271,6 +288,7 @@ function serializePublisherProduct(
     shortDescription: full.shortDescription,
     salesPageUrl: full.salesPageUrl,
     affiliateTrackingParam: full.affiliateTrackingParam,
+    lifetimeCookie: full.lifetimeCookie,
     previewUrl: full.previewUrl,
     upsells: full.upsells.map((u) => ({
       name: u.name,
@@ -332,7 +350,9 @@ export async function listPublisherDigitalProducts(
 ) {
   const page = filters.page ?? 1;
   const limit = filters.limit ?? 100;
-  const where = buildProductWhere({ ...filters, activeOnly: true });
+  const where: Prisma.DigitalProductWhereInput = {
+    AND: [buildProductWhere({ ...filters, activeOnly: true }), publisherVisibleProductWhere(publisherId)],
+  };
   const [rows, total] = await Promise.all([
     prisma.digitalProduct.findMany({
       where,
@@ -361,7 +381,7 @@ export async function listPublisherDigitalProducts(
 
 export async function getPublisherDigitalProduct(id: string, publisherId?: string) {
   const row = await prisma.digitalProduct.findFirst({
-    where: { id, status: "ACTIVE" },
+    where: { id, status: "ACTIVE", ...publisherVisibleProductWhere(publisherId) },
     include: {
       category: true,
       upsells: { orderBy: { sortOrder: "asc" } },
@@ -387,10 +407,44 @@ export async function getDigitalProductById(id: string) {
       upsells: { orderBy: { sortOrder: "asc" } },
       salesPages: { orderBy: { sortOrder: "asc" } },
       cfMappings: CF_MAPPINGS_INCLUDE,
+      allowedPublishers: {
+        orderBy: { createdAt: "asc" },
+        select: { publisher: { select: { id: true, name: true, email: true, memberNo: true } } },
+      },
     },
   });
   if (!row) throw Errors.notFound("Digital product");
   return serializeProduct(row);
+}
+
+/** Replace a product's allowlist with `publisherIds` (publishers only). */
+async function replaceProductAllowedPublishers(productId: string, publisherIds: string[]) {
+  const wanted = await prisma.user.findMany({
+    where: {
+      id: { in: [...new Set(publisherIds.filter((id) => typeof id === "string"))] },
+      role: "PUBLISHER",
+    },
+    select: { id: true },
+  });
+  await prisma.$transaction([
+    prisma.digitalProductAllowedPublisher.deleteMany({ where: { productId } }),
+    prisma.digitalProductAllowedPublisher.createMany({
+      data: wanted.map((u) => ({ productId, publisherId: u.id })),
+    }),
+  ]);
+}
+
+/** Public products, plus private ones the publisher is allowed to see. */
+function publisherVisibleProductWhere(publisherId?: string): Prisma.DigitalProductWhereInput {
+  if (!publisherId) return { isPrivate: false };
+  return { OR: [{ isPrivate: false }, { allowedPublishers: { some: { publisherId } } }] };
+}
+
+export async function publisherCanSeeDigitalProduct(productId: string, publisherId: string) {
+  const count = await prisma.digitalProduct.count({
+    where: { id: productId, ...publisherVisibleProductWhere(publisherId) },
+  });
+  return count > 0;
 }
 
 type NormalizedUpsellInput = {
@@ -665,6 +719,9 @@ export async function createDigitalProduct(input: {
   isNew?: boolean;
   salesPageUrl?: string;
   affiliateTrackingParam?: string;
+  lifetimeCookie?: boolean;
+  isPrivate?: boolean;
+  allowedPublisherIds?: string[];
   previewUrl?: string;
   frontEndCommission: number;
   upsellCommission?: number | null;
@@ -707,6 +764,8 @@ export async function createDigitalProduct(input: {
       isNew: input.isNew ?? false,
       salesPageUrl: input.salesPageUrl,
       affiliateTrackingParam: input.affiliateTrackingParam,
+      lifetimeCookie: input.lifetimeCookie ?? false,
+      isPrivate: input.isPrivate ?? false,
       previewUrl: input.previewUrl,
       frontEndCommission: input.frontEndCommission,
       upsellCommission: input.upsellCommission,
@@ -733,6 +792,9 @@ export async function createDigitalProduct(input: {
     },
   });
   await syncProductCfMappings(row.id, frontEndCf, upsells);
+  if (input.allowedPublisherIds) {
+    await replaceProductAllowedPublishers(row.id, input.allowedPublisherIds);
+  }
   return getDigitalProductById(row.id);
 }
 
@@ -749,6 +811,9 @@ export async function updateDigitalProduct(
     isNew: boolean;
     salesPageUrl: string;
     affiliateTrackingParam: string;
+    lifetimeCookie: boolean;
+    isPrivate: boolean;
+    allowedPublisherIds: string[];
     previewUrl: string;
     frontEndCommission: number;
     upsellCommission: number | null;
@@ -838,6 +903,8 @@ export async function updateDigitalProduct(
       isNew: input.isNew,
       salesPageUrl: input.salesPageUrl,
       affiliateTrackingParam: input.affiliateTrackingParam,
+      lifetimeCookie: input.lifetimeCookie,
+      isPrivate: input.isPrivate,
       previewUrl: input.previewUrl,
       frontEndCommission: input.frontEndCommission,
       upsellCommission: input.upsellCommission,
@@ -850,6 +917,9 @@ export async function updateDigitalProduct(
     },
   });
   if (shouldSyncCf) await syncProductCfMappings(row.id, frontEndCf, upsellsForCf);
+  if (Array.isArray(input.allowedPublisherIds)) {
+    await replaceProductAllowedPublishers(row.id, input.allowedPublisherIds);
+  }
   return getDigitalProductById(row.id);
 }
 

@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
 import { formatUserDateTime } from "@/lib/user-timezone";
 import { getSession } from "@/lib/session";
-import { Globe, Link2, Mail, MapPin, Share2, ShieldAlert, Wallet } from "lucide-react";
+import { Globe, Hash, Link2, Mail, MapPin, Share2, ShieldAlert, Wallet } from "lucide-react";
+import { formatMemberId } from "@cpl/shared";
 import { getPublisherDetail, listActiveCampaignsForSmartLinkAllowlist } from "@/services/admin.service";
 import { getPublisherSpamScoresByIds } from "@/modules/fraud/repositories/quality.repo";
 import { TIER_PAYOUT_ROWS } from "@/lib/platform-settings";
@@ -119,6 +120,15 @@ export default async function AdminPublisherDetailPage({ params }: PageProps) {
 
       <PageSection title="Profile" description="Publisher account details" icon={Share2} gradient="leads">
         <div className="grid gap-4 px-6 py-5 sm:grid-cols-2">
+          <div className="flex items-start gap-3">
+            <Hash className="mt-0.5 h-4 w-4 text-muted-foreground" />
+            <div>
+              <p className="text-xs text-muted-foreground">User ID</p>
+              <p className="font-mono text-sm font-medium text-foreground">
+                {formatMemberId(publisher.memberNo)}
+              </p>
+            </div>
+          </div>
           <div className="flex items-start gap-3">
             <Mail className="mt-0.5 h-4 w-4 text-muted-foreground" />
             <div>

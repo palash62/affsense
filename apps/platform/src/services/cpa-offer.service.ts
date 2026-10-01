@@ -6,6 +6,7 @@ import {
   type CpaOfferVisibility,
   type PublisherCpaOfferAccessStatus,
 } from "@prisma/client";
+import { formatMemberId } from "@cpl/shared";
 import { prisma } from "@/lib/prisma";
 import { Errors } from "@/lib/errors";
 import { parseUserAgent } from "@/lib/publisher-leads";
@@ -274,13 +275,87 @@ function serializePublisherCpaOffer(
   };
 }
 
+/** Hidden offers are listed only for publishers the admin approved. */
+function publisherVisibleOfferWhere(publisherId: string): Prisma.CpaOfferWhereInput {
+  return {
+    OR: [
+      { visibility: { not: "HIDDEN" } },
+      { publisherAccessRequests: { some: { publisherId, status: "APPROVED" } } },
+    ],
+  };
+}
+
+export type CpaOfferAllowedPublisher = {
+  id: string;
+  name: string;
+  email: string;
+  memberId: string;
+};
+
+export async function listCpaOfferAllowedPublishers(
+  offerId: string,
+): Promise<CpaOfferAllowedPublisher[]> {
+  const rows = await prisma.publisherCpaOfferAccess.findMany({
+    where: { offerId, status: "APPROVED" },
+    orderBy: { createdAt: "asc" },
+    select: { publisher: { select: { id: true, name: true, email: true, memberNo: true } } },
+  });
+  return rows.map(({ publisher: { memberNo, ...publisher } }) => ({
+    ...publisher,
+    memberId: formatMemberId(memberNo),
+  }));
+}
+
+/** Make `publisherIds` the APPROVED set for the offer; other statuses are left alone. */
+export async function setCpaOfferAllowedPublishers(
+  offerId: string,
+  publisherIds: string[],
+  adminId: string,
+) {
+  const wanted = await prisma.user.findMany({
+    where: { id: { in: [...new Set(publisherIds)] }, role: "PUBLISHER" },
+    select: { id: true },
+  });
+  const wantedIds = wanted.map((u) => u.id);
+  const alreadyApproved = new Set(
+    (
+      await prisma.publisherCpaOfferAccess.findMany({
+        where: { offerId, status: "APPROVED", publisherId: { in: wantedIds } },
+        select: { publisherId: true },
+      })
+    ).map((row) => row.publisherId),
+  );
+  const now = new Date();
+
+  await prisma.$transaction([
+    prisma.publisherCpaOfferAccess.deleteMany({
+      where: { offerId, status: "APPROVED", publisherId: { notIn: wantedIds } },
+    }),
+    ...wantedIds.filter((id) => !alreadyApproved.has(id)).map((publisherId) =>
+      prisma.publisherCpaOfferAccess.upsert({
+        where: { publisherId_offerId: { publisherId, offerId } },
+        create: {
+          publisherId,
+          offerId,
+          status: "APPROVED",
+          reviewedByUserId: adminId,
+          reviewedAt: now,
+        },
+        update: { status: "APPROVED", adminNote: null, reviewedByUserId: adminId, reviewedAt: now },
+      }),
+    ),
+  ]);
+}
+
 export async function listPublisherCpaOffers(
   publisherId: string,
   filters: CpaOfferListFilters,
 ): Promise<PublisherCpaOfferListResult> {
   const page = Math.max(1, filters.page ?? 1);
   const limit = Math.min(100, Math.max(1, filters.limit ?? 20));
-  const where = buildWhere(filters, { activeOnly: true });
+  const where: Prisma.CpaOfferWhereInput = {
+    AND: [buildWhere(filters, { activeOnly: true }), publisherVisibleOfferWhere(publisherId)],
+  };
 
   const [total, rows, categoryRows] = await Promise.all([
     prisma.cpaOffer.count({ where }),
@@ -334,7 +409,7 @@ export async function getPublisherCpaOfferById(
   if (!id) return null;
 
   const row = await prisma.cpaOffer.findFirst({
-    where: { id, status: "ACTIVE" },
+    where: { id, status: "ACTIVE", ...publisherVisibleOfferWhere(publisherId) },
   });
   if (!row) return null;
 

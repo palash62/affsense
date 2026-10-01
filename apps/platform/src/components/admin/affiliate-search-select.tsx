@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type SelectedAffiliate = { id: string; name: string; email: string };
+export type SelectedAffiliate = { id: string; name: string; email: string; memberId?: string };
 
 type AffiliateSearchSelectProps = {
   value: SelectedAffiliate | null;
@@ -53,7 +53,7 @@ export function AffiliateSearchSelect({
         <div className="min-w-0">
           <p className="truncate text-sm font-medium text-foreground">{value.name || value.email}</p>
           <p className="truncate text-xs text-muted-foreground">
-            {value.email} · <span className="font-mono">{value.id}</span>
+            {value.email} · <span className="font-mono">{value.memberId ?? value.id}</span>
           </p>
         </div>
         <button
@@ -106,11 +106,60 @@ export function AffiliateSearchSelect({
                 className="flex w-full flex-col px-3 py-2 text-left text-sm hover:bg-muted"
               >
                 <span className="font-medium text-foreground">{row.name || row.email}</span>
-                <span className="text-xs text-muted-foreground">{row.email}</span>
+                <span className="text-xs text-muted-foreground">
+                  {row.email}
+                  {row.memberId ? <span className="font-mono"> · {row.memberId}</span> : null}
+                </span>
               </button>
             ))
           )}
         </div>
+      )}
+    </div>
+  );
+}
+
+export function AffiliateMultiSelect({
+  value,
+  onChange,
+  placeholder,
+}: {
+  value: SelectedAffiliate[];
+  onChange: (value: SelectedAffiliate[]) => void;
+  placeholder?: string;
+}) {
+  return (
+    <div className="space-y-2">
+      <AffiliateSearchSelect
+        value={null}
+        placeholder={placeholder}
+        onChange={(picked) => {
+          if (picked && !value.some((a) => a.id === picked.id)) onChange([...value, picked]);
+        }}
+      />
+      {value.length === 0 ? (
+        <p className="text-xs text-muted-foreground">No affiliates selected</p>
+      ) : (
+        <ul className="flex flex-wrap gap-1.5" aria-label="Selected affiliates">
+          {value.map((a) => (
+            <li
+              key={a.id}
+              className="inline-flex max-w-full items-center gap-1 rounded-full border border-border bg-muted/50 py-0.5 pl-2.5 pr-1 text-xs"
+            >
+              <span className="truncate" title={a.memberId ? `${a.email} · ${a.memberId}` : a.email}>
+                {a.name || a.email}
+              </span>
+              <button
+                type="button"
+                onClick={() => onChange(value.filter((x) => x.id !== a.id))}
+                className="rounded-full p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+                aria-label={`Remove ${a.name || a.email}`}
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </li>
+          ))}
+        </ul>
       )}
     </div>
   );

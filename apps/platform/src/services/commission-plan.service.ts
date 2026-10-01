@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@prisma/client";
+import { formatMemberId, parseMemberId } from "@cpl/shared";
 import { AppError, Errors } from "@/lib/errors";
 import {
   loadPublisherDigitalPlanRates,
@@ -413,17 +414,25 @@ export async function getPublisherDigitalPlanRates(
 
 export async function searchPublishersForCommissionPlan(query: string, limit = 20) {
   const q = query.trim();
+  const memberNo = parseMemberId(q);
   const rows = await prisma.user.findMany({
     where: {
       role: "PUBLISHER",
       status: "ACTIVE",
       ...(q
-        ? { OR: [{ name: { contains: q } }, { email: { contains: q } }, { id: q }] }
+        ? {
+            OR: [
+              { name: { contains: q } },
+              { email: { contains: q } },
+              { id: q },
+              ...(memberNo ? [{ memberNo }] : []),
+            ],
+          }
         : {}),
     },
     orderBy: { name: "asc" },
     take: Math.min(Math.max(limit, 1), 50),
-    select: { id: true, name: true, email: true },
+    select: { id: true, name: true, email: true, memberNo: true },
   });
-  return rows;
+  return rows.map(({ memberNo: no, ...row }) => ({ ...row, memberId: formatMemberId(no) }));
 }

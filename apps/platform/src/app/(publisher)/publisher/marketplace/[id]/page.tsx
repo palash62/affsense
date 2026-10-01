@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { notFound, redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { getPublisherDigitalProduct } from "@/services/digital-product.service";
+import { getMemberId } from "@/services/user.service";
 import { PageHeader } from "@/components/layout/page-header";
 import { PublisherProductViewPage } from "@/components/publisher/marketplace/publisher-product-view-page";
 
@@ -15,7 +16,10 @@ export default async function PublisherMarketplaceProductPage({
   if (!session?.user?.id) redirect("/login");
 
   const { id } = await params;
-  const product = await getPublisherDigitalProduct(id, session.user.id);
+  const [product, memberId] = await Promise.all([
+    getPublisherDigitalProduct(id, session.user.id),
+    getMemberId(session.user.id),
+  ]);
   if (!product) notFound();
 
   return (
@@ -30,7 +34,7 @@ export default async function PublisherMarketplaceProductPage({
           { label: product.name },
         ]}
       />
-      <PublisherProductViewPage product={product} publisherId={session.user.id} />
+      <PublisherProductViewPage product={product} publisherId={memberId} />
     </div>
   );
 }

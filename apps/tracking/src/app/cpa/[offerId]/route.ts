@@ -1,6 +1,7 @@
 import { prisma } from "@cpl/database";
 import { injectClickIdIntoTrackingUrl } from "@cpl/shared";
 import { NextResponse } from "next/server";
+import { findActivePublisherByRef } from "@/lib/member-ref";
 
 function clientIp(request: Request): string | null {
   const forwarded = request.headers.get("x-forwarded-for");
@@ -75,13 +76,10 @@ export async function GET(
       }
     }
   } else if (pubId) {
-    const publisher = await prisma.user.findFirst({
-      where: { id: pubId, role: "PUBLISHER", status: "ACTIVE" },
-      select: { id: true },
-    });
+    const publisher = await findActivePublisherByRef(pubId);
 
     if (publisher) {
-      if (offer.visibility === "PRIVATE") {
+      if (offer.visibility !== "PUBLIC") {
         const access = await prisma.publisherCpaOfferAccess.findUnique({
           where: {
             publisherId_offerId: { publisherId: publisher.id, offerId: offer.id },

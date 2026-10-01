@@ -155,6 +155,20 @@ export function AdminDigitalProductDetailPage({
                   New
                 </span>
               ) : null}
+              {product.isPrivate ? (
+                <span
+                  className="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-800"
+                  title={`${product.allowedAffiliates.length} allowed affiliate(s)`}
+                >
+                  Private · {product.allowedAffiliates.length} affiliate
+                  {product.allowedAffiliates.length === 1 ? "" : "s"}
+                </span>
+              ) : null}
+              {product.lifetimeCookie ? (
+                <span className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
+                  Lifetime cookie
+                </span>
+              ) : null}
             </div>
             <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 text-sm sm:grid-cols-3">
               <Stat label="Type">{product.productType}</Stat>

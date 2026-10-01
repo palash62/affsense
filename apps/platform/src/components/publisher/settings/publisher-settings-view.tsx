@@ -12,6 +12,7 @@ import {
   UserStatusBadge,
 } from "@/components/admin/admin-ui";
 import { PublisherInfoBanner } from "@/components/publisher/publisher-info-banner";
+import { MemberIdTile } from "@/components/shared/member-id-tile";
 import {
   PublisherPasswordForm,
   PublisherPayoutDetailsForm,
@@ -33,6 +34,7 @@ export type PublisherSettingsViewProps = {
   trafficSource: string;
   timezone: string;
   memberSince: string;
+  memberId: string;
   totalLeads: number;
   approvedLeads: number;
   availableBalance: number;
@@ -74,6 +76,7 @@ export function PublisherSettingsView({
   trafficSource,
   timezone,
   memberSince,
+  memberId,
   totalLeads,
   approvedLeads,
   availableBalance,
@@ -133,6 +136,7 @@ export function PublisherSettingsView({
               </p>
               <p className="mt-1 text-sm font-semibold text-foreground">{memberSince}</p>
             </div>
+            <MemberIdTile memberId={memberId} />
           </div>
         </div>
       </DashboardCard>

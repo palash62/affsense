@@ -40,6 +40,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { BuilderImageUpload } from "@/modules/page-builder/components/editor/builder-image-upload";
 import { cn } from "@/lib/utils";
 import { CommissionPlansSection } from "@/components/admin/commission-plans/commission-plans-section";
+import { AffiliateMultiSelect } from "@/components/admin/affiliate-search-select";
 import {
   saveCommissionPlanDrafts,
   type CommissionPlanDraft,
@@ -137,6 +138,9 @@ export function DigitalProductForm({ productId }: { productId?: string }) {
           isNew: Boolean(data.isNew),
           salesPageUrl: data.salesPageUrl ?? "",
           affiliateTrackingParam: data.affiliateTrackingParam ?? "affsense_id",
+          lifetimeCookie: Boolean(data.lifetimeCookie),
+          isPrivate: Boolean(data.isPrivate),
+          allowedAffiliates: Array.isArray(data.allowedAffiliates) ? data.allowedAffiliates : [],
           previewUrl: data.previewUrl ?? "",
           frontEndCommission: String(data.frontEndCommission ?? ""),
           referralReward:
@@ -294,6 +298,9 @@ export function DigitalProductForm({ productId }: { productId?: string }) {
         isNew: values.isNew,
         salesPageUrl: values.salesPageUrl,
         affiliateTrackingParam: values.affiliateTrackingParam,
+        lifetimeCookie: values.lifetimeCookie,
+        isPrivate: values.isPrivate,
+        allowedPublisherIds: values.isPrivate ? values.allowedAffiliates.map((a) => a.id) : [],
         previewUrl: values.previewUrl,
         frontEndCommission: Number(values.frontEndCommission) || 0,
         upsellCommission: null,
@@ -581,6 +588,39 @@ export function DigitalProductForm({ productId }: { productId?: string }) {
                 <span className="text-sm font-medium text-foreground">New Product</span>
               </label>
             </div>
+
+            <div className="mt-5 grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <FieldLabel>Affiliate Visibility</FieldLabel>
+                <Select
+                  value={values.isPrivate ? "PRIVATE" : "PUBLIC"}
+                  onValueChange={(v) => v && patch({ isPrivate: v === "PRIVATE" })}
+                >
+                  <SelectTrigger className="h-10 w-full rounded-md" aria-label="Affiliate Visibility">
+                    <SelectValue>
+                      {(value: string) =>
+                        value === "PRIVATE"
+                          ? "Private — only selected affiliates"
+                          : "Public — all affiliates"
+                      }
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="PUBLIC">Public — all affiliates</SelectItem>
+                    <SelectItem value="PRIVATE">Private — only selected affiliates</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {values.isPrivate ? (
+                <div className="space-y-2">
+                  <FieldLabel>Allowed affiliates</FieldLabel>
+                  <AffiliateMultiSelect
+                    value={values.allowedAffiliates}
+                    onChange={(allowedAffiliates) => patch({ allowedAffiliates })}
+                  />
+                </div>
+              ) : null}
+            </div>
           </DashboardCard>
 
           {/* 2. Offer & Funnel Details */}
@@ -682,6 +722,20 @@ export function DigitalProductForm({ productId }: { productId?: string }) {
                     placeholder="affsense_id"
                     className="h-10 rounded-md"
                   />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="flex cursor-pointer items-center gap-2.5">
+                    <Checkbox
+                      checked={values.lifetimeCookie}
+                      onCheckedChange={(checked) => patch({ lifetimeCookie: checked === true })}
+                    />
+                    <span className="text-sm font-medium text-foreground">Lifetime cookie</span>
+                  </label>
+                  <p className="text-xs text-muted-foreground">
+                    A buyer&apos;s later purchases of this product (repeat orders, upsells,
+                    renewals) are credited to the affiliate who referred them first, even when the
+                    sale arrives without the tracking parameter. Matched by buyer email.
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <FieldLabel>Tracked sales URL preview</FieldLabel>

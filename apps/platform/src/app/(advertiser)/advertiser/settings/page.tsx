@@ -1,6 +1,8 @@
 export const dynamic = "force-dynamic";
 
 import { Info, KeyRound, Shield } from "lucide-react";
+import { formatMemberId } from "@cpl/shared";
+import { MemberIdTile } from "@/components/shared/member-id-tile";
 import { getSession } from "@/lib/session";
 import { formatUserDateTime, resolveUserTimezone } from "@/lib/user-timezone";
 import { getAdvertiserSettings } from "@/services/user.service";
@@ -81,6 +83,7 @@ export default async function AdvertiserSettingsPage() {
               <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Member since</p>
               <p className="mt-1 text-sm font-semibold text-foreground">{memberSince}</p>
             </div>
+            <MemberIdTile memberId={formatMemberId(user.memberNo)} />
           </div>
         </div>
       </div>

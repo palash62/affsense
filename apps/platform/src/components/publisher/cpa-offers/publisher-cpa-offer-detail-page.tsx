@@ -69,7 +69,7 @@ export function PublisherCpaOfferDetailPage({
         <Badge className={cpaOfferStatusBadgeClass(localOffer.status)}>
           {cpaOfferStatusLabel(localOffer.status)}
         </Badge>
-        {localOffer.visibility === "PRIVATE" ? (
+        {localOffer.visibility !== "PUBLIC" ? (
           <Badge variant="secondary" className="bg-amber-50 text-amber-900 hover:bg-amber-50">
             Private
           </Badge>

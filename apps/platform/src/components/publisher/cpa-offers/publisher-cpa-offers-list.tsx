@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useSession } from "next-auth/react";
 import { Link2, Lock, Search, Store } from "lucide-react";
 import { toast } from "sonner";
 import { PublisherCpaOfferTrackingLinkDialog } from "@/components/publisher/cpa-offers/publisher-cpa-offer-tracking-link-dialog";
@@ -103,9 +102,7 @@ function OfferAccessFooter({
   );
 }
 
-export function PublisherCpaOffersList() {
-  const { data: session } = useSession();
-  const publisherId = session?.user?.id ?? "";
+export function PublisherCpaOffersList({ publisherId }: { publisherId: string }) {
 
   const [result, setResult] = useState<PublisherCpaOfferListResult | null>(null);
   const [loading, setLoading] = useState(true);

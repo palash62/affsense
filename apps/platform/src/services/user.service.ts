@@ -4,6 +4,16 @@ import { isValidTimezone, resolveUserTimezone } from "@/lib/user-timezone";
 import { Prisma } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { notifyPasswordChanged } from "@/services/notify.service";
+import { formatMemberId } from "@cpl/shared";
+
+/** Public User ID (AFF100001); falls back to the internal id if the user is missing. */
+export async function getMemberId(userId: string): Promise<string> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { memberNo: true },
+  });
+  return user ? formatMemberId(user.memberNo) : userId;
+}
 
 function assertTimezone(timezone: string) {
   if (!isValidTimezone(timezone)) {
@@ -38,6 +48,7 @@ export async function getAdvertiserSettings(userId: string) {
       status: true,
       timezone: true,
       referralCode: true,
+      memberNo: true,
       createdAt: true,
       advertiserProfile: {
         select: { company: true, industry: true },
@@ -56,6 +67,7 @@ export async function getPublisherSettings(userId: string) {
       role: true,
       status: true,
       timezone: true,
+      memberNo: true,
       createdAt: true,
       publisherProfile: {
         select: {

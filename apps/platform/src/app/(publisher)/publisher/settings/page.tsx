@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { redirect } from "next/navigation";
+import { formatMemberId } from "@cpl/shared";
 import { getSession } from "@/lib/session";
 import { formatUserDateTime, resolveUserTimezone } from "@/lib/user-timezone";
 import { getPublisherSettings } from "@/services/user.service";
@@ -50,6 +51,7 @@ export default async function PublisherSettingsPage() {
         trafficSource={user.publisherProfile?.trafficSource ?? ""}
         timezone={timezone}
         memberSince={formatUserDateTime(user.createdAt, timezone, "MMM d, yyyy")}
+        memberId={formatMemberId(user.memberNo)}
         totalLeads={user._count.leads}
         approvedLeads={approvedLeads}
         availableBalance={user.wallet ? Number(user.wallet.balance) : 0}
