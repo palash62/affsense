@@ -15,6 +15,7 @@ import {
   extractOrderFieldsFromClickFunnelsPayload,
 } from "@/lib/clickfunnels-webhook-payload";
 import { resolveDigitalProductCommissionById } from "@/lib/digital-product-commission";
+import { recordDigitalProductCommission } from "@/services/wallet.service";
 
 async function buildCommissionSnapshot(body: unknown, result: ConversionValidationResult) {
   if (result.status !== "PROCESSED" || !result.publisherId || !result.productId) return null;
@@ -258,6 +259,15 @@ export async function handleClickFunnelsWebhookPost(request: Request): Promise<R
     }
 
     await saveSubscriptionAttribution(result, created.id);
+
+    if (created.publisherId) {
+      // Never fail the webhook over this; the publisher reconcile retries it later.
+      try {
+        await recordDigitalProductCommission(created.id);
+      } catch (error) {
+        console.error("[clickfunnels-webhook] wallet posting failed", created.id, error);
+      }
+    }
 
     if (created.publisherId) {
       void import("@/services/digital-product-postback-dispatch")

@@ -10,6 +10,7 @@ import { loadAffiliateInvoicingConfig } from "@/services/affiliate-invoicing-set
 import { getSession } from "@/lib/session";
 import { formatUserDateTime } from "@/lib/user-timezone";
 import { formatInvoicePeriod } from "@/lib/affiliate-invoice-period";
+import { isWeeklyAutoInvoicing } from "@/lib/affiliate-invoicing-settings";
 import { GradientStatCard, NeutralStatCard } from "@/components/admin/gradient-stat-card";
 import { AffiliateInvoiceStatusBadge, formatCurrency } from "@/components/admin/admin-ui";
 import { AdminInvoicesFilters } from "@/components/admin/admin-invoices-filters";
@@ -100,7 +101,7 @@ export default async function AdminInvoicesPage({ searchParams }: PageProps) {
       <p className="text-sm text-muted-foreground">
         Weekly Monday-to-Sunday earnings, invoiced on Net-{config.netTermDays} terms once an
         affiliate reaches {formatCurrency(config.minimumAmount)}.
-        {config.enabled
+        {isWeeklyAutoInvoicing(config)
           ? ""
           : " Weekly invoicing is off, so affiliates request their own invoices, which appear here."}
       </p>

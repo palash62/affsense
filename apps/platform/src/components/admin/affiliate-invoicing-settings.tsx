@@ -115,8 +115,8 @@ export function AffiliateInvoicingSettingsForm() {
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">
-              On: invoices are generated for affiliates (see Weekly cycle below). Off:
-              affiliates request invoices themselves from their Invoices page.
+              On with Weekly cycle on: invoices are raised every Monday. Otherwise affiliates
+              request invoices themselves from their Invoices page.
             </p>
           </div>
 
@@ -142,7 +142,8 @@ export function AffiliateInvoicingSettingsForm() {
               </p>
             ) : (
               <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
-                Testing mode: Generate invoices bills all earnings up to now.
+                Affiliates request invoices themselves; admins can still Generate invoices, which
+                bills all earnings up to now.
               </p>
             )}
           </div>

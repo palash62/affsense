@@ -1347,6 +1347,75 @@ function matchesStatusFilter(
   return true;
 }
 
+export type WebhookEventCommission = {
+  publisherId: string;
+  /** Always positive; for a refund this is the commission to take back. */
+  commission: number;
+  isRefund: boolean;
+};
+
+/**
+ * Commission earned (or reversed) by one processed marketplace sale, worked out
+ * the same way as the publisher commission report so invoices match it.
+ */
+export async function resolveWebhookEventCommissions(
+  eventIds: string[],
+): Promise<Map<string, WebhookEventCommission | null>> {
+  const result = new Map<string, WebhookEventCommission | null>();
+  if (eventIds.length === 0) return result;
+
+  const rows = await prisma.webhookEvent.findMany({
+    where: { id: { in: eventIds } },
+    select: {
+      id: true,
+      eventType: true,
+      status: true,
+      publisherId: true,
+      payloadJson: true,
+      ...DIGITAL_COMMISSION_SNAPSHOT_SELECT,
+    },
+  });
+
+  const [commissionLookup, productNameById] = await Promise.all([
+    loadDigitalProductCommissionLookup(),
+    loadDigitalProductNameMap(),
+  ]);
+
+  for (const row of rows) {
+    if (row.status !== "PROCESSED" || !row.publisherId) {
+      result.set(row.id, null);
+      continue;
+    }
+
+    const fields = extractOrderFields(row.payloadJson);
+    const amount = fields.amount != null ? Math.abs(fields.amount) : null;
+    if (amount == null) {
+      result.set(row.id, null);
+      continue;
+    }
+
+    const resolved = applyDigitalCommissionSnapshot(
+      resolveDigitalProductForEvent(commissionLookup, productNameById, row, fields.pageSlug, amount),
+      row,
+    );
+    const orderType =
+      resolved.orderType ??
+      classifyCommissionType(fields.orderType ?? row.eventType, row.eventType);
+    const isRefund =
+      orderType === "Refund" || (row.externalEventKey ?? "").startsWith("cf:refund:");
+    const commission = Math.round(Math.abs(resolved.commission ?? 0) * 10_000) / 10_000;
+
+    result.set(
+      row.id,
+      Number.isFinite(commission) && commission > 0
+        ? { publisherId: row.publisherId, commission, isRefund }
+        : null,
+    );
+  }
+
+  return result;
+}
+
 export async function getPublisherCommissionReport(opts: {
   publisherId: string;
   from?: Date;

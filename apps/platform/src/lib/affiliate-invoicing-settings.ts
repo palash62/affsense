@@ -33,6 +33,16 @@ export const DEFAULT_AFFILIATE_INVOICING_CONFIG: AffiliateInvoicingConfig = {
   weeklyCycle: true,
 };
 
+/**
+ * Invoices are raised automatically only when invoicing is on with the weekly
+ * cycle. Otherwise affiliates request their own invoices.
+ */
+export function isWeeklyAutoInvoicing(
+  config: Pick<AffiliateInvoicingConfig, "enabled" | "weeklyCycle">,
+): boolean {
+  return config.enabled && config.weeklyCycle;
+}
+
 export function clampInvoiceMinimumAmount(value: unknown): number {
   const n = Number(value);
   if (!Number.isFinite(n) || n < 0) return DEFAULT_AFFILIATE_INVOICING_CONFIG.minimumAmount;

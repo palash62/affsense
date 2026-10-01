@@ -8,6 +8,7 @@ import { getSession } from "@/lib/session";
 import { getWalletBalance, listPublisherLedger } from "@/services/wallet.service";
 import { listPayouts } from "@/services/payout.service";
 import { loadAffiliateInvoicingConfig } from "@/services/affiliate-invoicing-settings.service";
+import { isWeeklyAutoInvoicing } from "@/lib/affiliate-invoicing-settings";
 import { prisma } from "@/lib/prisma";
 import { PENDING_PAYOUT_STATUSES } from "@/lib/payout-status";
 import { GradientStatCard, NeutralStatCard } from "@/components/admin/gradient-stat-card";
@@ -90,7 +91,7 @@ export default async function PublisherEarningsPage({ searchParams }: PageProps)
     loadAffiliateInvoicingConfig(),
   ]);
 
-  const invoicingEnabled = invoicingConfig.enabled;
+  const invoicingEnabled = isWeeklyAutoInvoicing(invoicingConfig);
 
   const wallet = balance ?? {
     balance: 0,

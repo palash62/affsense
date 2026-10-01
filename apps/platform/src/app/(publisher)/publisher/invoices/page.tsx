@@ -7,6 +7,7 @@ import {
   listAffiliateInvoicesForPublisher,
 } from "@/services/affiliate-invoice.service";
 import { loadAffiliateInvoicingConfig } from "@/services/affiliate-invoicing-settings.service";
+import { isWeeklyAutoInvoicing } from "@/lib/affiliate-invoicing-settings";
 import { getPlatformSettings } from "@/services/wallet.service";
 import { prisma } from "@/lib/prisma";
 import { PublisherRequestInvoiceButton } from "@/components/publisher/publisher-request-invoice-button";
@@ -42,7 +43,7 @@ export default async function PublisherInvoicesPage({ searchParams }: PageProps)
     }),
   ]);
 
-  const weekly = config.enabled;
+  const weekly = isWeeklyAutoInvoicing(config);
   const minimumAmount = platformSettings.minPayoutAmount;
 
   const unpaidTotal = invoices.invoices

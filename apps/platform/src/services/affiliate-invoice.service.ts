@@ -4,10 +4,13 @@ import { prisma } from "@/lib/prisma";
 import { AppError, Errors } from "@/lib/errors";
 import { invoiceWeekStart, resolveInvoicePeriod } from "@/lib/affiliate-invoice-period";
 import { loadAffiliateInvoicingConfig } from "@/services/affiliate-invoicing-settings.service";
+import { isWeeklyAutoInvoicing } from "@/lib/affiliate-invoicing-settings";
 import {
   debitWalletForPayout,
   getPlatformSettings,
   holdWalletFunds,
+  reconcileAllDigitalCommissions,
+  reconcilePublisherDigitalCommissionsForUser,
   releaseWalletHold,
 } from "@/services/wallet.service";
 import { notifyAdminAlert, notifyApproved, notifyUserById } from "@/services/notify.service";
@@ -21,6 +24,8 @@ const SOURCE_LABELS: Record<string, string> = {
   lead_reversal: "CPL leads",
   offerwall_conversion: "Offer wall",
   referral: "Referrals",
+  digital_product_sale: "Marketplace sales",
+  digital_product_refund: "Marketplace sales",
   adjustment: "Adjustments",
   deposit: "Deposits",
 };
@@ -81,12 +86,16 @@ export async function generateAffiliateInvoices(
     throw new AppError("INVOICING_DISABLED", "Affiliate invoicing is disabled", 422);
   }
 
+  await reconcileAllDigitalCommissions();
+  // Commissions backfilled just now are stamped after `runAt`; include them.
+  const billedUntil = new Date(Math.max(runAt.getTime(), Date.now()));
+
   const platformSettings = await getPlatformSettings();
   const minimumAmount = platformSettings.minPayoutAmount;
 
   const { periodEnd, periodEndExclusive } = config.weeklyCycle
     ? resolveInvoicePeriod(runAt, config.timezone)
-    : { periodEnd: runAt, periodEndExclusive: new Date(runAt.getTime() + 1) };
+    : { periodEnd: billedUntil, periodEndExclusive: new Date(billedUntil.getTime() + 1) };
   const startAt = config.startAt ? new Date(config.startAt) : null;
 
   const createdAtFilter: Prisma.DateTimeFilter = { lt: periodEndExclusive };
@@ -163,7 +172,7 @@ export async function requestAffiliateInvoice(
   now: Date = new Date(),
 ): Promise<{ id: string; number: string; publisherId: string; total: number }> {
   const config = await loadAffiliateInvoicingConfig();
-  if (config.enabled) {
+  if (isWeeklyAutoInvoicing(config)) {
     throw new AppError(
       "WEEKLY_INVOICING_ON",
       "Your earnings are invoiced automatically every Monday.",
@@ -181,6 +190,10 @@ export async function requestAffiliateInvoice(
     );
   }
 
+  await reconcilePublisherDigitalCommissionsForUser(publisherId);
+  // Commissions backfilled just now are stamped after `now`; include them.
+  const billedUntil = new Date(Math.max(now.getTime(), Date.now()) + 1);
+
   const wallet = await prisma.wallet.findUnique({
     where: { userId: publisherId },
     select: { id: true },
@@ -194,7 +207,7 @@ export async function requestAffiliateInvoice(
     );
   if (!wallet) throw belowMinimum();
 
-  const createdAtFilter: Prisma.DateTimeFilter = { lt: now };
+  const createdAtFilter: Prisma.DateTimeFilter = { lt: billedUntil };
   if (config.startAt) createdAtFilter.gte = new Date(config.startAt);
 
   let invoice: Awaited<ReturnType<typeof createInvoiceForWallet>>;
@@ -764,6 +777,9 @@ export async function listAffiliateInvoicesForPublisher(
 
 /** What the affiliate has earned since their last invoice, for the pending line. */
 export async function getUninvoicedTotalForPublisher(publisherId: string): Promise<number> {
+  await reconcilePublisherDigitalCommissionsForUser(publisherId).catch((error) => {
+    console.error("[affiliate-invoice] marketplace commission reconcile failed", error);
+  });
   const config = await loadAffiliateInvoicingConfig();
   const wallet = await prisma.wallet.findUnique({
     where: { userId: publisherId },

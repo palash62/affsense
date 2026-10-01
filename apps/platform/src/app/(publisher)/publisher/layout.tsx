@@ -2,7 +2,10 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/layout/app-shell";
 import { getSession } from "@/lib/session";
-import { reconcilePublisherLeadCreditsForUser } from "@/services/wallet.service";
+import {
+  reconcilePublisherDigitalCommissionsForUser,
+  reconcilePublisherLeadCreditsForUser,
+} from "@/services/wallet.service";
 
 const FULLSCREEN_PUBLISHER_PATH = /^\/publisher\/invoices\/[^/]+\/print(\/|$)/;
 
@@ -24,6 +27,9 @@ export default async function PublisherLayout({
   }
 
   await reconcilePublisherLeadCreditsForUser(session.user.id);
+  await reconcilePublisherDigitalCommissionsForUser(session.user.id).catch((error) => {
+    console.error("[publisher-layout] marketplace commission reconcile failed", error);
+  });
 
   return (
     <AppShell

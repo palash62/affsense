@@ -7,6 +7,7 @@ import {
   parsePlatformSettings,
 } from "@/lib/platform-settings";
 import { shouldCreditPublisherForLead } from "@/lib/publisher-leads";
+import type { WebhookEventCommission } from "@/services/digital-product.service";
 import {
   crossedLowBalanceTiers,
   parseLowBalanceAlertTiers,
@@ -549,6 +550,145 @@ export async function reconcilePublisherLeadCreditsForUser(publisherId: string):
     if (didCredit) credited += 1;
   }
   return credited;
+}
+
+export const DIGITAL_PRODUCT_SALE_REFERENCE = "digital_product_sale";
+export const DIGITAL_PRODUCT_REFUND_REFERENCE = "digital_product_refund";
+const DIGITAL_PRODUCT_REFERENCES = [DIGITAL_PRODUCT_SALE_REFERENCE, DIGITAL_PRODUCT_REFUND_REFERENCE];
+
+/** Debit that may take the balance below zero, for reversals that must always land. */
+async function debitWalletAllowNegative(
+  tx: Prisma.TransactionClient,
+  userId: string,
+  amount: number,
+  referenceType: string,
+  referenceId: string,
+  description?: string,
+) {
+  const wallet = await tx.wallet.findUniqueOrThrow({ where: { userId } });
+  const newBalance = Number(wallet.balance) - amount;
+
+  await tx.wallet.update({
+    where: { id: wallet.id },
+    data: { balance: newBalance },
+  });
+
+  await tx.ledgerEntry.create({
+    data: {
+      walletId: wallet.id,
+      type: "DEBIT",
+      amount,
+      balanceAfter: newBalance,
+      referenceType,
+      referenceId,
+      description,
+    },
+  });
+
+  return newBalance;
+}
+
+async function loadMarketplaceCommissions(eventIds: string[]) {
+  const { resolveWebhookEventCommissions } = await import("@/services/digital-product.service");
+  return resolveWebhookEventCommissions(eventIds);
+}
+
+/**
+ * Post one processed marketplace sale to the affiliate wallet: a credit for a
+ * sale, a debit for a refund. Safe to call repeatedly for the same event.
+ */
+export async function recordDigitalProductCommission(eventId: string): Promise<boolean> {
+  try {
+    const resolved = (await loadMarketplaceCommissions([eventId])).get(eventId) ?? null;
+    return await postDigitalProductCommission(eventId, resolved);
+  } catch (error) {
+    console.error(`Failed to record marketplace commission for event ${eventId}`, error);
+    return false;
+  }
+}
+
+async function postDigitalProductCommission(
+  eventId: string,
+  resolved: WebhookEventCommission | null,
+): Promise<boolean> {
+  if (!resolved) return false;
+  try {
+    return await prisma.$transaction(async (tx) => {
+      await ensurePublisherWallet(resolved.publisherId, tx);
+      // Serialize postings per wallet so concurrent reconciles cannot double-post.
+      await tx.$queryRaw`SELECT id FROM wallets WHERE user_id = ${resolved.publisherId} FOR UPDATE`;
+
+      const existing = await tx.ledgerEntry.findFirst({
+        where: { referenceId: eventId, referenceType: { in: DIGITAL_PRODUCT_REFERENCES } },
+        select: { id: true },
+      });
+      if (existing) return false;
+
+      if (resolved.isRefund) {
+        await debitWalletAllowNegative(
+          tx,
+          resolved.publisherId,
+          resolved.commission,
+          DIGITAL_PRODUCT_REFUND_REFERENCE,
+          eventId,
+          "Marketplace refund",
+        );
+      } else {
+        await creditWallet(
+          tx,
+          resolved.publisherId,
+          resolved.commission,
+          DIGITAL_PRODUCT_SALE_REFERENCE,
+          eventId,
+          "Marketplace sale commission",
+        );
+      }
+      return true;
+    });
+  } catch (error) {
+    console.error(`Failed to record marketplace commission for event ${eventId}`, error);
+    return false;
+  }
+}
+
+async function reconcileDigitalCommissions(
+  where: Prisma.WebhookEventWhereInput,
+): Promise<number> {
+  const events = await prisma.webhookEvent.findMany({
+    where: { ...where, status: "PROCESSED", publisherId: { not: null } },
+    select: { id: true },
+    orderBy: { createdAt: "asc" },
+  });
+  if (events.length === 0) return 0;
+
+  const posted = await prisma.ledgerEntry.findMany({
+    where: {
+      referenceType: { in: DIGITAL_PRODUCT_REFERENCES },
+      referenceId: { in: events.map((event) => event.id) },
+    },
+    select: { referenceId: true },
+  });
+  const postedIds = new Set(posted.map((entry) => entry.referenceId));
+  const pendingIds = events.map((event) => event.id).filter((id) => !postedIds.has(id));
+  if (pendingIds.length === 0) return 0;
+
+  const commissions = await loadMarketplaceCommissions(pendingIds);
+  let recorded = 0;
+  for (const id of pendingIds) {
+    if (await postDigitalProductCommission(id, commissions.get(id) ?? null)) recorded += 1;
+  }
+  return recorded;
+}
+
+/** Backfill marketplace commissions for one affiliate (safe to call on page load). */
+export async function reconcilePublisherDigitalCommissionsForUser(
+  publisherId: string,
+): Promise<number> {
+  return reconcileDigitalCommissions({ publisherId });
+}
+
+export async function reconcileAllDigitalCommissions(): Promise<number> {
+  return reconcileDigitalCommissions({});
 }
 
 export async function getWalletBalance(userId: string) {
