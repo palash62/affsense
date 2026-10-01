@@ -64,11 +64,11 @@ export default async function PublisherOldDashboardPage({ searchParams }: PagePr
             </p>
           </div>
           <ButtonLink
-            href="/publisher/payouts/request"
+            href="/publisher/invoices"
             className="h-9 rounded-lg bg-[var(--theme-primary)] px-4 text-sm hover:opacity-90"
           >
             <TrendingUp className="mr-1.5 h-4 w-4" />
-            Request Payout
+            Invoices
           </ButtonLink>
         </div>
       </div>

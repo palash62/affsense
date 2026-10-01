@@ -10,7 +10,7 @@ import {
   holdWalletFunds,
   releaseWalletHold,
 } from "@/services/wallet.service";
-import { notifyApproved, notifyUserById } from "@/services/notify.service";
+import { notifyAdminAlert, notifyApproved, notifyUserById } from "@/services/notify.service";
 import { resolvePublisherPayeeSnapshot } from "@/lib/payout-payment-details";
 
 /** Ledger reference types that represent money leaving the wallet, never earnings. */
@@ -152,6 +152,84 @@ export async function generateAffiliateInvoices(
   }
 
   return result;
+}
+
+/**
+ * Self-service invoice for when weekly invoicing is off: bills every
+ * uninvoiced earning up to now. One outstanding invoice at a time.
+ */
+export async function requestAffiliateInvoice(
+  publisherId: string,
+  now: Date = new Date(),
+): Promise<{ id: string; number: string; publisherId: string; total: number }> {
+  const config = await loadAffiliateInvoicingConfig();
+  if (config.enabled) {
+    throw new AppError(
+      "WEEKLY_INVOICING_ON",
+      "Your earnings are invoiced automatically every Monday.",
+      422,
+    );
+  }
+
+  const unpaid = await prisma.affiliateInvoice.findFirst({
+    where: { publisherId, status: "UNPAID" },
+    select: { number: true },
+  });
+  if (unpaid) {
+    throw Errors.validation(
+      `Invoice ${unpaid.number} is still awaiting payment. You can request a new invoice once it is paid.`,
+    );
+  }
+
+  const wallet = await prisma.wallet.findUnique({
+    where: { userId: publisherId },
+    select: { id: true },
+  });
+
+  const platformSettings = await getPlatformSettings();
+  const minimumAmount = platformSettings.minPayoutAmount;
+  const belowMinimum = () =>
+    Errors.validation(
+      `Your uninvoiced earnings are below the minimum of $${round2(minimumAmount).toFixed(2)}.`,
+    );
+  if (!wallet) throw belowMinimum();
+
+  const createdAtFilter: Prisma.DateTimeFilter = { lt: now };
+  if (config.startAt) createdAtFilter.gte = new Date(config.startAt);
+
+  let invoice: Awaited<ReturnType<typeof createInvoiceForWallet>>;
+  try {
+    invoice = await createInvoiceForWallet(wallet.id, {
+      createdAtFilter,
+      periodEnd: now,
+      minimumAmount,
+      netTermDays: config.netTermDays,
+      timezone: config.timezone,
+      weeklyCycle: false,
+      issuedAt: now,
+      adminId: publisherId,
+    });
+  } catch (error) {
+    if (error instanceof Error && error.message === "INSUFFICIENT_FUNDS") {
+      throw new AppError(
+        "WALLET_INSUFFICIENT_FUNDS",
+        "Your available balance is lower than the earnings to invoice. Please contact support.",
+        422,
+      );
+    }
+    throw error;
+  }
+  if (!invoice) throw belowMinimum();
+
+  void notifyAdminAlert({
+    title: "New affiliate invoice requested",
+    message: `Invoice ${invoice.number} for $${round2(invoice.total).toFixed(2)} was requested by an affiliate.`,
+    actionPath: "/admin/invoices",
+    actionLabel: "View invoice",
+    metadata: { invoiceId: invoice.id, publisherId },
+  });
+
+  return invoice;
 }
 
 async function createInvoiceForWallet(

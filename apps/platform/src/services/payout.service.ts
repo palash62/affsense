@@ -1,7 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import {
   debitWalletForPayout,
-  getPlatformSettings,
   holdWalletFunds,
   releaseWalletHold,
 } from "@/services/wallet.service";
@@ -11,7 +10,6 @@ import {
 } from "@/services/cpa-wallet.service";
 import { AppError, Errors } from "@/lib/errors";
 import { loadAffiliateInvoicingConfig } from "@/services/affiliate-invoicing-settings.service";
-import { getMinPayoutForMethod } from "@/lib/platform-settings";
 import { isPendingPayoutStatus, PENDING_PAYOUT_STATUSES } from "@/lib/payout-status";
 import { payoutPublisherSelect, payoutCpaPublisherSelect, serializePayoutForClient } from "@/lib/payout";
 import type { PayoutPaymentDetails } from "@/lib/payout-payment-details";
@@ -62,77 +60,19 @@ export async function getPublisherPayoutRequestEligibility(
   };
 }
 
-export async function requestPayout(
-  publisherId: string,
-  amount: number,
-  method: PayoutMethod,
-  paymentDetails: PayoutPaymentDetails,
-  idempotencyKey?: string,
-) {
-  // While weekly invoicing is on, affiliates are paid from invoices instead of
-  // requesting withdrawals themselves.
+/**
+ * Affiliates are always paid from invoices: weekly ones, or ones they request
+ * themselves when weekly invoicing is off. Self-service withdrawals are closed.
+ */
+export async function requestPayout(): Promise<never> {
   const invoicing = await loadAffiliateInvoicingConfig();
-  if (invoicing.enabled) {
-    throw new AppError(
-      "PAYOUT_VIA_INVOICE",
-      "Payouts are issued through weekly invoices. Your earnings are invoiced automatically every Monday.",
-      422,
-    );
-  }
-
-  const settings = await getPlatformSettings();
-  const minAmount = getMinPayoutForMethod(method, settings);
-
-  if (amount < minAmount) {
-    throw Errors.payoutBelowMinimum(minAmount);
-  }
-
-  if (idempotencyKey) {
-    const existing = await prisma.payout.findUnique({
-      where: { idempotencyKey },
-    });
-    if (existing) throw Errors.duplicatePayout();
-  }
-
-  const eligibility = await getPublisherPayoutRequestEligibility(publisherId);
-  if (!eligibility.canRequest && eligibility.nextAllowedAt) {
-    throw Errors.payoutWeeklyLimit(eligibility.nextAllowedAt);
-  }
-
-  const wallet = await prisma.wallet.findUniqueOrThrow({
-    where: { userId: publisherId },
-  });
-
-  const available = Number(wallet.balance) - Number(wallet.holdBalance);
-  if (available < amount) {
-    throw Errors.insufficientFunds();
-  }
-
-  const payout = await prisma.$transaction(async (tx) => {
-    await holdWalletFunds(tx, publisherId, amount);
-
-    return tx.payout.create({
-      data: {
-        publisherId,
-        kind: "PUBLISHER",
-        amount,
-        method,
-        paymentDetails: paymentDetails as Prisma.InputJsonValue,
-        idempotencyKey,
-        status: "PENDING",
-      },
-      include: { publisher: { select: { id: true, name: true, email: true } } },
-    });
-  });
-
-  void notifyAdminAlert({
-    title: "New publisher payout request",
-    message: `${payout.publisher.name} requested ${method} payout of $${amount.toFixed(2)}.`,
-    actionPath: "/admin/payout-center",
-    metadata: { payoutId: payout.id },
-  });
-
-  return payout;
+  throw new AppError(
+    "PAYOUT_VIA_INVOICE",
+    invoicing.enabled
+      ? "Payouts are issued through weekly invoices. Your earnings are invoiced automatically every Monday."
+      : "Payouts are issued through invoices. Request one on the Invoices page.",
+    422,
+  );
 }
 
 export async function requestReferralPayout(

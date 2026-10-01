@@ -99,7 +99,7 @@ export function AffiliateInvoicingSettingsForm() {
 
         <div className="mt-6 space-y-5">
           <div className="space-y-2">
-            <Label>Invoicing enabled</Label>
+            <Label>Automatic invoicing</Label>
             <Select
               value={settings.enabled ? "on" : "off"}
               onValueChange={(v) => {
@@ -115,8 +115,8 @@ export function AffiliateInvoicingSettingsForm() {
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">
-              While enabled, affiliates are paid through invoices and cannot request payouts
-              themselves.
+              On: invoices are generated for affiliates (see Weekly cycle below). Off:
+              affiliates request invoices themselves from their Invoices page.
             </p>
           </div>
 

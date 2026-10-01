@@ -20,10 +20,12 @@ export function PublisherInvoicesList({
   invoices,
   timezone,
   periodTimezone,
+  weekly = true,
 }: {
   invoices: SerializedAffiliateInvoice[];
   timezone?: string;
   periodTimezone: string;
+  weekly?: boolean;
 }) {
   const [expanded, setExpanded] = useState<string | null>(null);
 
@@ -35,7 +37,9 @@ export function PublisherInvoicesList({
         </div>
         <h3 className="mt-4 text-base font-semibold text-foreground">No invoices yet</h3>
         <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-          Your first invoice is raised on the Monday after your earnings reach the minimum.
+          {weekly
+            ? "Your first invoice is raised on the Monday after your earnings reach the minimum."
+            : "Once your earnings reach the minimum, use Request invoice to raise your first invoice."}
         </p>
       </div>
     );

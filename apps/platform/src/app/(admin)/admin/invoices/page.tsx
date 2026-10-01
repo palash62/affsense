@@ -100,7 +100,9 @@ export default async function AdminInvoicesPage({ searchParams }: PageProps) {
       <p className="text-sm text-muted-foreground">
         Weekly Monday-to-Sunday earnings, invoiced on Net-{config.netTermDays} terms once an
         affiliate reaches {formatCurrency(config.minimumAmount)}.
-        {config.enabled ? "" : " Invoicing is currently disabled in settings."}
+        {config.enabled
+          ? ""
+          : " Weekly invoicing is off, so affiliates request their own invoices, which appear here."}
       </p>
 
       <div className="overflow-hidden rounded-[var(--radius-card,0.875rem)] border border-border bg-card shadow-[var(--shadow-card)]">

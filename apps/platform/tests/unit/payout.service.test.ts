@@ -54,52 +54,16 @@ describe("payout.service", () => {
       });
 
       const { requestPayout } = await import("@/services/payout.service");
-      await expect(
-        requestPayout("pub-1", 100, "WISE", { email: "pay@example.com" }),
-      ).rejects.toMatchObject({ code: "PAYOUT_VIA_INVOICE" });
+      await expect(requestPayout()).rejects.toMatchObject({ code: "PAYOUT_VIA_INVOICE" });
     });
 
-    it("rejects amounts below method minimum", async () => {
+    it("points affiliates to invoices when weekly invoicing is off", async () => {
       const { requestPayout } = await import("@/services/payout.service");
-      await expect(
-        requestPayout("pub-1", 10, "BANK_TRANSFER", { accountName: "Test" }),
-      ).rejects.toMatchObject({ code: "PAYOUT_BELOW_MINIMUM" });
-    });
-
-    it("rejects when available balance is insufficient", async () => {
-      prismaMock.wallet.findUniqueOrThrow.mockResolvedValue({
-        id: "wallet-1",
-        balance: 100,
-        holdBalance: 80,
+      await expect(requestPayout()).rejects.toMatchObject({
+        code: "PAYOUT_VIA_INVOICE",
+        message: expect.stringContaining("Invoices page"),
       });
-
-      const { requestPayout } = await import("@/services/payout.service");
-      await expect(
-        requestPayout("pub-1", 50, "WISE", { email: "pay@example.com" }),
-      ).rejects.toMatchObject({ code: "WALLET_INSUFFICIENT_FUNDS" });
-    });
-
-    it("holds funds and creates a pending payout", async () => {
-      prismaMock.wallet.findUniqueOrThrow.mockResolvedValue({
-        id: "wallet-1",
-        balance: 100,
-        holdBalance: 0,
-      });
-      prismaMock.payout.create.mockResolvedValue({
-        id: "payout-1",
-        publisher: { id: "pub-1", name: "Pub", email: "pub@test.com" },
-      });
-
-      const { requestPayout } = await import("@/services/payout.service");
-      const payout = await requestPayout("pub-1", 50, "WISE", { email: "pay@example.com" });
-
-      expect(payout.id).toBe("payout-1");
-      expect(prismaMock.wallet.update).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: { holdBalance: 50 },
-        }),
-      );
-      expect(prismaMock.payout.create).toHaveBeenCalled();
+      expect(prismaMock.payout.create).not.toHaveBeenCalled();
     });
   });
 

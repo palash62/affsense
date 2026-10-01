@@ -1,7 +1,6 @@
 import { withAuth, parsePagination, ADMIN_PORTAL_ROLES } from "@/lib/api-handler";
 import { isAdminPortalRole } from "@/lib/admin-portal";
 import { errorResponse } from "@/lib/errors";
-import { payoutRequestSchema } from "@/lib/validations";
 import { approvePayout, rejectPayout, listPayouts, requestPayout } from "@/services/payout.service";
 
 export async function GET(request: Request) {
@@ -34,25 +33,10 @@ export async function GET(request: Request) {
   }, ["PUBLISHER", "ADMIN"]);
 }
 
-export async function POST(request: Request) {
-  return withAuth(async (session) => {
+export async function POST() {
+  return withAuth(async () => {
     try {
-      const body = await request.json();
-      const parsed = payoutRequestSchema.safeParse(body);
-
-      if (!parsed.success) {
-        return Response.json({ error: { code: "VALIDATION_ERROR", message: parsed.error.message, status: 422 } }, { status: 422 });
-      }
-
-      const payout = await requestPayout(
-        session.user.id,
-        parsed.data.amount,
-        parsed.data.method,
-        parsed.data.paymentDetails,
-        parsed.data.idempotencyKey,
-      );
-
-      return Response.json({ data: payout }, { status: 201 });
+      return await requestPayout();
     } catch (error) {
       return errorResponse(error);
     }
