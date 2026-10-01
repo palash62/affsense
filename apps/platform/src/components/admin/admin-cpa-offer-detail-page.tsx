@@ -52,20 +52,18 @@ function DetailRow({ label, children }: { label: string; children: React.ReactNo
 
 export function AdminCpaOfferDetailPage({
   offer,
-  trackingBaseUrl,
 }: {
   offer: SerializedCpaOffer;
-  trackingBaseUrl: string;
 }) {
   const letter = (offer.name.trim()[0] || "?").toUpperCase();
   const buildAffiliateUrl = useCallback(
     (publisherId: string, extras: AffiliateTrackingExtras) =>
-      buildCpaOfferTrackingUrl(
-        offer.id,
-        { publisherId, src: extras.src, subId: extras.subId },
-        trackingBaseUrl,
-      ),
-    [offer.id, trackingBaseUrl],
+      buildCpaOfferTrackingUrl(offer.id, {
+        publisherId,
+        src: extras.src,
+        subId: extras.subId,
+      }),
+    [offer.id],
   );
   const percent = offer.payoutType === "PERCENT";
   const margin = Number(offer.revenue) - Number(offer.payout);

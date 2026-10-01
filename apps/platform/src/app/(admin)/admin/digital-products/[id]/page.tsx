@@ -1,4 +1,3 @@
-import { getTrackingUrl } from "@cpl/shared";
 import { isAdminPortalRole } from "@/lib/admin-portal";
 import { notFound, redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
@@ -25,5 +24,5 @@ export default async function DigitalProductDetailRoute({
     notFound();
   }
 
-  return <AdminDigitalProductDetailPage product={product} trackingBaseUrl={getTrackingUrl()} />;
+  return <AdminDigitalProductDetailPage product={product} />;
 }

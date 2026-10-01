@@ -1,4 +1,3 @@
-import { getTrackingUrl } from "@cpl/shared";
 import { isAdminPortalRole } from "@/lib/admin-portal";
 import { notFound, redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
@@ -25,5 +24,5 @@ export default async function AdminCpaOfferDetailRoute({ params }: PageProps) {
     notFound();
   }
 
-  return <AdminCpaOfferDetailPage offer={offer} trackingBaseUrl={getTrackingUrl()} />;
+  return <AdminCpaOfferDetailPage offer={offer} />;
 }

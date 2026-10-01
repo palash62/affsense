@@ -63,10 +63,8 @@ const MAIN_PAGE_ID = "main";
 
 export function AdminDigitalProductDetailPage({
   product,
-  trackingBaseUrl,
 }: {
   product: SerializedDigitalProduct;
-  trackingBaseUrl: string;
 }) {
   const letter = (product.name.trim()[0] || "?").toUpperCase();
   const trackingParam = product.affiliateTrackingParam?.trim() || "affsense_id";
@@ -83,12 +81,13 @@ export function AdminDigitalProductDetailPage({
 
   const buildAffiliateUrl = useCallback(
     (publisherId: string, extras: AffiliateTrackingExtras) =>
-      buildDigitalProductTrackingUrl(
-        product.id,
-        { publisherId, src: extras.src, subId: extras.subId, pageId },
-        trackingBaseUrl,
-      ),
-    [product.id, pageId, trackingBaseUrl],
+      buildDigitalProductTrackingUrl(product.id, {
+        publisherId,
+        src: extras.src,
+        subId: extras.subId,
+        pageId,
+      }),
+    [product.id, pageId],
   );
 
   return (
