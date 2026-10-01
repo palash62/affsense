@@ -1522,3 +1522,9 @@ export const publisherPostbackSchema = z.object({
   status: z.enum(["ACTIVE", "INACTIVE"]),
   endpoint: z.string().trim().max(2000),
 });
+
+export const adminPublisherPostbackChannelSchema = z.enum(["DIGITAL_PRODUCT", "CPA"]);
+
+export const adminPublisherPostbackSchema = publisherPostbackSchema.extend({
+  channel: adminPublisherPostbackChannelSchema,
+});

@@ -10,6 +10,7 @@ import {
   CheckCircle,
   Ban,
   Trash2,
+  Webhook,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,6 +22,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { AdminPublisherReviewDialog } from "@/components/admin/admin-publisher-review-dialog";
 import { AdminPublisherSpecialPayoutDialog } from "@/components/admin/admin-publisher-special-payout-dialog";
+import { AdminPublisherPostbackDialog } from "@/components/admin/admin-publisher-postback-dialog";
 import { AdminDeleteUserDialog } from "@/components/admin/admin-delete-user-dialog";
 import type { PublisherSpecialPayoutSettings } from "@/components/admin/admin-publisher-special-payout-dialog";
 import type { UserStatus } from "@prisma/client";
@@ -66,6 +68,7 @@ export function PublisherActionsMenu({
   const router = useRouter();
   const [reviewOpen, setReviewOpen] = useState(false);
   const [payoutOpen, setPayoutOpen] = useState(false);
+  const [postbackOpen, setPostbackOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [statusLoading, setStatusLoading] = useState<UserStatus | null>(null);
   const [statusError, setStatusError] = useState("");
@@ -130,6 +133,11 @@ export function PublisherActionsMenu({
             Special payout
           </DropdownMenuItem>
 
+          <DropdownMenuItem onClick={() => setPostbackOpen(true)}>
+            <Webhook className="h-4 w-4" />
+            Postbacks
+          </DropdownMenuItem>
+
           <DropdownMenuSeparator />
 
           <DropdownMenuItem
@@ -192,6 +200,13 @@ export function PublisherActionsMenu({
         }}
         open={payoutOpen}
         onOpenChange={setPayoutOpen}
+      />
+
+      <AdminPublisherPostbackDialog
+        publisherId={publisher.id}
+        publisherName={publisher.name}
+        open={postbackOpen}
+        onOpenChange={setPostbackOpen}
       />
 
       <AdminDeleteUserDialog
