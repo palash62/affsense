@@ -13,7 +13,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { BuilderImageUpload } from "@/modules/page-builder/components/editor/builder-image-upload";
 import type { SerializedTutorial } from "@/services/tutorial.service";
-import { cn } from "@/lib/utils";
+import { TutorialDescriptionEditor } from "@/components/admin/tutorial-description-editor";
+import { richTextToPlain } from "@/lib/rich-text";
 
 export type TutorialFormValues = {
   title: string;
@@ -73,13 +74,13 @@ export function AdminTutorialFormDialog({
 
   const canSubmit =
     values.title.trim().length >= 2 &&
-    values.description.trim().length >= 1 &&
+    richTextToPlain(values.description).length >= 1 &&
     values.youtubeUrl.trim().length >= 1 &&
     values.thumbnailUrl.trim().length >= 1;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto">
+      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>{isEdit ? "Edit tutorial" : "Add tutorial"}</DialogTitle>
         </DialogHeader>
@@ -96,17 +97,11 @@ export function AdminTutorialFormDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="tutorial-description">Description</Label>
-            <textarea
-              id="tutorial-description"
+            <Label>Description</Label>
+            <TutorialDescriptionEditor
+              key={tutorial?.id ?? "new"}
               value={values.description}
-              onChange={(e) => setValues((prev) => ({ ...prev, description: e.target.value }))}
-              placeholder="Brief summary of what this video covers"
-              rows={4}
-              className={cn(
-                "w-full rounded-lg border border-border bg-card px-3 py-2 text-sm outline-none",
-                "focus:border-[var(--theme-primary)] focus:ring-2 focus:ring-[var(--theme-primary)]/15",
-              )}
+              onChange={(html) => setValues((prev) => ({ ...prev, description: html }))}
             />
           </div>
 

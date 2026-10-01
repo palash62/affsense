@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { strongPasswordSchema } from "@/lib/password-policy";
 import { parseYouTubeVideoId } from "@/lib/youtube";
+import { richTextToPlain } from "@/lib/rich-text";
 
 const signupAttributionSchema = z
   .object({
@@ -1243,9 +1244,15 @@ const tutorialYoutubeUrlSchema = z
     message: "Enter a valid YouTube video URL.",
   });
 
+const tutorialDescriptionSchema = z
+  .string()
+  .trim()
+  .max(50_000, "Description is too long.")
+  .refine((value) => richTextToPlain(value).length >= 1, "Description is required.");
+
 export const adminTutorialCreateSchema = z.object({
   title: z.string().trim().min(2, "Title must be at least 2 characters.").max(120),
-  description: z.string().trim().min(1, "Description is required.").max(2000),
+  description: tutorialDescriptionSchema,
   youtubeUrl: tutorialYoutubeUrlSchema,
   thumbnailUrl: tutorialThumbnailSchema,
   sortOrder: z.number().int().min(0).max(9999).optional(),
@@ -1254,7 +1261,7 @@ export const adminTutorialCreateSchema = z.object({
 
 export const adminTutorialUpdateSchema = z.object({
   title: z.string().trim().min(2).max(120).optional(),
-  description: z.string().trim().min(1).max(2000).optional(),
+  description: tutorialDescriptionSchema.optional(),
   youtubeUrl: tutorialYoutubeUrlSchema.optional(),
   thumbnailUrl: tutorialThumbnailSchema.optional(),
   sortOrder: z.number().int().min(0).max(9999).optional(),

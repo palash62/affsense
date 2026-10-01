@@ -54,7 +54,7 @@ export function TutorialCard({ tutorial, onPlay }: TutorialCardProps) {
             {tutorial.title}
           </h3>
           <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-muted-foreground">
-            {tutorial.description}
+            {tutorial.descriptionText}
           </p>
         </div>
       </div>

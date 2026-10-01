@@ -11,6 +11,8 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { getYouTubeEmbedUrlFromLink } from "@/lib/youtube";
+import { isRichHtml, RICH_CONTENT_CLASS } from "@/lib/rich-text";
+import { cn } from "@/lib/utils";
 import type { SerializedTutorial } from "@/services/tutorial.service";
 
 type TutorialsPanelProps = {
@@ -27,7 +29,7 @@ export function TutorialsPanel({ tutorials }: TutorialsPanelProps) {
     return tutorials.filter(
       (tutorial) =>
         tutorial.title.toLowerCase().includes(q) ||
-        tutorial.description.toLowerCase().includes(q),
+        tutorial.descriptionText.toLowerCase().includes(q),
     );
   }, [tutorials, search]);
 
@@ -94,6 +96,24 @@ export function TutorialsPanel({ tutorials }: TutorialsPanelProps) {
                 embedUrl={embedUrl}
                 title={activeTutorial.title}
               />
+              <div className="max-h-[38vh] overflow-y-auto px-6 py-5">
+                <h2 className="text-lg font-semibold tracking-tight text-white">
+                  {activeTutorial.title}
+                </h2>
+                {isRichHtml(activeTutorial.description) ? (
+                  <div
+                    className={cn(
+                      "mt-3 text-slate-300 [&_a]:text-indigo-300 [&_h2]:text-white [&_h3]:text-white [&_hr]:border-white/15",
+                      RICH_CONTENT_CLASS,
+                    )}
+                    dangerouslySetInnerHTML={{ __html: activeTutorial.description }}
+                  />
+                ) : (
+                  <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-slate-300">
+                    {activeTutorial.description}
+                  </p>
+                )}
+              </div>
             </>
           ) : null}
         </DialogContent>

@@ -1,11 +1,15 @@
 import { prisma } from "@/lib/prisma";
 import { Errors } from "@/lib/errors";
 import { normalizeYouTubeUrl } from "@/lib/youtube";
+import { isRichHtml, richTextToPlain } from "@/lib/rich-text";
+import { sanitizeHtml } from "@/modules/page-builder/lib/sanitize";
 
 export type SerializedTutorial = {
   id: string;
   title: string;
+  /** Sanitized HTML from the rich editor, or plain text for older tutorials. */
   description: string;
+  descriptionText: string;
   youtubeUrl: string;
   thumbnailUrl: string;
   sortOrder: number;
@@ -25,10 +29,12 @@ function serializeTutorial(row: {
   createdAt: Date;
   updatedAt: Date;
 }): SerializedTutorial {
+  const description = cleanDescription(row.description);
   return {
     id: row.id,
     title: row.title,
-    description: row.description,
+    description,
+    descriptionText: richTextToPlain(description),
     youtubeUrl: row.youtubeUrl,
     thumbnailUrl: row.thumbnailUrl,
     sortOrder: row.sortOrder,
@@ -36,6 +42,11 @@ function serializeTutorial(row: {
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
+}
+
+function cleanDescription(value: string): string {
+  const trimmed = value.trim();
+  return isRichHtml(trimmed) ? sanitizeHtml(trimmed) : trimmed;
 }
 
 function assertThumbnailUrl(thumbnailUrl: string) {
@@ -88,7 +99,7 @@ export async function createTutorial(input: {
   const row = await prisma.tutorial.create({
     data: {
       title: input.title.trim(),
-      description: input.description.trim(),
+      description: cleanDescription(input.description),
       youtubeUrl,
       thumbnailUrl: input.thumbnailUrl.trim(),
       sortOrder: input.sortOrder ?? 0,
@@ -121,7 +132,7 @@ export async function updateTutorial(
   } = {};
 
   if (input.title !== undefined) data.title = input.title.trim();
-  if (input.description !== undefined) data.description = input.description.trim();
+  if (input.description !== undefined) data.description = cleanDescription(input.description);
   if (input.youtubeUrl !== undefined) data.youtubeUrl = assertYouTubeUrl(input.youtubeUrl);
   if (input.thumbnailUrl !== undefined) {
     assertThumbnailUrl(input.thumbnailUrl);

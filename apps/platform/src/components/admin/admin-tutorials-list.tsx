@@ -170,7 +170,7 @@ export function AdminTutorialsList() {
                     </TableCell>
                     <TableCell className="px-4 py-3">
                       <p className="text-sm font-medium text-foreground">{tutorial.title}</p>
-                      <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{tutorial.description}</p>
+                      <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{tutorial.descriptionText}</p>
                     </TableCell>
                     <TableCell className="px-4 py-3">
                       <Badge
