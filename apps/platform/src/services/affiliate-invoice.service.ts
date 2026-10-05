@@ -26,6 +26,7 @@ const SOURCE_LABELS: Record<string, string> = {
   referral: "Referrals",
   digital_product_sale: "Marketplace sales",
   digital_product_refund: "Marketplace sales",
+  digital_product_reject: "Marketplace sales",
   adjustment: "Adjustments",
   deposit: "Deposits",
 };

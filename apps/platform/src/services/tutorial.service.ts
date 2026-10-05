@@ -10,8 +10,8 @@ export type SerializedTutorial = {
   /** Sanitized HTML from the rich editor, or plain text for older tutorials. */
   description: string;
   descriptionText: string;
-  youtubeUrl: string;
-  thumbnailUrl: string;
+  youtubeUrl: string | null;
+  thumbnailUrl: string | null;
   sortOrder: number;
   isPublished: boolean;
   createdAt: string;
@@ -22,8 +22,8 @@ function serializeTutorial(row: {
   id: string;
   title: string;
   description: string;
-  youtubeUrl: string;
-  thumbnailUrl: string;
+  youtubeUrl: string | null;
+  thumbnailUrl: string | null;
   sortOrder: number;
   isPublished: boolean;
   createdAt: Date;
@@ -49,15 +49,19 @@ function cleanDescription(value: string): string {
   return isRichHtml(trimmed) ? sanitizeHtml(trimmed) : trimmed;
 }
 
-function assertThumbnailUrl(thumbnailUrl: string) {
-  const trimmed = thumbnailUrl.trim();
+function resolveThumbnailUrl(thumbnailUrl: string | null | undefined): string | null {
+  const trimmed = thumbnailUrl?.trim() ?? "";
+  if (!trimmed) return null;
   if (!trimmed.startsWith("/uploads/builder/")) {
     throw Errors.validation("Thumbnail must be uploaded from the admin panel.");
   }
+  return trimmed;
 }
 
-function assertYouTubeUrl(youtubeUrl: string) {
-  const normalized = normalizeYouTubeUrl(youtubeUrl);
+function resolveYouTubeUrl(youtubeUrl: string | null | undefined): string | null {
+  const trimmed = youtubeUrl?.trim() ?? "";
+  if (!trimmed) return null;
+  const normalized = normalizeYouTubeUrl(trimmed);
   if (!normalized) {
     throw Errors.validation("Enter a valid YouTube video URL.");
   }
@@ -71,7 +75,7 @@ export async function listTutorialsForAdmin(): Promise<SerializedTutorial[]> {
   return rows.map(serializeTutorial);
 }
 
-export async function listTutorialsForAdvertiser(): Promise<SerializedTutorial[]> {
+export async function listPublishedTutorials(): Promise<SerializedTutorial[]> {
   const rows = await prisma.tutorial.findMany({
     where: { isPublished: true },
     orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
@@ -88,20 +92,17 @@ export async function getTutorialById(id: string): Promise<SerializedTutorial> {
 export async function createTutorial(input: {
   title: string;
   description: string;
-  youtubeUrl: string;
-  thumbnailUrl: string;
+  youtubeUrl?: string | null;
+  thumbnailUrl?: string | null;
   sortOrder?: number;
   isPublished?: boolean;
 }): Promise<SerializedTutorial> {
-  const youtubeUrl = assertYouTubeUrl(input.youtubeUrl);
-  assertThumbnailUrl(input.thumbnailUrl);
-
   const row = await prisma.tutorial.create({
     data: {
       title: input.title.trim(),
       description: cleanDescription(input.description),
-      youtubeUrl,
-      thumbnailUrl: input.thumbnailUrl.trim(),
+      youtubeUrl: resolveYouTubeUrl(input.youtubeUrl),
+      thumbnailUrl: resolveThumbnailUrl(input.thumbnailUrl),
       sortOrder: input.sortOrder ?? 0,
       isPublished: input.isPublished ?? true,
     },
@@ -114,8 +115,8 @@ export async function updateTutorial(
   input: {
     title?: string;
     description?: string;
-    youtubeUrl?: string;
-    thumbnailUrl?: string;
+    youtubeUrl?: string | null;
+    thumbnailUrl?: string | null;
     sortOrder?: number;
     isPublished?: boolean;
   },
@@ -125,19 +126,16 @@ export async function updateTutorial(
   const data: {
     title?: string;
     description?: string;
-    youtubeUrl?: string;
-    thumbnailUrl?: string;
+    youtubeUrl?: string | null;
+    thumbnailUrl?: string | null;
     sortOrder?: number;
     isPublished?: boolean;
   } = {};
 
   if (input.title !== undefined) data.title = input.title.trim();
   if (input.description !== undefined) data.description = cleanDescription(input.description);
-  if (input.youtubeUrl !== undefined) data.youtubeUrl = assertYouTubeUrl(input.youtubeUrl);
-  if (input.thumbnailUrl !== undefined) {
-    assertThumbnailUrl(input.thumbnailUrl);
-    data.thumbnailUrl = input.thumbnailUrl.trim();
-  }
+  if (input.youtubeUrl !== undefined) data.youtubeUrl = resolveYouTubeUrl(input.youtubeUrl);
+  if (input.thumbnailUrl !== undefined) data.thumbnailUrl = resolveThumbnailUrl(input.thumbnailUrl);
   if (input.sortOrder !== undefined) data.sortOrder = input.sortOrder;
   if (input.isPublished !== undefined) data.isPublished = input.isPublished;
 

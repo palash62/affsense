@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Eye } from "lucide-react";
+import { Ban, Eye } from "lucide-react";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { readApiErrorMessage } from "@/lib/errors";
 import {
   Table,
   TableBody,
@@ -14,10 +16,13 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import type { DigitalProductOrderRow } from "@/services/digital-product.service";
 
 function OrderTypeBadge({ type }: { type: string | null }) {
@@ -41,7 +46,7 @@ function StatusBadge({ status }: { status: string | null }) {
   const cls =
     lower === "processed"
       ? "bg-emerald-100 text-emerald-700"
-      : lower === "failed"
+      : lower === "failed" || lower === "rejected"
         ? "bg-red-100 text-red-700"
         : lower === "duplicate"
           ? "bg-amber-100 text-amber-700"
@@ -54,7 +59,7 @@ function StatusBadge({ status }: { status: string | null }) {
         ? "Failed"
         : lower === "duplicate"
           ? "Duplicate"
-          : lower === "ignored"
+          : lower === "ignored" || lower === "rejected"
             ? "Rejected"
             : status;
 
@@ -110,14 +115,66 @@ function RecurringBadge({ isRecurring }: { isRecurring?: boolean }) {
   );
 }
 
+function canReject(row: DigitalProductOrderRow) {
+  return (
+    row.webhookStatus === "PROCESSED" &&
+    !(row.orderType ?? "").toLowerCase().includes("refund")
+  );
+}
+
 export function DigitalProductOrdersTable({
   rows,
   showReason = false,
+  onRejected,
 }: {
   rows: DigitalProductOrderRow[];
   showReason?: boolean;
+  /** Enables the Reject action; called after a successful rejection. */
+  onRejected?: () => void;
 }) {
   const [payloadRow, setPayloadRow] = useState<DigitalProductOrderRow | null>(null);
+  const [rejectRow, setRejectRow] = useState<DigitalProductOrderRow | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
+  const [rejecting, setRejecting] = useState(false);
+
+  function openReject(row: DigitalProductOrderRow) {
+    setRejectRow(row);
+    setRejectReason("");
+  }
+
+  async function submitReject() {
+    if (!rejectRow) return;
+    const reason = rejectReason.trim();
+    if (reason.length < 3) {
+      toast.error("Enter a reason (at least 3 characters).");
+      return;
+    }
+    setRejecting(true);
+    try {
+      const res = await fetch(`/api/v1/admin/digital-products/orders/${rejectRow.id}/reject`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        toast.error(readApiErrorMessage(body, "Failed to reject conversion.", res.status));
+        return;
+      }
+      const reversed = Number(body?.data?.reversedAmount ?? 0);
+      toast.success(
+        reversed > 0
+          ? `Conversion rejected. $${reversed.toFixed(2)} commission reversed.`
+          : "Conversion rejected.",
+      );
+      setRejectRow(null);
+      onRejected?.();
+    } catch {
+      toast.error("Failed to reject conversion. Check your connection and try again.");
+    } finally {
+      setRejecting(false);
+    }
+  }
 
   if (rows.length === 0) {
     return (
@@ -146,7 +203,9 @@ export function DigitalProductOrdersTable({
               <TableHead className="whitespace-nowrap px-4 py-3 text-xs">Affiliate</TableHead>
               <TableHead className="whitespace-nowrap px-4 py-3 text-right text-xs">Commission</TableHead>
               <TableHead className="whitespace-nowrap px-4 py-3 text-xs">Source</TableHead>
-              <TableHead className="whitespace-nowrap px-4 py-3 text-xs">Sub ID</TableHead>
+              <TableHead className="whitespace-nowrap px-4 py-3 text-xs">Sub ID 1</TableHead>
+              <TableHead className="whitespace-nowrap px-4 py-3 text-xs">Sub ID 2</TableHead>
+              <TableHead className="whitespace-nowrap px-4 py-3 text-xs">Sub ID 3</TableHead>
               <TableHead className="whitespace-nowrap px-4 py-3 text-xs">Status</TableHead>
               {showReason ? (
                 <TableHead className="whitespace-nowrap px-4 py-3 text-xs">Reason</TableHead>
@@ -212,6 +271,12 @@ export function DigitalProductOrdersTable({
                 <TableCell className="max-w-[100px] truncate px-4 py-3 text-xs text-muted-foreground">
                   {row.subId ?? "—"}
                 </TableCell>
+                <TableCell className="max-w-[100px] truncate px-4 py-3 text-xs text-muted-foreground">
+                  {row.subId2 ?? "—"}
+                </TableCell>
+                <TableCell className="max-w-[100px] truncate px-4 py-3 text-xs text-muted-foreground">
+                  {row.subId3 ?? "—"}
+                </TableCell>
                 <TableCell className="whitespace-nowrap px-4 py-3">
                   <StatusBadge status={row.webhookStatus} />
                 </TableCell>
@@ -227,15 +292,29 @@ export function DigitalProductOrdersTable({
                   <PaymentBadge status={row.paymentStatus} />
                 </TableCell>
                 <TableCell className="px-4 py-3">
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                    title="View event details"
-                    onClick={() => setPayloadRow(row)}
-                  >
-                    <Eye className="h-3.5 w-3.5" />
-                  </Button>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                      title="View event details"
+                      onClick={() => setPayloadRow(row)}
+                    >
+                      <Eye className="h-3.5 w-3.5" />
+                    </Button>
+                    {onRejected && canReject(row) ? (
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-7 w-7 text-red-600 hover:bg-red-50 hover:text-red-700"
+                        title="Reject conversion"
+                        data-testid="reject-conversion"
+                        onClick={() => openReject(row)}
+                      >
+                        <Ban className="h-3.5 w-3.5" />
+                      </Button>
+                    ) : null}
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
@@ -270,8 +349,12 @@ export function DigitalProductOrdersTable({
               <span className="font-mono text-xs">{payloadRow?.affiliateRef ?? "—"}</span>
               <span className="text-muted-foreground">Source</span>
               <span>{payloadRow?.source ?? "—"}</span>
-              <span className="text-muted-foreground">Sub ID</span>
+              <span className="text-muted-foreground">Sub ID 1</span>
               <span>{payloadRow?.subId ?? "—"}</span>
+              <span className="text-muted-foreground">Sub ID 2</span>
+              <span>{payloadRow?.subId2 ?? "—"}</span>
+              <span className="text-muted-foreground">Sub ID 3</span>
+              <span>{payloadRow?.subId3 ?? "—"}</span>
               <span className="text-muted-foreground">Webhook Status</span>
               <span>{payloadRow?.webhookStatus ?? "—"}</span>
               <span className="text-muted-foreground">Payment</span>
@@ -294,6 +377,54 @@ export function DigitalProductOrdersTable({
               <span className="break-all font-mono text-xs">{payloadRow?.clickId ?? "—"}</span>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={!!rejectRow}
+        onOpenChange={(open) => {
+          if (!open && !rejecting) setRejectRow(null);
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Reject conversion — {rejectRow?.orderId ?? rejectRow?.id}</DialogTitle>
+            <DialogDescription>
+              {rejectRow?.affiliateName ?? "The affiliate"} loses the{" "}
+              {formatUsd(rejectRow?.commission ?? null)} commission for this sale. This cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-1.5">
+            <label htmlFor="reject-reason" className="text-xs font-medium text-muted-foreground">
+              Reason
+            </label>
+            <Textarea
+              id="reject-reason"
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              placeholder="e.g. Fraudulent order, chargeback, self-purchase"
+              maxLength={500}
+              rows={3}
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={rejecting}
+              onClick={() => setRejectRow(null)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={rejecting || rejectReason.trim().length < 3}
+              onClick={() => void submitReject()}
+            >
+              {rejecting ? "Rejecting…" : "Reject conversion"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </>

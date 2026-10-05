@@ -1,6 +1,6 @@
 "use client";
 
-import { Play, Video } from "lucide-react";
+import { BookOpen, FileText, Play, Video } from "lucide-react";
 import type { SerializedTutorial } from "@/services/tutorial.service";
 import { cn } from "@/lib/utils";
 
@@ -10,6 +10,7 @@ type TutorialCardProps = {
 };
 
 export function TutorialCard({ tutorial, onPlay }: TutorialCardProps) {
+  const hasVideo = Boolean(tutorial.youtubeUrl);
   return (
     <article
       className={cn(
@@ -21,23 +22,31 @@ export function TutorialCard({ tutorial, onPlay }: TutorialCardProps) {
         type="button"
         onClick={() => onPlay(tutorial)}
         className="relative block aspect-video w-full overflow-hidden bg-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--theme-primary)]/50"
-        aria-label={`Play tutorial: ${tutorial.title}`}
+        aria-label={`${hasVideo ? "Play" : "Read"} tutorial: ${tutorial.title}`}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={tutorial.thumbnailUrl}
-          alt=""
-          className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-        />
+        {tutorial.thumbnailUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={tutorial.thumbnailUrl}
+            alt=""
+            className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+          />
+        ) : (
+          <div className="h-full w-full bg-gradient-to-br from-[var(--theme-primary)] to-[var(--theme-accent-purple,#713BFF)]" />
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/25 to-black/10" />
         <div className="absolute inset-0 flex items-center justify-center">
           <span className="flex h-14 w-14 items-center justify-center rounded-full bg-white/95 text-[var(--theme-primary)] shadow-xl ring-4 ring-white/30 transition duration-200 group-hover:scale-110">
-            <Play className="ml-1 h-6 w-6 fill-current" />
+            {hasVideo ? (
+              <Play className="ml-1 h-6 w-6 fill-current" />
+            ) : (
+              <BookOpen className="h-6 w-6" />
+            )}
           </span>
         </div>
         <div className="absolute bottom-3 left-3 flex items-center gap-1.5 rounded-full bg-black/55 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur-sm">
-          <Video className="h-3 w-3" />
-          Watch tutorial
+          {hasVideo ? <Video className="h-3 w-3" /> : <FileText className="h-3 w-3" />}
+          {hasVideo ? "Watch tutorial" : "Read tutorial"}
         </div>
       </button>
 

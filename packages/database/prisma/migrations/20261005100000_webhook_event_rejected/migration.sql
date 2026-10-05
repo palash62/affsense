@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE `webhook_events` MODIFY `status` ENUM('PROCESSED', 'FAILED', 'DUPLICATE', 'IGNORED', 'REJECTED') NOT NULL;

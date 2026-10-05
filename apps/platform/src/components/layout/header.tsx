@@ -79,8 +79,8 @@ export function Header({ role, title, breadcrumbs, premium, onOpenMobileNav }: H
   const tutorialsHref =
     role === "ADMIN" || role === "PLATFORM_MANAGER"
       ? "/admin/tutorials"
-      : role === "ADVERTISER"
-        ? "/advertiser/tutorials"
+      : role === "PUBLISHER"
+        ? "/publisher/tutorials"
         : null;
 
   const visibleQuickActions = filterAdminQuickActionLinks(

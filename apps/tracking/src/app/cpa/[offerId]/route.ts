@@ -1,5 +1,5 @@
 import { prisma } from "@cpl/database";
-import { injectClickIdIntoTrackingUrl } from "@cpl/shared";
+import { injectClickIdIntoTrackingUrl, readSubIds } from "@cpl/shared";
 import { NextResponse } from "next/server";
 import { findActivePublisherByRef } from "@/lib/member-ref";
 
@@ -30,7 +30,12 @@ export async function GET(
   const requestUrl = new URL(request.url);
   const advId = requestUrl.searchParams.get("adv_id")?.trim() || null;
   const pubId = requestUrl.searchParams.get("pub_id")?.trim() || null;
-  const subId = requestUrl.searchParams.get("sub_id")?.trim() || null;
+  const subIds = readSubIds(requestUrl.searchParams);
+  const subColumns = {
+    subId: subIds.sub1?.slice(0, 191) || null,
+    subId2: subIds.sub2?.slice(0, 191) || null,
+    subId3: subIds.sub3?.slice(0, 191) || null,
+  };
   const src = requestUrl.searchParams.get("src")?.trim() || null;
   const leadIdParam = requestUrl.searchParams.get("lead_id")?.trim() || null;
 
@@ -60,7 +65,7 @@ export async function GET(
           offerId: offer.id,
           advertiserId: advertiser.id,
           leadId,
-          subId: subId?.slice(0, 191) || null,
+          ...subColumns,
           src: src?.slice(0, 191) || null,
           ip: clientIp(request)?.slice(0, 191) || null,
           userAgent: request.headers.get("user-agent")?.slice(0, 1000) || null,
@@ -98,7 +103,7 @@ export async function GET(
         data: {
           offerId: offer.id,
           publisherId: publisher.id,
-          subId: subId?.slice(0, 191) || null,
+          ...subColumns,
           src: src?.slice(0, 191) || null,
           ip: clientIp(request)?.slice(0, 191) || null,
           userAgent: request.headers.get("user-agent")?.slice(0, 1000) || null,
@@ -122,7 +127,12 @@ export async function GET(
 
     if (advId) target.searchParams.set("adv_id", advId);
     if (pubId) target.searchParams.set("pub_id", pubId);
-    if (subId) target.searchParams.set("sub_id", subId);
+    if (subIds.sub1) {
+      target.searchParams.set("sub_id", subIds.sub1);
+      target.searchParams.set("sub1", subIds.sub1);
+    }
+    if (subIds.sub2) target.searchParams.set("sub2", subIds.sub2);
+    if (subIds.sub3) target.searchParams.set("sub3", subIds.sub3);
     if (src) target.searchParams.set("src", src);
 
     destination = target.toString();

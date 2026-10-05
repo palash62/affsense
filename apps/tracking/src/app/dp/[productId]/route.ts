@@ -2,6 +2,7 @@ import { prisma } from "@cpl/database";
 import {
   buildDigitalProductDestinationUrl,
   formatMemberId,
+  readSubIds,
   sanitizeTrackingParam,
 } from "@cpl/shared";
 import { NextResponse } from "next/server";
@@ -56,7 +57,10 @@ export async function GET(
 
   const pubId = requestUrl.searchParams.get("pub_id")?.trim() || null;
   const src = sanitizeTrackingParam(requestUrl.searchParams.get("src"));
-  const subId = sanitizeTrackingParam(requestUrl.searchParams.get("sub_id"));
+  const rawSubIds = readSubIds(requestUrl.searchParams);
+  const subId = sanitizeTrackingParam(rawSubIds.sub1);
+  const subId2 = sanitizeTrackingParam(rawSubIds.sub2);
+  const subId3 = sanitizeTrackingParam(rawSubIds.sub3);
   const campaign = sanitizeTrackingParam(requestUrl.searchParams.get("campaign"));
 
   if (!pubId) {
@@ -88,19 +92,24 @@ export async function GET(
     }
   }
 
+  let clickId: string | undefined;
   try {
-    await prisma.digitalProductClick.create({
+    const click = await prisma.digitalProductClick.create({
       data: {
         productId: product.id,
         publisherId: publisher.id,
         salesPageId: salesPage?.pageUrl?.trim() ? salesPage.id : null,
         src: src?.slice(0, 191) || null,
         subId: subId?.slice(0, 191) || null,
+        subId2: subId2?.slice(0, 191) || null,
+        subId3: subId3?.slice(0, 191) || null,
         campaign: campaign?.slice(0, 191) || null,
         ip: clientIp(request)?.slice(0, 191) || null,
         userAgent: request.headers.get("user-agent")?.slice(0, 1000) || null,
       },
+      select: { id: true },
     });
+    clickId = click.id;
   } catch {
     // Best-effort: still redirect even if click write fails.
   }
@@ -112,7 +121,10 @@ export async function GET(
     {
       source: src,
       subid: subId,
+      subid2: subId2,
+      subid3: subId3,
       campaign,
+      clickId,
     },
   );
 

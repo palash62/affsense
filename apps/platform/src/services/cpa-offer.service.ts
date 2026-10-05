@@ -1533,6 +1533,8 @@ export type SerializedCpaConversion = {
   browser: string;
   source: string | null;
   subId: string | null;
+  subId2: string | null;
+  subId3: string | null;
   createdAt: string;
 };
 
@@ -1549,6 +1551,8 @@ export type CpaConversionListFilters = {
   q?: string;
   offerId?: string;
   subId?: string;
+  subId2?: string;
+  subId3?: string;
   advertiserId?: string;
   publisherId?: string;
   from?: string;
@@ -1556,6 +1560,27 @@ export type CpaConversionListFilters = {
   page?: number;
   limit?: number;
 };
+
+/** Exact-match Sub ID 1/2/3 filters on a CpaOfferClick. */
+function cpaSubIdWhere(filters: {
+  subId?: string;
+  subId2?: string;
+  subId3?: string;
+}): Pick<Prisma.CpaOfferClickWhereInput, "subId" | "subId2" | "subId3"> | null {
+  const subId = filters.subId?.trim();
+  const subId2 = filters.subId2?.trim();
+  const subId3 = filters.subId3?.trim();
+  if (!subId && !subId2 && !subId3) return null;
+  return {
+    ...(subId ? { subId } : {}),
+    ...(subId2 ? { subId2 } : {}),
+    ...(subId3 ? { subId3 } : {}),
+  };
+}
+
+const CPA_SUB_ID_SELECT = { subId: true, subId2: true, subId3: true } as const;
+
+type CpaSubIds = { subId: string | null; subId2: string | null; subId3: string | null };
 
 function serializeCpaConversionRow(
   row: {
@@ -1578,6 +1603,8 @@ function serializeCpaConversionRow(
       userAgent: string | null;
       src: string | null;
       subId: string | null;
+      subId2?: string | null;
+      subId3?: string | null;
       publisherId?: string | null;
       publisher?: { name: string } | null;
     } | null;
@@ -1605,6 +1632,8 @@ function serializeCpaConversionRow(
     browser,
     source: click?.src ?? null,
     subId: click?.subId ?? null,
+    subId2: click?.subId2 ?? null,
+    subId3: click?.subId3 ?? null,
     createdAt: row.createdAt.toISOString(),
   };
 }
@@ -1643,10 +1672,10 @@ export async function listCpaConversionsForAdmin(
     clickWhere.publisherId = publisherId;
   }
 
-  const subId = filters.subId?.trim();
-  if (subId) {
-    where.clickRecord = { ...(where.clickRecord as object), subId };
-    clickWhere.subId = subId;
+  const subIds = cpaSubIdWhere(filters);
+  if (subIds) {
+    where.clickRecord = { ...(where.clickRecord as object), ...subIds };
+    Object.assign(clickWhere, subIds);
   }
 
   if (filters.from || filters.to) {
@@ -1699,7 +1728,7 @@ export async function listCpaConversionsForAdmin(
             ip: true,
             userAgent: true,
             src: true,
-            subId: true,
+            ...CPA_SUB_ID_SELECT,
             publisherId: true,
             publisher: { select: { name: true } },
           },
@@ -1779,10 +1808,10 @@ export async function listCpaConversionsForAdvertiser(
   if (offerId) where.offerId = offerId;
   if (offerId) clickWhere.offerId = offerId;
 
-  const subId = filters.subId?.trim();
-  if (subId) {
-    where.clickRecord = { subId };
-    clickWhere.subId = subId;
+  const subIds = cpaSubIdWhere(filters);
+  if (subIds) {
+    where.clickRecord = { ...subIds };
+    Object.assign(clickWhere, subIds);
   }
 
   if (filters.from || filters.to) {
@@ -1826,7 +1855,7 @@ export async function listCpaConversionsForAdvertiser(
       include: {
         offer: { select: { name: true, status: true, revenue: true, payout: true } },
         advertiser: { select: { name: true } },
-        clickRecord: { select: { ip: true, userAgent: true, src: true, subId: true } },
+        clickRecord: { select: { ip: true, userAgent: true, src: true, ...CPA_SUB_ID_SELECT } },
       },
       orderBy: { createdAt: "desc" },
       skip: (page - 1) * limit,
@@ -1902,10 +1931,10 @@ export async function listCpaConversionsForPublisher(
   if (offerId) where.offerId = offerId;
   if (offerId) clickWhere.offerId = offerId;
 
-  const subId = filters.subId?.trim();
-  if (subId) {
-    where.clickRecord = { publisherId, subId };
-    clickWhere.subId = subId;
+  const subIds = cpaSubIdWhere(filters);
+  if (subIds) {
+    where.clickRecord = { publisherId, ...subIds };
+    Object.assign(clickWhere, subIds);
   }
 
   if (filters.from || filters.to) {
@@ -1949,7 +1978,7 @@ export async function listCpaConversionsForPublisher(
       include: {
         offer: { select: { name: true, status: true, revenue: true, payout: true } },
         advertiser: { select: { name: true } },
-        clickRecord: { select: { ip: true, userAgent: true, src: true, subId: true } },
+        clickRecord: { select: { ip: true, userAgent: true, src: true, ...CPA_SUB_ID_SELECT } },
       },
       orderBy: { createdAt: "desc" },
       skip: (page - 1) * limit,
@@ -2021,6 +2050,8 @@ export type SerializedCpaClick = {
   browser: string;
   source: string | null;
   subId: string | null;
+  subId2: string | null;
+  subId3: string | null;
   converted: boolean;
   createdAt: string;
 };
@@ -2045,6 +2076,8 @@ function serializeCpaClickRow(row: {
   userAgent: string | null;
   src: string | null;
   subId: string | null;
+  subId2: string | null;
+  subId3: string | null;
   createdAt: Date;
   offer: { name: string; status: CpaOfferStatus };
   advertiser: { name: string } | null;
@@ -2066,6 +2099,8 @@ function serializeCpaClickRow(row: {
     browser,
     source: row.src,
     subId: row.subId,
+    subId2: row.subId2,
+    subId3: row.subId3,
     converted: row.conversions.length > 0,
     createdAt: row.createdAt.toISOString(),
   };
@@ -2120,12 +2155,12 @@ export async function listCpaClicksForAdmin(
     conversionWhere.clickRecord = { publisherId };
   }
 
-  const subId = filters.subId?.trim();
-  if (subId) {
-    where.subId = subId;
+  const subIds = cpaSubIdWhere(filters);
+  if (subIds) {
+    Object.assign(where, subIds);
     conversionWhere.clickRecord = {
       ...(conversionWhere.clickRecord as object),
-      subId,
+      ...subIds,
     };
   }
 
@@ -2157,6 +2192,8 @@ export async function listCpaClicksForAdmin(
       { advertiser: { name: { contains: q } } },
       { publisher: { name: { contains: q } } },
       { subId: { contains: q } },
+      { subId2: { contains: q } },
+      { subId3: { contains: q } },
       { src: { contains: q } },
       { ip: { contains: q } },
     ];
@@ -2214,10 +2251,10 @@ export async function listCpaClicksForPublisher(
     conversionWhere.offerId = offerId;
   }
 
-  const subId = filters.subId?.trim();
-  if (subId) {
-    where.subId = subId;
-    conversionWhere.clickRecord = { publisherId, subId };
+  const subIds = cpaSubIdWhere(filters);
+  if (subIds) {
+    Object.assign(where, subIds);
+    conversionWhere.clickRecord = { publisherId, ...subIds };
   }
 
   if (filters.from || filters.to) {
@@ -2246,6 +2283,8 @@ export async function listCpaClicksForPublisher(
       { offer: { name: { contains: q } } },
       { offerId: { contains: q } },
       { subId: { contains: q } },
+      { subId2: { contains: q } },
+      { subId3: { contains: q } },
       { src: { contains: q } },
       { ip: { contains: q } },
     ];
@@ -2291,6 +2330,8 @@ export type SerializedCpaAffiliateOfferReportRow = {
   offerName: string;
   offerStatus: CpaOfferStatus | null;
   subId: string | null;
+  subId2: string | null;
+  subId3: string | null;
   clicks: number;
   conversions: number;
   conversionRate: number;
@@ -2335,8 +2376,8 @@ function buildAffiliateOfferClickWhere(
   const publisherId = filters.publisherId?.trim();
   if (publisherId) where.publisherId = publisherId;
 
-  const subId = filters.subId?.trim();
-  if (subId) where.subId = subId;
+  const subIds = cpaSubIdWhere(filters);
+  if (subIds) Object.assign(where, subIds);
 
   if (filters.from || filters.to) {
     where.createdAt = {};
@@ -2359,6 +2400,8 @@ function buildAffiliateOfferClickWhere(
       { advertiser: { name: { contains: q } } },
       { publisher: { name: { contains: q } } },
       { subId: { contains: q } },
+      { subId2: { contains: q } },
+      { subId3: { contains: q } },
     ];
   }
 
@@ -2379,11 +2422,11 @@ function buildAffiliateOfferConversionWhere(
   if (advertiserId) where.advertiserId = advertiserId;
 
   const publisherId = filters.publisherId?.trim();
-  const subId = filters.subId?.trim();
-  if (publisherId || subId) {
+  const subIds = cpaSubIdWhere(filters);
+  if (publisherId || subIds) {
     where.clickRecord = {
       ...(publisherId ? { publisherId } : { publisherId: { not: null } }),
-      ...(subId ? { subId } : {}),
+      ...subIds,
     };
   }
 
@@ -2408,6 +2451,8 @@ function buildAffiliateOfferConversionWhere(
       { advertiser: { name: { contains: q } } },
       { clickRecord: { publisher: { name: { contains: q } } } },
       { clickRecord: { subId: { contains: q } } },
+      { clickRecord: { subId2: { contains: q } } },
+      { clickRecord: { subId3: { contains: q } } },
     ];
   }
 
@@ -2425,7 +2470,7 @@ export async function listCpaAffiliateOfferReportForAdmin(
 
   const [clickGroups, conversionRows] = await Promise.all([
     prisma.cpaOfferClick.groupBy({
-      by: ["publisherId", "offerId", "subId"],
+      by: ["publisherId", "offerId", "subId", "subId2", "subId3"],
       where: clickWhere,
       _count: { _all: true },
     }),
@@ -2436,7 +2481,7 @@ export async function listCpaAffiliateOfferReportForAdmin(
         offerId: true,
         payout: true,
         offer: { select: { name: true, status: true, revenue: true, payout: true } },
-        clickRecord: { select: { publisherId: true, subId: true } },
+        clickRecord: { select: { publisherId: true, ...CPA_SUB_ID_SELECT } },
       },
     }),
   ]);
@@ -2468,6 +2513,8 @@ export async function listCpaAffiliateOfferReportForAdmin(
     publisherId: string;
     offerId: string;
     subId: string | null;
+    subId2: string | null;
+    subId3: string | null;
     clicks: number;
     conversions: number;
     payout: number;
@@ -2475,16 +2522,17 @@ export async function listCpaAffiliateOfferReportForAdmin(
   };
 
   const byKey = new Map<string, Acc>();
-  const keyOf = (publisherId: string, offerId: string, subId: string | null) =>
-    `${publisherId}::${offerId}::${subId ?? ""}`;
+  const keyOf = (publisherId: string, offerId: string, subs: CpaSubIds) =>
+    `${publisherId}::${offerId}::${subs.subId ?? ""}::${subs.subId2 ?? ""}::${subs.subId3 ?? ""}`;
 
   for (const g of clickGroups) {
     if (!g.publisherId) continue;
-    const key = keyOf(g.publisherId, g.offerId, g.subId);
+    const subs = { subId: g.subId, subId2: g.subId2, subId3: g.subId3 };
+    const key = keyOf(g.publisherId, g.offerId, subs);
     byKey.set(key, {
       publisherId: g.publisherId,
       offerId: g.offerId,
-      subId: g.subId,
+      ...subs,
       clicks: g._count._all,
       conversions: 0,
       payout: 0,
@@ -2502,12 +2550,16 @@ export async function listCpaAffiliateOfferReportForAdmin(
     else if (statusFlags?.hasRejected) status = "R";
     if (status !== "A") continue;
 
-    const subId = row.clickRecord?.subId ?? null;
-    const key = keyOf(publisherId, row.offerId, subId);
+    const subs = {
+      subId: row.clickRecord?.subId ?? null,
+      subId2: row.clickRecord?.subId2 ?? null,
+      subId3: row.clickRecord?.subId3 ?? null,
+    };
+    const key = keyOf(publisherId, row.offerId, subs);
     const acc = byKey.get(key) ?? {
       publisherId,
       offerId: row.offerId,
-      subId,
+      ...subs,
       clicks: 0,
       conversions: 0,
       payout: 0,
@@ -2561,6 +2613,8 @@ export async function listCpaAffiliateOfferReportForAdmin(
         offerName: offer?.name ?? acc.offerId,
         offerStatus: offer?.status ?? null,
         subId: acc.subId,
+        subId2: acc.subId2,
+        subId3: acc.subId3,
         clicks,
         conversions,
         conversionRate,
@@ -2575,7 +2629,11 @@ export async function listCpaAffiliateOfferReportForAdmin(
       if (byPub !== 0) return byPub;
       const byOffer = a.offerName.localeCompare(b.offerName);
       if (byOffer !== 0) return byOffer;
-      return (a.subId ?? "").localeCompare(b.subId ?? "");
+      return (
+        (a.subId ?? "").localeCompare(b.subId ?? "") ||
+        (a.subId2 ?? "").localeCompare(b.subId2 ?? "") ||
+        (a.subId3 ?? "").localeCompare(b.subId3 ?? "")
+      );
     });
 
   const totals = allRows.reduce(
@@ -2669,7 +2727,7 @@ async function listCpaAffiliateOfferReportFromWhere(
 ): Promise<CpaAffiliateOfferReportResult> {
   const [clickGroups, conversionRows] = await Promise.all([
     prisma.cpaOfferClick.groupBy({
-      by: ["publisherId", "offerId", "subId"],
+      by: ["publisherId", "offerId", "subId", "subId2", "subId3"],
       where: clickWhere,
       _count: { _all: true },
     }),
@@ -2680,7 +2738,7 @@ async function listCpaAffiliateOfferReportFromWhere(
         offerId: true,
         payout: true,
         offer: { select: { name: true, status: true, revenue: true, payout: true } },
-        clickRecord: { select: { publisherId: true, subId: true } },
+        clickRecord: { select: { publisherId: true, ...CPA_SUB_ID_SELECT } },
       },
     }),
   ]);
@@ -2712,6 +2770,8 @@ async function listCpaAffiliateOfferReportFromWhere(
     publisherId: string;
     offerId: string;
     subId: string | null;
+    subId2: string | null;
+    subId3: string | null;
     clicks: number;
     conversions: number;
     payout: number;
@@ -2719,16 +2779,17 @@ async function listCpaAffiliateOfferReportFromWhere(
   };
 
   const byKey = new Map<string, Acc>();
-  const keyOf = (publisherId: string, offerId: string, subId: string | null) =>
-    `${publisherId}::${offerId}::${subId ?? ""}`;
+  const keyOf = (publisherId: string, offerId: string, subs: CpaSubIds) =>
+    `${publisherId}::${offerId}::${subs.subId ?? ""}::${subs.subId2 ?? ""}::${subs.subId3 ?? ""}`;
 
   for (const g of clickGroups) {
     if (!g.publisherId) continue;
-    const key = keyOf(g.publisherId, g.offerId, g.subId);
+    const subs = { subId: g.subId, subId2: g.subId2, subId3: g.subId3 };
+    const key = keyOf(g.publisherId, g.offerId, subs);
     byKey.set(key, {
       publisherId: g.publisherId,
       offerId: g.offerId,
-      subId: g.subId,
+      ...subs,
       clicks: g._count._all,
       conversions: 0,
       payout: 0,
@@ -2746,12 +2807,16 @@ async function listCpaAffiliateOfferReportFromWhere(
     else if (statusFlags?.hasRejected) status = "R";
     if (status !== "A") continue;
 
-    const subId = row.clickRecord?.subId ?? null;
-    const key = keyOf(publisherId, row.offerId, subId);
+    const subs = {
+      subId: row.clickRecord?.subId ?? null,
+      subId2: row.clickRecord?.subId2 ?? null,
+      subId3: row.clickRecord?.subId3 ?? null,
+    };
+    const key = keyOf(publisherId, row.offerId, subs);
     const acc = byKey.get(key) ?? {
       publisherId,
       offerId: row.offerId,
-      subId,
+      ...subs,
       clicks: 0,
       conversions: 0,
       payout: 0,
@@ -2805,6 +2870,8 @@ async function listCpaAffiliateOfferReportFromWhere(
         offerName: offer?.name ?? acc.offerId,
         offerStatus: offer?.status ?? null,
         subId: acc.subId,
+        subId2: acc.subId2,
+        subId3: acc.subId3,
         clicks,
         conversions,
         conversionRate,
@@ -2819,7 +2886,11 @@ async function listCpaAffiliateOfferReportFromWhere(
       if (byPub !== 0) return byPub;
       const byOffer = a.offerName.localeCompare(b.offerName);
       if (byOffer !== 0) return byOffer;
-      return (a.subId ?? "").localeCompare(b.subId ?? "");
+      return (
+        (a.subId ?? "").localeCompare(b.subId ?? "") ||
+        (a.subId2 ?? "").localeCompare(b.subId2 ?? "") ||
+        (a.subId3 ?? "").localeCompare(b.subId3 ?? "")
+      );
     });
 
   const totals = allRows.reduce(
@@ -2890,10 +2961,10 @@ export async function listCpaConversionsForAdvertiserOwner(
     clickWhere.publisherId = publisherId;
   }
 
-  const subId = filters.subId?.trim();
-  if (subId) {
-    where.clickRecord = { ...(where.clickRecord as object), subId };
-    clickWhere.subId = subId;
+  const subIds = cpaSubIdWhere(filters);
+  if (subIds) {
+    where.clickRecord = { ...(where.clickRecord as object), ...subIds };
+    Object.assign(clickWhere, subIds);
   }
 
   if (filters.from || filters.to) {
@@ -2941,7 +3012,7 @@ export async function listCpaConversionsForAdvertiserOwner(
             ip: true,
             userAgent: true,
             src: true,
-            subId: true,
+            ...CPA_SUB_ID_SELECT,
             publisherId: true,
             publisher: { select: { name: true } },
           },
@@ -3030,12 +3101,12 @@ export async function listCpaClicksForAdvertiserOwner(
     conversionWhere.clickRecord = { publisherId };
   }
 
-  const subId = filters.subId?.trim();
-  if (subId) {
-    where.subId = subId;
+  const subIds = cpaSubIdWhere(filters);
+  if (subIds) {
+    Object.assign(where, subIds);
     conversionWhere.clickRecord = {
       ...(conversionWhere.clickRecord as object),
-      subId,
+      ...subIds,
     };
   }
 
@@ -3066,6 +3137,8 @@ export async function listCpaClicksForAdvertiserOwner(
       { offerId: { contains: q } },
       { publisher: { name: { contains: q } } },
       { subId: { contains: q } },
+      { subId2: { contains: q } },
+      { subId3: { contains: q } },
     ];
     conversionWhere.OR = [
       { clickId: { contains: q } },

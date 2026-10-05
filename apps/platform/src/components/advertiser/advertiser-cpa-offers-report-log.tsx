@@ -32,6 +32,8 @@ type AppliedFilters = {
   q: string;
   offerId: string;
   subId: string;
+  subId2: string;
+  subId3: string;
   from: string;
   to: string;
 };
@@ -40,6 +42,8 @@ const emptyFilters: AppliedFilters = {
   q: "",
   offerId: "",
   subId: "",
+  subId2: "",
+  subId3: "",
   from: "",
   to: "",
 };
@@ -76,7 +80,9 @@ export function AdvertiserCpaOffersReportLog() {
     params.set("limit", String(PAGE_SIZE));
     if (applied.q.trim()) params.set("q", applied.q.trim());
     if (applied.offerId.trim()) params.set("offerId", applied.offerId.trim());
-    if (applied.subId.trim()) params.set("subId", applied.subId.trim());
+    for (const key of ["subId", "subId2", "subId3"] as const) {
+      if (applied[key].trim()) params.set(key, applied[key].trim());
+    }
     if (applied.from.trim()) params.set("from", new Date(applied.from).toISOString());
     if (applied.to.trim()) {
       const end = new Date(applied.to);
@@ -250,15 +256,17 @@ export function AdvertiserCpaOffersReportLog() {
                 className="bg-white"
               />
             </div>
-            <div className="w-full space-y-1 sm:w-44">
-              <label className="text-xs font-medium text-muted-foreground">Sub ID</label>
-              <Input
-                value={draft.subId}
-                onChange={(e) => setDraft((prev) => ({ ...prev, subId: e.target.value }))}
-                placeholder="Sub ID"
-                className="bg-white font-mono text-xs"
-              />
-            </div>
+            {(["subId", "subId2", "subId3"] as const).map((key, index) => (
+              <div key={key} className="w-full space-y-1 sm:w-36">
+                <label className="text-xs font-medium text-muted-foreground">Sub ID {index + 1}</label>
+                <Input
+                  value={draft[key]}
+                  onChange={(e) => setDraft((prev) => ({ ...prev, [key]: e.target.value }))}
+                  placeholder={`Sub ID ${index + 1}`}
+                  className="bg-white font-mono text-xs"
+                />
+              </div>
+            ))}
             <div className="min-w-[12rem] flex-1 space-y-1">
               <label className="text-xs font-medium text-muted-foreground">Search</label>
               <div className="relative">
@@ -331,7 +339,9 @@ export function AdvertiserCpaOffersReportLog() {
                   <TableHead>Device</TableHead>
                   <TableHead>Browser</TableHead>
                   <TableHead>Source</TableHead>
-                  <TableHead>Sub ID</TableHead>
+                  <TableHead>Sub ID 1</TableHead>
+                  <TableHead>Sub ID 2</TableHead>
+                  <TableHead>Sub ID 3</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Earnings</TableHead>
                 </TableRow>
@@ -339,12 +349,12 @@ export function AdvertiserCpaOffersReportLog() {
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={10} className="py-12 text-center text-sm text-muted-foreground">
+                    <TableCell colSpan={12} className="py-12 text-center text-sm text-muted-foreground">
                       Loading conversions…
                     </TableCell>
                   </TableRow>
                 ) : conversionItems.length === 0 ? (
-                  <EmptyRow colSpan={10} label="No conversions found" />
+                  <EmptyRow colSpan={12} label="No conversions found" />
                 ) : (
                   conversionItems.map((row) => (
                     <TableRow key={row.id} className="hover:bg-sky-50/40">
@@ -400,6 +410,18 @@ export function AdvertiserCpaOffersReportLog() {
                       >
                         {cellValue(row.subId)}
                       </TableCell>
+                      <TableCell
+                        className="max-w-[8rem] truncate font-mono text-xs text-muted-foreground"
+                        title={row.subId2 ?? undefined}
+                      >
+                        {cellValue(row.subId2)}
+                      </TableCell>
+                      <TableCell
+                        className="max-w-[8rem] truncate font-mono text-xs text-muted-foreground"
+                        title={row.subId3 ?? undefined}
+                      >
+                        {cellValue(row.subId3)}
+                      </TableCell>
                       <TableCell className="whitespace-nowrap">
                         <StatusBadge status={row.status} />
                       </TableCell>
@@ -449,19 +471,21 @@ export function AdvertiserCpaOffersReportLog() {
                   <TableHead>Device</TableHead>
                   <TableHead>Browser</TableHead>
                   <TableHead>Source</TableHead>
-                  <TableHead>Sub ID</TableHead>
+                  <TableHead>Sub ID 1</TableHead>
+                  <TableHead>Sub ID 2</TableHead>
+                  <TableHead>Sub ID 3</TableHead>
                   <TableHead>Converted</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="py-12 text-center text-sm text-muted-foreground">
+                    <TableCell colSpan={11} className="py-12 text-center text-sm text-muted-foreground">
                       Loading clicks…
                     </TableCell>
                   </TableRow>
                 ) : clickItems.length === 0 ? (
-                  <EmptyRow colSpan={9} label="No clicks found" />
+                  <EmptyRow colSpan={11} label="No clicks found" />
                 ) : (
                   clickItems.map((row) => (
                     <TableRow key={row.id} className="hover:bg-sky-50/40">
@@ -512,6 +536,18 @@ export function AdvertiserCpaOffersReportLog() {
                         title={row.subId ?? undefined}
                       >
                         {cellValue(row.subId)}
+                      </TableCell>
+                      <TableCell
+                        className="max-w-[8rem] truncate font-mono text-xs text-muted-foreground"
+                        title={row.subId2 ?? undefined}
+                      >
+                        {cellValue(row.subId2)}
+                      </TableCell>
+                      <TableCell
+                        className="max-w-[8rem] truncate font-mono text-xs text-muted-foreground"
+                        title={row.subId3 ?? undefined}
+                      >
+                        {cellValue(row.subId3)}
                       </TableCell>
                       <TableCell className="whitespace-nowrap">
                         {row.converted ? (

@@ -8,6 +8,8 @@ export type ResolvedCpaClickAttribution = {
   clickRecordId: string | null;
   source: string | null;
   subId: string | null;
+  subId2: string | null;
+  subId3: string | null;
 };
 
 /** Resolve attribution only from a matching CpaOfferClick for this offer. */
@@ -22,6 +24,8 @@ export function resolveCpaClickAttribution(input: {
         publisherId?: string | null;
         src: string | null;
         subId: string | null;
+        subId2?: string | null;
+        subId3?: string | null;
       }
     | null;
 }): ResolvedCpaClickAttribution {
@@ -40,6 +44,8 @@ export function resolveCpaClickAttribution(input: {
       clickRecordId: input.click.id,
       source: input.click.src,
       subId: input.click.subId,
+      subId2: input.click.subId2 ?? null,
+      subId3: input.click.subId3 ?? null,
     };
   }
 
@@ -51,5 +57,7 @@ export function resolveCpaClickAttribution(input: {
     clickRecordId: null,
     source: null,
     subId: null,
+    subId2: null,
+    subId3: null,
   };
 }

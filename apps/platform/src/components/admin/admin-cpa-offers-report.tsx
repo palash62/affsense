@@ -67,6 +67,8 @@ type AppliedFilters = {
   q: string;
   offerId: string;
   subId: string;
+  subId2: string;
+  subId3: string;
   advertiserId: string;
   publisherId: string;
   from: string;
@@ -77,6 +79,8 @@ const emptyFilters: AppliedFilters = {
   q: "",
   offerId: "",
   subId: "",
+  subId2: "",
+  subId3: "",
   advertiserId: "",
   publisherId: "",
   from: "",
@@ -339,7 +343,9 @@ export function AdminCpaOffersReport({
     params.set("limit", String(PAGE_SIZE));
     if (applied.q.trim()) params.set("q", applied.q.trim());
     if (applied.offerId.trim()) params.set("offerId", applied.offerId.trim());
-    if (applied.subId.trim()) params.set("subId", applied.subId.trim());
+    for (const key of ["subId", "subId2", "subId3"] as const) {
+      if (applied[key].trim()) params.set(key, applied[key].trim());
+    }
     if (applied.advertiserId.trim()) params.set("advertiserId", applied.advertiserId.trim());
     if (applied.publisherId.trim()) params.set("publisherId", applied.publisherId.trim());
     if (applied.from.trim()) params.set("from", new Date(applied.from).toISOString());
@@ -574,15 +580,17 @@ export function AdminCpaOffersReport({
                 className="h-9 bg-white"
               />
             </div>
-            <div className="space-y-1 xl:col-span-1">
-              <label className="text-xs font-medium text-muted-foreground">Sub ID</label>
-              <Input
-                value={draft.subId}
-                onChange={(e) => setDraft((prev) => ({ ...prev, subId: e.target.value }))}
-                placeholder="Sub ID"
-                className="h-9 bg-white font-mono text-xs"
-              />
-            </div>
+            {(["subId", "subId2", "subId3"] as const).map((key, index) => (
+              <div key={key} className="space-y-1 xl:col-span-1">
+                <label className="text-xs font-medium text-muted-foreground">Sub ID {index + 1}</label>
+                <Input
+                  value={draft[key]}
+                  onChange={(e) => setDraft((prev) => ({ ...prev, [key]: e.target.value }))}
+                  placeholder={`Sub ID ${index + 1}`}
+                  className="h-9 bg-white font-mono text-xs"
+                />
+              </div>
+            ))}
             <div className="space-y-1 sm:col-span-2 xl:col-span-2">
               <label className="text-xs font-medium text-muted-foreground">Search</label>
               <div className="relative">
@@ -655,7 +663,9 @@ export function AdminCpaOffersReport({
                   <TableHead>Affiliate</TableHead>
                   <TableHead>Offer</TableHead>
                   <TableHead>Click ID</TableHead>
-                  <TableHead>Sub ID</TableHead>
+                  <TableHead>Sub ID 1</TableHead>
+                  <TableHead>Sub ID 2</TableHead>
+                  <TableHead>Sub ID 3</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Payout</TableHead>
                   <TableHead className="text-right">Revenue</TableHead>
@@ -665,13 +675,13 @@ export function AdminCpaOffersReport({
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={10} className="py-12 text-center text-sm text-muted-foreground">
+                    <TableCell colSpan={12} className="py-12 text-center text-sm text-muted-foreground">
                       Loading conversions…
                     </TableCell>
                   </TableRow>
                 ) : conversionItems.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={10} className="py-12 text-center">
+                    <TableCell colSpan={12} className="py-12 text-center">
                       <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-50 text-violet-600">
                         <Activity className="h-5 w-5" />
                       </div>
@@ -739,6 +749,12 @@ export function AdminCpaOffersReport({
                       </TableCell>
                       <TableCell className="font-mono text-xs text-muted-foreground">
                         {row.subId ?? "—"}
+                      </TableCell>
+                      <TableCell className="font-mono text-xs text-muted-foreground">
+                        {row.subId2 ?? "—"}
+                      </TableCell>
+                      <TableCell className="font-mono text-xs text-muted-foreground">
+                        {row.subId3 ?? "—"}
                       </TableCell>
                       <TableCell className="whitespace-nowrap">
                         {row.status === "A" ? (
@@ -849,20 +865,22 @@ export function AdminCpaOffersReport({
                   <TableHead>Device</TableHead>
                   <TableHead>Browser</TableHead>
                   <TableHead>Source</TableHead>
-                  <TableHead>Sub ID</TableHead>
+                  <TableHead>Sub ID 1</TableHead>
+                  <TableHead>Sub ID 2</TableHead>
+                  <TableHead>Sub ID 3</TableHead>
                   <TableHead>Converted</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={11} className="py-12 text-center text-sm text-muted-foreground">
+                    <TableCell colSpan={13} className="py-12 text-center text-sm text-muted-foreground">
                       Loading clicks…
                     </TableCell>
                   </TableRow>
                 ) : clickItems.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={11} className="py-12 text-center">
+                    <TableCell colSpan={13} className="py-12 text-center">
                       <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-50 text-violet-600">
                         <Activity className="h-5 w-5" />
                       </div>
@@ -947,6 +965,18 @@ export function AdminCpaOffersReport({
                         title={row.subId ?? undefined}
                       >
                         {row.subId || "—"}
+                      </TableCell>
+                      <TableCell
+                        className="max-w-[8rem] truncate font-mono text-xs text-muted-foreground"
+                        title={row.subId2 ?? undefined}
+                      >
+                        {row.subId2 || "—"}
+                      </TableCell>
+                      <TableCell
+                        className="max-w-[8rem] truncate font-mono text-xs text-muted-foreground"
+                        title={row.subId3 ?? undefined}
+                      >
+                        {row.subId3 || "—"}
                       </TableCell>
                       <TableCell className="whitespace-nowrap">
                         {row.converted ? (

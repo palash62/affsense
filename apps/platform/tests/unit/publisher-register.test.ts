@@ -6,6 +6,9 @@ const prismaMock = {
     findUnique: vi.fn(),
     create: vi.fn(),
   },
+  publisherProfile: {
+    findUnique: vi.fn(),
+  },
   $transaction: vi.fn(),
 };
 
@@ -18,7 +21,8 @@ describe("publisherRegisterSchema", () => {
     const result = publisherRegisterSchema.safeParse({
       name: "Jane Publisher",
       email: "pub@example.com",
-      password: "password123",
+      password: "Password123!",
+      username: "jane_pub",
       website: "https://example.com",
       trafficSource: "Facebook",
       country: "US",
@@ -30,22 +34,24 @@ describe("publisherRegisterSchema", () => {
     const result = publisherRegisterSchema.safeParse({
       name: "Jane Publisher",
       email: "pub@example.com",
-      password: "password123",
+      password: "Password123!",
+      username: "jane_pub",
       website: "not-a-url",
     });
     expect(result.success).toBe(false);
   });
 
-  it("does not include referralRef field", () => {
+  it("keeps referralRef for publisher referrals", () => {
     const result = publisherRegisterSchema.safeParse({
       name: "Jane Publisher",
       email: "pub@example.com",
-      password: "password123",
+      password: "Password123!",
+      username: "jane_pub",
       referralRef: "ABC123",
     });
     expect(result.success).toBe(true);
     if (result.success) {
-      expect("referralRef" in result.data).toBe(false);
+      expect(result.data.referralRef).toBe("ABC123");
     }
   });
 });
@@ -57,8 +63,8 @@ describe("POST /api/v1/auth/register/publisher", () => {
     vi.doMock("bcryptjs", () => ({
       default: { hash: vi.fn().mockResolvedValue("hashed") },
     }));
-    vi.doMock("@/lib/email-deliverability", () => ({
-      validateEmailDeliverability: vi.fn().mockResolvedValue({ ok: true }),
+    vi.doMock("@/lib/signup-email", () => ({
+      validateSignupEmail: vi.fn().mockResolvedValue({ ok: true }),
     }));
     vi.doMock("@/services/auth-token.service", () => ({
       createEmailVerificationToken: vi.fn().mockResolvedValue("test-verify-token"),
@@ -73,6 +79,7 @@ describe("POST /api/v1/auth/register/publisher", () => {
     }));
 
     prismaMock.user.findUnique.mockResolvedValue(null);
+    prismaMock.publisherProfile.findUnique.mockResolvedValue(null);
     prismaMock.user.create.mockResolvedValue({
       id: "pub-1",
       email: "pub@example.com",
@@ -95,7 +102,8 @@ describe("POST /api/v1/auth/register/publisher", () => {
         body: JSON.stringify({
           name: "Jane Publisher",
           email: "pub@example.com",
-          password: "password123",
+          password: "Password123!",
+          username: "jane_pub",
           website: "https://example.com",
         }),
       }),
@@ -129,6 +137,27 @@ describe("POST /api/v1/auth/register/publisher", () => {
       }),
     );
   });
+
+  it("drops honeypot submissions without creating a user", async () => {
+    const { POST } = await import("@/app/api/v1/auth/register/publisher/route");
+
+    const response = await POST(
+      new Request("http://localhost/api/v1/auth/register/publisher", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-forwarded-for": "192.0.2.99" },
+        body: JSON.stringify({
+          name: "Bot",
+          email: "bot@example.com",
+          password: "Password123!",
+          username: "bot_user",
+          company_website: "http://spam.example",
+        }),
+      }),
+    );
+
+    expect(response.status).toBe(201);
+    expect(prismaMock.user.create).not.toHaveBeenCalled();
+  });
 });
 
 describe("registerPublisherAccount", () => {
@@ -138,8 +167,8 @@ describe("registerPublisherAccount", () => {
     vi.doMock("bcryptjs", () => ({
       default: { hash: vi.fn().mockResolvedValue("hashed") },
     }));
-    vi.doMock("@/lib/email-deliverability", () => ({
-      validateEmailDeliverability: vi.fn().mockResolvedValue({ ok: true }),
+    vi.doMock("@/lib/signup-email", () => ({
+      validateSignupEmail: vi.fn().mockResolvedValue({ ok: true }),
     }));
     vi.doMock("@/services/auth-token.service", () => ({
       createEmailVerificationToken: vi.fn().mockResolvedValue("token"),
@@ -154,6 +183,7 @@ describe("registerPublisherAccount", () => {
     }));
 
     prismaMock.user.findUnique.mockResolvedValue(null);
+    prismaMock.publisherProfile.findUnique.mockResolvedValue(null);
     prismaMock.user.create.mockResolvedValue({
       id: "pub-2",
       email: "newpub@example.com",
@@ -173,7 +203,8 @@ describe("registerPublisherAccount", () => {
     await registerPublisherAccount({
       name: "New Pub",
       email: "newpub@example.com",
-      password: "password123",
+      password: "Password123!",
+      username: "new_pub",
     });
 
     expect(notifyAdminAlert).toHaveBeenCalledWith(

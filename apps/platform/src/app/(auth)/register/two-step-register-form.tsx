@@ -5,6 +5,11 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Inter } from "next/font/google";
 import { PasswordRequirements } from "@/components/auth/password-requirements";
+import {
+  SignupHoneypot,
+  TurnstileWidget,
+  useSignupBotCheck,
+} from "@/components/auth/turnstile-widget";
 import { isStrongPassword } from "@/lib/password-policy";
 import { COUNTRY_BY_CODE, getCountryName } from "@/lib/campaign-form";
 import { readReferralCookie, writeReferralCookie } from "@/lib/referral";
@@ -107,6 +112,7 @@ export function TwoStepRegisterForm() {
   const [facebookUrl, setFacebookUrl] = useState("");
   const [trafficPolicy, setTrafficPolicy] = useState(false);
   const [terms, setTerms] = useState(false);
+  const botCheck = useSignupBotCheck();
 
   useEffect(() => {
     const fromUrl = searchParams.get("referral_by") ?? searchParams.get("ref") ?? "";
@@ -167,6 +173,10 @@ export function TwoStepRegisterForm() {
       ok = false;
     }
     if (!ok) return;
+    if (!botCheck.captchaReady) {
+      setError("Please complete the security check.");
+      return;
+    }
 
     setLoading(true);
     const name = `${firstName.trim()} ${lastName.trim()}`.trim();
@@ -196,6 +206,7 @@ export function TwoStepRegisterForm() {
           whatsapp: whatsapp.trim() || null,
           facebookUrl: facebookUrl.trim() || null,
         },
+        ...botCheck.payload,
       }),
     });
 
@@ -204,6 +215,7 @@ export function TwoStepRegisterForm() {
 
     if (!res.ok) {
       setError(data?.error?.message ?? "Registration failed");
+      botCheck.resetCaptcha();
       return;
     }
 
@@ -293,6 +305,7 @@ export function TwoStepRegisterForm() {
           {error ? <div className="tsrAlert">{error}</div> : null}
 
           <form onSubmit={handleSubmit}>
+            <SignupHoneypot {...botCheck.honeypotProps} />
             <section className={`tsrStep${step === 1 ? " on" : ""}`}>
               <h2>Create your free account</h2>
               <div className="tsrSub">
@@ -612,6 +625,8 @@ export function TwoStepRegisterForm() {
                 </span>
               </label>
 
+              <TurnstileWidget {...botCheck.widgetProps} className="mt-4" />
+
               <div className="tsrButtons">
                 <button
                   className="tsrBtn tsrBack"
@@ -623,7 +638,11 @@ export function TwoStepRegisterForm() {
                 >
                   ← Back
                 </button>
-                <button className="tsrBtn tsrNext" type="submit" disabled={loading}>
+                <button
+                  className="tsrBtn tsrNext"
+                  type="submit"
+                  disabled={loading || !botCheck.captchaReady}
+                >
                   {loading ? "Creating account..." : "Create Free Account →"}
                 </button>
               </div>

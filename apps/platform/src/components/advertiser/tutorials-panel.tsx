@@ -33,7 +33,7 @@ export function TutorialsPanel({ tutorials }: TutorialsPanelProps) {
     );
   }, [tutorials, search]);
 
-  const embedUrl = activeTutorial
+  const embedUrl = activeTutorial?.youtubeUrl
     ? getYouTubeEmbedUrlFromLink(activeTutorial.youtubeUrl, { autoplay: true, controls: true })
     : null;
 
@@ -68,7 +68,7 @@ export function TutorialsPanel({ tutorials }: TutorialsPanelProps) {
       {tutorials.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border bg-muted/80 px-6 py-16 text-center">
           <p className="text-sm font-medium text-foreground">No tutorials available yet</p>
-          <p className="mt-1 text-xs text-muted-foreground">Check back later for new video guides.</p>
+          <p className="mt-1 text-xs text-muted-foreground">Check back later for new guides.</p>
         </div>
       ) : filtered.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border bg-muted/80 px-6 py-16 text-center">
@@ -83,7 +83,29 @@ export function TutorialsPanel({ tutorials }: TutorialsPanelProps) {
         </div>
       )}
 
-      <Dialog open={Boolean(activeTutorial)} onOpenChange={(open) => !open && setActiveTutorial(null)}>
+      <Dialog open={Boolean(activeTutorial && !embedUrl)} onOpenChange={(open) => !open && setActiveTutorial(null)}>
+        <DialogContent showCloseButton className="max-h-[85vh] max-w-3xl overflow-y-auto sm:max-w-3xl">
+          {activeTutorial && !embedUrl ? (
+            <>
+              <DialogTitle className="pr-8 text-xl font-semibold tracking-tight">
+                {activeTutorial.title}
+              </DialogTitle>
+              {isRichHtml(activeTutorial.description) ? (
+                <div
+                  className={cn("mt-2", RICH_CONTENT_CLASS)}
+                  dangerouslySetInnerHTML={{ __html: activeTutorial.description }}
+                />
+              ) : (
+                <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-muted-foreground">
+                  {activeTutorial.description}
+                </p>
+              )}
+            </>
+          ) : null}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={Boolean(activeTutorial && embedUrl)} onOpenChange={(open) => !open && setActiveTutorial(null)}>
         <DialogContent
           showCloseButton
           className="max-w-4xl gap-0 overflow-hidden border-0 bg-slate-950 p-0 text-white sm:max-w-4xl [&_[data-slot=dialog-close]]:text-white [&_[data-slot=dialog-close]]:hover:bg-white/10"

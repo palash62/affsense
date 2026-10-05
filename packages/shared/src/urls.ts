@@ -4,11 +4,33 @@ import { buildTrackingUrl, sanitizeTrackingParam } from "./smart-link";
 /** Default ClickFunnels / platform tracking query param for digital products. */
 export const DEFAULT_DIGITAL_PRODUCT_AFFILIATE_PARAM = "affsense_id";
 
+/** Sales page query param carrying the DigitalProductClick id back via the CF webhook. */
+export const DIGITAL_PRODUCT_CLICK_PARAM = "aff_click";
+
 export type DigitalProductAffiliateUrlExtras = {
   source?: string;
   subid?: string;
+  subid2?: string;
+  subid3?: string;
   campaign?: string;
+  clickId?: string;
 };
+
+export type TrackingSubIds = {
+  sub1: string | null;
+  sub2: string | null;
+  sub3: string | null;
+};
+
+/** Read `sub1`/`sub2`/`sub3` from a tracking link; legacy `sub_id` is an alias for `sub1`. */
+export function readSubIds(searchParams: URLSearchParams): TrackingSubIds {
+  const read = (key: string) => searchParams.get(key)?.trim() || null;
+  return {
+    sub1: read("sub1") ?? read("sub_id"),
+    sub2: read("sub2"),
+    sub3: read("sub3"),
+  };
+}
 
 export type DigitalProductTrackingParams = {
   publisherId?: string;
@@ -47,22 +69,27 @@ export function buildDigitalProductDestinationUrl(
   }
 
   if (!extras) return withAffiliate;
-  const source = sanitizeTrackingParam(extras.source);
-  const subid = sanitizeTrackingParam(extras.subid);
-  const campaign = sanitizeTrackingParam(extras.campaign);
-  if (!source && !subid && !campaign) return withAffiliate;
+  const raw: Array<[string, string | undefined]> = [
+    ["source", extras.source],
+    ["subid", extras.subid],
+    ["subid2", extras.subid2],
+    ["subid3", extras.subid3],
+    ["campaign", extras.campaign],
+    [DIGITAL_PRODUCT_CLICK_PARAM, extras.clickId],
+  ];
+  const entries: Array<[string, string]> = [];
+  for (const [key, value] of raw) {
+    const clean = sanitizeTrackingParam(value);
+    if (clean) entries.push([key, clean]);
+  }
+  if (entries.length === 0) return withAffiliate;
 
   try {
     const parsed = new URL(withAffiliate);
-    if (source) parsed.searchParams.set("source", source);
-    if (subid) parsed.searchParams.set("subid", subid);
-    if (campaign) parsed.searchParams.set("campaign", campaign);
+    for (const [key, value] of entries) parsed.searchParams.set(key, value);
     return parsed.toString();
   } catch {
-    const parts: string[] = [];
-    if (source) parts.push(`source=${encodeURIComponent(source)}`);
-    if (subid) parts.push(`subid=${encodeURIComponent(subid)}`);
-    if (campaign) parts.push(`campaign=${encodeURIComponent(campaign)}`);
+    const parts = entries.map(([key, value]) => `${key}=${encodeURIComponent(value)}`);
     const hashIndex = withAffiliate.indexOf("#");
     const beforeHash = hashIndex >= 0 ? withAffiliate.slice(0, hashIndex) : withAffiliate;
     const hash = hashIndex >= 0 ? withAffiliate.slice(hashIndex) : "";

@@ -18,6 +18,7 @@ export const CONVERSION_REJECT_REASONS = {
   SUBSCRIPTION_ATTRIBUTION_NOT_FOUND:
     "Recurring payment for a subscription not originally referred through Affsense",
   PUBLISHER_NOT_ALLOWED: "Affiliate is not allowed to promote this private product",
+  SALE_REJECTED: "Refund for a sale that an admin already rejected",
 } as const;
 
 export type ConversionRejectReason = keyof typeof CONVERSION_REJECT_REASONS;
@@ -37,6 +38,8 @@ export type StoredSubscriptionAttribution = {
   publisherId: string;
   clickId: string | null;
   subId: string | null;
+  subId2: string | null;
+  subId3: string | null;
   src: string | null;
   affiliateRef: string | null;
   originalOrderId: string | null;
@@ -46,6 +49,8 @@ export type LifetimeReferrer = {
   publisherId: string;
   clickId: string | null;
   subId: string | null;
+  subId2: string | null;
+  subId3: string | null;
   src: string | null;
   affiliateRef: string | null;
 };
@@ -61,6 +66,8 @@ export type ConversionValidationDeps = {
   findLifetimeReferrer(productId: string, email: string): Promise<LifetimeReferrer | null>;
   /** False only for a private product the publisher is not allowed on. */
   publisherAllowedForProduct(productId: string, publisherId: string): Promise<boolean>;
+  /** True when an admin rejected this publisher's sale for the order (its commission is already reversed). */
+  saleRejected?(orderId: string, publisherId: string, productId: string): Promise<boolean>;
 };
 
 export type ConversionValidationResult = {
@@ -74,6 +81,8 @@ export type ConversionValidationResult = {
   affiliateRef: string | null;
   clickId: string | null;
   subId: string | null;
+  subId2: string | null;
+  subId3: string | null;
   src: string | null;
   isRecurring: boolean;
   /** Idempotency key; set only for PROCESSED events. */
@@ -145,7 +154,35 @@ export async function validateClickFunnelsConversion(input: {
       platformParam: input.platformParam,
       requestUrl: input.requestUrl,
     });
-  const identifiers = extractClickFunnelsIdentifiers(input.body);
+  const result = await validateWithDeps(input.body, at, deps);
+  const { identifiers } = result;
+  if (
+    result.status === "PROCESSED" &&
+    identifiers.isRefund &&
+    identifiers.orderId &&
+    result.publisherId &&
+    result.productId &&
+    deps.saleRejected &&
+    (await deps.saleRejected(identifiers.orderId, result.publisherId, result.productId))
+  ) {
+    return {
+      ...result,
+      status: "IGNORED",
+      reason: "SALE_REJECTED",
+      affiliateRef: result.affiliateRef ?? result.publisherId,
+      publisherId: null,
+      externalEventKey: null,
+    };
+  }
+  return result;
+}
+
+async function validateWithDeps(
+  body: unknown,
+  at: Date,
+  deps: ConversionValidationDeps,
+): Promise<ConversionValidationResult> {
+  const identifiers = extractClickFunnelsIdentifiers(body);
 
   const base: ConversionValidationResult = {
     status: "IGNORED",
@@ -158,13 +195,15 @@ export async function validateClickFunnelsConversion(input: {
     affiliateRef: null,
     clickId: null,
     subId: null,
+    subId2: null,
+    subId3: null,
     src: null,
     isRecurring: false,
     externalEventKey: null,
     storeSubscription: false,
   };
 
-  const product = await resolveProduct(identifiers, input.body, deps);
+  const product = await resolveProduct(identifiers, body, deps);
   if (!product) return { ...base, reason: "PRODUCT_NOT_MAPPED" };
 
   const withProduct: ConversionValidationResult = {
@@ -186,7 +225,7 @@ export async function validateClickFunnelsConversion(input: {
     !identifiers.isRefund &&
     (identifiers.renewalHint || (subscription != null && !sameOrderAsOriginal));
 
-  const buyerEmail = extractLeadFromClickFunnelsPayload(input.body).leadEmail?.trim() || null;
+  const buyerEmail = extractLeadFromClickFunnelsPayload(body).leadEmail?.trim() || null;
   const findLifetimeReferrer = () =>
     buyerEmail && !identifiers.isRefund
       ? deps.findLifetimeReferrer(product.productId, buyerEmail)
@@ -231,6 +270,8 @@ export async function validateClickFunnelsConversion(input: {
       affiliateRef: subscription.affiliateRef,
       clickId: subscription.clickId,
       subId: subscription.subId,
+      subId2: subscription.subId2,
+      subId3: subscription.subId3,
       src: subscription.src,
       externalEventKey: buildExternalEventKey({ identifiers, isRecurring, productKey, at }),
     };
@@ -279,6 +320,8 @@ export async function validateClickFunnelsConversion(input: {
     affiliateRef: attribution.affiliateRef,
     clickId: attribution.clickId,
     subId: attribution.subId,
+    subId2: attribution.subId2,
+    subId3: attribution.subId3,
     src: attribution.src,
     externalEventKey: buildExternalEventKey({ identifiers, isRecurring: false, productKey, at }),
     storeSubscription: Boolean(identifiers.subscriptionKey) && !subscription && !identifiers.isRefund,
@@ -327,6 +370,8 @@ export function createPrismaConversionDeps(ctx: {
           publisherId: true,
           clickId: true,
           subId: true,
+          subId2: true,
+          subId3: true,
           src: true,
           affiliateRef: true,
           originalOrderId: true,
@@ -368,7 +413,15 @@ export function createPrismaConversionDeps(ctx: {
           publisherId: { not: null },
         },
         orderBy: { createdAt: "asc" },
-        select: { publisherId: true, clickId: true, subId: true, src: true, affiliateRef: true },
+        select: {
+          publisherId: true,
+          clickId: true,
+          subId: true,
+          subId2: true,
+          subId3: true,
+          src: true,
+          affiliateRef: true,
+        },
       });
       return first?.publisherId ? { ...first, publisherId: first.publisherId } : null;
     },
@@ -381,6 +434,12 @@ export function createPrismaConversionDeps(ctx: {
         },
       });
       return !product?.isPrivate || product.allowedPublishers.length > 0;
+    },
+    async saleRejected(orderId, publisherId, productId) {
+      const rejected = await prisma.webhookEvent.count({
+        where: { status: "REJECTED", cfOrderId: orderId, publisherId, digitalProductId: productId },
+      });
+      return rejected > 0;
     },
   };
 }

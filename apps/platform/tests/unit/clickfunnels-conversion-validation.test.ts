@@ -451,6 +451,49 @@ describe("validateClickFunnelsConversion", () => {
       expect(result.externalEventKey).toBe("cf:renewal:inv-9");
     });
   });
+
+  describe("refund of an admin-rejected sale", () => {
+    it("ignores the refund so the commission is not reversed twice", async () => {
+      const saleRejected = vi.fn(async () => true);
+      const { deps } = makeDeps({ saleRejected });
+      const result = await validateClickFunnelsConversion({
+        body: cf2Order({ orderId: 7001, productId: PINSTACK_CF_ID, eventType: "order.refunded" }),
+        at: AT,
+        deps,
+      });
+
+      expect(saleRejected).toHaveBeenCalledWith("7001", "pub-aff", "prod-pinstack");
+      expect(result.status).toBe("IGNORED");
+      expect(result.reason).toBe("SALE_REJECTED");
+      expect(result.publisherId).toBeNull();
+      expect(result.externalEventKey).toBeNull();
+    });
+
+    it("keeps a refund of an approved sale", async () => {
+      const { deps } = makeDeps({ saleRejected: vi.fn(async () => false) });
+      const result = await validateClickFunnelsConversion({
+        body: cf2Order({ orderId: 7002, productId: PINSTACK_CF_ID, eventType: "order.refunded" }),
+        at: AT,
+        deps,
+      });
+
+      expect(result.status).toBe("PROCESSED");
+      expect(result.publisherId).toBe("pub-aff");
+    });
+
+    it("does not check rejection for normal sales", async () => {
+      const saleRejected = vi.fn(async () => true);
+      const { deps } = makeDeps({ saleRejected });
+      const result = await validateClickFunnelsConversion({
+        body: cf2Order({ orderId: 7003, productId: PINSTACK_CF_ID }),
+        at: AT,
+        deps,
+      });
+
+      expect(saleRejected).not.toHaveBeenCalled();
+      expect(result.status).toBe("PROCESSED");
+    });
+  });
 });
 
 describe("buildExternalEventKey", () => {

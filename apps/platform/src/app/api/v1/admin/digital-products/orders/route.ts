@@ -1,11 +1,16 @@
 import { withAuth, parsePagination, ADMIN_PORTAL_ROLES } from "@/lib/api-handler";
 import { errorResponse } from "@/lib/errors";
 import { z } from "zod";
-import { listDigitalProductOrders } from "@/services/digital-product.service";
+import {
+  listDigitalProductOrders,
+  parseDigitalProductConversionStatus,
+} from "@/services/digital-product.service";
 
 const adminDigitalProductOrdersQuerySchema = z.object({
   publisherId: z.string().trim().optional(),
   subId: z.string().trim().optional(),
+  subId2: z.string().trim().optional(),
+  subId3: z.string().trim().optional(),
   eventType: z.string().trim().optional(),
   from: z.string().trim().optional(),
   to: z.string().trim().optional(),
@@ -21,6 +26,8 @@ export async function GET(request: Request) {
       const parsed = adminDigitalProductOrdersQuerySchema.safeParse({
         publisherId: searchParams.get("publisherId") ?? undefined,
         subId: searchParams.get("subId") ?? undefined,
+        subId2: searchParams.get("subId2") ?? undefined,
+        subId3: searchParams.get("subId3") ?? undefined,
         eventType: searchParams.get("eventType") ?? undefined,
         from: searchParams.get("from") ?? undefined,
         to: searchParams.get("to") ?? undefined,
@@ -53,12 +60,14 @@ export async function GET(request: Request) {
       const data = await listDigitalProductOrders({
         publisherId: parsed.data.publisherId,
         subId: parsed.data.subId,
+        subId2: parsed.data.subId2,
+        subId3: parsed.data.subId3,
         eventType: parsed.data.eventType,
         from: from && !Number.isNaN(from.getTime()) ? from : undefined,
         to: to && !Number.isNaN(to.getTime()) ? to : undefined,
         page: parsed.data.page,
         limit: parsed.data.limit ?? 15,
-        includeRejected: searchParams.get("includeRejected") === "1",
+        status: parseDigitalProductConversionStatus(searchParams.get("status")),
       });
 
       return Response.json({ data });

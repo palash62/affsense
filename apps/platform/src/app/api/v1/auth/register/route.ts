@@ -2,7 +2,7 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { registerSchema } from "@/lib/validations";
 import { errorResponse } from "@/lib/errors";
-import { validateEmailDeliverability } from "@/lib/email-deliverability";
+import { validateSignupEmail } from "@/lib/signup-email";
 import { resolveReferrerId } from "@/services/referral.service";
 import { applySignupAttribution } from "@/services/promotion.service";
 import { createEmailVerificationToken } from "@/services/auth-token.service";
@@ -12,21 +12,14 @@ import {
   notifyReferralSignup,
   notifyWelcome,
 } from "@/services/notify.service";
-import {
-  checkRateLimit,
-  clientIpFromRequest,
-  rateLimitResponse,
-} from "@/lib/rate-limit";
+import { runSignupGuard } from "@/lib/signup-guard";
 
 export async function POST(request: Request) {
-  const ip = clientIpFromRequest(request);
-  const limited = checkRateLimit(`register:${ip}`, 8, 60_000);
-  if (!limited.allowed) {
-    return rateLimitResponse(limited.retryAfterSec);
-  }
-
   try {
     const body = await request.json();
+    const guard = await runSignupGuard(request, body);
+    if (!guard.ok) return guard.response;
+
     const parsed = registerSchema.safeParse(body);
 
     if (!parsed.success) {
@@ -39,7 +32,7 @@ export async function POST(request: Request) {
     }
 
     const email = parsed.data.email.trim().toLowerCase();
-    const deliverability = await validateEmailDeliverability(email);
+    const deliverability = await validateSignupEmail(email);
     if (!deliverability.ok) {
       return Response.json(
         { error: { code: "VALIDATION_INVALID_EMAIL", message: deliverability.reason, status: 422 } },

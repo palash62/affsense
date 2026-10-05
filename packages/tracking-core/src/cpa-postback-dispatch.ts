@@ -247,6 +247,8 @@ export async function dispatchCpaConversionPostbacks(input: {
   publisherPayout?: Prisma.Decimal | number | string | null;
   source?: string | null;
   subId?: string | null;
+  subId2?: string | null;
+  subId3?: string | null;
 }) {
   const macroContext: PostbackMacroContext = {
     clickId: input.clickId,
@@ -257,6 +259,8 @@ export async function dispatchCpaConversionPostbacks(input: {
     source: input.source,
     date: new Date().toISOString().slice(0, 10),
     sub1: input.subId,
+    sub2: input.subId2,
+    sub3: input.subId3,
   };
 
   const network = await getCpaNetworkPostbackConfig();

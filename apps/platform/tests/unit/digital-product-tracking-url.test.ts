@@ -2,7 +2,24 @@ import { describe, expect, it } from "vitest";
 import {
   buildDigitalProductDestinationUrl,
   buildDigitalProductTrackingUrl,
+  readSubIds,
 } from "@cpl/shared";
+
+describe("readSubIds", () => {
+  it("reads sub1/sub2/sub3 and treats sub_id as an alias for sub1", () => {
+    expect(readSubIds(new URLSearchParams("sub1=a&sub2=b&sub3=c"))).toEqual({
+      sub1: "a",
+      sub2: "b",
+      sub3: "c",
+    });
+    expect(readSubIds(new URLSearchParams("sub_id=legacy"))).toEqual({
+      sub1: "legacy",
+      sub2: null,
+      sub3: null,
+    });
+    expect(readSubIds(new URLSearchParams("sub1=new&sub_id=legacy")).sub1).toBe("new");
+  });
+});
 
 describe("buildDigitalProductTrackingUrl", () => {
   it("builds tracking-domain share link with publisher and optional params", () => {
@@ -62,6 +79,29 @@ describe("buildDigitalProductDestinationUrl", () => {
     expect(url).toContain("source=facebook");
     expect(url).toContain("subid=ad1");
     expect(url).toContain("campaign=launch");
+  });
+
+  it("appends the click id as aff_click", () => {
+    const url = buildDigitalProductDestinationUrl(
+      "https://vendor.example/sales",
+      "affsense_id",
+      "AFF100003",
+      { clickId: "cmclick123" },
+    );
+    expect(url).toContain("affsense_id=AFF100003");
+    expect(url).toContain("aff_click=cmclick123");
+  });
+
+  it("appends subid2 and subid3 when present", () => {
+    const url = buildDigitalProductDestinationUrl(
+      "https://vendor.example/sales",
+      "affsense_id",
+      "AFF100003",
+      { subid: "fb", subid2: "adset1", subid3: "creative9" },
+    );
+    expect(url).toContain("subid=fb");
+    expect(url).toContain("subid2=adset1");
+    expect(url).toContain("subid3=creative9");
   });
 
   it("returns null when sales page or publisher is missing", () => {

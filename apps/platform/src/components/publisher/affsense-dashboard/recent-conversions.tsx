@@ -8,6 +8,7 @@ import {
   type DashboardOfferSource,
 } from "@/components/publisher/affsense-dashboard/dashboard-source-chip";
 import { cn } from "@/lib/utils";
+import { PUBLISHER_GET_PAID_TASKS_ENABLED } from "@/lib/feature-flags";
 
 export type RecentConversionRow = {
   source: DashboardOfferSource;
@@ -29,7 +30,7 @@ const REPORT_BY_SOURCE: Record<string, string> = {
   digital: "/publisher/marketplace/report",
   cpa: "/publisher/cpa-offers/report",
   offerwall: "/publisher/offer-wall/report",
-  tasks: "/publisher/reports/tasks",
+  ...(PUBLISHER_GET_PAID_TASKS_ENABLED ? { tasks: "/publisher/reports/tasks" } : {}),
 };
 
 function formatMoney(n: number) {

@@ -16,6 +16,11 @@ import {
 } from "@/components/ui/select";
 import { AuthLayout } from "@/components/layout/auth-layout";
 import { PasswordRequirements } from "@/components/auth/password-requirements";
+import {
+  SignupHoneypot,
+  TurnstileWidget,
+  useSignupBotCheck,
+} from "@/components/auth/turnstile-widget";
 import { isStrongPassword } from "@/lib/password-policy";
 import { COUNTRY_BY_CODE, getCountryName } from "@/lib/campaign-form";
 import {
@@ -43,6 +48,7 @@ export function PublisherRegisterForm() {
   const [postalCode, setPostalCode] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const botCheck = useSignupBotCheck();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -71,6 +77,7 @@ export function PublisherRegisterForm() {
         city: city.trim() || undefined,
         state: state.trim() || undefined,
         postalCode: postalCode.trim() || undefined,
+        ...botCheck.payload,
       }),
     });
 
@@ -79,6 +86,7 @@ export function PublisherRegisterForm() {
 
     if (!res.ok) {
       setError(data.error?.message ?? "Registration failed");
+      botCheck.resetCaptcha();
       return;
     }
 
@@ -106,7 +114,8 @@ export function PublisherRegisterForm() {
       title="Apply as publisher"
       description="Verify your email, then we’ll review your application"
     >
-      <form onSubmit={handleSubmit} className="space-y-3">
+      <form onSubmit={handleSubmit} className="relative space-y-3">
+        <SignupHoneypot {...botCheck.honeypotProps} />
         {error && (
           <Alert variant="destructive">
             <AlertDescription>{error}</AlertDescription>
@@ -252,7 +261,13 @@ export function PublisherRegisterForm() {
           </div>
         </div>
 
-        <Button type="submit" className="authPrimaryBtn h-auto" disabled={loading}>
+        <TurnstileWidget {...botCheck.widgetProps} />
+
+        <Button
+          type="submit"
+          className="authPrimaryBtn h-auto"
+          disabled={loading || !botCheck.captchaReady}
+        >
           {loading ? "Submitting application..." : "Submit application"}
         </Button>
       </form>

@@ -48,6 +48,7 @@ jobs:
           TRACKING_URL: https://track.leadtb.com
           NEXT_PUBLIC_PLATFORM_URL: https://affsense.com
           NEXT_PUBLIC_TRACKING_URL: https://track.leadtb.com
+          NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${{ vars.TURNSTILE_SITE_KEY }}
           INTERNAL_SERVICE_TOKEN: ci-internal-service-token-placeholder
 
       - name: Prepare standalone

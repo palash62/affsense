@@ -8,7 +8,7 @@ import { PlatformLogo } from "@/components/brand/platform-logo";
 import { isAdminPortalRole } from "@/lib/admin-portal";
 import { isPublisherPortalRole } from "@/lib/publisher-page-title";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
-import { SidebarNavList, SidebarStatusCard, SidebarAffiliateTierCard } from "./sidebar-nav-list";
+import { SidebarNavList, SidebarStatusCard } from "./sidebar-nav-list";
 import { useNavigationPending } from "./navigation-pending";
 import { cn } from "@/lib/utils";
 
@@ -84,7 +84,7 @@ export function MobileNav({
             staffMenuAccess={staffMenuAccess}
             onNavigate={() => onOpenChange(false)}
           />
-          {isPublisherPortalRole(role) ? <SidebarAffiliateTierCard /> : <SidebarStatusCard />}
+          {isPublisherPortalRole(role) ? null : <SidebarStatusCard />}
         </div>
       </SheetContent>
     </Sheet>

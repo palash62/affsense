@@ -107,8 +107,8 @@ describe("register emailDelivery", () => {
     vi.doMock("bcryptjs", () => ({
       default: { hash: vi.fn().mockResolvedValue("hashed") },
     }));
-    vi.doMock("@/lib/email-deliverability", () => ({
-      validateEmailDeliverability: vi.fn().mockResolvedValue({ ok: true }),
+    vi.doMock("@/lib/signup-email", () => ({
+      validateSignupEmail: vi.fn().mockResolvedValue({ ok: true }),
     }));
     vi.doMock("@/services/referral.service", () => ({
       resolveReferrerId: vi.fn().mockResolvedValue(null),
@@ -148,7 +148,7 @@ describe("register emailDelivery", () => {
         body: JSON.stringify({
           name: "Test Advertiser",
           email: "adv@example.com",
-          password: "password123",
+          password: "Password123!",
           phone: "555-0100",
           address: "123 Main St",
           country: "US",

@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 import type { z } from "zod";
 import { AppError } from "@/lib/errors";
-import { validateEmailDeliverability } from "@/lib/email-deliverability";
+import { validateSignupEmail } from "@/lib/signup-email";
 import type { publisherRegisterSchema } from "@/lib/validations";
 import { prisma } from "@/lib/prisma";
 import { createEmailVerificationToken } from "@/services/auth-token.service";
@@ -34,7 +34,7 @@ async function resolvePublisherReferrerId(referralRef?: string | null) {
 export async function registerPublisherAccount(data: PublisherRegisterInput) {
   const email = data.email.trim().toLowerCase();
   const username = data.username.trim().toLowerCase();
-  const deliverability = await validateEmailDeliverability(email);
+  const deliverability = await validateSignupEmail(email);
   if (!deliverability.ok) {
     throw new AppError("VALIDATION_INVALID_EMAIL", deliverability.reason, 422);
   }

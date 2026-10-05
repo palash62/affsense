@@ -102,7 +102,9 @@ export function PublisherCommissionTable({ rows }: { rows: PublisherCommissionRo
               <TableHead className="whitespace-nowrap px-4 py-3 text-right text-xs">Commission</TableHead>
               <TableHead className="whitespace-nowrap px-4 py-3 text-xs">Rate</TableHead>
               <TableHead className="whitespace-nowrap px-4 py-3 text-xs">Source</TableHead>
-              <TableHead className="whitespace-nowrap px-4 py-3 text-xs">Sub ID</TableHead>
+              <TableHead className="whitespace-nowrap px-4 py-3 text-xs">Sub ID 1</TableHead>
+              <TableHead className="whitespace-nowrap px-4 py-3 text-xs">Sub ID 2</TableHead>
+              <TableHead className="whitespace-nowrap px-4 py-3 text-xs">Sub ID 3</TableHead>
               <TableHead className="whitespace-nowrap px-4 py-3 text-xs">Status</TableHead>
               <TableHead className="whitespace-nowrap px-4 py-3 text-xs">Payment</TableHead>
               <TableHead className="px-4 py-3 text-xs">Action</TableHead>
@@ -140,6 +142,12 @@ export function PublisherCommissionTable({ rows }: { rows: PublisherCommissionRo
                 </TableCell>
                 <TableCell className="max-w-[100px] truncate px-4 py-3 text-xs text-muted-foreground">
                   {row.subId ?? "—"}
+                </TableCell>
+                <TableCell className="max-w-[100px] truncate px-4 py-3 text-xs text-muted-foreground">
+                  {row.subId2 ?? "—"}
+                </TableCell>
+                <TableCell className="max-w-[100px] truncate px-4 py-3 text-xs text-muted-foreground">
+                  {row.subId3 ?? "—"}
                 </TableCell>
                 <TableCell className="whitespace-nowrap px-4 py-3">
                   <StatusBadge status={row.webhookStatus} />
@@ -189,8 +197,12 @@ export function PublisherCommissionTable({ rows }: { rows: PublisherCommissionRo
               <dd>{Math.round(detail.rate * 100)}%</dd>
               <dt className="text-muted-foreground">Source</dt>
               <dd>{detail.source ?? "—"}</dd>
-              <dt className="text-muted-foreground">Sub ID</dt>
+              <dt className="text-muted-foreground">Sub ID 1</dt>
               <dd>{detail.subId ?? "—"}</dd>
+              <dt className="text-muted-foreground">Sub ID 2</dt>
+              <dd>{detail.subId2 ?? "—"}</dd>
+              <dt className="text-muted-foreground">Sub ID 3</dt>
+              <dd>{detail.subId3 ?? "—"}</dd>
               <dt className="text-muted-foreground">Status</dt>
               <dd>{detail.webhookStatus}</dd>
               <dt className="text-muted-foreground">Payment</dt>

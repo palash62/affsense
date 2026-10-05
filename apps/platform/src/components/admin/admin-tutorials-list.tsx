@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { FileText, Pencil, Plus, Trash2, Video } from "lucide-react";
 import { toast } from "sonner";
 import { PageHero } from "@/components/admin/page-hero";
 import {
@@ -116,7 +116,7 @@ export function AdminTutorialsList() {
       <PageHero
         eyebrow="Content"
         title="Tutorials"
-        description="Add YouTube tutorial videos for advertisers. Upload a thumbnail, title, and description for each video."
+        description="Add tutorials for publishers. Each tutorial needs a title and description; a YouTube video and thumbnail are optional."
         badge={`${tutorials.length} total`}
       />
 
@@ -133,7 +133,7 @@ export function AdminTutorialsList() {
         ) : tutorials.length === 0 ? (
           <div className="px-6 py-16 text-center">
             <p className="text-sm font-medium text-foreground">No tutorials yet</p>
-            <p className="mt-1 text-xs text-muted-foreground">Add your first tutorial video for advertisers.</p>
+            <p className="mt-1 text-xs text-muted-foreground">Add your first tutorial for publishers.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -161,12 +161,18 @@ export function AdminTutorialsList() {
                 {tutorials.map((tutorial) => (
                   <TableRow key={tutorial.id} className="border-border hover:bg-muted/80">
                     <TableCell className="px-4 py-3">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={tutorial.thumbnailUrl}
-                        alt=""
-                        className="h-14 w-24 rounded-md border border-border object-cover"
-                      />
+                      {tutorial.thumbnailUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={tutorial.thumbnailUrl}
+                          alt=""
+                          className="h-14 w-24 rounded-md border border-border object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-14 w-24 items-center justify-center rounded-md border border-border bg-muted text-muted-foreground">
+                          {tutorial.youtubeUrl ? <Video className="h-5 w-5" /> : <FileText className="h-5 w-5" />}
+                        </div>
+                      )}
                     </TableCell>
                     <TableCell className="px-4 py-3">
                       <p className="text-sm font-medium text-foreground">{tutorial.title}</p>

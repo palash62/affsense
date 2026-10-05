@@ -30,6 +30,8 @@ interface PageProps {
     orderType?: string;
     source?: string;
     subId?: string;
+    subId2?: string;
+    subId3?: string;
     status?: string;
     q?: string;
     page?: string;
@@ -60,6 +62,8 @@ export default async function PublisherCommissionsReportPage({ searchParams }: P
     orderType: params.orderType,
     source: params.source,
     subId: params.subId,
+    subId2: params.subId2,
+    subId3: params.subId3,
     status: params.status,
     q: params.q,
     page,
@@ -142,6 +146,8 @@ export default async function PublisherCommissionsReportPage({ searchParams }: P
             products={filterOptions.products}
             sources={filterOptions.sources}
             subIds={filterOptions.subIds}
+            subIds2={filterOptions.subIds2}
+            subIds3={filterOptions.subIds3}
             defaultFrom={defaultFrom}
             defaultTo={defaultTo}
           />

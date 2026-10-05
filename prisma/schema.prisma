@@ -1456,8 +1456,8 @@ model Tutorial {
   id           String   @id @default(cuid())
   title        String
   description  String   @db.Text
-  youtubeUrl   String   @map("youtube_url")
-  thumbnailUrl String   @map("thumbnail_url")
+  youtubeUrl   String?  @map("youtube_url")
+  thumbnailUrl String?  @map("thumbnail_url")
   sortOrder    Int      @default(0) @map("sort_order")
   isPublished  Boolean  @default(true) @map("is_published")
   createdAt    DateTime @default(now()) @map("created_at")

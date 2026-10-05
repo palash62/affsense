@@ -12,6 +12,8 @@ export async function GET(request: Request) {
         q: searchParams.get("q") ?? undefined,
         productId: searchParams.get("productId") ?? undefined,
         subId: searchParams.get("subId") ?? undefined,
+        subId2: searchParams.get("subId2") ?? undefined,
+        subId3: searchParams.get("subId3") ?? undefined,
         publisherId: searchParams.get("publisherId") ?? undefined,
         from: searchParams.get("from") ?? undefined,
         to: searchParams.get("to") ?? undefined,

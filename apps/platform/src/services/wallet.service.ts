@@ -554,7 +554,54 @@ export async function reconcilePublisherLeadCreditsForUser(publisherId: string):
 
 export const DIGITAL_PRODUCT_SALE_REFERENCE = "digital_product_sale";
 export const DIGITAL_PRODUCT_REFUND_REFERENCE = "digital_product_refund";
-const DIGITAL_PRODUCT_REFERENCES = [DIGITAL_PRODUCT_SALE_REFERENCE, DIGITAL_PRODUCT_REFUND_REFERENCE];
+export const DIGITAL_PRODUCT_REJECT_REFERENCE = "digital_product_reject";
+const DIGITAL_PRODUCT_REFERENCES = [
+  DIGITAL_PRODUCT_SALE_REFERENCE,
+  DIGITAL_PRODUCT_REFUND_REFERENCE,
+  DIGITAL_PRODUCT_REJECT_REFERENCE,
+];
+
+/**
+ * Reverse the sale commission credited for each event (admin rejection).
+ * Caller must hold the wallet row lock (`SELECT ... FOR UPDATE`) inside `tx`.
+ * Returns the total amount debited.
+ */
+export async function reverseDigitalProductSaleCommissions(
+  tx: Prisma.TransactionClient,
+  publisherId: string,
+  eventIds: string[],
+): Promise<number> {
+  if (eventIds.length === 0) return 0;
+  const entries = await tx.ledgerEntry.findMany({
+    where: {
+      referenceId: { in: eventIds },
+      referenceType: { in: [DIGITAL_PRODUCT_SALE_REFERENCE, DIGITAL_PRODUCT_REJECT_REFERENCE] },
+      wallet: { userId: publisherId },
+    },
+    select: { referenceId: true, referenceType: true, amount: true },
+  });
+  const alreadyReversed = new Set(
+    entries.filter((e) => e.referenceType === DIGITAL_PRODUCT_REJECT_REFERENCE).map((e) => e.referenceId),
+  );
+  let total = 0;
+  for (const entry of entries) {
+    if (entry.referenceType !== DIGITAL_PRODUCT_SALE_REFERENCE || !entry.referenceId) continue;
+    if (alreadyReversed.has(entry.referenceId)) continue;
+    const amount = Number(entry.amount);
+    if (amount <= 0) continue;
+    await debitWalletAllowNegative(
+      tx,
+      publisherId,
+      amount,
+      DIGITAL_PRODUCT_REJECT_REFERENCE,
+      entry.referenceId,
+      "Marketplace sale rejected by admin",
+    );
+    alreadyReversed.add(entry.referenceId);
+    total += amount;
+  }
+  return total;
+}
 
 /** Debit that may take the balance below zero, for reversals that must always land. */
 async function debitWalletAllowNegative(
@@ -623,7 +670,7 @@ async function postDigitalProductCommission(
       const existing = await tx.$queryRaw<Array<{ id: string }>>`
         SELECT id FROM ledger_entries
         WHERE reference_id = ${eventId}
-          AND reference_type IN (${DIGITAL_PRODUCT_SALE_REFERENCE}, ${DIGITAL_PRODUCT_REFUND_REFERENCE})
+          AND reference_type IN (${DIGITAL_PRODUCT_SALE_REFERENCE}, ${DIGITAL_PRODUCT_REFUND_REFERENCE}, ${DIGITAL_PRODUCT_REJECT_REFERENCE})
         LIMIT 1 FOR UPDATE`;
       if (existing.length > 0) return false;
 

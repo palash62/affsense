@@ -1,10 +1,14 @@
 import { publisherRegisterSchema } from "@/lib/validations";
 import { errorResponse } from "@/lib/errors";
 import { registerPublisherAccount } from "@/services/auth.service";
+import { runSignupGuard } from "@/lib/signup-guard";
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
+    const guard = await runSignupGuard(request, body);
+    if (!guard.ok) return guard.response;
+
     const parsed = publisherRegisterSchema.safeParse(body);
 
     if (!parsed.success) {

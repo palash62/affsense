@@ -71,6 +71,8 @@ describe("resolveDigitalProductWebhookAttribution click enrichment", () => {
       affiliateRef: null,
       clickId: null,
       subId: null,
+      subId2: null,
+      subId3: null,
       src: null,
     });
     expect(digitalProductClickFindFirst).not.toHaveBeenCalled();
@@ -124,6 +126,8 @@ describe("resolveDigitalProductWebhookAttribution click enrichment", () => {
       affiliateRef: "37e34b6q",
       clickId: "click-2",
       subId: "profile",
+      subId2: null,
+      subId3: null,
       src: "facebook",
     });
     expect(digitalProductClickFindFirst).toHaveBeenCalledWith(
@@ -132,8 +136,116 @@ describe("resolveDigitalProductWebhookAttribution click enrichment", () => {
           productId: "prod-1",
           publisherId: "pub-37",
         }),
-        select: { id: true, subId: true, src: true },
+        select: { id: true, subId: true, subId2: true, subId3: true, src: true },
       }),
     );
+  });
+
+  describe("exact visit attribution", () => {
+    const at = new Date("2026-09-10T12:00:00.000Z");
+    const landing = (query: string) => ({
+      purchase: { products: [{ amount_cents: 999 }], status: "paid" },
+      data: {
+        visits: { first_visit: { landing_page: `https://x.test/sales?affsense_id=AFF100003&${query}` } },
+      },
+    });
+
+    beforeEach(() => {
+      resolvePublisherFromAffiliateRefMock.mockResolvedValue({
+        publisherId: "pub-1",
+        affiliateRef: "AFF100003",
+      });
+    });
+
+    it("uses the exact aff_click click over a newer click with another sub id", async () => {
+      digitalProductClickFindFirst.mockImplementation(async (args: { where: { id?: string } }) =>
+        args.where.id === "click-fb"
+          ? { id: "click-fb", subId: "fb", src: "facebook" }
+          : { id: "click-yt", subId: "yt", src: "youtube" },
+      );
+
+      const result = await resolveDigitalProductWebhookAttribution({
+        body: landing("subid=fb&source=facebook&aff_click=click-fb"),
+        at,
+      });
+
+      expect(result).toMatchObject({ clickId: "click-fb", subId: "fb", src: "facebook" });
+      expect(digitalProductClickFindFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: "click-fb", publisherId: "pub-1", productId: "prod-1" },
+        }),
+      );
+    });
+
+    it("ignores an aff_click that does not belong to this publisher and uses the visit sub id", async () => {
+      digitalProductClickFindFirst.mockImplementation(async (args: { where: { id?: string; subId?: string } }) => {
+        if (args.where.id) return null;
+        return args.where.subId === "fb" ? { id: "click-fb-2", subId: "fb", src: "facebook" } : null;
+      });
+
+      const result = await resolveDigitalProductWebhookAttribution({
+        body: landing("subid=fb&source=facebook&aff_click=someone-else"),
+        at,
+      });
+
+      expect(result).toMatchObject({ clickId: "click-fb-2", subId: "fb", src: "facebook" });
+    });
+
+    it("prefers landing URL subid/source over the latest click", async () => {
+      digitalProductClickFindFirst.mockResolvedValue(null);
+
+      const result = await resolveDigitalProductWebhookAttribution({
+        body: landing("subid=fb&source=facebook"),
+        at,
+      });
+
+      expect(result).toMatchObject({ clickId: null, subId: "fb", src: "facebook" });
+      expect(digitalProductClickFindFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ subId: "fb", src: "facebook" }),
+        }),
+      );
+    });
+
+    it("carries sub2/sub3 from the exact aff_click click", async () => {
+      digitalProductClickFindFirst.mockResolvedValue({
+        id: "click-fb",
+        subId: "fb",
+        subId2: "adset1",
+        subId3: "creative9",
+        src: "facebook",
+      });
+
+      const result = await resolveDigitalProductWebhookAttribution({
+        body: landing("subid=fb&aff_click=click-fb"),
+        at,
+      });
+
+      expect(result).toMatchObject({ clickId: "click-fb", subId: "fb", subId2: "adset1", subId3: "creative9" });
+    });
+
+    it("reads sub2/sub3 from the landing URL and filters the fallback click by them", async () => {
+      digitalProductClickFindFirst.mockResolvedValue(null);
+
+      const result = await resolveDigitalProductWebhookAttribution({
+        body: landing("sub1=fb&sub2=adset1&subid3=creative9"),
+        at,
+      });
+
+      expect(result).toMatchObject({ clickId: null, subId: "fb", subId2: "adset1", subId3: "creative9" });
+      expect(digitalProductClickFindFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ subId: "fb", subId2: "adset1", subId3: "creative9" }),
+        }),
+      );
+    });
+
+    it("falls back to the latest click when the visit has no tracking params", async () => {
+      digitalProductClickFindFirst.mockResolvedValue({ id: "click-yt", subId: "yt", src: "youtube" });
+
+      const result = await resolveDigitalProductWebhookAttribution({ body: landing("x=1"), at });
+
+      expect(result).toMatchObject({ clickId: "click-yt", subId: "yt", src: "youtube" });
+    });
   });
 });

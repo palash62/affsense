@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/table";
 import type {
   DigitalProductClickListResult,
+  DigitalProductConversionStatus,
   DigitalProductOrderRow,
   DigitalProductOrderSummary,
 } from "@/services/digital-product.service";
@@ -58,6 +59,8 @@ type AppliedFilters = {
   q: string;
   productId: string;
   subId: string;
+  subId2: string;
+  subId3: string;
   publisherId: string;
   eventType: string;
   from: string;
@@ -98,6 +101,8 @@ export function AdminDigitalProductsReport({
       q: "",
       productId: "",
       subId: "",
+      subId2: "",
+      subId3: "",
       publisherId: "",
       eventType: "",
       from: defaultFrom,
@@ -113,7 +118,8 @@ export function AdminDigitalProductsReport({
   const [draft, setDraft] = useState<AppliedFilters>(emptyFilters);
   const [applied, setApplied] = useState<AppliedFilters>(emptyFilters);
   const [page, setPage] = useState(1);
-  const [showRejected, setShowRejected] = useState(false);
+  const [conversionStatus, setConversionStatus] = useState<DigitalProductConversionStatus>("approved");
+  const showRejected = conversionStatus === "rejected";
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -121,7 +127,9 @@ export function AdminDigitalProductsReport({
     params.set("page", String(page));
     params.set("limit", tab === "orders" ? "15" : "20");
     if (applied.publisherId.trim()) params.set("publisherId", applied.publisherId.trim());
-    if (applied.subId.trim()) params.set("subId", applied.subId.trim());
+    for (const key of ["subId", "subId2", "subId3"] as const) {
+      if (applied[key].trim()) params.set(key, applied[key].trim());
+    }
     if (applied.from.trim()) {
       const from =
         tab === "orders"
@@ -140,7 +148,7 @@ export function AdminDigitalProductsReport({
     }
     if (tab === "orders") {
       if (applied.eventType.trim()) params.set("eventType", applied.eventType.trim());
-      if (showRejected) params.set("includeRejected", "1");
+      params.set("status", conversionStatus);
     } else {
       if (applied.q.trim()) params.set("q", applied.q.trim());
       if (applied.productId.trim()) params.set("productId", applied.productId.trim());
@@ -158,7 +166,7 @@ export function AdminDigitalProductsReport({
       setOrdersResult(body.data ?? null);
     }
     setLoading(false);
-  }, [page, applied, tab, showRejected]);
+  }, [page, applied, tab, conversionStatus]);
 
   useEffect(() => {
     void load();
@@ -364,15 +372,17 @@ export function AdminDigitalProductsReport({
                 </div>
               </>
             )}
-            <div className="space-y-1 xl:col-span-2">
-              <label className="text-xs font-medium text-muted-foreground">Sub ID</label>
-              <Input
-                value={draft.subId}
-                onChange={(e) => setDraft((prev) => ({ ...prev, subId: e.target.value }))}
-                placeholder="Sub ID"
-                className="h-9 bg-white font-mono text-xs"
-              />
-            </div>
+            {(["subId", "subId2", "subId3"] as const).map((key, index) => (
+              <div key={key} className="space-y-1 xl:col-span-2">
+                <label className="text-xs font-medium text-muted-foreground">Sub ID {index + 1}</label>
+                <Input
+                  value={draft[key]}
+                  onChange={(e) => setDraft((prev) => ({ ...prev, [key]: e.target.value }))}
+                  placeholder={`Sub ID ${index + 1}`}
+                  className="h-9 bg-white font-mono text-xs"
+                />
+              </div>
+            ))}
             <div className="flex flex-wrap gap-2 sm:col-span-2 xl:col-span-1 xl:justify-end">
               <Button type="button" className="h-9" onClick={applyFilters}>
                 Apply
@@ -411,29 +421,39 @@ export function AdminDigitalProductsReport({
               loading
                 ? "Loading…"
                 : showRejected
-                  ? `${(ordersResult?.total ?? 0).toLocaleString()} webhook events in range (including rejected)`
-                  : `${(ordersResult?.total ?? 0).toLocaleString()} valid conversions in range`
+                  ? `${(ordersResult?.total ?? 0).toLocaleString()} rejected conversions in range`
+                  : `${(ordersResult?.total ?? 0).toLocaleString()} approved conversions in range`
             }
             icon={BarChart3}
             actions={
-              <label className="flex cursor-pointer items-center gap-2 text-xs font-medium text-muted-foreground">
-                <input
-                  type="checkbox"
-                  className="h-4 w-4 rounded border-border accent-primary"
-                  checked={showRejected}
-                  onChange={(e) => {
-                    setShowRejected(e.target.checked);
+              <div className="flex items-center gap-2">
+                <label className="text-xs font-medium text-muted-foreground">Status</label>
+                <Select
+                  value={conversionStatus}
+                  onValueChange={(v) => {
+                    setConversionStatus(v === "rejected" ? "rejected" : "approved");
                     setPage(1);
                   }}
-                />
-                Show rejected events
-              </label>
+                >
+                  <SelectTrigger className="h-8 w-32 bg-white" data-testid="orders-status-filter">
+                    <SelectValue>{showRejected ? "Rejected" : "Approved"}</SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="approved">Approved</SelectItem>
+                    <SelectItem value="rejected">Rejected</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             }
           >
             {loading ? (
               <p className="px-6 py-10 text-center text-sm text-muted-foreground">Loading orders…</p>
             ) : (
-              <DigitalProductOrdersTable rows={orderItems} showReason={showRejected} />
+              <DigitalProductOrdersTable
+                rows={orderItems}
+                showReason={showRejected}
+                onRejected={() => void load()}
+              />
             )}
             {totalPages > 1 ? (
               <div className="flex items-center justify-between border-t border-border px-5 py-3">
@@ -488,20 +508,22 @@ export function AdminDigitalProductsReport({
                   <TableHead>Device</TableHead>
                   <TableHead>Browser</TableHead>
                   <TableHead>Source</TableHead>
-                  <TableHead>Sub ID</TableHead>
+                  <TableHead>Sub ID 1</TableHead>
+                  <TableHead>Sub ID 2</TableHead>
+                  <TableHead>Sub ID 3</TableHead>
                   <TableHead>Campaign</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={10} className="py-12 text-center text-sm text-muted-foreground">
+                    <TableCell colSpan={12} className="py-12 text-center text-sm text-muted-foreground">
                       Loading clicks…
                     </TableCell>
                   </TableRow>
                 ) : clickItems.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={10} className="py-12 text-center text-sm text-muted-foreground">
+                    <TableCell colSpan={12} className="py-12 text-center text-sm text-muted-foreground">
                       No clicks found
                     </TableCell>
                   </TableRow>
@@ -539,6 +561,8 @@ export function AdminDigitalProductsReport({
                       <TableCell>{row.browser}</TableCell>
                       <TableCell>{cellValue(row.src)}</TableCell>
                       <TableCell className="font-mono text-xs">{cellValue(row.subId)}</TableCell>
+                      <TableCell className="font-mono text-xs">{cellValue(row.subId2)}</TableCell>
+                      <TableCell className="font-mono text-xs">{cellValue(row.subId3)}</TableCell>
                       <TableCell>{cellValue(row.campaign)}</TableCell>
                     </TableRow>
                   ))

@@ -6,7 +6,7 @@ import type { UserRole } from "@prisma/client";
 import { PlatformLogo } from "@/components/brand/platform-logo";
 import { isAdminPortalRole } from "@/lib/admin-portal";
 import { isPublisherPortalRole } from "@/lib/publisher-page-title";
-import { SidebarNavList, SidebarStatusCard, SidebarAffiliateTierCard } from "./sidebar-nav-list";
+import { SidebarNavList, SidebarStatusCard } from "./sidebar-nav-list";
 import { useNavigationPending } from "./navigation-pending";
 
 interface SidebarProps {
@@ -74,13 +74,7 @@ export function Sidebar({
         canAccessAutoresponder={canAccessAutoresponder}
         staffMenuAccess={staffMenuAccess}
       />
-      {!collapsed ? (
-        isPublisherPortalRole(role) ? (
-          <SidebarAffiliateTierCard />
-        ) : (
-          <SidebarStatusCard />
-        )
-      ) : null}
+      {!collapsed && !isPublisherPortalRole(role) ? <SidebarStatusCard /> : null}
     </aside>
   );
 }

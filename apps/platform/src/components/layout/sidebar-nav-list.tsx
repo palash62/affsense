@@ -506,20 +506,3 @@ export function SidebarStatusCard() {
     </div>
   );
 }
-
-export function SidebarAffiliateTierCard() {
-  return (
-    <div className="mx-3 mb-4 rounded-xl border border-white/10 bg-gradient-to-br from-[var(--theme-primary)] to-[var(--theme-accent-purple,#713BFF)] px-3.5 py-3">
-      <p className="text-sm font-semibold text-white">Elite Affiliate</p>
-      <p className="mt-1 text-[11px] leading-relaxed text-white/80">
-        Unlock higher commissions and priority payouts.
-      </p>
-      <button
-        type="button"
-        className="mt-2.5 text-xs font-semibold text-white underline-offset-2 hover:underline"
-      >
-        View Benefits →
-      </button>
-    </div>
-  );
-}

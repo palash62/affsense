@@ -38,6 +38,7 @@ import {
   LayoutGrid,
 } from "lucide-react";
 import { ASSIGNABLE_STAFF_MENU_HREFS, parseStaffMenuAccess, STAFF_USERS_PATH } from "@/lib/admin-portal";
+import { PUBLISHER_GET_PAID_TASKS_ENABLED } from "@/lib/feature-flags";
 
 export interface NavItem {
   label: string;
@@ -208,7 +209,6 @@ export const ADVERTISER_NAV: NavItem[] = [
   { label: "Referrals", href: "/advertiser/referal_link", icon: Gift },
   { label: "Support", href: "/advertiser/support", icon: LifeBuoy },
   { label: "Announcements", href: "/advertiser/announcements", icon: Bell },
-  { label: "Tutorials", href: "/advertiser/tutorials", icon: PlayCircle },
   { label: "Settings", href: "/advertiser/settings", icon: Settings },
 ];
 
@@ -262,17 +262,21 @@ export const PUBLISHER_NAV: AdminNavEntry[] = [
       ],
     },
   },
-  {
-    kind: "item",
-    item: {
-      label: "Get Paid Tasks",
-      href: "/publisher/get-paid-tasks",
-      icon: ListTodo,
-      children: [
-        { label: "Paid Task", href: "/publisher/get-paid-tasks", icon: ListTodo },
-      ],
-    },
-  },
+  ...(PUBLISHER_GET_PAID_TASKS_ENABLED
+    ? [
+        {
+          kind: "item",
+          item: {
+            label: "Get Paid Tasks",
+            href: "/publisher/get-paid-tasks",
+            icon: ListTodo,
+            children: [
+              { label: "Paid Task", href: "/publisher/get-paid-tasks", icon: ListTodo },
+            ],
+          },
+        } satisfies AdminNavEntry,
+      ]
+    : []),
 
   { kind: "divider" },
   { kind: "item", item: { label: "My Links", href: "/publisher/promotions", icon: Link2 } },
@@ -287,7 +291,9 @@ export const PUBLISHER_NAV: AdminNavEntry[] = [
         { label: "Commissions Report", href: "/publisher/reports/commissions", icon: Percent },
         { label: "Performance", href: "/publisher/reports/performance", icon: BarChart3 },
         { label: "Offer Reports", href: "/publisher/reports/offers", icon: Store },
-        { label: "Task Reports", href: "/publisher/reports/tasks", icon: ListTodo },
+        ...(PUBLISHER_GET_PAID_TASKS_ENABLED
+          ? [{ label: "Task Reports", href: "/publisher/reports/tasks", icon: ListTodo }]
+          : []),
         { label: "Referral Reports", href: "/publisher/reports/referrals", icon: Gift },
         { label: "Payout Reports", href: "/publisher/reports/payouts", icon: Banknote },
       ],
@@ -309,6 +315,7 @@ export const PUBLISHER_NAV: AdminNavEntry[] = [
 
   { kind: "divider" },
   { kind: "item", item: { label: "Help Center", href: "/publisher/support", icon: LifeBuoy } },
+  { kind: "item", item: { label: "Tutorials", href: "/publisher/tutorials", icon: PlayCircle } },
   { kind: "item", item: { label: "Settings", href: "/publisher/settings", icon: Settings } },
   { kind: "item", item: { label: "Announcements", href: "/publisher/announcements", icon: Bell } },
 ];

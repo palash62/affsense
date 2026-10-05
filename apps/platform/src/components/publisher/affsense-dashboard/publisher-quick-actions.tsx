@@ -6,6 +6,7 @@ import {
   DashboardCardTitle,
 } from "@/components/admin/affsense-dashboard/dashboard-card";
 import { cn } from "@/lib/utils";
+import { PUBLISHER_GET_PAID_TASKS_ENABLED } from "@/lib/feature-flags";
 
 const ACTIONS: Array<{ label: string; href: string; icon: LucideIcon; iconClass: string }> = [
   {
@@ -20,12 +21,16 @@ const ACTIONS: Array<{ label: string; href: string; icon: LucideIcon; iconClass:
     icon: Box,
     iconClass: "text-[var(--theme-success)]",
   },
-  {
-    label: "Get Paid Tasks",
-    href: "/publisher/get-paid-tasks",
-    icon: ClipboardList,
-    iconClass: "text-[var(--theme-primary)]",
-  },
+  ...(PUBLISHER_GET_PAID_TASKS_ENABLED
+    ? [
+        {
+          label: "Get Paid Tasks",
+          href: "/publisher/get-paid-tasks",
+          icon: ClipboardList,
+          iconClass: "text-[var(--theme-primary)]",
+        },
+      ]
+    : []),
   {
     label: "Create Affiliate Link",
     href: "/publisher/promotions",

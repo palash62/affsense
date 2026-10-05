@@ -39,6 +39,8 @@ type AppliedFilters = {
   q: string;
   offerId: string;
   subId: string;
+  subId2: string;
+  subId3: string;
   from: string;
   to: string;
 };
@@ -47,6 +49,8 @@ const emptyFilters: AppliedFilters = {
   q: "",
   offerId: "",
   subId: "",
+  subId2: "",
+  subId3: "",
   from: "",
   to: "",
 };
@@ -65,7 +69,9 @@ export function PublisherCpaAffiliateOfferReport() {
     params.set("limit", String(PAGE_SIZE));
     if (applied.q.trim()) params.set("q", applied.q.trim());
     if (applied.offerId.trim()) params.set("offerId", applied.offerId.trim());
-    if (applied.subId.trim()) params.set("subId", applied.subId.trim());
+    for (const key of ["subId", "subId2", "subId3"] as const) {
+      if (applied[key].trim()) params.set(key, applied[key].trim());
+    }
     if (applied.from.trim()) params.set("from", new Date(applied.from).toISOString());
     if (applied.to.trim()) {
       const end = new Date(applied.to);
@@ -207,15 +213,17 @@ export function PublisherCpaAffiliateOfferReport() {
                 onChange={(e) => setDraft((prev) => ({ ...prev, offerId: e.target.value }))}
               />
             </div>
-            <div className="space-y-1 xl:col-span-2">
-              <label className="text-xs font-medium text-muted-foreground">Sub ID</label>
-              <Input
-                className="h-9 bg-white font-mono text-xs"
-                placeholder="Optional"
-                value={draft.subId}
-                onChange={(e) => setDraft((prev) => ({ ...prev, subId: e.target.value }))}
-              />
-            </div>
+            {(["subId", "subId2", "subId3"] as const).map((key, index) => (
+              <div key={key} className="space-y-1 xl:col-span-2">
+                <label className="text-xs font-medium text-muted-foreground">Sub ID {index + 1}</label>
+                <Input
+                  className="h-9 bg-white font-mono text-xs"
+                  placeholder="Optional"
+                  value={draft[key]}
+                  onChange={(e) => setDraft((prev) => ({ ...prev, [key]: e.target.value }))}
+                />
+              </div>
+            ))}
             <div className="space-y-1 sm:col-span-2 xl:col-span-3">
               <label className="text-xs font-medium text-muted-foreground">Search</label>
               <div className="relative">
@@ -249,7 +257,9 @@ export function PublisherCpaAffiliateOfferReport() {
           <TableHeader>
             <TableRow className="bg-muted/40 hover:bg-muted/40">
               <TableHead>Offer</TableHead>
-              <TableHead>Sub ID</TableHead>
+              <TableHead>Sub ID 1</TableHead>
+              <TableHead>Sub ID 2</TableHead>
+              <TableHead>Sub ID 3</TableHead>
               <TableHead className="text-right">Clicks</TableHead>
               <TableHead className="text-right">Conversions</TableHead>
               <TableHead className="text-right">CR%</TableHead>
@@ -260,13 +270,13 @@ export function PublisherCpaAffiliateOfferReport() {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={7} className="py-10 text-center text-muted-foreground">
+                <TableCell colSpan={9} className="py-10 text-center text-muted-foreground">
                   Loading…
                 </TableCell>
               </TableRow>
             ) : items.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="py-10 text-center text-muted-foreground">
+                <TableCell colSpan={9} className="py-10 text-center text-muted-foreground">
                   <div className="mx-auto flex max-w-sm flex-col items-center gap-2">
                     <Activity className="h-8 w-8 text-muted-foreground/50" />
                     <p>No offer rows for these filters.</p>
@@ -275,7 +285,7 @@ export function PublisherCpaAffiliateOfferReport() {
               </TableRow>
             ) : (
               items.map((row) => (
-                <TableRow key={`${row.publisherId}:${row.offerId}:${row.subId ?? ""}`}>
+                <TableRow key={`${row.publisherId}:${row.offerId}:${row.subId ?? ""}:${row.subId2 ?? ""}:${row.subId3 ?? ""}`}>
                   <TableCell>
                     <div className="flex items-center gap-2.5">
                       {row.offerStatus ? <CpaOfferStatusDot status={row.offerStatus} /> : null}
@@ -289,6 +299,12 @@ export function PublisherCpaAffiliateOfferReport() {
                   </TableCell>
                   <TableCell className="font-mono text-xs text-muted-foreground">
                     {row.subId ?? "—"}
+                  </TableCell>
+                  <TableCell className="font-mono text-xs text-muted-foreground">
+                    {row.subId2 ?? "—"}
+                  </TableCell>
+                  <TableCell className="font-mono text-xs text-muted-foreground">
+                    {row.subId3 ?? "—"}
                   </TableCell>
                   <TableCell className="text-right tabular-nums">{row.clicks}</TableCell>
                   <TableCell className="text-right tabular-nums">{row.conversions}</TableCell>

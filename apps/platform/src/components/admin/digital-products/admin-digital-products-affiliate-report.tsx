@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/table";
 import type {
   DigitalProductAffiliateReportResult,
+  DigitalProductConversionStatus,
   SerializedDigitalProductAffiliateReportRow,
 } from "@/services/digital-product.service";
 
@@ -52,10 +53,13 @@ type AppliedFilters = {
   q: string;
   productId: string;
   subId: string;
+  subId2: string;
+  subId3: string;
   src: string;
   publisherId: string;
   from: string;
   to: string;
+  status: DigitalProductConversionStatus;
 };
 
 export function AdminDigitalProductsAffiliateReport({
@@ -72,10 +76,13 @@ export function AdminDigitalProductsAffiliateReport({
       q: "",
       productId: "",
       subId: "",
+      subId2: "",
+      subId3: "",
       src: "",
       publisherId: "",
       from: defaultFrom,
       to: defaultTo,
+      status: "approved",
     }),
     [defaultFrom, defaultTo],
   );
@@ -93,9 +100,12 @@ export function AdminDigitalProductsAffiliateReport({
     params.set("limit", String(PAGE_SIZE));
     if (applied.q.trim()) params.set("q", applied.q.trim());
     if (applied.productId.trim()) params.set("productId", applied.productId.trim());
-    if (applied.subId.trim()) params.set("subId", applied.subId.trim());
+    for (const key of ["subId", "subId2", "subId3"] as const) {
+      if (applied[key].trim()) params.set(key, applied[key].trim());
+    }
     if (applied.src.trim()) params.set("src", applied.src.trim());
     if (applied.publisherId.trim()) params.set("publisherId", applied.publisherId.trim());
+    params.set("status", applied.status);
     if (applied.from.trim()) params.set("from", new Date(applied.from).toISOString());
     if (applied.to.trim()) {
       const end = new Date(applied.to);
@@ -273,15 +283,17 @@ export function AdminDigitalProductsAffiliateReport({
                 onChange={(e) => setDraft((prev) => ({ ...prev, productId: e.target.value }))}
               />
             </div>
-            <div className="space-y-1 xl:col-span-2">
-              <label className="text-xs font-medium text-muted-foreground">Sub ID</label>
-              <Input
-                className="h-9 bg-white font-mono text-xs"
-                placeholder="Optional"
-                value={draft.subId}
-                onChange={(e) => setDraft((prev) => ({ ...prev, subId: e.target.value }))}
-              />
-            </div>
+            {(["subId", "subId2", "subId3"] as const).map((key, index) => (
+              <div key={key} className="space-y-1 xl:col-span-2">
+                <label className="text-xs font-medium text-muted-foreground">Sub ID {index + 1}</label>
+                <Input
+                  className="h-9 bg-white font-mono text-xs"
+                  placeholder="Optional"
+                  value={draft[key]}
+                  onChange={(e) => setDraft((prev) => ({ ...prev, [key]: e.target.value }))}
+                />
+              </div>
+            ))}
             <div className="space-y-1 xl:col-span-2">
               <label className="text-xs font-medium text-muted-foreground">Source</label>
               <Input
@@ -291,7 +303,27 @@ export function AdminDigitalProductsAffiliateReport({
                 onChange={(e) => setDraft((prev) => ({ ...prev, src: e.target.value }))}
               />
             </div>
-            <div className="space-y-1 sm:col-span-2 xl:col-span-4">
+            <div className="space-y-1 xl:col-span-2">
+              <label className="text-xs font-medium text-muted-foreground">Status</label>
+              <Select
+                value={draft.status}
+                onValueChange={(v) =>
+                  setDraft((prev) => ({
+                    ...prev,
+                    status: v === "rejected" ? "rejected" : "approved",
+                  }))
+                }
+              >
+                <SelectTrigger className="h-9 w-full bg-white" data-testid="affiliate-report-status-filter">
+                  <SelectValue>{draft.status === "rejected" ? "Rejected" : "Approved"}</SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="approved">Approved</SelectItem>
+                  <SelectItem value="rejected">Rejected</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1 sm:col-span-2 xl:col-span-2">
               <label className="text-xs font-medium text-muted-foreground">Search</label>
               <div className="relative">
                 <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
@@ -325,7 +357,9 @@ export function AdminDigitalProductsAffiliateReport({
             <TableRow className="bg-muted/40 hover:bg-muted/40">
               <TableHead>Affiliate</TableHead>
               <TableHead>Product</TableHead>
-              <TableHead>Sub ID</TableHead>
+              <TableHead>Sub ID 1</TableHead>
+              <TableHead>Sub ID 2</TableHead>
+              <TableHead>Sub ID 3</TableHead>
               <TableHead>Source</TableHead>
               <TableHead className="text-right">Clicks</TableHead>
               <TableHead className="text-right">Conversions</TableHead>
@@ -339,13 +373,13 @@ export function AdminDigitalProductsAffiliateReport({
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={11} className="py-10 text-center text-muted-foreground">
+                <TableCell colSpan={13} className="py-10 text-center text-muted-foreground">
                   Loading…
                 </TableCell>
               </TableRow>
             ) : items.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={11} className="py-10 text-center text-muted-foreground">
+                <TableCell colSpan={13} className="py-10 text-center text-muted-foreground">
                   <div className="mx-auto flex max-w-sm flex-col items-center gap-2">
                     <Activity className="h-8 w-8 text-muted-foreground/50" />
                     <p>No affiliate × product rows for these filters.</p>
@@ -355,7 +389,7 @@ export function AdminDigitalProductsAffiliateReport({
             ) : (
               items.map((row) => (
                 <TableRow
-                  key={`${row.publisherId}:${row.productId ?? row.productName}:${row.subId ?? ""}:${row.source ?? ""}`}
+                  key={`${row.publisherId}:${row.productId ?? row.productName}:${row.subId ?? ""}:${row.subId2 ?? ""}:${row.subId3 ?? ""}:${row.source ?? ""}`}
                 >
                   <TableCell>
                     <div>
@@ -379,6 +413,12 @@ export function AdminDigitalProductsAffiliateReport({
                   </TableCell>
                   <TableCell className="font-mono text-xs text-muted-foreground">
                     {row.subId ?? "—"}
+                  </TableCell>
+                  <TableCell className="font-mono text-xs text-muted-foreground">
+                    {row.subId2 ?? "—"}
+                  </TableCell>
+                  <TableCell className="font-mono text-xs text-muted-foreground">
+                    {row.subId3 ?? "—"}
                   </TableCell>
                   <TableCell className="font-mono text-xs text-muted-foreground">
                     {row.source ?? "—"}

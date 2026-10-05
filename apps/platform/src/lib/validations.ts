@@ -15,8 +15,15 @@ const signupAttributionSchema = z
   })
   .optional();
 
+const signupBotCheckFields = {
+  turnstileToken: z.string().max(4096).optional(),
+  company_website: z.string().max(500).optional(),
+  formStartedAt: z.number().optional(),
+};
+
 export const registerSchema = z
   .object({
+    ...signupBotCheckFields,
     email: z.string().email(),
     password: strongPasswordSchema,
     name: z.string().min(2),
@@ -33,6 +40,7 @@ export const registerSchema = z
   });
 
 export const publisherRegisterSchema = z.object({
+  ...signupBotCheckFields,
   email: z.string().email(),
   password: strongPasswordSchema,
   name: z.string().trim().min(2, "Name must be at least 2 characters"),
@@ -1231,18 +1239,18 @@ export const templateImportSchema = z.object({
 const tutorialThumbnailSchema = z
   .string()
   .trim()
-  .min(1, "Thumbnail is required.")
-  .refine((value) => value.startsWith("/uploads/builder/"), {
+  .refine((value) => value === "" || value.startsWith("/uploads/builder/"), {
     message: "Upload a thumbnail image.",
-  });
+  })
+  .nullable();
 
 const tutorialYoutubeUrlSchema = z
   .string()
   .trim()
-  .min(1, "YouTube URL is required.")
-  .refine((value) => Boolean(parseYouTubeVideoId(value)), {
+  .refine((value) => value === "" || Boolean(parseYouTubeVideoId(value)), {
     message: "Enter a valid YouTube video URL.",
-  });
+  })
+  .nullable();
 
 const tutorialDescriptionSchema = z
   .string()
@@ -1253,8 +1261,8 @@ const tutorialDescriptionSchema = z
 export const adminTutorialCreateSchema = z.object({
   title: z.string().trim().min(2, "Title must be at least 2 characters.").max(120),
   description: tutorialDescriptionSchema,
-  youtubeUrl: tutorialYoutubeUrlSchema,
-  thumbnailUrl: tutorialThumbnailSchema,
+  youtubeUrl: tutorialYoutubeUrlSchema.optional(),
+  thumbnailUrl: tutorialThumbnailSchema.optional(),
   sortOrder: z.number().int().min(0).max(9999).optional(),
   isPublished: z.boolean().optional(),
 });
@@ -1442,6 +1450,8 @@ export const cpaConversionListQuerySchema = z.object({
   q: z.string().trim().optional(),
   offerId: z.string().trim().optional(),
   subId: z.string().trim().optional(),
+  subId2: z.string().trim().optional(),
+  subId3: z.string().trim().optional(),
   advertiserId: z.string().trim().optional(),
   publisherId: z.string().trim().optional(),
   from: z.string().trim().optional(),
@@ -1454,6 +1464,8 @@ export const digitalProductClickListQuerySchema = z.object({
   q: z.string().trim().optional(),
   productId: z.string().trim().optional(),
   subId: z.string().trim().optional(),
+  subId2: z.string().trim().optional(),
+  subId3: z.string().trim().optional(),
   src: z.string().trim().optional(),
   publisherId: z.string().trim().optional(),
   from: z.string().trim().optional(),
@@ -1466,6 +1478,8 @@ export const digitalProductOrdersListQuerySchema = z.object({
   q: z.string().trim().optional(),
   productId: z.string().trim().optional(),
   subId: z.string().trim().optional(),
+  subId2: z.string().trim().optional(),
+  subId3: z.string().trim().optional(),
   eventType: z.string().trim().optional(),
   from: z.string().trim().optional(),
   to: z.string().trim().optional(),

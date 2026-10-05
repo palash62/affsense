@@ -16,6 +16,11 @@ import {
 } from "@/components/ui/select";
 import { AuthLayout } from "@/components/layout/auth-layout";
 import { PasswordRequirements } from "@/components/auth/password-requirements";
+import {
+  SignupHoneypot,
+  TurnstileWidget,
+  useSignupBotCheck,
+} from "@/components/auth/turnstile-widget";
 import { isStrongPassword } from "@/lib/password-policy";
 import { COUNTRY_BY_CODE, getCountryName } from "@/lib/campaign-form";
 import { readReferralCookie, writeReferralCookie } from "@/lib/referral";
@@ -53,6 +58,7 @@ export function RegisterForm() {
   >(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const botCheck = useSignupBotCheck();
 
   useEffect(() => {
     const fromUrl = searchParams.get("referral_by") ?? searchParams.get("ref") ?? "";
@@ -103,6 +109,7 @@ export function RegisterForm() {
         role: "ADVERTISER",
         referralRef,
         ...(signupAttribution ? { signupAttribution } : {}),
+        ...botCheck.payload,
       }),
     });
 
@@ -111,6 +118,7 @@ export function RegisterForm() {
 
     if (!res.ok) {
       setError(data.error?.message ?? "Registration failed");
+      botCheck.resetCaptcha();
       return;
     }
 
@@ -149,7 +157,8 @@ export function RegisterForm() {
           You were invited with referral code <strong>{referralRef.toUpperCase()}</strong>.
         </div>
       )}
-      <form onSubmit={handleSubmit} className="space-y-3">
+      <form onSubmit={handleSubmit} className="relative space-y-3">
+        <SignupHoneypot {...botCheck.honeypotProps} />
         {error && (
           <Alert variant="destructive">
             <AlertDescription>{error}</AlertDescription>
@@ -238,7 +247,13 @@ export function RegisterForm() {
           {password.length > 0 && <PasswordRequirements password={password} />}
         </div>
 
-        <Button type="submit" className="authPrimaryBtn h-auto" disabled={loading || !country}>
+        <TurnstileWidget {...botCheck.widgetProps} />
+
+        <Button
+          type="submit"
+          className="authPrimaryBtn h-auto"
+          disabled={loading || !country || !botCheck.captchaReady}
+        >
           {loading ? "Creating account..." : "Create account"}
         </Button>
       </form>

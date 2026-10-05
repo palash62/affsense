@@ -98,7 +98,28 @@ export async function POST(request: Request) {
     }
 
     const { code, expiresMinutes } = await createLoginOtp(user.id);
-    await notifyLoginOtp(user, code, expiresMinutes);
+    const delivery = await notifyLoginOtp(user, code, expiresMinutes);
+    if (!delivery.sent) {
+      console.error("[request-otp] login code email failed", {
+        userId: user.id,
+        skipped: delivery.skipped,
+        error: delivery.error,
+      });
+      if (process.env.NODE_ENV === "development") {
+        console.info("[request-otp:dev] login code:", code);
+      } else {
+        return Response.json(
+          {
+            error: {
+              code: "EMAIL_SEND_FAILED",
+              message: "We couldn't send your sign-in code. Please try again in a minute.",
+              status: 503,
+            },
+          },
+          { status: 503 },
+        );
+      }
+    }
 
     return Response.json({ success: true, message: GENERIC_MESSAGE });
   } catch (error) {

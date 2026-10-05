@@ -1,7 +1,10 @@
 import { withAuth, parsePagination, ADMIN_PORTAL_ROLES } from "@/lib/api-handler";
 import { errorResponse } from "@/lib/errors";
 import { digitalProductClickListQuerySchema } from "@/lib/validations";
-import { listDigitalProductAffiliateProductReportForAdmin } from "@/services/digital-product.service";
+import {
+  listDigitalProductAffiliateProductReportForAdmin,
+  parseDigitalProductConversionStatus,
+} from "@/services/digital-product.service";
 
 export async function GET(request: Request) {
   return withAuth(async () => {
@@ -12,6 +15,8 @@ export async function GET(request: Request) {
         q: searchParams.get("q") ?? undefined,
         productId: searchParams.get("productId") ?? undefined,
         subId: searchParams.get("subId") ?? undefined,
+        subId2: searchParams.get("subId2") ?? undefined,
+        subId3: searchParams.get("subId3") ?? undefined,
         src: searchParams.get("src") ?? undefined,
         publisherId: searchParams.get("publisherId") ?? undefined,
         from: searchParams.get("from") ?? undefined,
@@ -33,7 +38,10 @@ export async function GET(request: Request) {
         );
       }
 
-      const data = await listDigitalProductAffiliateProductReportForAdmin(parsed.data);
+      const data = await listDigitalProductAffiliateProductReportForAdmin({
+        ...parsed.data,
+        status: parseDigitalProductConversionStatus(searchParams.get("status")),
+      });
       return Response.json({ data });
     } catch (error) {
       return errorResponse(error);

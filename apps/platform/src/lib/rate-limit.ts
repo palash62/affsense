@@ -5,7 +5,11 @@
 
 type Bucket = { count: number; resetAt: number };
 
-const buckets = new Map<string, Bucket>();
+// Route bundles can each get their own copy of this module; keep one shared store.
+const globalForRateLimit = globalThis as typeof globalThis & {
+  __rateLimitBuckets?: Map<string, Bucket>;
+};
+const buckets = (globalForRateLimit.__rateLimitBuckets ??= new Map<string, Bucket>());
 
 export type RateLimitResult = {
   allowed: boolean;

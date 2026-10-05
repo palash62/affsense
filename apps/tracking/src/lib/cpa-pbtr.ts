@@ -22,6 +22,8 @@ type ClickRow = {
   publisherId: string | null;
   src: string | null;
   subId: string | null;
+  subId2: string | null;
+  subId3: string | null;
 };
 
 async function readParams(request: Request) {
@@ -93,6 +95,8 @@ async function loadClick(inboundClickId: string | null): Promise<ClickRow | null
       publisherId: true,
       src: true,
       subId: true,
+      subId2: true,
+      subId3: true,
     },
   });
 }
@@ -211,6 +215,8 @@ async function createConversionAndDispatch(input: {
       publisherPayout,
       source: input.attribution.source,
       subId: input.attribution.subId,
+      subId2: input.attribution.subId2,
+      subId3: input.attribution.subId3,
     });
   } catch (error) {
     console.error("[pbtr] outbound dispatch failed", error);

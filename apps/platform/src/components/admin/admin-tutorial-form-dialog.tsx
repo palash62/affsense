@@ -58,8 +58,8 @@ export function AdminTutorialFormDialog({
       setValues({
         title: tutorial.title,
         description: tutorial.description,
-        youtubeUrl: tutorial.youtubeUrl,
-        thumbnailUrl: tutorial.thumbnailUrl,
+        youtubeUrl: tutorial.youtubeUrl ?? "",
+        thumbnailUrl: tutorial.thumbnailUrl ?? "",
         sortOrder: tutorial.sortOrder,
         isPublished: tutorial.isPublished,
       });
@@ -73,10 +73,7 @@ export function AdminTutorialFormDialog({
   }
 
   const canSubmit =
-    values.title.trim().length >= 2 &&
-    richTextToPlain(values.description).length >= 1 &&
-    values.youtubeUrl.trim().length >= 1 &&
-    values.thumbnailUrl.trim().length >= 1;
+    values.title.trim().length >= 2 && richTextToPlain(values.description).length >= 1;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -106,7 +103,7 @@ export function AdminTutorialFormDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="tutorial-youtube">YouTube URL</Label>
+            <Label htmlFor="tutorial-youtube">YouTube URL (optional)</Label>
             <Input
               id="tutorial-youtube"
               value={values.youtubeUrl}
@@ -116,7 +113,7 @@ export function AdminTutorialFormDialog({
           </div>
 
           <div className="space-y-2">
-            <Label>Thumbnail</Label>
+            <Label>Thumbnail (optional)</Label>
             <BuilderImageUpload
               value={values.thumbnailUrl}
               onChange={(url) => setValues((prev) => ({ ...prev, thumbnailUrl: url }))}
@@ -151,7 +148,7 @@ export function AdminTutorialFormDialog({
               }
             />
             <Label htmlFor="tutorial-published" className="cursor-pointer font-normal">
-              Published (visible to advertisers)
+              Published (visible to publishers)
             </Label>
           </div>
         </div>

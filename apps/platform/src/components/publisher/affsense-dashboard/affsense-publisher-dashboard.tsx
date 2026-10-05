@@ -28,6 +28,7 @@ import {
 import { PageHeader } from "@/components/layout/page-header";
 import { ButtonLink } from "@/components/ui/button-link";
 import { cn } from "@/lib/utils";
+import { PUBLISHER_GET_PAID_TASKS_ENABLED } from "@/lib/feature-flags";
 import { AnnouncementsFeed } from "@/components/announcements/announcements-feed";
 
 export type AffsensePublisherDashboardData = {
@@ -73,8 +74,8 @@ const SOURCE_TABS = [
   { id: "digital", label: "Digital" },
   { id: "cpa", label: "CPA" },
   { id: "offerwall", label: "Offer Wall" },
-  { id: "tasks", label: "Get Paid Tasks" },
-] as const;
+  ...(PUBLISHER_GET_PAID_TASKS_ENABLED ? [{ id: "tasks", label: "Get Paid Tasks" } as const] : []),
+];
 
 const SOURCE_DESCRIPTIONS: Record<string, string> = {
   all: "all sources",

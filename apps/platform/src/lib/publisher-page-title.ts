@@ -75,6 +75,10 @@ export function getPublisherPageMeta(
     "/publisher/reports/tasks": { title: "Task Reports" },
     "/publisher/reports/referrals": { title: "Referral Reports" },
     "/publisher/reports/payouts": { title: "Payout Reports" },
+    "/publisher/tutorials": {
+      title: "Tutorials",
+      subtitle: "Guides to help you promote offers and grow your earnings",
+    },
     "/publisher/announcements": {
       title: "Announcements",
       subtitle: "Platform updates and news for affiliates",

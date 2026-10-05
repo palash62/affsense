@@ -1,3 +1,4 @@
+import { DIGITAL_PRODUCT_CLICK_PARAM, sanitizeTrackingParam } from "@cpl/shared";
 import { prisma } from "@/lib/prisma";
 import {
   asRecord,
@@ -76,7 +77,15 @@ export function extractAffiliateRefFromWebhookPayload(
   const paramNames = Array.isArray(paramName)
     ? buildAffiliateParamCandidates(paramName[0], paramName.slice(1))
     : buildAffiliateParamCandidates(paramName);
+  return extractParamFromWebhookPayload(body, paramNames, requestUrl);
+}
 
+/** Exact param lookup (no affiliate aliases added) across request query, payload fields, and visit URLs. */
+export function extractParamFromWebhookPayload(
+  body: unknown,
+  paramNames: string[],
+  requestUrl?: URL,
+): string | null {
   if (requestUrl) {
     for (const key of paramNames) {
       for (const candidate of [key, key.toLowerCase(), key.toUpperCase()]) {
@@ -104,6 +113,41 @@ export function extractAffiliateRefFromWebhookPayload(
   return null;
 }
 
+export type LandingTrackingParams = {
+  clickId: string | null;
+  subId: string | null;
+  subId2: string | null;
+  subId3: string | null;
+  source: string | null;
+};
+
+/**
+ * Tracking params our /dp redirect appended to the sales page (aff_click, subid, source).
+ * Read from the visit URL that carries the affiliate param so all values belong to one visit.
+ */
+export function extractLandingTrackingParams(
+  body: unknown,
+  affiliateParamNames: string[],
+): LandingTrackingParams {
+  const urls = collectClickFunnelsUrlCandidates(body);
+  const hasAffiliate = (url: string) =>
+    affiliateParamNames.some((key) => Boolean(extractParamFromUrl(url, key)));
+  const visitUrl =
+    urls.find((url) => hasAffiliate(url) && extractParamFromUrl(url, DIGITAL_PRODUCT_CLICK_PARAM)) ??
+    urls.find(hasAffiliate) ??
+    urls.find((url) => extractParamFromUrl(url, DIGITAL_PRODUCT_CLICK_PARAM));
+  if (!visitUrl) return { clickId: null, subId: null, subId2: null, subId3: null, source: null };
+
+  const read = (key: string) => sanitizeTrackingParam(extractParamFromUrl(visitUrl, key)) || null;
+  return {
+    clickId: read(DIGITAL_PRODUCT_CLICK_PARAM),
+    subId: read("subid") ?? read("sub_id") ?? read("sub1"),
+    subId2: read("subid2") ?? read("sub2"),
+    subId3: read("subid3") ?? read("sub3"),
+    source: read("source") ?? read("src"),
+  };
+}
+
 export async function loadDigitalProductAffiliateParamNames(): Promise<string[]> {
   const products = await prisma.digitalProduct.findMany({
     where: { affiliateTrackingParam: { not: null } },
@@ -126,6 +170,8 @@ export type DigitalProductWebhookAttribution = {
   affiliateRef: string | null;
   clickId: string | null;
   subId: string | null;
+  subId2: string | null;
+  subId3: string | null;
   src: string | null;
 };
 
@@ -152,6 +198,8 @@ export async function resolveDigitalProductWebhookAttribution(input: {
       affiliateRef: fromRef.affiliateRef,
       clickId: null,
       subId: null,
+      subId2: null,
+      subId3: null,
       src: null,
     };
   }
@@ -163,33 +211,72 @@ export async function resolveDigitalProductWebhookAttribution(input: {
     productId = lookup.resolve(fields.pageSlug, fields.amount).productId;
   }
 
+  const base = { publisherId: fromRef.publisherId, affiliateRef: fromRef.affiliateRef };
+  const landing = extractLandingTrackingParams(input.body, paramNames);
+
+  // 1. Exact click our /dp redirect passed to the sales page.
+  if (landing.clickId) {
+    const exact = await prisma.digitalProductClick.findFirst({
+      where: {
+        id: landing.clickId,
+        publisherId: fromRef.publisherId,
+        ...(productId ? { productId } : {}),
+      },
+      select: { id: true, subId: true, subId2: true, subId3: true, src: true },
+    });
+    if (exact) {
+      return {
+        ...base,
+        clickId: exact.id,
+        subId: exact.subId,
+        subId2: exact.subId2,
+        subId3: exact.subId3,
+        src: exact.src,
+      };
+    }
+  }
+
+  const landingTracking = {
+    subId: landing.subId,
+    subId2: landing.subId2,
+    subId3: landing.subId3,
+    src: landing.source,
+  };
+  const hasLandingParams = Boolean(
+    landing.subId || landing.subId2 || landing.subId3 || landing.source,
+  );
   if (!productId) {
-    return {
-      publisherId: fromRef.publisherId,
-      affiliateRef: fromRef.affiliateRef,
-      clickId: null,
-      subId: null,
-      src: null,
-    };
+    return { ...base, clickId: null, ...landingTracking };
   }
 
   const at = input.at ?? new Date();
   const windowStart = new Date(at.getTime() - DIGITAL_PRODUCT_CLICK_ATTRIBUTION_WINDOW_MS);
+
+  // 2. subid/source from the buyer's visit URL; 3. otherwise the latest click in window.
   const click = await prisma.digitalProductClick.findFirst({
     where: {
       productId,
       publisherId: fromRef.publisherId,
       createdAt: { gte: windowStart, lte: at },
+      ...(landing.subId ? { subId: landing.subId } : {}),
+      ...(landing.subId2 ? { subId2: landing.subId2 } : {}),
+      ...(landing.subId3 ? { subId3: landing.subId3 } : {}),
+      ...(landing.source ? { src: landing.source } : {}),
     },
     orderBy: { createdAt: "desc" },
-    select: { id: true, subId: true, src: true },
+    select: { id: true, subId: true, subId2: true, subId3: true, src: true },
   });
 
+  if (hasLandingParams) {
+    return { ...base, clickId: click?.id ?? null, ...landingTracking };
+  }
+
   return {
-    publisherId: fromRef.publisherId,
-    affiliateRef: fromRef.affiliateRef,
+    ...base,
     clickId: click?.id ?? null,
     subId: click?.subId ?? null,
+    subId2: click?.subId2 ?? null,
+    subId3: click?.subId3 ?? null,
     src: click?.src ?? null,
   };
 }
