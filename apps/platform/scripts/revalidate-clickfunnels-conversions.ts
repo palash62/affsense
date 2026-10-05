@@ -210,6 +210,8 @@ async function main() {
           publisherId: result.publisherId,
           clickId: result.clickId,
           subId: result.subId,
+          subId2: result.subId2,
+          subId3: result.subId3,
           src: result.src,
           affiliateRef: result.affiliateRef,
           originalOrderId: result.identifiers.orderId,
