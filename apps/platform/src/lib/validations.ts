@@ -1486,6 +1486,7 @@ export const digitalProductOrdersListQuerySchema = z.object({
   eventType: z.string().trim().optional(),
   from: z.string().trim().optional(),
   to: z.string().trim().optional(),
+  status: z.enum(["all", "approved", "refunded"]).optional(),
   page: z.coerce.number().int().min(1).optional(),
   limit: z.coerce.number().int().min(1).max(100).optional(),
 });

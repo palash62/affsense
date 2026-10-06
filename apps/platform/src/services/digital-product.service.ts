@@ -1035,6 +1035,15 @@ export function parseDigitalProductConversionStatus(
   return raw === "rejected" ? "rejected" : "approved";
 }
 
+/** Report Log status: conversion statuses plus refunded orders. */
+export type DigitalProductOrderStatus = DigitalProductConversionStatus | "refunded";
+
+export function parseDigitalProductOrderStatus(
+  raw: string | null | undefined,
+): DigitalProductOrderStatus {
+  return raw === "refunded" ? "refunded" : parseDigitalProductConversionStatus(raw);
+}
+
 export type DigitalProductOrderRow = {
   id: string;
   orderId: string | null;
@@ -1311,8 +1320,12 @@ export async function listDigitalProductOrders(opts: {
   eventType?: string;
   page?: number;
   limit?: number;
-  /** approved = PROCESSED; rejected = admin-rejected or auto-rejected affiliate sales. */
-  status?: DigitalProductConversionStatus;
+  /**
+   * approved = PROCESSED and not refunded; refunded = sales whose order was refunded
+   * (plus the refund events unless hidden); rejected = admin-rejected or auto-rejected
+   * affiliate sales. Omitted = approved and refunded together.
+   */
+  status?: DigitalProductOrderStatus;
   /** Leave out refund events; the refunded sale itself is shown as REFUNDED. */
   hideRefunds?: boolean;
 } = {}) {
@@ -1462,9 +1475,20 @@ export async function listDigitalProductOrders(opts: {
     }),
   ]);
 
+  const isRefundRow = (row: DigitalProductOrderRow) =>
+    isRefundWebhookEvent({ eventType: row.eventType, externalEventKey: row.dedupeKey });
   let mapped = allRows.map(mapRow);
   if (opts.hideRefunds) {
-    mapped = mapped.filter((row) => !isRefundWebhookEvent({ eventType: row.eventType, externalEventKey: row.dedupeKey }));
+    mapped = mapped.filter((row) => !isRefundRow(row));
+  }
+  if (opts.status === "approved") {
+    mapped = mapped.filter(
+      (row) => row.webhookStatus !== REFUNDED_WEBHOOK_STATUS && !isRefundRow(row),
+    );
+  } else if (opts.status === "refunded") {
+    mapped = mapped.filter(
+      (row) => row.webhookStatus === REFUNDED_WEBHOOK_STATUS || isRefundRow(row),
+    );
   }
   if (subIdFilters) {
     mapped = mapped.filter((row) => matchesSubIdFilters(row, subIdFilters));
@@ -2105,12 +2129,15 @@ export async function listPublisherDigitalProductOrders(
     to?: string;
     page?: number;
     limit?: number;
+    /** Omitted or "all" lists approved and refunded orders together. */
+    status?: "all" | "approved" | "refunded";
   } = {},
 ) {
   const from = opts.from ? new Date(opts.from) : undefined;
   const to = opts.to ? new Date(opts.to) : undefined;
   const result = await listDigitalProductOrders({
     publisherId,
+    status: opts.status === "all" ? undefined : opts.status,
     subId: opts.subId,
     subId2: opts.subId2,
     subId3: opts.subId3,

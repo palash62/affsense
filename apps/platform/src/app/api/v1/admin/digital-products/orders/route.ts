@@ -3,7 +3,7 @@ import { errorResponse } from "@/lib/errors";
 import { z } from "zod";
 import {
   listDigitalProductOrders,
-  parseDigitalProductConversionStatus,
+  parseDigitalProductOrderStatus,
 } from "@/services/digital-product.service";
 
 const adminDigitalProductOrdersQuerySchema = z.object({
@@ -70,7 +70,7 @@ export async function GET(request: Request) {
         to: to && !Number.isNaN(to.getTime()) ? to : undefined,
         page: parsed.data.page,
         limit: parsed.data.limit ?? 15,
-        status: parseDigitalProductConversionStatus(searchParams.get("status")),
+        status: parseDigitalProductOrderStatus(searchParams.get("status")),
       });
 
       return Response.json({ data });

@@ -7,6 +7,13 @@ import { GradientStatCard, NeutralStatCard } from "@/components/admin/gradient-s
 import { formatCurrency } from "@/components/admin/admin-ui";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
@@ -25,6 +32,14 @@ import type {
 const PAGE_SIZE = 20;
 
 type ReportTab = "orders" | "clicks";
+
+type OrderStatusFilter = "all" | "approved" | "refunded";
+
+const ORDER_STATUS_LABELS: Record<OrderStatusFilter, string> = {
+  all: "All",
+  approved: "Approved",
+  refunded: "Refunded",
+};
 
 type AppliedFilters = {
   q: string;
@@ -93,12 +108,14 @@ export function PublisherMarketplaceReport() {
   const [draft, setDraft] = useState<AppliedFilters>(emptyFilters);
   const [applied, setApplied] = useState<AppliedFilters>(emptyFilters);
   const [page, setPage] = useState(1);
+  const [orderStatus, setOrderStatus] = useState<OrderStatusFilter>("all");
 
   const load = useCallback(async () => {
     setLoading(true);
     const params = new URLSearchParams();
     params.set("page", String(page));
     params.set("limit", String(PAGE_SIZE));
+    if (tab === "orders" && orderStatus !== "all") params.set("status", orderStatus);
     if (applied.q.trim()) params.set("q", applied.q.trim());
     if (applied.productId.trim()) params.set("productId", applied.productId.trim());
     for (const key of ["subId", "subId2", "subId3", "subId4"] as const) {
@@ -123,7 +140,7 @@ export function PublisherMarketplaceReport() {
       setOrdersResult(body.data ?? null);
     }
     setLoading(false);
-  }, [page, applied, tab]);
+  }, [page, applied, tab, orderStatus]);
 
   useEffect(() => {
     void load();
@@ -137,6 +154,7 @@ export function PublisherMarketplaceReport() {
   function clearFilters() {
     setDraft(emptyFilters);
     setApplied(emptyFilters);
+    setOrderStatus("all");
     setPage(1);
   }
 
@@ -250,6 +268,28 @@ export function PublisherMarketplaceReport() {
                 className="bg-white"
               />
             </div>
+            {tab === "orders" ? (
+              <div className="w-full space-y-1 sm:w-36">
+                <label className="text-xs font-medium text-muted-foreground">Status</label>
+                <Select
+                  value={orderStatus}
+                  onValueChange={(v) => {
+                    const next = String(v ?? "all");
+                    setOrderStatus(next === "approved" || next === "refunded" ? next : "all");
+                    setPage(1);
+                  }}
+                >
+                  <SelectTrigger className="bg-white" data-testid="orders-status-filter">
+                    <SelectValue>{ORDER_STATUS_LABELS[orderStatus]}</SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All</SelectItem>
+                    <SelectItem value="approved">Approved</SelectItem>
+                    <SelectItem value="refunded">Refunded</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            ) : null}
             {(["subId", "subId2", "subId3", "subId4"] as const).map((key, index) => (
               <div key={key} className="w-full space-y-1 sm:w-36">
                 <label className="text-xs font-medium text-muted-foreground">Sub ID {index + 1}</label>

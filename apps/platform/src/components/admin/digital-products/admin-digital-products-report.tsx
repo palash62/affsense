@@ -37,7 +37,7 @@ import {
 } from "@/components/ui/table";
 import type {
   DigitalProductClickListResult,
-  DigitalProductConversionStatus,
+  DigitalProductOrderStatus,
   DigitalProductOrderRow,
   DigitalProductOrderSummary,
 } from "@/services/digital-product.service";
@@ -88,6 +88,16 @@ function cellValue(value: string | null | undefined) {
   return value;
 }
 
+const ORDER_STATUS_LABELS: Record<DigitalProductOrderStatus, string> = {
+  approved: "Approved",
+  refunded: "Refunded",
+  rejected: "Rejected",
+};
+
+function toOrderStatus(value: string): DigitalProductOrderStatus {
+  return value === "rejected" || value === "refunded" ? value : "approved";
+}
+
 export function AdminDigitalProductsReport({
   publishers,
   defaultFrom,
@@ -120,8 +130,9 @@ export function AdminDigitalProductsReport({
   const [draft, setDraft] = useState<AppliedFilters>(emptyFilters);
   const [applied, setApplied] = useState<AppliedFilters>(emptyFilters);
   const [page, setPage] = useState(1);
-  const [conversionStatus, setConversionStatus] = useState<DigitalProductConversionStatus>("approved");
+  const [conversionStatus, setConversionStatus] = useState<DigitalProductOrderStatus>("approved");
   const showRejected = conversionStatus === "rejected";
+  const statusLabel = ORDER_STATUS_LABELS[conversionStatus];
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -422,9 +433,7 @@ export function AdminDigitalProductsReport({
             description={
               loading
                 ? "Loading…"
-                : showRejected
-                  ? `${(ordersResult?.total ?? 0).toLocaleString()} rejected conversions in range`
-                  : `${(ordersResult?.total ?? 0).toLocaleString()} approved conversions in range`
+                : `${(ordersResult?.total ?? 0).toLocaleString()} ${statusLabel.toLowerCase()} conversions in range`
             }
             icon={BarChart3}
             actions={
@@ -433,15 +442,16 @@ export function AdminDigitalProductsReport({
                 <Select
                   value={conversionStatus}
                   onValueChange={(v) => {
-                    setConversionStatus(v === "rejected" ? "rejected" : "approved");
+                    setConversionStatus(toOrderStatus(String(v ?? "")));
                     setPage(1);
                   }}
                 >
                   <SelectTrigger className="h-8 w-32 bg-white" data-testid="orders-status-filter">
-                    <SelectValue>{showRejected ? "Rejected" : "Approved"}</SelectValue>
+                    <SelectValue>{statusLabel}</SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="approved">Approved</SelectItem>
+                    <SelectItem value="refunded">Refunded</SelectItem>
                     <SelectItem value="rejected">Rejected</SelectItem>
                   </SelectContent>
                 </Select>

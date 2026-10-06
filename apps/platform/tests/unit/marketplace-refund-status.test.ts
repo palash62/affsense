@@ -105,6 +105,27 @@ describe("refunded marketplace sales", () => {
     expect(result.summary.totalCommissions).toBeCloseTo(18.5);
   });
 
+  it("lists only non-refunded sales under Approved", async () => {
+    const publisher = await listPublisherDigitalProductOrders("pub-1", { status: "approved" });
+    expect(publisher.items.map((row) => row.id)).toEqual(["other-sale"]);
+    const admin = await listDigitalProductOrders({ publisherId: "pub-1", status: "approved" });
+    expect(admin.items.map((row) => row.id)).toEqual(["other-sale"]);
+  });
+
+  it("lists refunded sales under Refunded, with refund events only for admins", async () => {
+    const publisher = await listPublisherDigitalProductOrders("pub-1", { status: "refunded" });
+    expect(publisher.items.map((row) => row.id)).toEqual(["sale"]);
+    expect(publisher.items[0]?.webhookStatus).toBe(REFUNDED_WEBHOOK_STATUS);
+
+    const admin = await listDigitalProductOrders({ publisherId: "pub-1", status: "refunded" });
+    expect(admin.items.map((row) => row.id).sort()).toEqual(["refund-invoice", "sale"]);
+  });
+
+  it("shows approved and refunded sales together under All", async () => {
+    const result = await listPublisherDigitalProductOrders("pub-1", { status: "all" });
+    expect(result.items.map((row) => row.id).sort()).toEqual(["other-sale", "sale"]);
+  });
+
   it("leaves the refunded sale out of the commission report total", async () => {
     const report = await getPublisherCommissionReport({ publisherId: "pub-1" });
     expect(report.kpis.commission).toBeCloseTo(18.5);
