@@ -40,12 +40,13 @@ type FilterKey =
   | "subId"
   | "subId2"
   | "subId3"
+  | "subId4"
   | "status"
   | "from"
   | "to"
   | "q";
 
-const SELECT_KEYS = ["product", "orderType", "source", "subId", "subId2", "subId3", "status"] as const;
+const SELECT_KEYS = ["product", "orderType", "source", "subId", "subId2", "subId3", "subId4", "status"] as const;
 
 export function PublisherCommissionFilters({
   products,
@@ -53,6 +54,7 @@ export function PublisherCommissionFilters({
   subIds,
   subIds2 = [],
   subIds3 = [],
+  subIds4 = [],
   defaultFrom,
   defaultTo,
 }: {
@@ -61,6 +63,7 @@ export function PublisherCommissionFilters({
   subIds: string[];
   subIds2?: string[];
   subIds3?: string[];
+  subIds4?: string[];
   defaultFrom: string;
   defaultTo: string;
 }) {
@@ -75,6 +78,7 @@ export function PublisherCommissionFilters({
   const subId = searchParams.get("subId") ?? "all";
   const subId2 = searchParams.get("subId2") ?? "all";
   const subId3 = searchParams.get("subId3") ?? "all";
+  const subId4 = searchParams.get("subId4") ?? "all";
   const status = searchParams.get("status") ?? "all";
   const dateFrom = searchParams.get("from") ?? defaultFrom;
   const dateTo = searchParams.get("to") ?? defaultTo;
@@ -90,6 +94,7 @@ export function PublisherCommissionFilters({
         subId: overrides?.subId ?? subId,
         subId2: overrides?.subId2 ?? subId2,
         subId3: overrides?.subId3 ?? subId3,
+        subId4: overrides?.subId4 ?? subId4,
         status: overrides?.status ?? status,
         from: overrides?.from ?? dateFrom,
         to: overrides?.to ?? dateTo,
@@ -119,6 +124,7 @@ export function PublisherCommissionFilters({
       subId,
       subId2,
       subId3,
+      subId4,
       status,
       dateFrom,
       dateTo,
@@ -142,6 +148,7 @@ export function PublisherCommissionFilters({
     searchParams.has("subId") ||
     searchParams.has("subId2") ||
     searchParams.has("subId3") ||
+    searchParams.has("subId4") ||
     searchParams.has("status") ||
     searchParams.has("q") ||
     (searchParams.has("from") && searchParams.get("from") !== defaultFrom) ||
@@ -204,7 +211,8 @@ export function PublisherCommissionFilters({
           [
             { key: "subId", label: "Sub ID 1", value: subId, options: subIds },
             { key: "subId2", label: "Sub ID 2", value: subId2, options: subIds2 },
-            { key: "subId3", label: "Sub ID 3", value: subId3, options: subIds3 },
+            { key: "subId3", label: "Sub ID 3", value: subId3, options: subIds3, subIds4 },
+            { key: "subId4", label: "Sub ID 4", value: subId4, options: subIds4 },
           ] as const
         ).map((f) => (
           <div key={f.key} className="min-w-[120px] space-y-1">

@@ -35,17 +35,25 @@ export function PublisherCpaOfferTrackingLinkDialog({
 }: PublisherCpaOfferTrackingLinkDialogProps) {
   const [includeParams, setIncludeParams] = useState(false);
   const [src, setSrc] = useState("");
-  const [subId, setSubId] = useState("");
+  const [subIds, setSubIds] = useState(["", "", "", ""]);
   const [copied, setCopied] = useState(false);
 
   const trackingLink = useMemo(() => {
     if (!offer) return "";
+    const param = (value: string) => (includeParams ? value.trim() || undefined : undefined);
     return buildCpaOfferTrackingUrl(offer.id, {
       publisherId: publisherId || undefined,
-      src: includeParams ? src.trim() || undefined : undefined,
-      subId: includeParams ? subId.trim() || undefined : undefined,
+      src: param(src),
+      subId: param(subIds[0]),
+      subId2: param(subIds[1]),
+      subId3: param(subIds[2]),
+      subId4: param(subIds[3]),
     });
-  }, [offer, publisherId, includeParams, src, subId]);
+  }, [offer, publisherId, includeParams, src, subIds]);
+
+  function setSubIdAt(index: number, value: string) {
+    setSubIds((prev) => prev.map((current, i) => (i === index ? value : current)));
+  }
 
   async function copyLink() {
     if (!trackingLink) return;
@@ -128,15 +136,17 @@ export function PublisherCpaOfferTrackingLinkDialog({
                     placeholder="facebook"
                   />
                 </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="pub-cpa-sub">Sub ID</Label>
-                  <Input
-                    id="pub-cpa-sub"
-                    value={subId}
-                    onChange={(e) => setSubId(e.target.value)}
-                    placeholder="campaign-a"
-                  />
-                </div>
+                {subIds.map((value, index) => (
+                  <div key={index} className="space-y-1.5">
+                    <Label htmlFor={`pub-cpa-sub${index + 1}`}>Sub ID {index + 1}</Label>
+                    <Input
+                      id={`pub-cpa-sub${index + 1}`}
+                      value={value}
+                      onChange={(e) => setSubIdAt(index, e.target.value)}
+                      placeholder={index === 0 ? "campaign-a" : `sub${index + 1}`}
+                    />
+                  </div>
+                ))}
               </div>
             ) : null}
           </section>

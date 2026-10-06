@@ -206,6 +206,7 @@ export function DigitalProductOrdersTable({
               <TableHead className="whitespace-nowrap px-4 py-3 text-xs">Sub ID 1</TableHead>
               <TableHead className="whitespace-nowrap px-4 py-3 text-xs">Sub ID 2</TableHead>
               <TableHead className="whitespace-nowrap px-4 py-3 text-xs">Sub ID 3</TableHead>
+              <TableHead className="whitespace-nowrap px-4 py-3 text-xs">Sub ID 4</TableHead>
               <TableHead className="whitespace-nowrap px-4 py-3 text-xs">Status</TableHead>
               {showReason ? (
                 <TableHead className="whitespace-nowrap px-4 py-3 text-xs">Reason</TableHead>
@@ -276,6 +277,9 @@ export function DigitalProductOrdersTable({
                 </TableCell>
                 <TableCell className="max-w-[100px] truncate px-4 py-3 text-xs text-muted-foreground">
                   {row.subId3 ?? "—"}
+                </TableCell>
+                <TableCell className="max-w-[100px] truncate px-4 py-3 text-xs text-muted-foreground">
+                  {row.subId4 ?? "—"}
                 </TableCell>
                 <TableCell className="whitespace-nowrap px-4 py-3">
                   <StatusBadge status={row.webhookStatus} />
@@ -355,6 +359,8 @@ export function DigitalProductOrdersTable({
               <span>{payloadRow?.subId2 ?? "—"}</span>
               <span className="text-muted-foreground">Sub ID 3</span>
               <span>{payloadRow?.subId3 ?? "—"}</span>
+              <span className="text-muted-foreground">Sub ID 4</span>
+              <span>{payloadRow?.subId4 ?? "—"}</span>
               <span className="text-muted-foreground">Webhook Status</span>
               <span>{payloadRow?.webhookStatus ?? "—"}</span>
               <span className="text-muted-foreground">Payment</span>

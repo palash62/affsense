@@ -228,6 +228,7 @@ export async function createWebhookEvent(input: {
   subId?: string | null;
   subId2?: string | null;
   subId3?: string | null;
+  subId4?: string | null;
   src?: string | null;
   payloadJson: unknown;
   digitalProductId?: string | null;
@@ -255,6 +256,7 @@ export async function createWebhookEvent(input: {
       subId: input.subId ?? null,
       subId2: input.subId2 ?? null,
       subId3: input.subId3 ?? null,
+      subId4: input.subId4 ?? null,
       src: input.src ?? null,
       payloadJson: input.payloadJson as never,
       digitalProductId: input.digitalProductId ?? null,

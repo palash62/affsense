@@ -69,6 +69,7 @@ type AppliedFilters = {
   subId: string;
   subId2: string;
   subId3: string;
+  subId4: string;
   advertiserId: string;
   publisherId: string;
   from: string;
@@ -81,6 +82,7 @@ const emptyFilters: AppliedFilters = {
   subId: "",
   subId2: "",
   subId3: "",
+  subId4: "",
   advertiserId: "",
   publisherId: "",
   from: "",
@@ -343,7 +345,7 @@ export function AdminCpaOffersReport({
     params.set("limit", String(PAGE_SIZE));
     if (applied.q.trim()) params.set("q", applied.q.trim());
     if (applied.offerId.trim()) params.set("offerId", applied.offerId.trim());
-    for (const key of ["subId", "subId2", "subId3"] as const) {
+    for (const key of ["subId", "subId2", "subId3", "subId4"] as const) {
       if (applied[key].trim()) params.set(key, applied[key].trim());
     }
     if (applied.advertiserId.trim()) params.set("advertiserId", applied.advertiserId.trim());
@@ -580,7 +582,7 @@ export function AdminCpaOffersReport({
                 className="h-9 bg-white"
               />
             </div>
-            {(["subId", "subId2", "subId3"] as const).map((key, index) => (
+            {(["subId", "subId2", "subId3", "subId4"] as const).map((key, index) => (
               <div key={key} className="space-y-1 xl:col-span-1">
                 <label className="text-xs font-medium text-muted-foreground">Sub ID {index + 1}</label>
                 <Input
@@ -666,6 +668,7 @@ export function AdminCpaOffersReport({
                   <TableHead>Sub ID 1</TableHead>
                   <TableHead>Sub ID 2</TableHead>
                   <TableHead>Sub ID 3</TableHead>
+                  <TableHead>Sub ID 4</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Payout</TableHead>
                   <TableHead className="text-right">Revenue</TableHead>
@@ -675,13 +678,13 @@ export function AdminCpaOffersReport({
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={12} className="py-12 text-center text-sm text-muted-foreground">
+                    <TableCell colSpan={13} className="py-12 text-center text-sm text-muted-foreground">
                       Loading conversions…
                     </TableCell>
                   </TableRow>
                 ) : conversionItems.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={12} className="py-12 text-center">
+                    <TableCell colSpan={13} className="py-12 text-center">
                       <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-50 text-violet-600">
                         <Activity className="h-5 w-5" />
                       </div>
@@ -755,6 +758,9 @@ export function AdminCpaOffersReport({
                       </TableCell>
                       <TableCell className="font-mono text-xs text-muted-foreground">
                         {row.subId3 ?? "—"}
+                      </TableCell>
+                      <TableCell className="font-mono text-xs text-muted-foreground">
+                        {row.subId4 ?? "—"}
                       </TableCell>
                       <TableCell className="whitespace-nowrap">
                         {row.status === "A" ? (
@@ -868,19 +874,20 @@ export function AdminCpaOffersReport({
                   <TableHead>Sub ID 1</TableHead>
                   <TableHead>Sub ID 2</TableHead>
                   <TableHead>Sub ID 3</TableHead>
+                  <TableHead>Sub ID 4</TableHead>
                   <TableHead>Converted</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={13} className="py-12 text-center text-sm text-muted-foreground">
+                    <TableCell colSpan={14} className="py-12 text-center text-sm text-muted-foreground">
                       Loading clicks…
                     </TableCell>
                   </TableRow>
                 ) : clickItems.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={13} className="py-12 text-center">
+                    <TableCell colSpan={14} className="py-12 text-center">
                       <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-50 text-violet-600">
                         <Activity className="h-5 w-5" />
                       </div>
@@ -977,6 +984,12 @@ export function AdminCpaOffersReport({
                         title={row.subId3 ?? undefined}
                       >
                         {row.subId3 || "—"}
+                      </TableCell>
+                      <TableCell
+                        className="max-w-[8rem] truncate font-mono text-xs text-muted-foreground"
+                        title={row.subId4 ?? undefined}
+                      >
+                        {row.subId4 || "—"}
                       </TableCell>
                       <TableCell className="whitespace-nowrap">
                         {row.converted ? (

@@ -110,6 +110,7 @@ function buildMacroContext(input: {
   subId: string | null;
   subId2?: string | null;
   subId3?: string | null;
+  subId4?: string | null;
 }): PostbackMacroContext {
   const clickId = input.orderId || input.webhookEventId;
   return {
@@ -125,6 +126,7 @@ function buildMacroContext(input: {
     sub1: input.subId,
     sub2: input.subId2 ?? null,
     sub3: input.subId3 ?? null,
+    sub4: input.subId4 ?? null,
   };
 }
 
@@ -142,6 +144,7 @@ export async function dispatchDigitalProductPublisherPostback(
       subId: true,
       subId2: true,
       subId3: true,
+      subId4: true,
       src: true,
       payloadJson: true,
       commissionAmount: true,
@@ -207,6 +210,7 @@ export async function dispatchDigitalProductPublisherPostback(
     subId: event.subId ?? fields.subId,
     subId2: event.subId2,
     subId3: event.subId3,
+    subId4: event.subId4,
   });
 
   if (!isHttpTemplateUrl(postback.endpoint)) {

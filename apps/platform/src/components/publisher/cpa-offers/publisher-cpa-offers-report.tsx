@@ -34,6 +34,7 @@ type AppliedFilters = {
   subId: string;
   subId2: string;
   subId3: string;
+  subId4: string;
   from: string;
   to: string;
 };
@@ -44,6 +45,7 @@ const emptyFilters: AppliedFilters = {
   subId: "",
   subId2: "",
   subId3: "",
+  subId4: "",
   from: "",
   to: "",
 };
@@ -80,7 +82,7 @@ export function PublisherCpaOffersReport() {
     params.set("limit", String(PAGE_SIZE));
     if (applied.q.trim()) params.set("q", applied.q.trim());
     if (applied.offerId.trim()) params.set("offerId", applied.offerId.trim());
-    for (const key of ["subId", "subId2", "subId3"] as const) {
+    for (const key of ["subId", "subId2", "subId3", "subId4"] as const) {
       if (applied[key].trim()) params.set(key, applied[key].trim());
     }
     if (applied.from.trim()) params.set("from", new Date(applied.from).toISOString());
@@ -256,7 +258,7 @@ export function PublisherCpaOffersReport() {
                 className="bg-white"
               />
             </div>
-            {(["subId", "subId2", "subId3"] as const).map((key, index) => (
+            {(["subId", "subId2", "subId3", "subId4"] as const).map((key, index) => (
               <div key={key} className="w-full space-y-1 sm:w-36">
                 <label className="text-xs font-medium text-muted-foreground">Sub ID {index + 1}</label>
                 <Input
@@ -342,6 +344,7 @@ export function PublisherCpaOffersReport() {
                   <TableHead>Sub ID 1</TableHead>
                   <TableHead>Sub ID 2</TableHead>
                   <TableHead>Sub ID 3</TableHead>
+                  <TableHead>Sub ID 4</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Earnings</TableHead>
                 </TableRow>
@@ -349,12 +352,12 @@ export function PublisherCpaOffersReport() {
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={12} className="py-12 text-center text-sm text-muted-foreground">
+                    <TableCell colSpan={13} className="py-12 text-center text-sm text-muted-foreground">
                       Loading conversions…
                     </TableCell>
                   </TableRow>
                 ) : conversionItems.length === 0 ? (
-                  <EmptyRow colSpan={12} label="No conversions found" />
+                  <EmptyRow colSpan={13} label="No conversions found" />
                 ) : (
                   conversionItems.map((row) => (
                     <TableRow key={row.id} className="hover:bg-sky-50/40">
@@ -422,6 +425,12 @@ export function PublisherCpaOffersReport() {
                       >
                         {cellValue(row.subId3)}
                       </TableCell>
+                      <TableCell
+                        className="max-w-[8rem] truncate font-mono text-xs text-muted-foreground"
+                        title={row.subId4 ?? undefined}
+                      >
+                        {cellValue(row.subId4)}
+                      </TableCell>
                       <TableCell className="whitespace-nowrap">
                         <StatusBadge status={row.status} />
                       </TableCell>
@@ -474,18 +483,19 @@ export function PublisherCpaOffersReport() {
                   <TableHead>Sub ID 1</TableHead>
                   <TableHead>Sub ID 2</TableHead>
                   <TableHead>Sub ID 3</TableHead>
+                  <TableHead>Sub ID 4</TableHead>
                   <TableHead>Converted</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={11} className="py-12 text-center text-sm text-muted-foreground">
+                    <TableCell colSpan={12} className="py-12 text-center text-sm text-muted-foreground">
                       Loading clicks…
                     </TableCell>
                   </TableRow>
                 ) : clickItems.length === 0 ? (
-                  <EmptyRow colSpan={11} label="No clicks found" />
+                  <EmptyRow colSpan={12} label="No clicks found" />
                 ) : (
                   clickItems.map((row) => (
                     <TableRow key={row.id} className="hover:bg-sky-50/40">
@@ -548,6 +558,12 @@ export function PublisherCpaOffersReport() {
                         title={row.subId3 ?? undefined}
                       >
                         {cellValue(row.subId3)}
+                      </TableCell>
+                      <TableCell
+                        className="max-w-[8rem] truncate font-mono text-xs text-muted-foreground"
+                        title={row.subId4 ?? undefined}
+                      >
+                        {cellValue(row.subId4)}
                       </TableCell>
                       <TableCell className="whitespace-nowrap">
                         {row.converted ? (

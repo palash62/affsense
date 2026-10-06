@@ -73,6 +73,7 @@ describe("resolveDigitalProductWebhookAttribution click enrichment", () => {
       subId: null,
       subId2: null,
       subId3: null,
+      subId4: null,
       src: null,
     });
     expect(digitalProductClickFindFirst).not.toHaveBeenCalled();
@@ -128,6 +129,7 @@ describe("resolveDigitalProductWebhookAttribution click enrichment", () => {
       subId: "profile",
       subId2: null,
       subId3: null,
+      subId4: null,
       src: "facebook",
     });
     expect(digitalProductClickFindFirst).toHaveBeenCalledWith(
@@ -136,7 +138,7 @@ describe("resolveDigitalProductWebhookAttribution click enrichment", () => {
           productId: "prod-1",
           publisherId: "pub-37",
         }),
-        select: { id: true, subId: true, subId2: true, subId3: true, src: true },
+        select: { id: true, subId: true, subId2: true, subId3: true, subId4: true, src: true },
       }),
     );
   });
@@ -207,12 +209,13 @@ describe("resolveDigitalProductWebhookAttribution click enrichment", () => {
       );
     });
 
-    it("carries sub2/sub3 from the exact aff_click click", async () => {
+    it("carries sub2-sub4 from the exact aff_click click", async () => {
       digitalProductClickFindFirst.mockResolvedValue({
         id: "click-fb",
         subId: "fb",
         subId2: "adset1",
         subId3: "creative9",
+        subId4: "geo_us",
         src: "facebook",
       });
 
@@ -221,21 +224,21 @@ describe("resolveDigitalProductWebhookAttribution click enrichment", () => {
         at,
       });
 
-      expect(result).toMatchObject({ clickId: "click-fb", subId: "fb", subId2: "adset1", subId3: "creative9" });
+      expect(result).toMatchObject({ clickId: "click-fb", subId: "fb", subId2: "adset1", subId3: "creative9", subId4: "geo_us" });
     });
 
-    it("reads sub2/sub3 from the landing URL and filters the fallback click by them", async () => {
+    it("reads sub2-sub4 from the landing URL and filters the fallback click by them", async () => {
       digitalProductClickFindFirst.mockResolvedValue(null);
 
       const result = await resolveDigitalProductWebhookAttribution({
-        body: landing("sub1=fb&sub2=adset1&subid3=creative9"),
+        body: landing("sub1=fb&sub2=adset1&subid3=creative9&sub4=geo_us"),
         at,
       });
 
-      expect(result).toMatchObject({ clickId: null, subId: "fb", subId2: "adset1", subId3: "creative9" });
+      expect(result).toMatchObject({ clickId: null, subId: "fb", subId2: "adset1", subId3: "creative9", subId4: "geo_us" });
       expect(digitalProductClickFindFirst).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: expect.objectContaining({ subId: "fb", subId2: "adset1", subId3: "creative9" }),
+          where: expect.objectContaining({ subId: "fb", subId2: "adset1", subId3: "creative9", subId4: "geo_us" }),
         }),
       );
     });

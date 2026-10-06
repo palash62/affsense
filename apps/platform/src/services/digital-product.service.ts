@@ -983,12 +983,13 @@ export async function deleteDigitalProductCategory(id: string) {
 
 export type DigitalProductConversionStatus = "approved" | "rejected";
 
-const WEBHOOK_TRACKING_SELECT = { subId: true, subId2: true, subId3: true, src: true } as const;
+const WEBHOOK_TRACKING_SELECT = { subId: true, subId2: true, subId3: true, subId4: true, src: true } as const;
 
 type WebhookTrackingColumns = {
   subId: string | null;
   subId2: string | null;
   subId3: string | null;
+  subId4: string | null;
   src: string | null;
 };
 
@@ -1002,26 +1003,29 @@ function webhookTrackingValues(
     subId: row.subId?.trim() || fields.subId,
     subId2: row.subId2?.trim() || null,
     subId3: row.subId3?.trim() || null,
+    subId4: row.subId4?.trim() || null,
   };
 }
 
-type SubIdFilters = { subId?: string; subId2?: string; subId3?: string };
+type SubIdFilters = { subId?: string; subId2?: string; subId3?: string; subId4?: string };
 
 function normalizeSubIdFilters(input: SubIdFilters): SubIdFilters | null {
   const subId = input.subId?.trim() || undefined;
   const subId2 = input.subId2?.trim() || undefined;
   const subId3 = input.subId3?.trim() || undefined;
-  return subId || subId2 || subId3 ? { subId, subId2, subId3 } : null;
+  const subId4 = input.subId4?.trim() || undefined;
+  return subId || subId2 || subId3 || subId4 ? { subId, subId2, subId3, subId4 } : null;
 }
 
 function matchesSubIdFilters(
-  row: { subId: string | null; subId2: string | null; subId3: string | null },
+  row: { subId: string | null; subId2: string | null; subId3: string | null; subId4: string | null },
   filters: SubIdFilters,
 ) {
   return (
     (!filters.subId || row.subId === filters.subId) &&
     (!filters.subId2 || row.subId2 === filters.subId2) &&
-    (!filters.subId3 || row.subId3 === filters.subId3)
+    (!filters.subId3 || row.subId3 === filters.subId3) &&
+    (!filters.subId4 || row.subId4 === filters.subId4)
   );
 }
 
@@ -1049,6 +1053,7 @@ export type DigitalProductOrderRow = {
   subId: string | null;
   subId2: string | null;
   subId3: string | null;
+  subId4: string | null;
   eventType: string;
   webhookStatus: string;
   paymentStatus: string | null;
@@ -1237,6 +1242,7 @@ export async function listDigitalProductOrders(opts: {
   subId?: string;
   subId2?: string;
   subId3?: string;
+  subId4?: string;
   eventType?: string;
   page?: number;
   limit?: number;
@@ -1437,6 +1443,7 @@ export type PublisherCommissionRow = {
   subId: string | null;
   subId2: string | null;
   subId3: string | null;
+  subId4: string | null;
   webhookStatus: string;
   paymentStatus: string | null;
 };
@@ -1572,6 +1579,7 @@ export async function getPublisherCommissionReport(opts: {
   subId?: string;
   subId2?: string;
   subId3?: string;
+  subId4?: string;
   status?: string;
   q?: string;
   page?: number;
@@ -1653,6 +1661,7 @@ export async function getPublisherCommissionReport(opts: {
   const subIds = distinct(mapped.map((r) => r.subId));
   const subIds2 = distinct(mapped.map((r) => r.subId2));
   const subIds3 = distinct(mapped.map((r) => r.subId3));
+  const subIds4 = distinct(mapped.map((r) => r.subId4));
 
   const q = opts.q?.trim().toLowerCase();
   const filtered = mapped.filter((row) => {
@@ -1661,6 +1670,7 @@ export async function getPublisherCommissionReport(opts: {
     if (opts.subId && opts.subId !== "all" && row.subId !== opts.subId) return false;
     if (opts.subId2 && opts.subId2 !== "all" && row.subId2 !== opts.subId2) return false;
     if (opts.subId3 && opts.subId3 !== "all" && row.subId3 !== opts.subId3) return false;
+    if (opts.subId4 && opts.subId4 !== "all" && row.subId4 !== opts.subId4) return false;
     if (opts.orderType && opts.orderType !== "all") {
       const want = opts.orderType.toLowerCase().replace(/[_-]/g, " ");
       if (want === "front" || want === "front end" || want === "frontend") {
@@ -1767,7 +1777,7 @@ export async function getPublisherCommissionReport(opts: {
     page: safePage,
     limit,
     totalPages,
-    filterOptions: { products, sources, subIds, subIds2, subIds3 },
+    filterOptions: { products, sources, subIds, subIds2, subIds3, subIds4 },
   };
 }
 
@@ -1782,6 +1792,7 @@ export type SerializedDigitalProductClick = {
   subId: string | null;
   subId2: string | null;
   subId3: string | null;
+  subId4: string | null;
   campaign: string | null;
   ip: string | null;
   device: string;
@@ -1809,6 +1820,7 @@ export type DigitalProductClickListFilters = {
   subId?: string;
   subId2?: string;
   subId3?: string;
+  subId4?: string;
   src?: string;
   publisherId?: string;
   from?: string;
@@ -1842,6 +1854,7 @@ function serializeDigitalProductClick(row: {
   subId: string | null;
   subId2: string | null;
   subId3: string | null;
+  subId4: string | null;
   campaign: string | null;
   ip: string | null;
   userAgent: string | null;
@@ -1861,6 +1874,7 @@ function serializeDigitalProductClick(row: {
     subId: row.subId,
     subId2: row.subId2,
     subId3: row.subId3,
+    subId4: row.subId4,
     campaign: row.campaign,
     ip: row.ip,
     device,
@@ -1883,6 +1897,7 @@ function buildDigitalProductClickWhere(
   if (subIds?.subId) where.subId = subIds.subId;
   if (subIds?.subId2) where.subId2 = subIds.subId2;
   if (subIds?.subId3) where.subId3 = subIds.subId3;
+  if (subIds?.subId4) where.subId4 = subIds.subId4;
 
   const src = filters.src?.trim();
   if (src) where.src = src;
@@ -1912,6 +1927,7 @@ function buildDigitalProductClickWhere(
       { subId: { contains: q } },
       { subId2: { contains: q } },
       { subId3: { contains: q } },
+      { subId4: { contains: q } },
       { campaign: { contains: q } },
       { ip: { contains: q } },
       ...(forcedPublisherId
@@ -1999,6 +2015,7 @@ export async function listPublisherDigitalProductOrders(
     subId?: string;
     subId2?: string;
     subId3?: string;
+    subId4?: string;
     eventType?: string;
     from?: string;
     to?: string;
@@ -2013,6 +2030,7 @@ export async function listPublisherDigitalProductOrders(
     subId: opts.subId,
     subId2: opts.subId2,
     subId3: opts.subId3,
+    subId4: opts.subId4,
     from: from && !Number.isNaN(from.getTime()) ? from : undefined,
     to: to && !Number.isNaN(to.getTime()) ? to : undefined,
     eventType: opts.eventType,
@@ -2030,7 +2048,7 @@ export async function listPublisherDigitalProductOrders(
         if (!hay.includes(productId)) return false;
       }
       if (q) {
-        const hay = `${row.orderId} ${row.product ?? ""} ${row.funnel ?? ""} ${row.source ?? ""} ${row.subId ?? ""} ${row.subId2 ?? ""} ${row.subId3 ?? ""}`.toLowerCase();
+        const hay = `${row.orderId} ${row.product ?? ""} ${row.funnel ?? ""} ${row.source ?? ""} ${row.subId ?? ""} ${row.subId2 ?? ""} ${row.subId3 ?? ""} ${row.subId4 ?? ""}`.toLowerCase();
         if (!hay.includes(q)) return false;
       }
       return true;
@@ -2068,11 +2086,15 @@ export function digitalProductAffiliateReportKeyOf(
   subId: string | null,
   subId2: string | null = null,
   subId3: string | null = null,
+  subId4: string | null = null,
 ) {
   const productPart = productId
     ? `id::${productId}`
     : `name::${nameKey || "_"}`;
-  const extra = subId2 || subId3 ? `::${subId2 ?? ""}::${subId3 ?? ""}` : "";
+  const extra =
+    subId2 || subId3 || subId4
+      ? `::${subId2 ?? ""}::${subId3 ?? ""}${subId4 ? `::${subId4}` : ""}`
+      : "";
   return `${publisherId}::${productPart}::${subId ?? ""}${extra}`;
 }
 
@@ -2085,29 +2107,33 @@ export function resolveDigitalProductOrderTrackingParams(input: {
   storedSubId?: string | null;
   storedSubId2?: string | null;
   storedSubId3?: string | null;
+  storedSubId4?: string | null;
   storedSrc?: string | null;
   clickSubId?: string | null;
   clickSubId2?: string | null;
   clickSubId3?: string | null;
+  clickSubId4?: string | null;
   clickSrc?: string | null;
   payloadSubId?: string | null;
   payloadSrc?: string | null;
-}): { subId: string | null; subId2: string | null; subId3: string | null; source: string | null } {
-  const stored = input.storedSubId ?? input.storedSubId2 ?? input.storedSubId3;
-  const click = input.clickSubId ?? input.clickSubId2 ?? input.clickSubId3;
+}): { subId: string | null; subId2: string | null; subId3: string | null; subId4: string | null; source: string | null } {
+  const stored = input.storedSubId ?? input.storedSubId2 ?? input.storedSubId3 ?? input.storedSubId4;
+  const click = input.clickSubId ?? input.clickSubId2 ?? input.clickSubId3 ?? input.clickSubId4;
   const subs = stored
     ? {
         subId: input.storedSubId ?? null,
         subId2: input.storedSubId2 ?? null,
         subId3: input.storedSubId3 ?? null,
+        subId4: input.storedSubId4 ?? null,
       }
     : click
       ? {
           subId: input.clickSubId ?? null,
           subId2: input.clickSubId2 ?? null,
           subId3: input.clickSubId3 ?? null,
+          subId4: input.clickSubId4 ?? null,
         }
-      : { subId: input.payloadSubId ?? null, subId2: null, subId3: null };
+      : { subId: input.payloadSubId ?? null, subId2: null, subId3: null, subId4: null };
   const source =
     (input.storedSrc?.trim() || null) ??
     (input.clickSrc?.trim() || null) ??
@@ -2122,6 +2148,7 @@ export type DigitalProductClickTrackingRow = {
   subId: string | null;
   subId2?: string | null;
   subId3?: string | null;
+  subId4?: string | null;
   src: string | null;
   createdAt: Date;
 };
@@ -2156,6 +2183,7 @@ export type SerializedDigitalProductAffiliateReportRow = {
   subId: string | null;
   subId2: string | null;
   subId3: string | null;
+  subId4: string | null;
   source: string | null;
   clicks: number;
   conversions: number;
@@ -2237,7 +2265,7 @@ export async function listDigitalProductAffiliateProductReportForAdmin(
 
   const [clickGroups, orderEvents, attributionClicks] = await Promise.all([
     prisma.digitalProductClick.groupBy({
-      by: ["publisherId", "productId", "subId", "subId2", "subId3", "src"],
+      by: ["publisherId", "productId", "subId", "subId2", "subId3", "subId4", "src"],
       where: clickWhere,
       _count: { _all: true },
     }),
@@ -2264,6 +2292,7 @@ export async function listDigitalProductAffiliateProductReportForAdmin(
         subId: true,
         subId2: true,
         subId3: true,
+        subId4: true,
         src: true,
         createdAt: true,
       },
@@ -2283,6 +2312,7 @@ export async function listDigitalProductAffiliateProductReportForAdmin(
     subId: string | null;
     subId2: string | null;
     subId3: string | null;
+    subId4: string | null;
     source: string | null;
     clicks: number;
     conversions: number;
@@ -2298,7 +2328,7 @@ export async function listDigitalProductAffiliateProductReportForAdmin(
     const productName = product?.name ?? g.productId;
     const nameKey = normalizeProductNameKey(productName);
     const source = g.src?.trim() || null;
-    const key = keyOf(g.publisherId, g.productId, nameKey, g.subId, g.subId2, g.subId3);
+    const key = keyOf(g.publisherId, g.productId, nameKey, g.subId, g.subId2, g.subId3, g.subId4);
     const existing = byKey.get(key);
     if (existing) {
       existing.clicks += g._count._all;
@@ -2313,6 +2343,7 @@ export async function listDigitalProductAffiliateProductReportForAdmin(
       subId: g.subId,
       subId2: g.subId2,
       subId3: g.subId3,
+      subId4: g.subId4,
       source,
       clicks: g._count._all,
       conversions: 0,
@@ -2350,15 +2381,17 @@ export async function listDigitalProductAffiliateProductReportForAdmin(
       storedSubId: ev.subId,
       storedSubId2: ev.subId2,
       storedSubId3: ev.subId3,
+      storedSubId4: ev.subId4,
       storedSrc: ev.src,
       clickSubId: historicalClick?.subId,
       clickSubId2: historicalClick?.subId2,
       clickSubId3: historicalClick?.subId3,
+      clickSubId4: historicalClick?.subId4,
       clickSrc: historicalClick?.src,
       payloadSubId: fields.subId,
       payloadSrc: fields.source,
     });
-    const { subId: orderSubId, subId2: orderSubId2, subId3: orderSubId3, source: orderSource } =
+    const { subId: orderSubId, subId2: orderSubId2, subId3: orderSubId3, subId4: orderSubId4, source: orderSource } =
       orderTracking;
 
     if (subIdFilters && !matchesSubIdFilters(orderTracking, subIdFilters)) continue;
@@ -2373,11 +2406,11 @@ export async function listDigitalProductAffiliateProductReportForAdmin(
     }
 
     if (q) {
-      const hay = `${productName} ${matchedProductId ?? ""} ${ev.publisherId} ${orderSubId ?? ""} ${orderSubId2 ?? ""} ${orderSubId3 ?? ""} ${orderSource ?? ""}`.toLowerCase();
+      const hay = `${productName} ${matchedProductId ?? ""} ${ev.publisherId} ${orderSubId ?? ""} ${orderSubId2 ?? ""} ${orderSubId3 ?? ""} ${orderSubId4 ?? ""} ${orderSource ?? ""}`.toLowerCase();
       if (!hay.includes(q)) continue;
     }
 
-    const key = keyOf(ev.publisherId, matchedProductId, nameKey, orderSubId, orderSubId2, orderSubId3);
+    const key = keyOf(ev.publisherId, matchedProductId, nameKey, orderSubId, orderSubId2, orderSubId3, orderSubId4);
     const acc = byKey.get(key) ?? {
       publisherId: ev.publisherId,
       productId: matchedProductId,
@@ -2388,6 +2421,7 @@ export async function listDigitalProductAffiliateProductReportForAdmin(
       subId: orderSubId,
       subId2: orderSubId2,
       subId3: orderSubId3,
+      subId4: orderSubId4,
       source: orderSource,
       clicks: 0,
       conversions: 0,
@@ -2413,7 +2447,7 @@ export async function listDigitalProductAffiliateProductReportForAdmin(
   if (q) {
     for (const [key, acc] of [...byKey.entries()]) {
       if (acc.conversions > 0) continue;
-      const hay = `${acc.productName} ${acc.productId ?? ""} ${acc.publisherId} ${acc.subId ?? ""} ${acc.subId2 ?? ""} ${acc.subId3 ?? ""} ${acc.source ?? ""}`.toLowerCase();
+      const hay = `${acc.productName} ${acc.productId ?? ""} ${acc.publisherId} ${acc.subId ?? ""} ${acc.subId2 ?? ""} ${acc.subId3 ?? ""} ${acc.subId4 ?? ""} ${acc.source ?? ""}`.toLowerCase();
       if (!hay.includes(q)) byKey.delete(key);
     }
   }
@@ -2446,6 +2480,7 @@ export async function listDigitalProductAffiliateProductReportForAdmin(
         subId: acc.subId,
         subId2: acc.subId2,
         subId3: acc.subId3,
+        subId4: acc.subId4,
         source: acc.source,
         clicks,
         conversions,
@@ -2464,7 +2499,8 @@ export async function listDigitalProductAffiliateProductReportForAdmin(
       const bySub =
         (a.subId ?? "").localeCompare(b.subId ?? "") ||
         (a.subId2 ?? "").localeCompare(b.subId2 ?? "") ||
-        (a.subId3 ?? "").localeCompare(b.subId3 ?? "");
+        (a.subId3 ?? "").localeCompare(b.subId3 ?? "") ||
+        (a.subId4 ?? "").localeCompare(b.subId4 ?? "");
       if (bySub !== 0) return bySub;
       return (a.source ?? "").localeCompare(b.source ?? "");
     });

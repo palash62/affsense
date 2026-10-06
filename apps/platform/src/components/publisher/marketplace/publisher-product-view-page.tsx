@@ -44,7 +44,7 @@ export function PublisherProductViewPage({
 }) {
   const [source, setSource] = useState("none");
   const [customSource, setCustomSource] = useState("");
-  const [subId, setSubId] = useState("");
+  const [subIds, setSubIds] = useState(["", "", "", ""]);
   const [campaign, setCampaign] = useState("");
 
   const [selectedPageId, setSelectedPageId] = useState(MAIN_PAGE_ID);
@@ -75,11 +75,18 @@ export function PublisherProductViewPage({
     return buildDigitalProductTrackingUrl(product.id, {
       publisherId,
       src: sourceValue || undefined,
-      subId: subId || undefined,
+      subId: subIds[0].trim() || undefined,
+      subId2: subIds[1].trim() || undefined,
+      subId3: subIds[2].trim() || undefined,
+      subId4: subIds[3].trim() || undefined,
       campaign: campaign || undefined,
       pageId,
     });
-  }, [product.id, publisherId, selectedPage, pageId, sourceValue, subId, campaign]);
+  }, [product.id, publisherId, selectedPage, pageId, sourceValue, subIds, campaign]);
+
+  function setSubIdAt(index: number, value: string) {
+    setSubIds((prev) => prev.map((current, i) => (i === index ? value : current)));
+  }
 
   const funnelUrl = product.previewUrl?.trim() || product.salesPageUrl?.trim() || null;
   const letter = (product.name.trim()[0] || "?").toUpperCase();
@@ -269,9 +276,9 @@ export function PublisherProductViewPage({
             <div>
               <h3 className="text-sm font-semibold text-foreground">Link settings</h3>
               <p className="mt-0.5 text-xs text-muted-foreground">
-                Add source, sub ID, and campaign so you can see which traffic converts.
+                Add source, campaign, and up to four sub IDs so you can see which traffic converts.
               </p>
-              <div className="mt-3 grid gap-3 sm:grid-cols-3">
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <Label htmlFor="aff-source">Source</Label>
                   <Select
@@ -303,16 +310,6 @@ export function PublisherProductViewPage({
                   ) : null}
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="aff-subid">Sub ID</Label>
-                  <Input
-                    id="aff-subid"
-                    value={subId}
-                    onChange={(e) => setSubId(e.target.value)}
-                    placeholder="video1"
-                    className="h-10 font-mono text-xs"
-                  />
-                </div>
-                <div className="space-y-1.5">
                   <Label htmlFor="aff-campaign">Campaign</Label>
                   <Input
                     id="aff-campaign"
@@ -323,6 +320,20 @@ export function PublisherProductViewPage({
                   />
                 </div>
               </div>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                {subIds.map((value, index) => (
+                  <div key={index} className="space-y-1.5">
+                    <Label htmlFor={`aff-subid${index + 1}`}>Sub ID {index + 1}</Label>
+                    <Input
+                      id={`aff-subid${index + 1}`}
+                      value={value}
+                      onChange={(e) => setSubIdAt(index, e.target.value)}
+                      placeholder={index === 0 ? "video1" : `sub${index + 1}`}
+                      className="h-10 font-mono text-xs"
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
 
             <div className="rounded-lg border border-border bg-muted/30 p-4">
@@ -330,7 +341,7 @@ export function PublisherProductViewPage({
                 <div>
                   <p className="text-sm font-semibold text-foreground">Your link preview</p>
                   <p className="text-xs text-muted-foreground">
-                    Updates as you change source, sub ID, and campaign.
+                    Updates as you change source, campaign, and sub IDs.
                   </p>
                 </div>
                 {previewUrl ? (
@@ -353,7 +364,7 @@ export function PublisherProductViewPage({
               <p className="font-semibold">Tips</p>
               <ul className="mt-1 list-disc space-y-0.5 pl-4 text-xs">
                 <li>Source tags the traffic channel (YouTube, Facebook, email).</li>
-                <li>Sub ID is for a specific ad, video, or placement.</li>
+                <li>Sub ID 1-4 tag a specific ad, video, or placement — use as many as you need.</li>
                 <li>Campaign groups a promotion, such as a seasonal push.</li>
                 <li>Use letters, numbers, hyphens, and underscores only.</li>
               </ul>

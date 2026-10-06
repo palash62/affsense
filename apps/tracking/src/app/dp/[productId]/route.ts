@@ -61,6 +61,7 @@ export async function GET(
   const subId = sanitizeTrackingParam(rawSubIds.sub1);
   const subId2 = sanitizeTrackingParam(rawSubIds.sub2);
   const subId3 = sanitizeTrackingParam(rawSubIds.sub3);
+  const subId4 = sanitizeTrackingParam(rawSubIds.sub4);
   const campaign = sanitizeTrackingParam(requestUrl.searchParams.get("campaign"));
 
   if (!pubId) {
@@ -103,6 +104,7 @@ export async function GET(
         subId: subId?.slice(0, 191) || null,
         subId2: subId2?.slice(0, 191) || null,
         subId3: subId3?.slice(0, 191) || null,
+        subId4: subId4?.slice(0, 191) || null,
         campaign: campaign?.slice(0, 191) || null,
         ip: clientIp(request)?.slice(0, 191) || null,
         userAgent: request.headers.get("user-agent")?.slice(0, 1000) || null,
@@ -123,6 +125,7 @@ export async function GET(
       subid: subId,
       subid2: subId2,
       subid3: subId3,
+      subid4: subId4,
       campaign,
       clickId,
     },

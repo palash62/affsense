@@ -32,6 +32,7 @@ type AppliedFilters = {
   subId: string;
   subId2: string;
   subId3: string;
+  subId4: string;
   from: string;
   to: string;
 };
@@ -42,6 +43,7 @@ const emptyFilters: AppliedFilters = {
   subId: "",
   subId2: "",
   subId3: "",
+  subId4: "",
   from: "",
   to: "",
 };
@@ -87,7 +89,7 @@ export function PublisherMarketplaceReport() {
     params.set("limit", String(PAGE_SIZE));
     if (applied.q.trim()) params.set("q", applied.q.trim());
     if (applied.productId.trim()) params.set("productId", applied.productId.trim());
-    for (const key of ["subId", "subId2", "subId3"] as const) {
+    for (const key of ["subId", "subId2", "subId3", "subId4"] as const) {
       if (applied[key].trim()) params.set(key, applied[key].trim());
     }
     if (applied.from.trim()) params.set("from", new Date(applied.from).toISOString());
@@ -236,7 +238,7 @@ export function PublisherMarketplaceReport() {
                 className="bg-white"
               />
             </div>
-            {(["subId", "subId2", "subId3"] as const).map((key, index) => (
+            {(["subId", "subId2", "subId3", "subId4"] as const).map((key, index) => (
               <div key={key} className="w-full space-y-1 sm:w-36">
                 <label className="text-xs font-medium text-muted-foreground">Sub ID {index + 1}</label>
                 <Input
@@ -317,18 +319,19 @@ export function PublisherMarketplaceReport() {
                   <TableHead>Sub ID 1</TableHead>
                   <TableHead>Sub ID 2</TableHead>
                   <TableHead>Sub ID 3</TableHead>
+                  <TableHead>Sub ID 4</TableHead>
                   <TableHead>Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={10} className="py-12 text-center text-sm text-muted-foreground">
+                    <TableCell colSpan={11} className="py-12 text-center text-sm text-muted-foreground">
                       Loading orders…
                     </TableCell>
                   </TableRow>
                 ) : orderItems.length === 0 ? (
-                  <EmptyRow colSpan={10} label="No orders found" />
+                  <EmptyRow colSpan={11} label="No orders found" />
                 ) : (
                   orderItems.map((row) => (
                     <TableRow key={row.id} className="hover:bg-sky-50/40">
@@ -352,6 +355,7 @@ export function PublisherMarketplaceReport() {
                       <TableCell className="font-mono text-xs">{cellValue(row.subId)}</TableCell>
                       <TableCell className="font-mono text-xs">{cellValue(row.subId2)}</TableCell>
                       <TableCell className="font-mono text-xs">{cellValue(row.subId3)}</TableCell>
+                      <TableCell className="font-mono text-xs">{cellValue(row.subId4)}</TableCell>
                       <TableCell>{cellValue(row.webhookStatus)}</TableCell>
                     </TableRow>
                   ))
@@ -386,18 +390,19 @@ export function PublisherMarketplaceReport() {
                   <TableHead>Sub ID 1</TableHead>
                   <TableHead>Sub ID 2</TableHead>
                   <TableHead>Sub ID 3</TableHead>
+                  <TableHead>Sub ID 4</TableHead>
                   <TableHead>Campaign</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={11} className="py-12 text-center text-sm text-muted-foreground">
+                    <TableCell colSpan={12} className="py-12 text-center text-sm text-muted-foreground">
                       Loading clicks…
                     </TableCell>
                   </TableRow>
                 ) : clickItems.length === 0 ? (
-                  <EmptyRow colSpan={11} label="No clicks found" />
+                  <EmptyRow colSpan={12} label="No clicks found" />
                 ) : (
                   clickItems.map((row) => (
                     <TableRow key={row.id} className="hover:bg-sky-50/40">
@@ -424,6 +429,7 @@ export function PublisherMarketplaceReport() {
                       <TableCell className="font-mono text-xs">{cellValue(row.subId)}</TableCell>
                       <TableCell className="font-mono text-xs">{cellValue(row.subId2)}</TableCell>
                       <TableCell className="font-mono text-xs">{cellValue(row.subId3)}</TableCell>
+                      <TableCell className="font-mono text-xs">{cellValue(row.subId4)}</TableCell>
                       <TableCell>{cellValue(row.campaign)}</TableCell>
                     </TableRow>
                   ))

@@ -249,6 +249,7 @@ export async function dispatchCpaConversionPostbacks(input: {
   subId?: string | null;
   subId2?: string | null;
   subId3?: string | null;
+  subId4?: string | null;
 }) {
   const macroContext: PostbackMacroContext = {
     clickId: input.clickId,
@@ -261,6 +262,7 @@ export async function dispatchCpaConversionPostbacks(input: {
     sub1: input.subId,
     sub2: input.subId2,
     sub3: input.subId3,
+    sub4: input.subId4,
   };
 
   const network = await getCpaNetworkPostbackConfig();

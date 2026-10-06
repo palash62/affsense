@@ -10,6 +10,7 @@ export type ResolvedCpaClickAttribution = {
   subId: string | null;
   subId2: string | null;
   subId3: string | null;
+  subId4: string | null;
 };
 
 /** Resolve attribution only from a matching CpaOfferClick for this offer. */
@@ -26,6 +27,7 @@ export function resolveCpaClickAttribution(input: {
         subId: string | null;
         subId2?: string | null;
         subId3?: string | null;
+        subId4?: string | null;
       }
     | null;
 }): ResolvedCpaClickAttribution {
@@ -46,6 +48,7 @@ export function resolveCpaClickAttribution(input: {
       subId: input.click.subId,
       subId2: input.click.subId2 ?? null,
       subId3: input.click.subId3 ?? null,
+      subId4: input.click.subId4 ?? null,
     };
   }
 
@@ -59,5 +62,6 @@ export function resolveCpaClickAttribution(input: {
     subId: null,
     subId2: null,
     subId3: null,
+    subId4: null,
   };
 }

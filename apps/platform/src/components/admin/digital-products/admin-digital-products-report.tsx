@@ -61,6 +61,7 @@ type AppliedFilters = {
   subId: string;
   subId2: string;
   subId3: string;
+  subId4: string;
   publisherId: string;
   eventType: string;
   from: string;
@@ -103,6 +104,7 @@ export function AdminDigitalProductsReport({
       subId: "",
       subId2: "",
       subId3: "",
+      subId4: "",
       publisherId: "",
       eventType: "",
       from: defaultFrom,
@@ -127,7 +129,7 @@ export function AdminDigitalProductsReport({
     params.set("page", String(page));
     params.set("limit", tab === "orders" ? "15" : "20");
     if (applied.publisherId.trim()) params.set("publisherId", applied.publisherId.trim());
-    for (const key of ["subId", "subId2", "subId3"] as const) {
+    for (const key of ["subId", "subId2", "subId3", "subId4"] as const) {
       if (applied[key].trim()) params.set(key, applied[key].trim());
     }
     if (applied.from.trim()) {
@@ -372,7 +374,7 @@ export function AdminDigitalProductsReport({
                 </div>
               </>
             )}
-            {(["subId", "subId2", "subId3"] as const).map((key, index) => (
+            {(["subId", "subId2", "subId3", "subId4"] as const).map((key, index) => (
               <div key={key} className="space-y-1 xl:col-span-2">
                 <label className="text-xs font-medium text-muted-foreground">Sub ID {index + 1}</label>
                 <Input
@@ -511,19 +513,20 @@ export function AdminDigitalProductsReport({
                   <TableHead>Sub ID 1</TableHead>
                   <TableHead>Sub ID 2</TableHead>
                   <TableHead>Sub ID 3</TableHead>
+                  <TableHead>Sub ID 4</TableHead>
                   <TableHead>Campaign</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={12} className="py-12 text-center text-sm text-muted-foreground">
+                    <TableCell colSpan={13} className="py-12 text-center text-sm text-muted-foreground">
                       Loading clicks…
                     </TableCell>
                   </TableRow>
                 ) : clickItems.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={12} className="py-12 text-center text-sm text-muted-foreground">
+                    <TableCell colSpan={13} className="py-12 text-center text-sm text-muted-foreground">
                       No clicks found
                     </TableCell>
                   </TableRow>
@@ -563,6 +566,7 @@ export function AdminDigitalProductsReport({
                       <TableCell className="font-mono text-xs">{cellValue(row.subId)}</TableCell>
                       <TableCell className="font-mono text-xs">{cellValue(row.subId2)}</TableCell>
                       <TableCell className="font-mono text-xs">{cellValue(row.subId3)}</TableCell>
+                      <TableCell className="font-mono text-xs">{cellValue(row.subId4)}</TableCell>
                       <TableCell>{cellValue(row.campaign)}</TableCell>
                     </TableRow>
                   ))

@@ -12,6 +12,7 @@ export type DigitalProductAffiliateUrlExtras = {
   subid?: string;
   subid2?: string;
   subid3?: string;
+  subid4?: string;
   campaign?: string;
   clickId?: string;
 };
@@ -20,19 +21,34 @@ export type TrackingSubIds = {
   sub1: string | null;
   sub2: string | null;
   sub3: string | null;
+  sub4: string | null;
 };
 
-/** Read `sub1`/`sub2`/`sub3` from a tracking link; legacy `sub_id` is an alias for `sub1`. */
+/** Read `sub1`..`sub4` from a tracking link; legacy `sub_id` is an alias for `sub1`. */
 export function readSubIds(searchParams: URLSearchParams): TrackingSubIds {
   const read = (key: string) => searchParams.get(key)?.trim() || null;
   return {
     sub1: read("sub1") ?? read("sub_id"),
     sub2: read("sub2"),
     sub3: read("sub3"),
+    sub4: read("sub4"),
   };
 }
 
-export type DigitalProductTrackingParams = {
+/** Optional Sub ID 2-4 on publisher share links (Sub ID 1 is written as `sub_id`). */
+export type ExtraSubIdParams = {
+  subId2?: string;
+  subId3?: string;
+  subId4?: string;
+};
+
+function setExtraSubIds(url: URL, params?: ExtraSubIdParams) {
+  if (params?.subId2) url.searchParams.set("sub2", params.subId2);
+  if (params?.subId3) url.searchParams.set("sub3", params.subId3);
+  if (params?.subId4) url.searchParams.set("sub4", params.subId4);
+}
+
+export type DigitalProductTrackingParams = ExtraSubIdParams & {
   publisherId?: string;
   src?: string;
   subId?: string;
@@ -74,6 +90,7 @@ export function buildDigitalProductDestinationUrl(
     ["subid", extras.subid],
     ["subid2", extras.subid2],
     ["subid3", extras.subid3],
+    ["subid4", extras.subid4],
     ["campaign", extras.campaign],
     [DIGITAL_PRODUCT_CLICK_PARAM, extras.clickId],
   ];
@@ -110,6 +127,7 @@ export function buildDigitalProductTrackingUrl(
   if (params?.publisherId) url.searchParams.set("pub_id", params.publisherId);
   if (params?.src) url.searchParams.set("src", params.src);
   if (params?.subId) url.searchParams.set("sub_id", params.subId);
+  setExtraSubIds(url, params);
   if (params?.campaign) url.searchParams.set("campaign", params.campaign);
   if (params?.pageId) url.searchParams.set("page", params.pageId);
   return url.toString();
@@ -202,7 +220,7 @@ export function buildCpaOfferPostbackUrl(
   return `${trackingBaseUrl ?? getTrackingUrl()}/pbtr/${encodeURIComponent(postbackToken)}?click_id={click_id}&payout={payout}`;
 }
 
-export type CpaOfferTrackingParams = {
+export type CpaOfferTrackingParams = ExtraSubIdParams & {
   advertiserId?: string;
   publisherId?: string;
   src?: string;
@@ -221,6 +239,7 @@ export function buildCpaOfferTrackingUrl(
   if (params?.publisherId) url.searchParams.set("pub_id", params.publisherId);
   if (params?.src) url.searchParams.set("src", params.src);
   if (params?.subId) url.searchParams.set("sub_id", params.subId);
+  setExtraSubIds(url, params);
   if (params?.leadId) url.searchParams.set("lead_id", params.leadId);
   return url.toString();
 }

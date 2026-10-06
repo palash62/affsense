@@ -1,21 +1,24 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildCpaOfferTrackingUrl,
   buildDigitalProductDestinationUrl,
   buildDigitalProductTrackingUrl,
   readSubIds,
 } from "@cpl/shared";
 
 describe("readSubIds", () => {
-  it("reads sub1/sub2/sub3 and treats sub_id as an alias for sub1", () => {
-    expect(readSubIds(new URLSearchParams("sub1=a&sub2=b&sub3=c"))).toEqual({
+  it("reads sub1-sub4 and treats sub_id as an alias for sub1", () => {
+    expect(readSubIds(new URLSearchParams("sub1=a&sub2=b&sub3=c&sub4=d"))).toEqual({
       sub1: "a",
       sub2: "b",
       sub3: "c",
+      sub4: "d",
     });
     expect(readSubIds(new URLSearchParams("sub_id=legacy"))).toEqual({
       sub1: "legacy",
       sub2: null,
       sub3: null,
+      sub4: null,
     });
     expect(readSubIds(new URLSearchParams("sub1=new&sub_id=legacy")).sub1).toBe("new");
   });
@@ -38,6 +41,20 @@ describe("buildDigitalProductTrackingUrl", () => {
     expect(url).toContain("src=youtube");
     expect(url).toContain("sub_id=video1");
     expect(url).toContain("campaign=spring_promo");
+  });
+
+  it("writes Sub ID 2-4 as sub2/sub3/sub4", () => {
+    const url = new URL(
+      buildDigitalProductTrackingUrl(
+        "prod1",
+        { publisherId: "pub-9", subId: "a", subId2: "b", subId3: "c", subId4: "d" },
+        "https://track.leadtb.com",
+      ),
+    );
+    expect(url.searchParams.get("sub_id")).toBe("a");
+    expect(url.searchParams.get("sub2")).toBe("b");
+    expect(url.searchParams.get("sub3")).toBe("c");
+    expect(url.searchParams.get("sub4")).toBe("d");
   });
 
   it("encodes product id in the path", () => {
@@ -92,16 +109,34 @@ describe("buildDigitalProductDestinationUrl", () => {
     expect(url).toContain("aff_click=cmclick123");
   });
 
-  it("appends subid2 and subid3 when present", () => {
+  it("appends subid2, subid3 and subid4 when present", () => {
     const url = buildDigitalProductDestinationUrl(
       "https://vendor.example/sales",
       "affsense_id",
       "AFF100003",
-      { subid: "fb", subid2: "adset1", subid3: "creative9" },
+      { subid: "fb", subid2: "adset1", subid3: "creative9", subid4: "geo_us" },
     );
     expect(url).toContain("subid=fb");
     expect(url).toContain("subid2=adset1");
     expect(url).toContain("subid3=creative9");
+    expect(url).toContain("subid4=geo_us");
+  });
+});
+
+describe("buildCpaOfferTrackingUrl", () => {
+  it("writes Sub ID 1-4 and leaves empty ones out", () => {
+    const url = new URL(
+      buildCpaOfferTrackingUrl(
+        "offer1",
+        { publisherId: "AFF1", subId: "a", subId3: "c", subId4: "d" },
+        "https://track.leadtb.com",
+      ),
+    );
+    expect(url.pathname).toBe("/cpa/offer1");
+    expect(url.searchParams.get("sub_id")).toBe("a");
+    expect(url.searchParams.has("sub2")).toBe(false);
+    expect(url.searchParams.get("sub3")).toBe("c");
+    expect(url.searchParams.get("sub4")).toBe("d");
   });
 
   it("returns null when sales page or publisher is missing", () => {

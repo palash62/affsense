@@ -35,6 +35,7 @@ export async function GET(
     subId: subIds.sub1?.slice(0, 191) || null,
     subId2: subIds.sub2?.slice(0, 191) || null,
     subId3: subIds.sub3?.slice(0, 191) || null,
+    subId4: subIds.sub4?.slice(0, 191) || null,
   };
   const src = requestUrl.searchParams.get("src")?.trim() || null;
   const leadIdParam = requestUrl.searchParams.get("lead_id")?.trim() || null;
@@ -133,6 +134,7 @@ export async function GET(
     }
     if (subIds.sub2) target.searchParams.set("sub2", subIds.sub2);
     if (subIds.sub3) target.searchParams.set("sub3", subIds.sub3);
+    if (subIds.sub4) target.searchParams.set("sub4", subIds.sub4);
     if (src) target.searchParams.set("src", src);
 
     destination = target.toString();

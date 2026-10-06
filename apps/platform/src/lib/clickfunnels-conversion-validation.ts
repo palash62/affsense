@@ -40,6 +40,7 @@ export type StoredSubscriptionAttribution = {
   subId: string | null;
   subId2: string | null;
   subId3: string | null;
+  subId4: string | null;
   src: string | null;
   affiliateRef: string | null;
   originalOrderId: string | null;
@@ -51,6 +52,7 @@ export type LifetimeReferrer = {
   subId: string | null;
   subId2: string | null;
   subId3: string | null;
+  subId4: string | null;
   src: string | null;
   affiliateRef: string | null;
 };
@@ -83,6 +85,7 @@ export type ConversionValidationResult = {
   subId: string | null;
   subId2: string | null;
   subId3: string | null;
+  subId4: string | null;
   src: string | null;
   isRecurring: boolean;
   /** Idempotency key; set only for PROCESSED events. */
@@ -197,6 +200,7 @@ async function validateWithDeps(
     subId: null,
     subId2: null,
     subId3: null,
+    subId4: null,
     src: null,
     isRecurring: false,
     externalEventKey: null,
@@ -272,6 +276,7 @@ async function validateWithDeps(
       subId: subscription.subId,
       subId2: subscription.subId2,
       subId3: subscription.subId3,
+      subId4: subscription.subId4,
       src: subscription.src,
       externalEventKey: buildExternalEventKey({ identifiers, isRecurring, productKey, at }),
     };
@@ -322,6 +327,7 @@ async function validateWithDeps(
     subId: attribution.subId,
     subId2: attribution.subId2,
     subId3: attribution.subId3,
+    subId4: attribution.subId4,
     src: attribution.src,
     externalEventKey: buildExternalEventKey({ identifiers, isRecurring: false, productKey, at }),
     storeSubscription: Boolean(identifiers.subscriptionKey) && !subscription && !identifiers.isRefund,
@@ -372,6 +378,7 @@ export function createPrismaConversionDeps(ctx: {
           subId: true,
           subId2: true,
           subId3: true,
+          subId4: true,
           src: true,
           affiliateRef: true,
           originalOrderId: true,
@@ -419,6 +426,7 @@ export function createPrismaConversionDeps(ctx: {
           subId: true,
           subId2: true,
           subId3: true,
+          subId4: true,
           src: true,
           affiliateRef: true,
         },

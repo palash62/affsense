@@ -264,6 +264,7 @@ export function AdvertiserCpaOffersReport() {
               <TableHead>Sub ID 1</TableHead>
               <TableHead>Sub ID 2</TableHead>
               <TableHead>Sub ID 3</TableHead>
+              <TableHead>Sub ID 4</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Earnings</TableHead>
             </TableRow>
@@ -271,13 +272,13 @@ export function AdvertiserCpaOffersReport() {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={12} className="py-12 text-center text-sm text-muted-foreground">
+                <TableCell colSpan={13} className="py-12 text-center text-sm text-muted-foreground">
                   Loading conversions…
                 </TableCell>
               </TableRow>
             ) : items.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={12} className="py-12 text-center">
+                <TableCell colSpan={13} className="py-12 text-center">
                   <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-50 text-violet-600">
                     <Activity className="h-5 w-5" />
                   </div>
@@ -353,6 +354,12 @@ export function AdvertiserCpaOffersReport() {
                     title={row.subId3 ?? undefined}
                   >
                     {cellValue(row.subId3)}
+                  </TableCell>
+                  <TableCell
+                    className="max-w-[8rem] truncate font-mono text-xs text-muted-foreground"
+                    title={row.subId4 ?? undefined}
+                  >
+                    {cellValue(row.subId4)}
                   </TableCell>
                   <TableCell className="whitespace-nowrap">
                     {row.status === "A" ? (

@@ -244,7 +244,13 @@ describe("digital product affiliate report tracking join", () => {
       payloadSubId: null,
       payloadSrc: "Affiliate Marketing Mastery",
     });
-    expect(resolved).toEqual({ subId: "profile", source: "facebook" });
+    expect(resolved).toEqual({
+      subId: "profile",
+      subId2: null,
+      subId3: null,
+      subId4: null,
+      source: "facebook",
+    });
   });
 
   it("prefers stored webhook attribution over historical click and payload", () => {
@@ -256,7 +262,13 @@ describe("digital product affiliate report tracking join", () => {
       payloadSubId: "payload-sub",
       payloadSrc: "utm",
     });
-    expect(resolved).toEqual({ subId: "stored-sub", source: "email" });
+    expect(resolved).toEqual({
+      subId: "stored-sub",
+      subId2: null,
+      subId3: null,
+      subId4: null,
+      source: "email",
+    });
   });
 
   it("joins click and conversion on publisher+product+subId without source", () => {

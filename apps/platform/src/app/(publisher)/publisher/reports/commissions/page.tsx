@@ -32,6 +32,7 @@ interface PageProps {
     subId?: string;
     subId2?: string;
     subId3?: string;
+    subId4?: string;
     status?: string;
     q?: string;
     page?: string;
@@ -64,6 +65,7 @@ export default async function PublisherCommissionsReportPage({ searchParams }: P
     subId: params.subId,
     subId2: params.subId2,
     subId3: params.subId3,
+    subId4: params.subId4,
     status: params.status,
     q: params.q,
     page,
@@ -148,6 +150,7 @@ export default async function PublisherCommissionsReportPage({ searchParams }: P
             subIds={filterOptions.subIds}
             subIds2={filterOptions.subIds2}
             subIds3={filterOptions.subIds3}
+            subIds4={filterOptions.subIds4}
             defaultFrom={defaultFrom}
             defaultTo={defaultTo}
           />

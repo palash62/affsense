@@ -37,6 +37,9 @@ export const PUBLISHER_CPA_POSTBACK_MACROS = [
   { macro: "{date}", description: "Date" },
   { macro: "{sub_id}", description: "Sub ID from ?sub_id=" },
   { macro: "{sub1}", description: "Same as {sub_id}" },
+  { macro: "{sub2}", description: "Sub ID 2" },
+  { macro: "{sub3}", description: "Sub ID 3" },
+  { macro: "{sub4}", description: "Sub ID 4" },
 ] as const;
 
 export const PUBLISHER_DIGITAL_PRODUCT_POSTBACK_MACROS = [
@@ -50,6 +53,9 @@ export const PUBLISHER_DIGITAL_PRODUCT_POSTBACK_MACROS = [
   { macro: "{date}", description: "Date" },
   { macro: "{sub_id}", description: "Sub ID from order payload" },
   { macro: "{sub1}", description: "Same as {sub_id}" },
+  { macro: "{sub2}", description: "Sub ID 2" },
+  { macro: "{sub3}", description: "Sub ID 3" },
+  { macro: "{sub4}", description: "Sub ID 4" },
 ] as const;
 
 export type PostbackMacroContext = {

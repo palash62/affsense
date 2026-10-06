@@ -118,6 +118,7 @@ export type LandingTrackingParams = {
   subId: string | null;
   subId2: string | null;
   subId3: string | null;
+  subId4: string | null;
   source: string | null;
 };
 
@@ -136,7 +137,7 @@ export function extractLandingTrackingParams(
     urls.find((url) => hasAffiliate(url) && extractParamFromUrl(url, DIGITAL_PRODUCT_CLICK_PARAM)) ??
     urls.find(hasAffiliate) ??
     urls.find((url) => extractParamFromUrl(url, DIGITAL_PRODUCT_CLICK_PARAM));
-  if (!visitUrl) return { clickId: null, subId: null, subId2: null, subId3: null, source: null };
+  if (!visitUrl) return { clickId: null, subId: null, subId2: null, subId3: null, subId4: null, source: null };
 
   const read = (key: string) => sanitizeTrackingParam(extractParamFromUrl(visitUrl, key)) || null;
   return {
@@ -144,6 +145,7 @@ export function extractLandingTrackingParams(
     subId: read("subid") ?? read("sub_id") ?? read("sub1"),
     subId2: read("subid2") ?? read("sub2"),
     subId3: read("subid3") ?? read("sub3"),
+    subId4: read("subid4") ?? read("sub4"),
     source: read("source") ?? read("src"),
   };
 }
@@ -172,6 +174,7 @@ export type DigitalProductWebhookAttribution = {
   subId: string | null;
   subId2: string | null;
   subId3: string | null;
+  subId4: string | null;
   src: string | null;
 };
 
@@ -200,6 +203,7 @@ export async function resolveDigitalProductWebhookAttribution(input: {
       subId: null,
       subId2: null,
       subId3: null,
+      subId4: null,
       src: null,
     };
   }
@@ -222,7 +226,7 @@ export async function resolveDigitalProductWebhookAttribution(input: {
         publisherId: fromRef.publisherId,
         ...(productId ? { productId } : {}),
       },
-      select: { id: true, subId: true, subId2: true, subId3: true, src: true },
+      select: { id: true, subId: true, subId2: true, subId3: true, subId4: true, src: true },
     });
     if (exact) {
       return {
@@ -231,6 +235,7 @@ export async function resolveDigitalProductWebhookAttribution(input: {
         subId: exact.subId,
         subId2: exact.subId2,
         subId3: exact.subId3,
+        subId4: exact.subId4,
         src: exact.src,
       };
     }
@@ -240,10 +245,11 @@ export async function resolveDigitalProductWebhookAttribution(input: {
     subId: landing.subId,
     subId2: landing.subId2,
     subId3: landing.subId3,
+    subId4: landing.subId4,
     src: landing.source,
   };
   const hasLandingParams = Boolean(
-    landing.subId || landing.subId2 || landing.subId3 || landing.source,
+    landing.subId || landing.subId2 || landing.subId3 || landing.subId4 || landing.source,
   );
   if (!productId) {
     return { ...base, clickId: null, ...landingTracking };
@@ -261,10 +267,11 @@ export async function resolveDigitalProductWebhookAttribution(input: {
       ...(landing.subId ? { subId: landing.subId } : {}),
       ...(landing.subId2 ? { subId2: landing.subId2 } : {}),
       ...(landing.subId3 ? { subId3: landing.subId3 } : {}),
+      ...(landing.subId4 ? { subId4: landing.subId4 } : {}),
       ...(landing.source ? { src: landing.source } : {}),
     },
     orderBy: { createdAt: "desc" },
-    select: { id: true, subId: true, subId2: true, subId3: true, src: true },
+    select: { id: true, subId: true, subId2: true, subId3: true, subId4: true, src: true },
   });
 
   if (hasLandingParams) {
@@ -277,6 +284,7 @@ export async function resolveDigitalProductWebhookAttribution(input: {
     subId: click?.subId ?? null,
     subId2: click?.subId2 ?? null,
     subId3: click?.subId3 ?? null,
+    subId4: click?.subId4 ?? null,
     src: click?.src ?? null,
   };
 }

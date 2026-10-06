@@ -212,6 +212,7 @@ async function main() {
           subId: result.subId,
           subId2: result.subId2,
           subId3: result.subId3,
+          subId4: result.subId4,
           src: result.src,
           affiliateRef: result.affiliateRef,
           originalOrderId: result.identifiers.orderId,

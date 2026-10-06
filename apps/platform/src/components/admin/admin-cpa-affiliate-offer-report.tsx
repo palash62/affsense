@@ -63,6 +63,7 @@ type AppliedFilters = {
   subId: string;
   subId2: string;
   subId3: string;
+  subId4: string;
   advertiserId: string;
   publisherId: string;
   from: string;
@@ -75,6 +76,7 @@ const emptyFilters: AppliedFilters = {
   subId: "",
   subId2: "",
   subId3: "",
+  subId4: "",
   advertiserId: "",
   publisherId: "",
   from: "",
@@ -101,7 +103,7 @@ export function AdminCpaAffiliateOfferReport({
     params.set("limit", String(PAGE_SIZE));
     if (applied.q.trim()) params.set("q", applied.q.trim());
     if (applied.offerId.trim()) params.set("offerId", applied.offerId.trim());
-    for (const key of ["subId", "subId2", "subId3"] as const) {
+    for (const key of ["subId", "subId2", "subId3", "subId4"] as const) {
       if (applied[key].trim()) params.set(key, applied[key].trim());
     }
     if (applied.advertiserId.trim()) params.set("advertiserId", applied.advertiserId.trim());
@@ -305,7 +307,7 @@ export function AdminCpaAffiliateOfferReport({
                 onChange={(e) => setDraft((prev) => ({ ...prev, offerId: e.target.value }))}
               />
             </div>
-            {(["subId", "subId2", "subId3"] as const).map((key, index) => (
+            {(["subId", "subId2", "subId3", "subId4"] as const).map((key, index) => (
               <div key={key} className="space-y-1 xl:col-span-2">
                 <label className="text-xs font-medium text-muted-foreground">Sub ID {index + 1}</label>
                 <Input
@@ -353,6 +355,7 @@ export function AdminCpaAffiliateOfferReport({
               <TableHead>Sub ID 1</TableHead>
               <TableHead>Sub ID 2</TableHead>
               <TableHead>Sub ID 3</TableHead>
+              <TableHead>Sub ID 4</TableHead>
               <TableHead className="text-right">Clicks</TableHead>
               <TableHead className="text-right">Conversions</TableHead>
               <TableHead className="text-right">CR%</TableHead>
@@ -365,13 +368,13 @@ export function AdminCpaAffiliateOfferReport({
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={12} className="py-10 text-center text-muted-foreground">
+                <TableCell colSpan={13} className="py-10 text-center text-muted-foreground">
                   Loading…
                 </TableCell>
               </TableRow>
             ) : items.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={12} className="py-10 text-center text-muted-foreground">
+                <TableCell colSpan={13} className="py-10 text-center text-muted-foreground">
                   <div className="mx-auto flex max-w-sm flex-col items-center gap-2">
                     <Activity className="h-8 w-8 text-muted-foreground/50" />
                     <p>No affiliate × offer rows for these filters.</p>
@@ -380,7 +383,7 @@ export function AdminCpaAffiliateOfferReport({
               </TableRow>
             ) : (
               items.map((row) => (
-                <TableRow key={`${row.publisherId}:${row.offerId}:${row.subId ?? ""}:${row.subId2 ?? ""}:${row.subId3 ?? ""}`}>
+                <TableRow key={`${row.publisherId}:${row.offerId}:${row.subId ?? ""}:${row.subId2 ?? ""}:${row.subId3 ?? ""}:${row.subId4 ?? ""}`}>
                   <TableCell>
                     <div>
                       <p className="font-medium text-foreground">{row.publisherName}</p>
@@ -408,6 +411,9 @@ export function AdminCpaAffiliateOfferReport({
                   </TableCell>
                   <TableCell className="font-mono text-xs text-muted-foreground">
                     {row.subId3 ?? "—"}
+                  </TableCell>
+                  <TableCell className="font-mono text-xs text-muted-foreground">
+                    {row.subId4 ?? "—"}
                   </TableCell>
                   <TableCell className="text-right tabular-nums">{row.clicks}</TableCell>
                   <TableCell className="text-right tabular-nums">{row.conversions}</TableCell>

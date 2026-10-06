@@ -1722,6 +1722,7 @@ model CpaOfferClick {
   subId        String?  @map("sub_id")
   subId2       String?  @map("sub_id_2")
   subId3       String?  @map("sub_id_3")
+  subId4       String?  @map("sub_id_4")
   src          String?
   ip           String?
   userAgent    String?  @map("user_agent") @db.Text
@@ -2080,6 +2081,7 @@ model DigitalProductSubscriptionAttribution {
   subId                  String?        @map("sub_id")
   subId2                 String?        @map("sub_id_2")
   subId3                 String?        @map("sub_id_3")
+  subId4                 String?        @map("sub_id_4")
   src                    String?
   affiliateRef           String?        @map("affiliate_ref")
   originalOrderId        String?        @map("original_order_id")
@@ -2119,6 +2121,7 @@ model DigitalProductClick {
   subId       String?        @map("sub_id")
   subId2      String?        @map("sub_id_2")
   subId3      String?        @map("sub_id_3")
+  subId4      String?        @map("sub_id_4")
   campaign    String?
   ip          String?
   userAgent   String?        @map("user_agent") @db.Text
@@ -2338,6 +2341,7 @@ model WebhookEvent {
   subId        String?            @map("sub_id")
   subId2       String?            @map("sub_id_2")
   subId3       String?            @map("sub_id_3")
+  subId4       String?            @map("sub_id_4")
   src          String?
   payloadJson  Json               @map("payload_json")
   digitalProductId        String?  @map("digital_product_id")
