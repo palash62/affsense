@@ -46,7 +46,7 @@ function StatusBadge({ status }: { status: string | null }) {
   const cls =
     lower === "processed"
       ? "bg-emerald-100 text-emerald-700"
-      : lower === "failed" || lower === "rejected"
+      : lower === "failed" || lower === "rejected" || lower === "refunded"
         ? "bg-red-100 text-red-700"
         : lower === "duplicate"
           ? "bg-amber-100 text-amber-700"
@@ -61,7 +61,9 @@ function StatusBadge({ status }: { status: string | null }) {
           ? "Duplicate"
           : lower === "ignored" || lower === "rejected"
             ? "Rejected"
-            : status;
+            : lower === "refunded"
+              ? "Refunded"
+              : status;
 
   return (
     <span className={cn("inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold", cls)}>

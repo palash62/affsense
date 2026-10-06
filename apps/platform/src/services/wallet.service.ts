@@ -675,6 +675,23 @@ async function postDigitalProductCommission(
       if (existing.length > 0) return false;
 
       if (resolved.isRefund) {
+        const event = await tx.webhookEvent.findUnique({
+          where: { id: eventId },
+          select: { digitalProductId: true, cfOrderId: true, cfProductId: true },
+        });
+        if (event?.digitalProductId && event.cfOrderId) {
+          const alreadyReversed = await tx.$queryRaw<Array<{ id: string }>>`
+            SELECT l.id FROM ledger_entries l
+            JOIN webhook_events e ON e.id = l.reference_id
+            WHERE l.reference_type = ${DIGITAL_PRODUCT_REFUND_REFERENCE}
+              AND e.id <> ${eventId}
+              AND e.publisher_id = ${resolved.publisherId}
+              AND e.digital_product_id = ${event.digitalProductId}
+              AND e.cf_order_id = ${event.cfOrderId}
+              AND e.cf_product_id <=> ${event.cfProductId}
+            LIMIT 1`;
+          if (alreadyReversed.length > 0) return false;
+        }
         await debitWalletAllowNegative(
           tx,
           resolved.publisherId,

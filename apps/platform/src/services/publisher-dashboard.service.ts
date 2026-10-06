@@ -1,7 +1,10 @@
 import { prisma } from "@cpl/database";
 import { listPublishedAnnouncements } from "@/services/announcement.service";
 import { reconcilePublisherLeadCreditsForUser } from "@/services/wallet.service";
-import { getPublisherCommissionReport } from "@/services/digital-product.service";
+import {
+  getPublisherCommissionReport,
+  REFUNDED_WEBHOOK_STATUS,
+} from "@/services/digital-product.service";
 import { getUninvoicedTotalForPublisher } from "@/services/affiliate-invoice.service";
 import { ensureReferralCode, getReferralBalanceSummary } from "@/services/referral.service";
 
@@ -392,10 +395,14 @@ function digitalConversionStatus(row: {
   webhookStatus: string;
   paymentStatus: string | null;
 }): DashboardConversionStatus {
-  if (row.orderType === "Refund" || (row.paymentStatus ?? "").toLowerCase().includes("refund")) {
+  const status = row.webhookStatus.toUpperCase();
+  if (
+    status === REFUNDED_WEBHOOK_STATUS ||
+    row.orderType === "Refund" ||
+    (row.paymentStatus ?? "").toLowerCase().includes("refund")
+  ) {
     return "Refunded";
   }
-  const status = row.webhookStatus.toUpperCase();
   if (status === "PROCESSED") return "Approved";
   if (status === "FAILED") return "Failed";
   return "Pending";

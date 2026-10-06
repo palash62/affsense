@@ -1173,17 +1173,81 @@ export function dedupeDigitalProductWebhookEventsByOrderId<
   return [...best.values()];
 }
 
-type SummaryOrderRow = DigitalCommissionSnapshot & {
+/** Shown instead of PROCESSED on a sale whose order was later refunded. */
+export const REFUNDED_WEBHOOK_STATUS = "REFUNDED";
+
+const REFUND_MATCH_SELECT = {
+  publisherId: true,
+  digitalProductId: true,
+  cfOrderId: true,
+  cfProductId: true,
+} as const;
+
+type RefundMatchRow = {
   publisherId: string | null;
-  eventType: string;
-  payloadJson: unknown;
-  externalEventKey?: string | null;
+  digitalProductId?: string | null;
+  cfOrderId?: string | null;
+  cfProductId?: string | null;
 };
+
+export function isRefundWebhookEvent(row: {
+  eventType: string;
+  externalEventKey?: string | null;
+}): boolean {
+  return (
+    (row.externalEventKey ?? "").startsWith("cf:refund:") || /refund|chargeback/i.test(row.eventType)
+  );
+}
+
+export function refundMatchKey(row: RefundMatchRow): string | null {
+  if (!row.publisherId || !row.digitalProductId || !row.cfOrderId) return null;
+  return [row.publisherId, row.digitalProductId, row.cfOrderId, row.cfProductId ?? ""].join("|");
+}
+
+/** Keys (see refundMatchKey) of orders that have a processed refund. */
+export async function loadRefundedSaleKeys(publisherId?: string): Promise<Set<string>> {
+  const refunds = await prisma.webhookEvent.findMany({
+    where: {
+      status: "PROCESSED",
+      publisherId: publisherId ?? { not: null },
+      OR: [
+        { externalEventKey: { startsWith: "cf:refund:" } },
+        { eventType: { contains: "refund" } },
+        { eventType: { contains: "chargeback" } },
+      ],
+    },
+    select: REFUND_MATCH_SELECT,
+  });
+  const keys = new Set<string>();
+  for (const row of refunds) {
+    const key = refundMatchKey(row);
+    if (key) keys.add(key);
+  }
+  return keys;
+}
+
+export function isRefundedSale(
+  row: RefundMatchRow & { eventType: string; externalEventKey?: string | null },
+  refundedKeys: Set<string>,
+): boolean {
+  if (isRefundWebhookEvent(row)) return false;
+  const key = refundMatchKey(row);
+  return key != null && refundedKeys.has(key);
+}
+
+type SummaryOrderRow = DigitalCommissionSnapshot &
+  RefundMatchRow & {
+    publisherId: string | null;
+    eventType: string;
+    payloadJson: unknown;
+    externalEventKey?: string | null;
+  };
 
 function summarizeDigitalProductOrders(
   rows: Array<SummaryOrderRow & { orderId: string | null }>,
   commissionLookup: Awaited<ReturnType<typeof loadDigitalProductCommissionLookup>>,
   productNameById: Map<string, string>,
+  refundedKeys: Set<string>,
 ): DigitalProductOrderSummary {
   // Collapse by order id so retries don't inflate revenue / affiliate sales.
   // Caller should pass newest-first; first attributed row wins, else first seen.
@@ -1217,6 +1281,7 @@ function summarizeDigitalProductOrders(
     }
     if (ev.publisherId) {
       affiliateSales += 1;
+      if (isRefundWebhookEvent(ev) || isRefundedSale(ev, refundedKeys)) continue;
       const resolved = applyDigitalCommissionSnapshot(
         resolveDigitalProductForEvent(commissionLookup, productNameById, ev, fields.pageSlug, amount),
         ev,
@@ -1248,6 +1313,8 @@ export async function listDigitalProductOrders(opts: {
   limit?: number;
   /** approved = PROCESSED; rejected = admin-rejected or auto-rejected affiliate sales. */
   status?: DigitalProductConversionStatus;
+  /** Leave out refund events; the refunded sale itself is shown as REFUNDED. */
+  hideRefunds?: boolean;
 } = {}) {
   const page = Math.max(1, opts.page ?? 1);
   const limit = Math.min(100, Math.max(1, opts.limit ?? 15));
@@ -1304,9 +1371,10 @@ export async function listDigitalProductOrders(opts: {
     ...DIGITAL_COMMISSION_SNAPSHOT_SELECT,
   } as const;
 
-  const [commissionLookup, productNameById] = await Promise.all([
+  const [commissionLookup, productNameById, refundedKeys] = await Promise.all([
     loadDigitalProductCommissionLookup(),
     loadDigitalProductNameMap(),
+    loadRefundedSaleKeys(opts.publisherId),
   ]);
 
   const mapRow = (
@@ -1337,8 +1405,10 @@ export async function listDigitalProductOrders(opts: {
       resolveDigitalProductForEvent(commissionLookup, productNameById, row, fields.pageSlug, amount),
       row,
     );
+    const isRefund = isRefundWebhookEvent(row);
+    const refunded = row.status === "PROCESSED" && isRefundedSale(row, refundedKeys);
     const commission =
-      amount != null && row.publisherId ? resolved.commission : null;
+      amount == null || !row.publisherId ? null : isRefund || refunded ? 0 : resolved.commission;
     return {
       id: row.id,
       orderId: fields.orderId ?? `CF-${row.id.slice(-6).toUpperCase()}`,
@@ -1357,7 +1427,7 @@ export async function listDigitalProductOrders(opts: {
       affiliateRef: row.affiliateRef,
       ...webhookTrackingValues(row, fields),
       eventType: row.eventType,
-      webhookStatus: row.status,
+      webhookStatus: refunded ? REFUNDED_WEBHOOK_STATUS : row.status,
       paymentStatus: fields.paymentStatus,
       dedupeKey: row.externalEventKey ?? null,
       isRecurring: row.isRecurring,
@@ -1381,11 +1451,11 @@ export async function listDigitalProductOrders(opts: {
     prisma.webhookEvent.findMany({
       where: approvedWhere,
       select: {
-        publisherId: true,
         eventType: true,
         payloadJson: true,
         ...WEBHOOK_TRACKING_SELECT,
         ...DIGITAL_COMMISSION_SNAPSHOT_SELECT,
+        ...REFUND_MATCH_SELECT,
       },
       orderBy: { createdAt: "desc" },
       take: 5000,
@@ -1393,6 +1463,9 @@ export async function listDigitalProductOrders(opts: {
   ]);
 
   let mapped = allRows.map(mapRow);
+  if (opts.hideRefunds) {
+    mapped = mapped.filter((row) => !isRefundWebhookEvent({ eventType: row.eventType, externalEventKey: row.dedupeKey }));
+  }
   if (subIdFilters) {
     mapped = mapped.filter((row) => matchesSubIdFilters(row, subIdFilters));
   }
@@ -1413,6 +1486,7 @@ export async function listDigitalProductOrders(opts: {
     })),
     commissionLookup,
     productNameById,
+    refundedKeys,
   );
 
   const total = dedupedItems.length;
@@ -1496,7 +1570,11 @@ function matchesStatusFilter(
   if (status === "approved") return webhook === "PROCESSED" && row.orderType !== "Refund";
   if (status === "pending") return webhook === "DUPLICATE" || webhook === "IGNORED";
   if (status === "failed") return webhook === "FAILED";
-  if (status === "refunded") return row.orderType === "Refund" || payment.includes("refund");
+  if (status === "refunded") {
+    return (
+      webhook === REFUNDED_WEBHOOK_STATUS || row.orderType === "Refund" || payment.includes("refund")
+    );
+  }
   return true;
 }
 
@@ -1608,12 +1686,14 @@ export async function getPublisherCommissionReport(opts: {
       createdAt: true,
       ...WEBHOOK_TRACKING_SELECT,
       ...DIGITAL_COMMISSION_SNAPSHOT_SELECT,
+      ...REFUND_MATCH_SELECT,
     },
   });
 
-  const [commissionLookup, productNameById] = await Promise.all([
+  const [commissionLookup, productNameById, refundedKeys] = await Promise.all([
     loadDigitalProductCommissionLookup(),
     loadDigitalProductNameMap(),
+    loadRefundedSaleKeys(opts.publisherId),
   ]);
 
   const mapped: PublisherCommissionRow[] = events.map((row) => {
@@ -1628,11 +1708,13 @@ export async function getPublisherCommissionReport(opts: {
       ),
       row,
     );
-    const orderType =
-      resolved.orderType ??
-      classifyCommissionType(fields.orderType ?? row.eventType, row.eventType);
+    const isRefund = isRefundWebhookEvent(row);
+    const orderType: PublisherCommissionType = isRefund
+      ? "Refund"
+      : (resolved.orderType ??
+        classifyCommissionType(fields.orderType ?? row.eventType, row.eventType));
     const amount = fields.amount;
-    const isRefund = orderType === "Refund";
+    const refunded = row.status === "PROCESSED" && isRefundedSale(row, refundedKeys);
     return {
       id: row.id,
       orderId: fields.orderId ?? `CF-${row.id.slice(-6).toUpperCase()}`,
@@ -1642,14 +1724,14 @@ export async function getPublisherCommissionReport(opts: {
       orderType,
       amount,
       commission:
-        amount != null && !isRefund
-          ? resolved.commission
-          : isRefund
-            ? 0
+        isRefund || refunded
+          ? 0
+          : amount != null
+            ? resolved.commission
             : null,
       rate: isRefund ? 0 : resolved.rate,
       ...webhookTrackingValues(row, fields),
-      webhookStatus: row.status,
+      webhookStatus: refunded ? REFUNDED_WEBHOOK_STATUS : row.status,
       paymentStatus: fields.paymentStatus,
     };
   });
@@ -1759,10 +1841,12 @@ export async function getPublisherCommissionReport(opts: {
     .sort((a, b) => b.value - a.value)
     .slice(0, 5);
 
-  const total = filtered.length;
+  // Refund events only feed the refunds KPI; the table shows the sale as REFUNDED.
+  const tableRows = filtered.filter((row) => row.orderType !== "Refund");
+  const total = tableRows.length;
   const totalPages = Math.max(1, Math.ceil(total / limit) || 1);
   const safePage = Math.min(page, totalPages);
-  const items = filtered.slice((safePage - 1) * limit, safePage * limit);
+  const items = tableRows.slice((safePage - 1) * limit, safePage * limit);
 
   const productStats = [...productStatsMap.entries()].map(([name, stats]) => ({ name, ...stats }));
 
@@ -2036,6 +2120,7 @@ export async function listPublisherDigitalProductOrders(
     eventType: opts.eventType,
     page: opts.page,
     limit: opts.limit ?? 20,
+    hideRefunds: true,
   });
 
   const q = opts.q?.trim().toLowerCase();
@@ -2245,6 +2330,7 @@ export async function listDigitalProductAffiliateProductReportForAdmin(
     select: { id: true, name: true },
   });
   const commissionLookup = await loadDigitalProductCommissionLookup();
+  const refundedKeys = await loadRefundedSaleKeys(publisherId || undefined);
   const productById = new Map(catalogProducts.map((p) => [p.id, p]));
   const productNameById = new Map(catalogProducts.map((p) => [p.id, p.name]));
   const productIdByName = new Map<string, string>();
@@ -2280,6 +2366,8 @@ export async function listDigitalProductAffiliateProductReportForAdmin(
         ...WEBHOOK_TRACKING_SELECT,
         createdAt: true,
         ...DIGITAL_COMMISSION_SNAPSHOT_SELECT,
+        cfOrderId: true,
+        cfProductId: true,
       },
       take: 10000,
     }),
@@ -2356,7 +2444,8 @@ export async function listDigitalProductAffiliateProductReportForAdmin(
     if (!ev.publisherId) continue;
     const fields = extractOrderFields(ev.payloadJson);
     const type = (fields.orderType ?? ev.eventType ?? "").toLowerCase();
-    if (type.includes("refund")) continue;
+    if (type.includes("refund") || isRefundWebhookEvent(ev)) continue;
+    if (ev.status === "PROCESSED" && isRefundedSale(ev, refundedKeys)) continue;
 
     const amount = fields.amount ?? 0;
     const resolved = applyDigitalCommissionSnapshot(

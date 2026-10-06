@@ -108,7 +108,9 @@ export function buildExternalEventKey(input: {
   const product = productKey ?? "";
   let key: string | null = null;
   if (ids.isRefund) {
-    const ref = ids.paymentId ?? ids.orderId;
+    // One refund arrives as both an invoice and an order webhook; keying by order
+    // makes the second one a duplicate instead of a second reversal.
+    const ref = ids.orderId ?? ids.paymentId;
     key = ref ? `refund:${ref}:${product}` : null;
   } else if (isRecurring) {
     if (ids.paymentId) key = `renewal:${ids.paymentId}`;

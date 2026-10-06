@@ -232,6 +232,7 @@ function collectProductIdsFromItem(out: string[], item: Record<string, unknown> 
   pushId(out, variant?.product_id);
   pushId(out, item.product_id);
   pushId(out, item.original_product_id);
+  pushId(out, asRecord(item.original_product)?.id);
   const product = asRecord(item.product);
   pushId(out, product?.id);
 }
@@ -260,9 +261,14 @@ export function extractClickFunnelsIdentifiers(payload: unknown): ClickFunnelsId
   for (const source of [root, data, order, purchase]) pushId(productIds, source?.product_id);
 
   const fields = extractOrderFieldsFromClickFunnelsPayload(payload);
+  // Order webhooks (e.g. one_time_order.refunded) send the order itself as `data`;
+  // its `id` is the same order id that invoice webhooks carry in `data.order.id`.
+  const dataIsOrder =
+    !order && data != null && (Array.isArray(data.line_items) || data.order_type != null);
   const orderId =
     pickString(data, ["order_id"]) ??
     (order?.id != null ? String(order.id) : null) ??
+    (dataIsOrder ? pickString(data, ["id"]) : null) ??
     fields.orderId;
 
   const eventType = pickString(root, ["event_type", "event", "eventType", "type"]) ?? "";

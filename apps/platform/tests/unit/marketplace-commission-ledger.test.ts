@@ -14,6 +14,10 @@ const state = vi.hoisted(() => ({
   ledger: [] as LedgerRow[],
   commissions: new Map<string, { publisherId: string; commission: number; isRefund: boolean } | null>(),
   events: [] as Array<{ id: string }>,
+  eventMeta: new Map<
+    string,
+    { digitalProductId: string; cfOrderId: string; cfProductId: string | null }
+  >(),
 }));
 
 const mocks = vi.hoisted(() => {
@@ -35,11 +39,29 @@ const mocks = vi.hoisted(() => {
         state.ledger.push(data);
       }),
     },
+    webhookEvent: {
+      findUnique: vi.fn(async ({ where }: { where: { id: string } }) => state.eventMeta.get(where.id) ?? null),
+    },
     $queryRaw: vi.fn(async (strings: TemplateStringsArray, ...values: unknown[]) => {
       const sql = strings.join("?");
       if (sql.includes("FROM wallets")) {
         calls.push("lock.wallet");
         return [{ id: "wallet-1" }];
+      }
+      if (sql.includes("JOIN webhook_events")) {
+        const [refType, eventId, , productId, orderId, cfProductId] = values;
+        return state.ledger
+          .filter((row) => {
+            if (row.referenceType !== refType || row.referenceId === eventId) return false;
+            const meta = state.eventMeta.get(row.referenceId);
+            return (
+              meta !== undefined &&
+              meta.digitalProductId === productId &&
+              meta.cfOrderId === orderId &&
+              meta.cfProductId === cfProductId
+            );
+          })
+          .map(() => ({ id: "entry" }));
       }
       calls.push("lock.ledger");
       return state.ledger
@@ -96,6 +118,7 @@ describe("marketplace commission ledger posting", () => {
     state.ledger = [];
     state.commissions = new Map();
     state.events = [];
+    state.eventMeta = new Map();
     mocks.calls.length = 0;
   });
 
@@ -166,6 +189,33 @@ describe("marketplace commission ledger posting", () => {
       referenceType: "digital_product_refund",
     });
     expect(state.balance).toBe(-15);
+  });
+
+  it("reverses a refunded order only once when the refund arrives twice", async () => {
+    state.balance = 20;
+    const order = { digitalProductId: "prod-1", cfOrderId: "6986933", cfProductId: "1037588" };
+    state.eventMeta.set("evt-refund-invoice", order);
+    state.eventMeta.set("evt-refund-order", order);
+    state.commissions.set("evt-refund-invoice", { publisherId: "pub-1", commission: 8.4, isRefund: true });
+    state.commissions.set("evt-refund-order", { publisherId: "pub-1", commission: 8.4, isRefund: true });
+
+    expect(await recordDigitalProductCommission("evt-refund-invoice")).toBe(true);
+    expect(await recordDigitalProductCommission("evt-refund-order")).toBe(false);
+
+    expect(state.ledger).toHaveLength(1);
+    expect(state.balance).toBeCloseTo(11.6);
+  });
+
+  it("still reverses a refund of a different product in the same order", async () => {
+    state.balance = 20;
+    state.eventMeta.set("evt-refund-main", { digitalProductId: "prod-1", cfOrderId: "7001", cfProductId: "cf-main" });
+    state.eventMeta.set("evt-refund-upsell", { digitalProductId: "prod-1", cfOrderId: "7001", cfProductId: "cf-upsell" });
+    state.commissions.set("evt-refund-main", { publisherId: "pub-1", commission: 5, isRefund: true });
+    state.commissions.set("evt-refund-upsell", { publisherId: "pub-1", commission: 3, isRefund: true });
+
+    expect(await recordDigitalProductCommission("evt-refund-main")).toBe(true);
+    expect(await recordDigitalProductCommission("evt-refund-upsell")).toBe(true);
+    expect(state.balance).toBe(12);
   });
 
   it("skips sales with no commission", async () => {

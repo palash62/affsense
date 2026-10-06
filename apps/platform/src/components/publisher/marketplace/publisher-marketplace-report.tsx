@@ -73,6 +73,18 @@ function cellValue(value: string | null | undefined) {
   return value;
 }
 
+function ConversionStatus({ status }: { status: string }) {
+  const lower = status.toLowerCase();
+  if (lower === "refunded") {
+    return (
+      <span className="inline-flex rounded-full bg-red-100 px-2 py-0.5 text-[11px] font-semibold text-red-700">
+        Refunded
+      </span>
+    );
+  }
+  return <>{lower === "processed" ? "Approved" : status}</>;
+}
+
 export function PublisherMarketplaceReport() {
   const [tab, setTab] = useState<ReportTab>("orders");
   const [ordersResult, setOrdersResult] = useState<OrdersResult | null>(null);
@@ -356,7 +368,9 @@ export function PublisherMarketplaceReport() {
                       <TableCell className="font-mono text-xs">{cellValue(row.subId2)}</TableCell>
                       <TableCell className="font-mono text-xs">{cellValue(row.subId3)}</TableCell>
                       <TableCell className="font-mono text-xs">{cellValue(row.subId4)}</TableCell>
-                      <TableCell>{cellValue(row.webhookStatus)}</TableCell>
+                      <TableCell>
+                        <ConversionStatus status={row.webhookStatus} />
+                      </TableCell>
                     </TableRow>
                   ))
                 )}

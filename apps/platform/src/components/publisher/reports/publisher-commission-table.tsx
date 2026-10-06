@@ -43,11 +43,17 @@ function StatusBadge({ status }: { status: string }) {
   const cls =
     lower === "processed"
       ? "bg-emerald-100 text-emerald-700"
-      : lower === "failed"
+      : lower === "failed" || lower === "refunded"
         ? "bg-red-100 text-red-700"
         : "bg-amber-100 text-amber-700";
   const label =
-    lower === "processed" ? "Approved" : lower === "failed" ? "Failed" : status;
+    lower === "processed"
+      ? "Approved"
+      : lower === "failed"
+        ? "Failed"
+        : lower === "refunded"
+          ? "Refunded"
+          : status;
   return (
     <span className={cn("inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold", cls)}>
       {label}

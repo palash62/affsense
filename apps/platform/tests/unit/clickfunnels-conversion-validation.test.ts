@@ -514,3 +514,55 @@ describe("buildExternalEventKey", () => {
     ).toBe("cf:order:42:upsell-2");
   });
 });
+
+describe("refund delivered as both an invoice and an order webhook", () => {
+  const invoiceRefund = {
+    event_type: "orders/invoice.refunded",
+    data: {
+      id: 12753136,
+      order_id: 6986933,
+      status: "refunded",
+      total_amount: "12.00",
+      invoice_type: "one_time_sale",
+      line_items: [{ id: 12757317, amount: "12.00", products_variant: { id: 5702460, product_id: PINSTACK_CF_ID } }],
+      order: { id: 6986933, order_number: "#8312", order_type: "one-time-order", total_amount: "12.00" },
+    },
+  };
+  const orderRefund = {
+    event_type: "one_time_order.refunded",
+    data: {
+      id: 6986933,
+      order_number: "#8312",
+      order_type: "one-time-order",
+      billing_status: "refunded",
+      total_amount: "12.00",
+      line_items: [
+        {
+          id: 8878313,
+          order_id: 6986933,
+          products_variant: { id: 5702460, name: "Pinstack" },
+          original_product: { id: PINSTACK_CF_ID, name: "Pinstack" },
+        },
+      ],
+    },
+  };
+
+  it("reads the same order and product from both shapes", () => {
+    const fromInvoice = extractClickFunnelsIdentifiers(invoiceRefund);
+    const fromOrder = extractClickFunnelsIdentifiers(orderRefund);
+    expect(fromInvoice.orderId).toBe("6986933");
+    expect(fromOrder.orderId).toBe("6986933");
+    expect(fromOrder.productIds).toContain(PINSTACK_CF_ID);
+    expect(fromInvoice.isRefund && fromOrder.isRefund).toBe(true);
+  });
+
+  it("gives both deliveries one idempotency key", async () => {
+    const { deps } = makeDeps();
+    const a = await validateClickFunnelsConversion({ body: invoiceRefund, at: AT, deps });
+    const b = await validateClickFunnelsConversion({ body: orderRefund, at: AT, deps });
+    expect(a.status).toBe("PROCESSED");
+    expect(b.status).toBe("PROCESSED");
+    expect(a.externalEventKey).toBe(`cf:refund:6986933:${PINSTACK_CF_ID}`);
+    expect(b.externalEventKey).toBe(a.externalEventKey);
+  });
+});
