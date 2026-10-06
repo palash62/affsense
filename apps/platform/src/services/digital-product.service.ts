@@ -7,6 +7,7 @@ import type {
 import { formatMemberId } from "@cpl/shared";
 import { Errors, AppError } from "@/lib/errors";
 import { parseUserAgent } from "@/lib/publisher-leads";
+import { buildReportOrderBy, sortRows, type SortDir } from "@/lib/report-sort";
 import {
   extractLeadFromClickFunnelsPayload,
   extractOrderFieldsFromClickFunnelsPayload,
@@ -1309,6 +1310,24 @@ function summarizeDigitalProductOrders(
   };
 }
 
+const DIGITAL_ORDER_SORT_ACCESSORS: Record<string, (row: DigitalProductOrderRow) => string | number | null> = {
+  date: (row) => row.date,
+  orderId: (row) => row.orderId,
+  customer: (row) => row.customerName ?? row.customerEmail,
+  product: (row) => row.product,
+  funnel: (row) => row.funnel,
+  type: (row) => row.orderType,
+  amount: (row) => row.amount,
+  commission: (row) => row.commission,
+  affiliate: (row) => row.affiliateName ?? row.affiliateEmail,
+  source: (row) => row.source,
+  subId: (row) => row.subId,
+  subId2: (row) => row.subId2,
+  subId3: (row) => row.subId3,
+  subId4: (row) => row.subId4,
+  status: (row) => row.webhookStatus,
+};
+
 export async function listDigitalProductOrders(opts: {
   from?: Date;
   to?: Date;
@@ -1328,6 +1347,10 @@ export async function listDigitalProductOrders(opts: {
   status?: DigitalProductOrderStatus;
   /** Leave out refund events; the refunded sale itself is shown as REFUNDED. */
   hideRefunds?: boolean;
+  /** Extra row filter applied before paging (publisher search). */
+  rowFilter?: (row: DigitalProductOrderRow) => boolean;
+  sortBy?: string;
+  sortDir?: SortDir;
 } = {}) {
   const page = Math.max(1, opts.page ?? 1);
   const limit = Math.min(100, Math.max(1, opts.limit ?? 15));
@@ -1493,7 +1516,8 @@ export async function listDigitalProductOrders(opts: {
   if (subIdFilters) {
     mapped = mapped.filter((row) => matchesSubIdFilters(row, subIdFilters));
   }
-  const dedupedItems = dedupeDigitalProductOrderRows(mapped);
+  if (opts.rowFilter) mapped = mapped.filter(opts.rowFilter);
+  const dedupedItems = sortRows(dedupeDigitalProductOrderRows(mapped), opts, DIGITAL_ORDER_SORT_ACCESSORS);
 
   const summarySource = subIdFilters
     ? allForSummary.filter((ev) =>
@@ -1671,6 +1695,24 @@ export async function resolveWebhookEventCommissions(
   return result;
 }
 
+const COMMISSION_SORT_ACCESSORS: Record<string, (row: PublisherCommissionRow) => string | number | null> = {
+  date: (row) => row.date,
+  orderId: (row) => row.orderId,
+  product: (row) => row.product,
+  funnel: (row) => row.funnel,
+  type: (row) => row.orderType,
+  amount: (row) => row.amount,
+  commission: (row) => row.commission,
+  rate: (row) => row.rate,
+  source: (row) => row.source,
+  subId: (row) => row.subId,
+  subId2: (row) => row.subId2,
+  subId3: (row) => row.subId3,
+  subId4: (row) => row.subId4,
+  status: (row) => row.webhookStatus,
+  payment: (row) => row.paymentStatus,
+};
+
 export async function getPublisherCommissionReport(opts: {
   publisherId: string;
   from?: Date;
@@ -1686,6 +1728,8 @@ export async function getPublisherCommissionReport(opts: {
   q?: string;
   page?: number;
   limit?: number;
+  sortBy?: string;
+  sortDir?: SortDir;
 }) {
   const page = Math.max(1, opts.page ?? 1);
   const limit = Math.min(100, Math.max(1, opts.limit ?? 10));
@@ -1866,7 +1910,11 @@ export async function getPublisherCommissionReport(opts: {
     .slice(0, 5);
 
   // Refund events only feed the refunds KPI; the table shows the sale as REFUNDED.
-  const tableRows = filtered.filter((row) => row.orderType !== "Refund");
+  const tableRows = sortRows(
+    filtered.filter((row) => row.orderType !== "Refund"),
+    opts,
+    COMMISSION_SORT_ACCESSORS,
+  );
   const total = tableRows.length;
   const totalPages = Math.max(1, Math.ceil(total / limit) || 1);
   const safePage = Math.min(page, totalPages);
@@ -1937,7 +1985,34 @@ export type DigitalProductClickListFilters = {
   limit?: number;
   /** Conversions counted in the affiliate report (default approved). */
   status?: DigitalProductConversionStatus;
+  sortBy?: string;
+  sortDir?: SortDir;
 };
+
+type DigitalClickOrderBy = Prisma.DigitalProductClickOrderByWithRelationInput;
+
+const DIGITAL_CLICK_SORT_COLUMNS: Record<string, (dir: SortDir) => DigitalClickOrderBy> = {
+  date: (dir) => ({ createdAt: dir }),
+  clickId: (dir) => ({ id: dir }),
+  product: (dir) => ({ product: { name: dir } }),
+  affiliate: (dir) => ({ publisher: { name: dir } }),
+  source: (dir) => ({ src: dir }),
+  subId: (dir) => ({ subId: dir }),
+  subId2: (dir) => ({ subId2: dir }),
+  subId3: (dir) => ({ subId3: dir }),
+  subId4: (dir) => ({ subId4: dir }),
+  campaign: (dir) => ({ campaign: dir }),
+  ip: (dir) => ({ ip: dir }),
+};
+
+function digitalClickOrderBy(filters: DigitalProductClickListFilters): DigitalClickOrderBy[] {
+  return buildReportOrderBy<DigitalClickOrderBy>(
+    filters,
+    DIGITAL_CLICK_SORT_COLUMNS,
+    { createdAt: "desc" },
+    (dir) => ({ id: dir }),
+  );
+}
 
 async function digitalProductClickWindowStats(
   where: Prisma.DigitalProductClickWhereInput,
@@ -2065,7 +2140,7 @@ export async function listDigitalProductClicksForAdmin(
         product: { select: { name: true } },
         publisher: { select: { name: true, email: true } },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: digitalClickOrderBy(filters),
       skip: (page - 1) * limit,
       take: limit,
     }),
@@ -2098,7 +2173,7 @@ export async function listDigitalProductClicksForPublisher(
         product: { select: { name: true } },
         publisher: { select: { name: true, email: true } },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: digitalClickOrderBy(filters),
       skip: (page - 1) * limit,
       take: limit,
     }),
@@ -2131,11 +2206,26 @@ export async function listPublisherDigitalProductOrders(
     limit?: number;
     /** Omitted or "all" lists approved and refunded orders together. */
     status?: "all" | "approved" | "refunded";
+    sortBy?: string;
+    sortDir?: SortDir;
   } = {},
 ) {
   const from = opts.from ? new Date(opts.from) : undefined;
   const to = opts.to ? new Date(opts.to) : undefined;
-  const result = await listDigitalProductOrders({
+  const q = opts.q?.trim().toLowerCase();
+  const productId = opts.productId?.trim().toLowerCase();
+  const rowFilter =
+    q || productId
+      ? (row: DigitalProductOrderRow) => {
+          if (productId && !`${row.product ?? ""}`.toLowerCase().includes(productId)) return false;
+          if (q) {
+            const hay = `${row.orderId} ${row.product ?? ""} ${row.funnel ?? ""} ${row.source ?? ""} ${row.subId ?? ""} ${row.subId2 ?? ""} ${row.subId3 ?? ""} ${row.subId4 ?? ""}`.toLowerCase();
+            if (!hay.includes(q)) return false;
+          }
+          return true;
+        }
+      : undefined;
+  return listDigitalProductOrders({
     publisherId,
     status: opts.status === "all" ? undefined : opts.status,
     subId: opts.subId,
@@ -2148,34 +2238,10 @@ export async function listPublisherDigitalProductOrders(
     page: opts.page,
     limit: opts.limit ?? 20,
     hideRefunds: true,
+    rowFilter,
+    sortBy: opts.sortBy,
+    sortDir: opts.sortDir,
   });
-
-  const q = opts.q?.trim().toLowerCase();
-  const productId = opts.productId?.trim().toLowerCase();
-  let items = result.items;
-  if (q || productId) {
-    items = items.filter((row) => {
-      if (productId) {
-        const hay = `${row.product ?? ""}`.toLowerCase();
-        if (!hay.includes(productId)) return false;
-      }
-      if (q) {
-        const hay = `${row.orderId} ${row.product ?? ""} ${row.funnel ?? ""} ${row.source ?? ""} ${row.subId ?? ""} ${row.subId2 ?? ""} ${row.subId3 ?? ""} ${row.subId4 ?? ""}`.toLowerCase();
-        if (!hay.includes(q)) return false;
-      }
-      return true;
-    });
-  }
-
-  return {
-    ...result,
-    items,
-    total: q || productId ? items.length : result.total,
-    totalPages:
-      q || productId
-        ? Math.max(1, Math.ceil(items.length / (opts.limit ?? 20)))
-        : result.totalPages,
-  };
 }
 
 function round2(n: number) {

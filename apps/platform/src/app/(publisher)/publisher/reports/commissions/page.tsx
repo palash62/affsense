@@ -36,6 +36,8 @@ interface PageProps {
     status?: string;
     q?: string;
     page?: string;
+    sortBy?: string;
+    sortDir?: string;
   }>;
 }
 
@@ -70,6 +72,8 @@ export default async function PublisherCommissionsReportPage({ searchParams }: P
     q: params.q,
     page,
     limit: 10,
+    sortBy: params.sortBy,
+    sortDir: params.sortDir === "asc" ? "asc" : params.sortDir === "desc" ? "desc" : undefined,
   });
 
   const {
@@ -155,7 +159,9 @@ export default async function PublisherCommissionsReportPage({ searchParams }: P
             defaultTo={defaultTo}
           />
         </Suspense>
-        <PublisherCommissionTable rows={items} />
+        <Suspense>
+          <PublisherCommissionTable rows={items} />
+        </Suspense>
         <Suspense>
           <AdvertiserLeadsTableFooter
             page={currentPage}

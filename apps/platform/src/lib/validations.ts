@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { reportSortQueryFields } from "@/lib/report-sort";
 import { strongPasswordSchema } from "@/lib/password-policy";
 import { parseYouTubeVideoId } from "@/lib/youtube";
 import { richTextToPlain } from "@/lib/rich-text";
@@ -1459,6 +1460,7 @@ export const cpaConversionListQuerySchema = z.object({
   to: z.string().trim().optional(),
   page: z.coerce.number().int().min(1).optional(),
   limit: z.coerce.number().int().min(1).max(100).optional(),
+  ...reportSortQueryFields,
 });
 
 export const digitalProductClickListQuerySchema = z.object({
@@ -1474,6 +1476,7 @@ export const digitalProductClickListQuerySchema = z.object({
   to: z.string().trim().optional(),
   page: z.coerce.number().int().min(1).optional(),
   limit: z.coerce.number().int().min(1).max(100).optional(),
+  ...reportSortQueryFields,
 });
 
 export const digitalProductOrdersListQuerySchema = z.object({
@@ -1489,6 +1492,7 @@ export const digitalProductOrdersListQuerySchema = z.object({
   status: z.enum(["all", "approved", "refunded"]).optional(),
   page: z.coerce.number().int().min(1).optional(),
   limit: z.coerce.number().int().min(1).max(100).optional(),
+  ...reportSortQueryFields,
 });
 
 export const webhookActivityListQuerySchema = z.object({
@@ -1543,12 +1547,22 @@ export const adminPublisherSmartLinkCampaignsSchema = z.object({
 });
 
 export const publisherPostbackSchema = z.object({
+  name: z.string().trim().max(100).optional().nullable(),
   status: z.enum(["ACTIVE", "INACTIVE"]),
   endpoint: z.string().trim().max(2000),
+});
+
+export const postbackTestFireSchema = z.object({
+  postbackId: z.string().trim().max(64).optional(),
+  endpoint: z.string().trim().max(20_000).optional(),
 });
 
 export const adminPublisherPostbackChannelSchema = z.enum(["DIGITAL_PRODUCT", "CPA"]);
 
 export const adminPublisherPostbackSchema = publisherPostbackSchema.extend({
+  channel: adminPublisherPostbackChannelSchema,
+});
+
+export const adminPostbackTestFireSchema = postbackTestFireSchema.extend({
   channel: adminPublisherPostbackChannelSchema,
 });

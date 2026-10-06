@@ -17,6 +17,8 @@ export async function GET(request: Request) {
         subId4: searchParams.get("subId4") ?? undefined,
         from: searchParams.get("from") ?? undefined,
         to: searchParams.get("to") ?? undefined,
+        sortBy: searchParams.get("sortBy") || undefined,
+        sortDir: searchParams.get("sortDir") || undefined,
         page,
         limit,
       });

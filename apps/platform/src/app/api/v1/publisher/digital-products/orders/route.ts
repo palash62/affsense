@@ -18,6 +18,8 @@ export async function GET(request: Request) {
         eventType: searchParams.get("eventType") ?? undefined,
         from: searchParams.get("from") ?? undefined,
         to: searchParams.get("to") ?? undefined,
+        sortBy: searchParams.get("sortBy") || undefined,
+        sortDir: searchParams.get("sortDir") || undefined,
         status: searchParams.get("status") || undefined,
         page,
         limit,

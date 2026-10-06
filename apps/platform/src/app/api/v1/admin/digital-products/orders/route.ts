@@ -1,6 +1,7 @@
 import { withAuth, parsePagination, ADMIN_PORTAL_ROLES } from "@/lib/api-handler";
 import { errorResponse } from "@/lib/errors";
 import { z } from "zod";
+import { reportSortQueryFields } from "@/lib/report-sort";
 import {
   listDigitalProductOrders,
   parseDigitalProductOrderStatus,
@@ -17,6 +18,7 @@ const adminDigitalProductOrdersQuerySchema = z.object({
   to: z.string().trim().optional(),
   page: z.coerce.number().int().min(1).optional(),
   limit: z.coerce.number().int().min(1).max(100).optional(),
+  ...reportSortQueryFields,
 });
 
 export async function GET(request: Request) {
@@ -33,6 +35,8 @@ export async function GET(request: Request) {
         eventType: searchParams.get("eventType") ?? undefined,
         from: searchParams.get("from") ?? undefined,
         to: searchParams.get("to") ?? undefined,
+        sortBy: searchParams.get("sortBy") || undefined,
+        sortDir: searchParams.get("sortDir") || undefined,
         page,
         limit,
       });
@@ -71,6 +75,8 @@ export async function GET(request: Request) {
         page: parsed.data.page,
         limit: parsed.data.limit ?? 15,
         status: parseDigitalProductOrderStatus(searchParams.get("status")),
+        sortBy: parsed.data.sortBy,
+        sortDir: parsed.data.sortDir,
       });
 
       return Response.json({ data });

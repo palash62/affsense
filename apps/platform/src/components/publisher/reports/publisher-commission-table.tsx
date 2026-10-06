@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ButtonLink } from "@/components/ui/button-link";
+import { SortableTableHead } from "@/components/ui/sortable-table-head";
+import { nextReportSort, setReportSortParams, type ReportSort } from "@/lib/report-sort";
 import type { PublisherCommissionRow } from "@/services/digital-product.service";
 
 function TypeBadge({ type }: { type: string }) {
@@ -78,6 +81,21 @@ function formatUsd(n: number | null) {
 
 export function PublisherCommissionTable({ rows }: { rows: PublisherCommissionRow[] }) {
   const [detail, setDetail] = useState<PublisherCommissionRow | null>(null);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const sortBy = searchParams.get("sortBy");
+  const sortDir = searchParams.get("sortDir");
+  const sort: ReportSort | null = sortBy
+    ? { by: sortBy, dir: sortDir === "asc" ? "asc" : "desc" }
+    : null;
+
+  function onSort(column: string) {
+    const params = new URLSearchParams(searchParams.toString());
+    setReportSortParams(params, nextReportSort(sort, column));
+    params.delete("page");
+    router.push(`${pathname}?${params.toString()}`);
+  }
 
   if (rows.length === 0) {
     return (
@@ -99,21 +117,21 @@ export function PublisherCommissionTable({ rows }: { rows: PublisherCommissionRo
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/60 hover:bg-muted/60">
-              <TableHead className="whitespace-nowrap px-4 py-3 text-xs">Date</TableHead>
-              <TableHead className="whitespace-nowrap px-4 py-3 text-xs">Transaction ID</TableHead>
-              <TableHead className="whitespace-nowrap px-4 py-3 text-xs">Product</TableHead>
-              <TableHead className="whitespace-nowrap px-4 py-3 text-xs">Funnel</TableHead>
-              <TableHead className="whitespace-nowrap px-4 py-3 text-xs">Type</TableHead>
-              <TableHead className="whitespace-nowrap px-4 py-3 text-right text-xs">Sale</TableHead>
-              <TableHead className="whitespace-nowrap px-4 py-3 text-right text-xs">Commission</TableHead>
-              <TableHead className="whitespace-nowrap px-4 py-3 text-xs">Rate</TableHead>
-              <TableHead className="whitespace-nowrap px-4 py-3 text-xs">Source</TableHead>
-              <TableHead className="whitespace-nowrap px-4 py-3 text-xs">Sub ID 1</TableHead>
-              <TableHead className="whitespace-nowrap px-4 py-3 text-xs">Sub ID 2</TableHead>
-              <TableHead className="whitespace-nowrap px-4 py-3 text-xs">Sub ID 3</TableHead>
-              <TableHead className="whitespace-nowrap px-4 py-3 text-xs">Sub ID 4</TableHead>
-              <TableHead className="whitespace-nowrap px-4 py-3 text-xs">Status</TableHead>
-              <TableHead className="whitespace-nowrap px-4 py-3 text-xs">Payment</TableHead>
+              <SortableTableHead label="Date" column="date" sort={sort} onSort={onSort} className="whitespace-nowrap px-4 py-3 text-xs" />
+              <SortableTableHead label="Transaction ID" column="orderId" sort={sort} onSort={onSort} className="whitespace-nowrap px-4 py-3 text-xs" />
+              <SortableTableHead label="Product" column="product" sort={sort} onSort={onSort} className="whitespace-nowrap px-4 py-3 text-xs" />
+              <SortableTableHead label="Funnel" column="funnel" sort={sort} onSort={onSort} className="whitespace-nowrap px-4 py-3 text-xs" />
+              <SortableTableHead label="Type" column="type" sort={sort} onSort={onSort} className="whitespace-nowrap px-4 py-3 text-xs" />
+              <SortableTableHead label="Sale" column="amount" sort={sort} onSort={onSort} align="right" className="whitespace-nowrap px-4 py-3 text-xs" />
+              <SortableTableHead label="Commission" column="commission" sort={sort} onSort={onSort} align="right" className="whitespace-nowrap px-4 py-3 text-xs" />
+              <SortableTableHead label="Rate" column="rate" sort={sort} onSort={onSort} className="whitespace-nowrap px-4 py-3 text-xs" />
+              <SortableTableHead label="Source" column="source" sort={sort} onSort={onSort} className="whitespace-nowrap px-4 py-3 text-xs" />
+              <SortableTableHead label="Sub ID 1" column="subId" sort={sort} onSort={onSort} className="whitespace-nowrap px-4 py-3 text-xs" />
+              <SortableTableHead label="Sub ID 2" column="subId2" sort={sort} onSort={onSort} className="whitespace-nowrap px-4 py-3 text-xs" />
+              <SortableTableHead label="Sub ID 3" column="subId3" sort={sort} onSort={onSort} className="whitespace-nowrap px-4 py-3 text-xs" />
+              <SortableTableHead label="Sub ID 4" column="subId4" sort={sort} onSort={onSort} className="whitespace-nowrap px-4 py-3 text-xs" />
+              <SortableTableHead label="Status" column="status" sort={sort} onSort={onSort} className="whitespace-nowrap px-4 py-3 text-xs" />
+              <SortableTableHead label="Payment" column="payment" sort={sort} onSort={onSort} className="whitespace-nowrap px-4 py-3 text-xs" />
               <TableHead className="px-4 py-3 text-xs">Action</TableHead>
             </TableRow>
           </TableHeader>

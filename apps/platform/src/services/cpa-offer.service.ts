@@ -10,6 +10,7 @@ import { formatMemberId } from "@cpl/shared";
 import { prisma } from "@/lib/prisma";
 import { Errors } from "@/lib/errors";
 import { parseUserAgent } from "@/lib/publisher-leads";
+import { buildReportOrderBy, type SortDir } from "@/lib/report-sort";
 import { getPublisherCpaPlanPayouts } from "@/services/commission-plan.service";
 import {
   cpaOfferDetailsToJson,
@@ -1561,7 +1562,60 @@ export type CpaConversionListFilters = {
   to?: string;
   page?: number;
   limit?: number;
+  sortBy?: string;
+  sortDir?: SortDir;
 };
+
+type ConversionOrderBy = Prisma.CpaOfferConversionOrderByWithRelationInput;
+type ClickOrderBy = Prisma.CpaOfferClickOrderByWithRelationInput;
+
+const CPA_CONVERSION_SORT_COLUMNS: Record<string, (dir: SortDir) => ConversionOrderBy> = {
+  date: (dir) => ({ createdAt: dir }),
+  offer: (dir) => ({ offer: { name: dir } }),
+  clickId: (dir) => ({ clickId: dir }),
+  ip: (dir) => ({ clickRecord: { ip: dir } }),
+  source: (dir) => ({ clickRecord: { src: dir } }),
+  subId: (dir) => ({ clickRecord: { subId: dir } }),
+  subId2: (dir) => ({ clickRecord: { subId2: dir } }),
+  subId3: (dir) => ({ clickRecord: { subId3: dir } }),
+  subId4: (dir) => ({ clickRecord: { subId4: dir } }),
+  payout: (dir) => ({ payout: dir }),
+  revenue: (dir) => ({ offer: { revenue: dir } }),
+  advertiser: (dir) => ({ advertiser: { name: dir } }),
+  affiliate: (dir) => ({ clickRecord: { publisher: { name: dir } } }),
+};
+
+const CPA_CLICK_SORT_COLUMNS: Record<string, (dir: SortDir) => ClickOrderBy> = {
+  date: (dir) => ({ createdAt: dir }),
+  offer: (dir) => ({ offer: { name: dir } }),
+  clickId: (dir) => ({ id: dir }),
+  ip: (dir) => ({ ip: dir }),
+  source: (dir) => ({ src: dir }),
+  subId: (dir) => ({ subId: dir }),
+  subId2: (dir) => ({ subId2: dir }),
+  subId3: (dir) => ({ subId3: dir }),
+  subId4: (dir) => ({ subId4: dir }),
+  advertiser: (dir) => ({ advertiser: { name: dir } }),
+  affiliate: (dir) => ({ publisher: { name: dir } }),
+};
+
+function cpaConversionOrderBy(filters: CpaConversionListFilters): ConversionOrderBy[] {
+  return buildReportOrderBy<ConversionOrderBy>(
+    filters,
+    CPA_CONVERSION_SORT_COLUMNS,
+    { createdAt: "desc" },
+    (dir) => ({ id: dir }),
+  );
+}
+
+function cpaClickOrderBy(filters: CpaConversionListFilters): ClickOrderBy[] {
+  return buildReportOrderBy<ClickOrderBy>(
+    filters,
+    CPA_CLICK_SORT_COLUMNS,
+    { createdAt: "desc" },
+    (dir) => ({ id: dir }),
+  );
+}
 
 /** Exact-match Sub ID 1/2/3 filters on a CpaOfferClick. */
 function cpaSubIdWhere(filters: {
@@ -1741,7 +1795,7 @@ export async function listCpaConversionsForAdmin(
           },
         },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: cpaConversionOrderBy(filters),
       skip: (page - 1) * limit,
       take: limit,
     }),
@@ -1987,7 +2041,7 @@ export async function listCpaConversionsForPublisher(
         advertiser: { select: { name: true } },
         clickRecord: { select: { ip: true, userAgent: true, src: true, ...CPA_SUB_ID_SELECT } },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: cpaConversionOrderBy(filters),
       skip: (page - 1) * limit,
       take: limit,
     }),
@@ -2227,7 +2281,7 @@ export async function listCpaClicksForAdmin(
         publisher: { select: { name: true } },
         conversions: { select: { id: true }, take: 1 },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: cpaClickOrderBy(filters),
       skip: (page - 1) * limit,
       take: limit,
     }),
@@ -2318,7 +2372,7 @@ export async function listCpaClicksForPublisher(
         publisher: { select: { name: true } },
         conversions: { select: { id: true }, take: 1 },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: cpaClickOrderBy(filters),
       skip: (page - 1) * limit,
       take: limit,
     }),

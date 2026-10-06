@@ -139,3 +139,41 @@ describe("refunded marketplace sales", () => {
     expect(approved.items.map((row) => row.id)).toEqual(["other-sale"]);
   });
 });
+
+describe("marketplace report sorting", () => {
+  it("sorts the Report Log by amount in both directions", async () => {
+    const asc = await listPublisherDigitalProductOrders("pub-1", { sortBy: "amount", sortDir: "asc" });
+    expect(asc.items.map((row) => row.id)).toEqual(["sale", "other-sale"]);
+    const desc = await listPublisherDigitalProductOrders("pub-1", { sortBy: "amount", sortDir: "desc" });
+    expect(desc.items.map((row) => row.id)).toEqual(["other-sale", "sale"]);
+  });
+
+  it("sorts admin orders by commission", async () => {
+    const result = await listDigitalProductOrders({
+      publisherId: "pub-1",
+      status: "approved",
+      sortBy: "commission",
+      sortDir: "asc",
+    });
+    expect(result.items.map((row) => row.commission)).toEqual([18.5]);
+    const all = await listDigitalProductOrders({ publisherId: "pub-1", sortBy: "commission", sortDir: "desc" });
+    const commissions = all.items.map((row) => row.commission ?? 0);
+    expect(commissions).toEqual([...commissions].sort((a, b) => b - a));
+  });
+
+  it("filters publisher search before paging so totals stay right", async () => {
+    const all = await listPublisherDigitalProductOrders("pub-1");
+    const orderId = all.items.find((row) => row.id === "other-sale")?.orderId;
+    expect(orderId).toBeTruthy();
+    const result = await listPublisherDigitalProductOrders("pub-1", { q: orderId!, limit: 1 });
+    expect(result.total).toBe(1);
+    expect(result.items.map((row) => row.id)).toEqual(["other-sale"]);
+  });
+
+  it("sorts the commission report table", async () => {
+    const asc = await getPublisherCommissionReport({ publisherId: "pub-1", sortBy: "commission", sortDir: "asc" });
+    expect(asc.items.map((row) => row.id)).toEqual(["sale", "other-sale"]);
+    const desc = await getPublisherCommissionReport({ publisherId: "pub-1", sortBy: "commission", sortDir: "desc" });
+    expect(desc.items.map((row) => row.id)).toEqual(["other-sale", "sale"]);
+  });
+});

@@ -11,7 +11,7 @@ export function PublisherCpaPostbackForm() {
       title="CPA Postback"
       description="Receive a server-to-server callback every time one of your CPA offers converts."
       banner="When a CPA conversion is recorded for your traffic, we send an HTTP GET to your postback URL with macros replaced."
-      tip="Add your tracker postback URL and set status to Active. We fire it once per CPA conversion."
+      tip="Add one or more tracker postback URLs and set them to Active. Every active postback fires once per CPA conversion."
       apiBase="/api/v1/publisher/cpa-offers/postback"
       macros={PUBLISHER_CPA_POSTBACK_MACROS}
       refLabel="Conversion"

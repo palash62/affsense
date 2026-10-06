@@ -1705,7 +1705,6 @@ export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
     cpaPayoutAgg,
     cpaClicks30d,
     digitalConversions30d,
-    digitalPayoutAgg,
     taskRewardsAgg,
     pendingTaskSubmissions,
     pendingCpaRequests,
@@ -1736,13 +1735,6 @@ export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
     prisma.webhookEvent.count({
       where: { status: "PROCESSED", publisherId: { not: null }, createdAt: { gte: since30d } },
     }),
-    prisma.digitalProductPostbackDelivery.aggregate({
-      _sum: { payout: true },
-      where: {
-        status: "SUCCESS",
-        createdAt: { gte: since30d },
-      },
-    }),
     prisma.publisherTaskSubmission.aggregate({
       _sum: { rewardAmount: true },
       where: { status: "APPROVED", createdAt: { gte: since30d } },
@@ -1768,7 +1760,8 @@ export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
     }),
     prisma.digitalProductPostbackDelivery.findMany({
       where: { status: "SUCCESS", createdAt: { gte: since30d } },
-      select: { payout: true, createdAt: true },
+      select: { webhookEventId: true, payout: true, createdAt: true },
+      orderBy: { createdAt: "asc" },
     }),
     prisma.publisherTaskSubmission.findMany({
       where: { status: "APPROVED", createdAt: { gte: since30d } },
@@ -1800,7 +1793,13 @@ export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
   const cpaProfit30d = money(cpaPayout30d);
 
   const offerWallPayout30d = money(Number(offerWallPayoutAgg._sum.payout ?? 0));
-  const digitalPayout30d = money(Number(digitalPayoutAgg._sum.payout ?? 0));
+  // A sale can have one delivery per postback; count each sale once.
+  const digitalSaleRows = [
+    ...new Map(digitalPayoutRows.map((row) => [row.webhookEventId, row] as const)).values(),
+  ];
+  const digitalPayout30d = money(
+    digitalSaleRows.reduce((sum, row) => sum + Number(row.payout ?? 0), 0),
+  );
   const taskRewards30d = money(Number(taskRewardsAgg._sum.rewardAmount ?? 0));
 
   const earningsMap = new Map<string, number>();
@@ -1823,7 +1822,7 @@ export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
 
   for (const row of offerWallConvRows) addEarn(row.createdAt, Number(row.payout));
   for (const row of cpaConvRows) addEarn(row.createdAt, Number(row.payout));
-  for (const row of digitalPayoutRows) addEarn(row.createdAt, Number(row.payout));
+  for (const row of digitalSaleRows) addEarn(row.createdAt, Number(row.payout));
   for (const row of taskRewardRows) addEarn(row.createdAt, Number(row.rewardAmount));
 
   for (const row of cpaClickRows) addClick(row.createdAt);

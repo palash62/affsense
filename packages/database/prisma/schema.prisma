@@ -1866,6 +1866,7 @@ model CpaPostbackDelivery {
   id           String                     @id @default(cuid())
   conversionId String                     @map("conversion_id")
   target       CpaPostbackDeliveryTarget
+  postbackId   String                     @default("") @map("postback_id")
   url          String                     @db.Text
   status       CpaPostbackDeliveryStatus  @default(PENDING)
   httpStatus   Int?                       @map("http_status")
@@ -1875,7 +1876,7 @@ model CpaPostbackDelivery {
   updatedAt    DateTime                   @updatedAt @map("updated_at")
   conversion   CpaOfferConversion         @relation(fields: [conversionId], references: [id], onDelete: Cascade)
 
-  @@unique([conversionId, target])
+  @@unique([conversionId, target, postbackId])
   @@index([conversionId])
   @@index([status, createdAt])
   @@map("cpa_postback_deliveries")
@@ -2266,6 +2267,7 @@ model PublisherPostback {
   id          String                   @id @default(cuid())
   publisherId String                   @map("publisher_id")
   channel     PublisherPostbackChannel @default(CPL)
+  name        String?                  @db.VarChar(100)
   type        GlobalPostbackType       @default(S2S)
   status      GlobalPostbackStatus     @default(INACTIVE)
   endpoint    String                   @db.Text
@@ -2275,7 +2277,7 @@ model PublisherPostback {
   publisher  User                        @relation(fields: [publisherId], references: [id], onDelete: Cascade)
   deliveries PublisherPostbackDelivery[]
 
-  @@unique([publisherId, channel])
+  @@index([publisherId, channel])
   @@index([publisherId])
   @@map("publisher_postbacks")
 }
@@ -2357,7 +2359,7 @@ model WebhookEvent {
   createdAt    DateTime           @default(now()) @map("created_at")
   publisher    User?              @relation("WebhookEventPublisher", fields: [publisherId], references: [id], onDelete: SetNull)
   click        DigitalProductClick? @relation(fields: [clickId], references: [id], onDelete: SetNull)
-  postbackDelivery DigitalProductPostbackDelivery?
+  postbackDeliveries DigitalProductPostbackDelivery[]
 
   @@index([createdAt])
   @@index([status])
@@ -2371,8 +2373,8 @@ model WebhookEvent {
 model DigitalProductPostbackDelivery {
   id             String                    @id @default(cuid())
   publisherId    String                    @map("publisher_id")
-  webhookEventId String                    @unique @map("webhook_event_id")
-  postbackId     String?                   @map("postback_id")
+  webhookEventId String                    @map("webhook_event_id")
+  postbackId     String                    @map("postback_id")
   url            String                    @db.Text
   status         CpaPostbackDeliveryStatus @default(PENDING)
   httpStatus     Int?                      @map("http_status")
@@ -2385,6 +2387,8 @@ model DigitalProductPostbackDelivery {
   publisher    User         @relation(fields: [publisherId], references: [id], onDelete: Cascade)
   webhookEvent WebhookEvent @relation(fields: [webhookEventId], references: [id], onDelete: Cascade)
 
+  @@unique([webhookEventId, postbackId])
+  @@index([webhookEventId])
   @@index([publisherId, createdAt])
   @@index([status, createdAt])
   @@map("digital_product_postback_deliveries")

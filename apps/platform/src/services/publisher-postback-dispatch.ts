@@ -222,13 +222,9 @@ export async function dispatchPublisherPostback(leadId: string): Promise<Publish
     };
   }
 
-  const postback = await prisma.publisherPostback.findUnique({
-    where: {
-      publisherId_channel: {
-        publisherId: lead.publisherId,
-        channel: "CPL",
-      },
-    },
+  const postback = await prisma.publisherPostback.findFirst({
+    where: { publisherId: lead.publisherId, channel: "CPL" },
+    orderBy: { createdAt: "asc" },
   });
   if (!postback || postback.status !== "ACTIVE" || !postback.endpoint.trim()) {
     return null;
@@ -258,18 +254,33 @@ export async function dispatchPublisherPostback(leadId: string): Promise<Publish
 
 export async function firePublisherPostbackTest(input: {
   publisherId: string;
+  /** Saved postback to test; its endpoint is used unless `endpoint` is given. */
+  postbackId?: string;
+  /** Unsaved URL from the form. */
   endpoint?: string;
   channel?: "CPL" | "CPA" | "DIGITAL_PRODUCT";
 }): Promise<PublisherPostbackFireResult> {
   const channel = input.channel ?? "CPL";
-  const saved = await prisma.publisherPostback.findUnique({
-    where: {
-      publisherId_channel: {
-        publisherId: input.publisherId,
-        channel,
-      },
-    },
-  });
+  const saved = input.postbackId
+    ? await prisma.publisherPostback.findFirst({
+        where: { id: input.postbackId, publisherId: input.publisherId, channel },
+      })
+    : input.endpoint?.trim()
+      ? null
+      : await prisma.publisherPostback.findFirst({
+          where: { publisherId: input.publisherId, channel },
+          orderBy: { createdAt: "asc" },
+        });
+  if (input.postbackId && !saved) {
+    return {
+      url: "",
+      ok: false,
+      httpStatus: 0,
+      error: "Postback not found.",
+      skipped: true,
+      reason: "not-found",
+    };
+  }
   const endpoint = (input.endpoint ?? saved?.endpoint ?? "").trim();
   if (!endpoint) {
     return {

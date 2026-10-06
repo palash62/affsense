@@ -23,6 +23,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { SortableTableHead } from "@/components/ui/sortable-table-head";
+import type { ReportSort } from "@/lib/report-sort";
 import type { DigitalProductOrderRow } from "@/services/digital-product.service";
 
 function OrderTypeBadge({ type }: { type: string | null }) {
@@ -124,15 +126,50 @@ function canReject(row: DigitalProductOrderRow) {
   );
 }
 
+function OrdersHead({
+  label,
+  column,
+  sort,
+  onSort,
+  align,
+  className,
+}: {
+  label: string;
+  column: string;
+  sort: ReportSort | null;
+  onSort?: (column: string) => void;
+  align?: "left" | "right";
+  className?: string;
+}) {
+  if (onSort) {
+    return (
+      <SortableTableHead
+        label={label}
+        column={column}
+        sort={sort}
+        onSort={onSort}
+        align={align}
+        className={className}
+      />
+    );
+  }
+  return <TableHead className={cn(align === "right" && "text-right", className)}>{label}</TableHead>;
+}
+
 export function DigitalProductOrdersTable({
   rows,
   showReason = false,
   onRejected,
+  sort = null,
+  onSort,
 }: {
   rows: DigitalProductOrderRow[];
   showReason?: boolean;
   /** Enables the Reject action; called after a successful rejection. */
   onRejected?: () => void;
+  sort?: ReportSort | null;
+  /** Makes the column headers sortable. */
+  onSort?: (column: string) => void;
 }) {
   const [payloadRow, setPayloadRow] = useState<DigitalProductOrderRow | null>(null);
   const [rejectRow, setRejectRow] = useState<DigitalProductOrderRow | null>(null);
@@ -195,21 +232,21 @@ export function DigitalProductOrdersTable({
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/60 hover:bg-muted/60">
-              <TableHead className="whitespace-nowrap px-4 py-3 text-xs">Order ID</TableHead>
-              <TableHead className="whitespace-nowrap px-4 py-3 text-xs">Date</TableHead>
-              <TableHead className="whitespace-nowrap px-4 py-3 text-xs">Customer</TableHead>
-              <TableHead className="whitespace-nowrap px-4 py-3 text-xs">Product</TableHead>
-              <TableHead className="whitespace-nowrap px-4 py-3 text-xs">Funnel</TableHead>
-              <TableHead className="whitespace-nowrap px-4 py-3 text-xs">Type</TableHead>
-              <TableHead className="whitespace-nowrap px-4 py-3 text-right text-xs">Amount</TableHead>
-              <TableHead className="whitespace-nowrap px-4 py-3 text-xs">Affiliate</TableHead>
-              <TableHead className="whitespace-nowrap px-4 py-3 text-right text-xs">Commission</TableHead>
-              <TableHead className="whitespace-nowrap px-4 py-3 text-xs">Source</TableHead>
-              <TableHead className="whitespace-nowrap px-4 py-3 text-xs">Sub ID 1</TableHead>
-              <TableHead className="whitespace-nowrap px-4 py-3 text-xs">Sub ID 2</TableHead>
-              <TableHead className="whitespace-nowrap px-4 py-3 text-xs">Sub ID 3</TableHead>
-              <TableHead className="whitespace-nowrap px-4 py-3 text-xs">Sub ID 4</TableHead>
-              <TableHead className="whitespace-nowrap px-4 py-3 text-xs">Status</TableHead>
+              <OrdersHead label="Order ID" column="orderId" sort={sort} onSort={onSort} className="whitespace-nowrap px-4 py-3 text-xs" />
+              <OrdersHead label="Date" column="date" sort={sort} onSort={onSort} className="whitespace-nowrap px-4 py-3 text-xs" />
+              <OrdersHead label="Customer" column="customer" sort={sort} onSort={onSort} className="whitespace-nowrap px-4 py-3 text-xs" />
+              <OrdersHead label="Product" column="product" sort={sort} onSort={onSort} className="whitespace-nowrap px-4 py-3 text-xs" />
+              <OrdersHead label="Funnel" column="funnel" sort={sort} onSort={onSort} className="whitespace-nowrap px-4 py-3 text-xs" />
+              <OrdersHead label="Type" column="type" sort={sort} onSort={onSort} className="whitespace-nowrap px-4 py-3 text-xs" />
+              <OrdersHead label="Amount" column="amount" sort={sort} onSort={onSort} align="right" className="whitespace-nowrap px-4 py-3 text-xs" />
+              <OrdersHead label="Affiliate" column="affiliate" sort={sort} onSort={onSort} className="whitespace-nowrap px-4 py-3 text-xs" />
+              <OrdersHead label="Commission" column="commission" sort={sort} onSort={onSort} align="right" className="whitespace-nowrap px-4 py-3 text-xs" />
+              <OrdersHead label="Source" column="source" sort={sort} onSort={onSort} className="whitespace-nowrap px-4 py-3 text-xs" />
+              <OrdersHead label="Sub ID 1" column="subId" sort={sort} onSort={onSort} className="whitespace-nowrap px-4 py-3 text-xs" />
+              <OrdersHead label="Sub ID 2" column="subId2" sort={sort} onSort={onSort} className="whitespace-nowrap px-4 py-3 text-xs" />
+              <OrdersHead label="Sub ID 3" column="subId3" sort={sort} onSort={onSort} className="whitespace-nowrap px-4 py-3 text-xs" />
+              <OrdersHead label="Sub ID 4" column="subId4" sort={sort} onSort={onSort} className="whitespace-nowrap px-4 py-3 text-xs" />
+              <OrdersHead label="Status" column="status" sort={sort} onSort={onSort} className="whitespace-nowrap px-4 py-3 text-xs" />
               {showReason ? (
                 <TableHead className="whitespace-nowrap px-4 py-3 text-xs">Reason</TableHead>
               ) : null}

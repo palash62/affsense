@@ -1,14 +1,8 @@
-import { z } from "zod";
 import { withAuth, ADMIN_PORTAL_ROLES } from "@/lib/api-handler";
 import { Errors, errorResponse } from "@/lib/errors";
 import { prisma } from "@/lib/prisma";
-import { adminPublisherPostbackChannelSchema } from "@/lib/validations";
+import { adminPostbackTestFireSchema } from "@/lib/validations";
 import { firePublisherPostbackTest } from "@/services/publisher-postback-dispatch";
-
-const testFireSchema = z.object({
-  channel: adminPublisherPostbackChannelSchema,
-  endpoint: z.string().trim().max(20_000).optional(),
-});
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -16,7 +10,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   return withAuth(async () => {
     try {
       const body = await request.json().catch(() => ({}));
-      const parsed = testFireSchema.safeParse(body);
+      const parsed = adminPostbackTestFireSchema.safeParse(body);
       if (!parsed.success) {
         return Response.json(
           {
@@ -35,6 +29,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
       const result = await firePublisherPostbackTest({
         publisherId: id,
+        postbackId: parsed.data.postbackId || undefined,
         endpoint: parsed.data.endpoint,
         channel: parsed.data.channel,
       });

@@ -65,7 +65,7 @@ async function fireHttpGet(url: string): Promise<{ ok: boolean; status: number; 
 async function recordDelivery(input: {
   publisherId: string;
   webhookEventId: string;
-  postbackId?: string | null;
+  postbackId: string;
   url: string;
   status: "SUCCESS" | "FAILED" | "SKIPPED";
   httpStatus?: number | null;
@@ -74,11 +74,16 @@ async function recordDelivery(input: {
 }) {
   try {
     await prisma.digitalProductPostbackDelivery.upsert({
-      where: { webhookEventId: input.webhookEventId },
+      where: {
+        webhookEventId_postbackId: {
+          webhookEventId: input.webhookEventId,
+          postbackId: input.postbackId,
+        },
+      },
       create: {
         publisherId: input.publisherId,
         webhookEventId: input.webhookEventId,
-        postbackId: input.postbackId ?? null,
+        postbackId: input.postbackId,
         url: input.url.slice(0, URL_TRUNCATE),
         status: input.status,
         httpStatus: input.httpStatus ?? null,
@@ -130,10 +135,13 @@ function buildMacroContext(input: {
   };
 }
 
-/** Fire publisher S2S postback once for a processed digital-product sale. */
+/**
+ * Fire every active publisher S2S postback once for a processed digital-product sale.
+ * Returns null when nothing applies, otherwise one result per active postback.
+ */
 export async function dispatchDigitalProductPublisherPostback(
   webhookEventId: string,
-): Promise<DigitalProductPostbackFireResult | null> {
+): Promise<DigitalProductPostbackFireResult[] | null> {
   const event = await prisma.webhookEvent.findUnique({
     where: { id: webhookEventId },
     select: {
@@ -156,22 +164,73 @@ export async function dispatchDigitalProductPublisherPostback(
   if (!event || event.status !== "PROCESSED" || !event.publisherId) {
     return null;
   }
+  const publisherId = event.publisherId;
 
   const fields = extractOrderFieldsFromClickFunnelsPayload(event.payloadJson);
   const type = (fields.orderType ?? event.eventType ?? "").toLowerCase();
   if (type.includes("refund")) {
-    return {
-      url: "",
-      ok: false,
-      httpStatus: 0,
-      error: "Refund events do not fire publisher postbacks.",
-      skipped: true,
-      reason: "refund",
-    };
+    return [
+      {
+        url: "",
+        ok: false,
+        httpStatus: 0,
+        error: "Refund events do not fire publisher postbacks.",
+        skipped: true,
+        reason: "refund",
+      },
+    ];
   }
 
+  const postbacks = await prisma.publisherPostback.findMany({
+    where: { publisherId, channel: "DIGITAL_PRODUCT", status: "ACTIVE" },
+    orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+  });
+  const active = postbacks.filter((postback) => postback.endpoint.trim());
+  if (active.length === 0) return null;
+
+  const amount = fields.amount ?? 0;
+  const lookup = await loadDigitalProductCommissionLookup();
+  const resolved = applyDigitalCommissionSnapshot(lookup.resolve(fields.pageSlug, amount), event);
+  const payout = resolved.commission ?? Math.round(amount * DIGITAL_PRODUCT_FALLBACK_COMMISSION_RATE * 100) / 100;
+  const context = buildMacroContext({
+    publisherId,
+    webhookEventId: event.id,
+    orderId: fields.orderId,
+    productId: resolved.productId ?? fields.product,
+    payout,
+    source: event.src?.trim() || fields.source,
+    subId: event.subId ?? fields.subId,
+    subId2: event.subId2,
+    subId3: event.subId3,
+    subId4: event.subId4,
+  });
+
+  const results: DigitalProductPostbackFireResult[] = [];
+  for (const postback of active) {
+    try {
+      results.push(await firePostbackOnce(publisherId, event.id, postback, context, payout));
+    } catch (error) {
+      console.error("[digital-product-postback] postback failed", postback.id, error);
+      results.push({
+        url: postback.endpoint,
+        ok: false,
+        httpStatus: 0,
+        error: error instanceof Error ? error.message : "Dispatch failed",
+      });
+    }
+  }
+  return results;
+}
+
+async function firePostbackOnce(
+  publisherId: string,
+  webhookEventId: string,
+  postback: { id: string; endpoint: string },
+  context: PostbackMacroContext,
+  payout: number,
+): Promise<DigitalProductPostbackFireResult> {
   const existing = await prisma.digitalProductPostbackDelivery.findUnique({
-    where: { webhookEventId: event.id },
+    where: { webhookEventId_postbackId: { webhookEventId, postbackId: postback.id } },
   });
   if (existing) {
     return {
@@ -184,35 +243,6 @@ export async function dispatchDigitalProductPublisherPostback(
     };
   }
 
-  const postback = await prisma.publisherPostback.findUnique({
-    where: {
-      publisherId_channel: {
-        publisherId: event.publisherId,
-        channel: "DIGITAL_PRODUCT",
-      },
-    },
-  });
-  if (!postback || postback.status !== "ACTIVE" || !postback.endpoint.trim()) {
-    return null;
-  }
-
-  const amount = fields.amount ?? 0;
-  const lookup = await loadDigitalProductCommissionLookup();
-  const resolved = applyDigitalCommissionSnapshot(lookup.resolve(fields.pageSlug, amount), event);
-  const payout = resolved.commission ?? Math.round(amount * DIGITAL_PRODUCT_FALLBACK_COMMISSION_RATE * 100) / 100;
-  const context = buildMacroContext({
-    publisherId: event.publisherId,
-    webhookEventId: event.id,
-    orderId: fields.orderId,
-    productId: resolved.productId ?? fields.product,
-    payout,
-    source: event.src?.trim() || fields.source,
-    subId: event.subId ?? fields.subId,
-    subId2: event.subId2,
-    subId3: event.subId3,
-    subId4: event.subId4,
-  });
-
   if (!isHttpTemplateUrl(postback.endpoint)) {
     const result: DigitalProductPostbackFireResult = {
       url: postback.endpoint,
@@ -223,8 +253,8 @@ export async function dispatchDigitalProductPublisherPostback(
       reason: "invalid-url",
     };
     await recordDelivery({
-      publisherId: event.publisherId,
-      webhookEventId: event.id,
+      publisherId,
+      webhookEventId,
       postbackId: postback.id,
       url: postback.endpoint,
       status: "SKIPPED",
@@ -237,8 +267,8 @@ export async function dispatchDigitalProductPublisherPostback(
   const url = substitutePostbackMacros(postback.endpoint, context);
   const fired = await fireHttpGet(url);
   await recordDelivery({
-    publisherId: event.publisherId,
-    webhookEventId: event.id,
+    publisherId,
+    webhookEventId,
     postbackId: postback.id,
     url,
     status: fired.ok ? "SUCCESS" : "FAILED",

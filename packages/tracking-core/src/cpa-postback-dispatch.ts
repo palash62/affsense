@@ -49,6 +49,8 @@ export function isPostbackSecurityAuthorized(
 async function recordDelivery(input: {
   conversionId: string;
   target: CpaPostbackDeliveryTarget;
+  /** Publisher postback id; admin and advertiser deliveries use "". */
+  postbackId?: string;
   url: string;
   status: "SUCCESS" | "FAILED" | "SKIPPED";
   httpStatus?: number | null;
@@ -57,14 +59,16 @@ async function recordDelivery(input: {
   try {
     await prisma.cpaPostbackDelivery.upsert({
       where: {
-        conversionId_target: {
+        conversionId_target_postbackId: {
           conversionId: input.conversionId,
           target: input.target,
+          postbackId: input.postbackId ?? "",
         },
       },
       create: {
         conversionId: input.conversionId,
         target: input.target,
+        postbackId: input.postbackId ?? "",
         url: input.url.slice(0, 4000),
         status: input.status,
         httpStatus: input.httpStatus ?? null,
@@ -194,45 +198,49 @@ async function dispatchPublisherGlobal(
   publisherId: string,
   macroContext: PostbackMacroContext,
 ) {
+  let postbacks: { id: string; endpoint: string }[];
   try {
-    const global = await prisma.publisherPostback.findUnique({
-      where: {
-        publisherId_channel: {
-          publisherId,
-          channel: "CPA",
-        },
-      },
-    });
-
-    if (!global || global.status !== "ACTIVE" || !global.endpoint.trim()) {
-      return;
-    }
-
-    const publisherMacros: PostbackMacroContext = {
-      ...macroContext,
-      affId: publisherId,
-      affEid: publisherId,
-      leadId: conversionId,
-    };
-
-    const url = substitutePostbackMacros(global.endpoint, publisherMacros);
-    const result = await fireHttpGet(url);
-    await recordDelivery({
-      conversionId,
-      target: "PUBLISHER",
-      url,
-      status: result.ok ? "SUCCESS" : "FAILED",
-      httpStatus: result.status || null,
-      error: result.error ?? null,
+    postbacks = await prisma.publisherPostback.findMany({
+      where: { publisherId, channel: "CPA", status: "ACTIVE" },
+      orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+      select: { id: true, endpoint: true },
     });
   } catch (error) {
-    await recordDelivery({
-      conversionId,
-      target: "PUBLISHER",
-      url: "",
-      status: "FAILED",
-      error: error instanceof Error ? error.message : "Dispatch failed",
-    });
+    console.error("[cpa-postback] failed to load publisher postbacks", publisherId, error);
+    return;
+  }
+
+  const publisherMacros: PostbackMacroContext = {
+    ...macroContext,
+    affId: publisherId,
+    affEid: publisherId,
+    leadId: conversionId,
+  };
+
+  for (const postback of postbacks) {
+    if (!postback.endpoint.trim()) continue;
+    try {
+      const url = substitutePostbackMacros(postback.endpoint, publisherMacros);
+      const result = await fireHttpGet(url);
+      await recordDelivery({
+        conversionId,
+        target: "PUBLISHER",
+        postbackId: postback.id,
+        url,
+        status: result.ok ? "SUCCESS" : "FAILED",
+        httpStatus: result.status || null,
+        error: result.error ?? null,
+      });
+    } catch (error) {
+      await recordDelivery({
+        conversionId,
+        target: "PUBLISHER",
+        postbackId: postback.id,
+        url: "",
+        status: "FAILED",
+        error: error instanceof Error ? error.message : "Dispatch failed",
+      });
+    }
   }
 }
 

@@ -23,6 +23,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { SortableTableHead } from "@/components/ui/sortable-table-head";
+import { nextReportSort, setReportSortParams, type ReportSort } from "@/lib/report-sort";
 import type {
   DigitalProductClickListResult,
   DigitalProductOrderRow,
@@ -109,12 +111,15 @@ export function PublisherMarketplaceReport() {
   const [applied, setApplied] = useState<AppliedFilters>(emptyFilters);
   const [page, setPage] = useState(1);
   const [orderStatus, setOrderStatus] = useState<OrderStatusFilter>("all");
+  const [sorts, setSorts] = useState<Partial<Record<ReportTab, ReportSort>>>({});
+  const activeSort = sorts[tab] ?? null;
 
   const load = useCallback(async () => {
     setLoading(true);
     const params = new URLSearchParams();
     params.set("page", String(page));
     params.set("limit", String(PAGE_SIZE));
+    setReportSortParams(params, activeSort);
     if (tab === "orders" && orderStatus !== "all") params.set("status", orderStatus);
     if (applied.q.trim()) params.set("q", applied.q.trim());
     if (applied.productId.trim()) params.set("productId", applied.productId.trim());
@@ -140,11 +145,16 @@ export function PublisherMarketplaceReport() {
       setOrdersResult(body.data ?? null);
     }
     setLoading(false);
-  }, [page, applied, tab, orderStatus]);
+  }, [page, applied, tab, orderStatus, activeSort]);
 
   useEffect(() => {
     void load();
   }, [load]);
+
+  function onSort(column: string) {
+    setSorts((prev) => ({ ...prev, [tab]: nextReportSort(prev[tab] ?? null, column) }));
+    setPage(1);
+  }
 
   function applyFilters() {
     setPage(1);
@@ -362,17 +372,17 @@ export function PublisherMarketplaceReport() {
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/90 hover:bg-muted/90">
-                  <TableHead>Date</TableHead>
-                  <TableHead>Product</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
-                  <TableHead className="text-right">Commission</TableHead>
-                  <TableHead>Source</TableHead>
-                  <TableHead>Sub ID 1</TableHead>
-                  <TableHead>Sub ID 2</TableHead>
-                  <TableHead>Sub ID 3</TableHead>
-                  <TableHead>Sub ID 4</TableHead>
-                  <TableHead>Status</TableHead>
+                  <SortableTableHead label="Date" column="date" sort={activeSort} onSort={onSort} />
+                  <SortableTableHead label="Product" column="product" sort={activeSort} onSort={onSort} />
+                  <SortableTableHead label="Type" column="type" sort={activeSort} onSort={onSort} />
+                  <SortableTableHead label="Amount" column="amount" sort={activeSort} onSort={onSort} align="right" />
+                  <SortableTableHead label="Commission" column="commission" sort={activeSort} onSort={onSort} align="right" />
+                  <SortableTableHead label="Source" column="source" sort={activeSort} onSort={onSort} />
+                  <SortableTableHead label="Sub ID 1" column="subId" sort={activeSort} onSort={onSort} />
+                  <SortableTableHead label="Sub ID 2" column="subId2" sort={activeSort} onSort={onSort} />
+                  <SortableTableHead label="Sub ID 3" column="subId3" sort={activeSort} onSort={onSort} />
+                  <SortableTableHead label="Sub ID 4" column="subId4" sort={activeSort} onSort={onSort} />
+                  <SortableTableHead label="Status" column="status" sort={activeSort} onSort={onSort} />
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -434,18 +444,18 @@ export function PublisherMarketplaceReport() {
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/90 hover:bg-muted/90">
-                  <TableHead>Date</TableHead>
-                  <TableHead>Product</TableHead>
-                  <TableHead>Click ID</TableHead>
-                  <TableHead>IP</TableHead>
+                  <SortableTableHead label="Date" column="date" sort={activeSort} onSort={onSort} />
+                  <SortableTableHead label="Product" column="product" sort={activeSort} onSort={onSort} />
+                  <SortableTableHead label="Click ID" column="clickId" sort={activeSort} onSort={onSort} />
+                  <SortableTableHead label="IP" column="ip" sort={activeSort} onSort={onSort} />
                   <TableHead>Device</TableHead>
                   <TableHead>Browser</TableHead>
-                  <TableHead>Source</TableHead>
-                  <TableHead>Sub ID 1</TableHead>
-                  <TableHead>Sub ID 2</TableHead>
-                  <TableHead>Sub ID 3</TableHead>
-                  <TableHead>Sub ID 4</TableHead>
-                  <TableHead>Campaign</TableHead>
+                  <SortableTableHead label="Source" column="source" sort={activeSort} onSort={onSort} />
+                  <SortableTableHead label="Sub ID 1" column="subId" sort={activeSort} onSort={onSort} />
+                  <SortableTableHead label="Sub ID 2" column="subId2" sort={activeSort} onSort={onSort} />
+                  <SortableTableHead label="Sub ID 3" column="subId3" sort={activeSort} onSort={onSort} />
+                  <SortableTableHead label="Sub ID 4" column="subId4" sort={activeSort} onSort={onSort} />
+                  <SortableTableHead label="Campaign" column="campaign" sort={activeSort} onSort={onSort} />
                 </TableRow>
               </TableHeader>
               <TableBody>

@@ -4,8 +4,10 @@ import { publisherPostbackSchema } from "@/lib/validations";
 import { buildPublisherPostbackMacroContext } from "@/services/publisher-postback-dispatch";
 import { assertHttpTemplateUrl } from "@/services/publisher-postback.service";
 
-const publisherPostbackFindUnique = vi.fn();
-const publisherPostbackUpsert = vi.fn();
+const publisherPostbackFindFirst = vi.fn();
+const publisherPostbackCreate = vi.fn();
+const publisherPostbackUpdate = vi.fn();
+const publisherPostbackDelete = vi.fn();
 const deliveryFindUnique = vi.fn();
 const deliveryCreate = vi.fn();
 const deliveryUpdate = vi.fn();
@@ -14,8 +16,10 @@ const leadFindUnique = vi.fn();
 vi.mock("@/lib/prisma", () => ({
   prisma: {
     publisherPostback: {
-      findUnique: (...args: unknown[]) => publisherPostbackFindUnique(...args),
-      upsert: (...args: unknown[]) => publisherPostbackUpsert(...args),
+      findFirst: (...args: unknown[]) => publisherPostbackFindFirst(...args),
+      create: (...args: unknown[]) => publisherPostbackCreate(...args),
+      update: (...args: unknown[]) => publisherPostbackUpdate(...args),
+      delete: (...args: unknown[]) => publisherPostbackDelete(...args),
     },
     publisherPostbackDelivery: {
       findUnique: (...args: unknown[]) => deliveryFindUnique(...args),
@@ -122,12 +126,12 @@ describe("dispatchPublisherPostback", () => {
     );
     leadFindUnique.mockResolvedValue(paidLead);
     deliveryFindUnique.mockResolvedValue(null);
-    publisherPostbackFindUnique.mockResolvedValue(activePostback);
+    publisherPostbackFindFirst.mockResolvedValue(activePostback);
     deliveryCreate.mockResolvedValue({ id: "del-1" });
   });
 
   it("skips inactive postbacks", async () => {
-    publisherPostbackFindUnique.mockResolvedValue({
+    publisherPostbackFindFirst.mockResolvedValue({
       ...activePostback,
       status: "INACTIVE",
     });
@@ -245,6 +249,107 @@ describe("upsertPublisherPostback", () => {
     await expect(
       upsertPublisherPostback("pub-1", { status: "ACTIVE", endpoint: "" }),
     ).rejects.toMatchObject({ message: expect.stringContaining("Endpoint is required") });
-    expect(publisherPostbackUpsert).not.toHaveBeenCalled();
+    expect(publisherPostbackCreate).not.toHaveBeenCalled();
+    expect(publisherPostbackUpdate).not.toHaveBeenCalled();
+  });
+
+  it("updates the existing CPL postback instead of creating another", async () => {
+    publisherPostbackFindFirst.mockResolvedValue({ id: "pb-cpl" });
+    publisherPostbackUpdate.mockResolvedValue({
+      id: "pb-cpl",
+      channel: "CPL",
+      name: null,
+      status: "ACTIVE",
+      endpoint: "https://t.example/pb",
+      updatedAt: new Date(),
+    });
+    const { upsertPublisherPostback } = await import("@/services/publisher-postback.service");
+    await upsertPublisherPostback("pub-1", { status: "ACTIVE", endpoint: "https://t.example/pb" });
+    expect(publisherPostbackFindFirst).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { publisherId: "pub-1", channel: "CPL" } }),
+    );
+    expect(publisherPostbackUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: "pb-cpl" } }),
+    );
+    expect(publisherPostbackCreate).not.toHaveBeenCalled();
+  });
+});
+
+describe("multiple channel postbacks", () => {
+  const row = {
+    id: "pb-2",
+    publisherId: "pub-1",
+    channel: "CPA",
+    name: "Voluum",
+    status: "ACTIVE",
+    endpoint: "https://t.example/pb?cid={click_id}",
+    updatedAt: new Date("2026-10-01T00:00:00Z"),
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("creates a named postback for the channel", async () => {
+    publisherPostbackCreate.mockResolvedValue(row);
+    const { createPublisherPostback } = await import("@/services/publisher-postback.service");
+    const result = await createPublisherPostback("pub-1", "CPA", {
+      name: "  Voluum ",
+      status: "ACTIVE",
+      endpoint: " https://t.example/pb?cid={click_id} ",
+    });
+    expect(publisherPostbackCreate).toHaveBeenCalledWith({
+      data: {
+        publisherId: "pub-1",
+        channel: "CPA",
+        type: "S2S",
+        name: "Voluum",
+        status: "ACTIVE",
+        endpoint: "https://t.example/pb?cid={click_id}",
+      },
+    });
+    expect(result).toMatchObject({ id: "pb-2", name: "Voluum", channel: "CPA" });
+  });
+
+  it("rejects an Active postback without a URL", async () => {
+    const { createPublisherPostback } = await import("@/services/publisher-postback.service");
+    await expect(
+      createPublisherPostback("pub-1", "DIGITAL_PRODUCT", { status: "ACTIVE", endpoint: " " }),
+    ).rejects.toMatchObject({ message: expect.stringContaining("Endpoint is required") });
+    expect(publisherPostbackCreate).not.toHaveBeenCalled();
+  });
+
+  it("only updates a postback owned by the publisher", async () => {
+    publisherPostbackFindFirst.mockResolvedValue(null);
+    const { updatePublisherPostback } = await import("@/services/publisher-postback.service");
+    await expect(
+      updatePublisherPostback("pub-other", "pb-2", { status: "INACTIVE", endpoint: "" }, "CPA"),
+    ).rejects.toMatchObject({ message: expect.stringMatching(/not found/i) });
+    expect(publisherPostbackFindFirst).toHaveBeenCalledWith({
+      where: { id: "pb-2", publisherId: "pub-other", channel: "CPA" },
+    });
+    expect(publisherPostbackUpdate).not.toHaveBeenCalled();
+  });
+
+  it("keeps the name when an update leaves it out", async () => {
+    publisherPostbackFindFirst.mockResolvedValue(row);
+    publisherPostbackUpdate.mockResolvedValue({ ...row, status: "INACTIVE" });
+    const { updatePublisherPostback } = await import("@/services/publisher-postback.service");
+    await updatePublisherPostback("pub-1", "pb-2", { status: "INACTIVE", endpoint: row.endpoint });
+    expect(publisherPostbackUpdate).toHaveBeenCalledWith({
+      where: { id: "pb-2" },
+      data: { type: "S2S", status: "INACTIVE", endpoint: row.endpoint, name: "Voluum" },
+    });
+  });
+
+  it("deletes only the publisher's own postback", async () => {
+    publisherPostbackFindFirst.mockResolvedValue(row);
+    publisherPostbackDelete.mockResolvedValue(row);
+    const { deletePublisherPostback } = await import("@/services/publisher-postback.service");
+    await deletePublisherPostback("pub-1", "pb-2", "CPA");
+    expect(publisherPostbackFindFirst).toHaveBeenCalledWith({
+      where: { id: "pb-2", publisherId: "pub-1", channel: "CPA" },
+    });
+    expect(publisherPostbackDelete).toHaveBeenCalledWith({ where: { id: "pb-2" } });
   });
 });

@@ -136,8 +136,13 @@ export function PublisherCommissionFilters({
   );
 
   function clearFilters() {
+    const params = new URLSearchParams({ from: defaultFrom, to: defaultTo });
+    for (const key of ["sortBy", "sortDir"]) {
+      const value = searchParams.get(key);
+      if (value) params.set(key, value);
+    }
     startTransition(() => {
-      router.push(`${pathname}?from=${defaultFrom}&to=${defaultTo}`);
+      router.push(`${pathname}?${params.toString()}`);
     });
   }
 

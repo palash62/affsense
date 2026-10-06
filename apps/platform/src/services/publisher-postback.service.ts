@@ -10,16 +10,27 @@ import { Errors } from "@/lib/errors";
 export type SerializedPublisherPostback = {
   id: string | null;
   channel: PublisherPostbackChannel;
+  name: string | null;
   type: "S2S";
   status: GlobalPostbackStatus;
   endpoint: string;
   updatedAt: string | null;
 };
 
+type PostbackRow = {
+  id: string;
+  channel: PublisherPostbackChannel;
+  name: string | null;
+  status: GlobalPostbackStatus;
+  endpoint: string;
+  updatedAt: Date;
+};
+
 function defaultSerialized(channel: PublisherPostbackChannel): SerializedPublisherPostback {
   return {
     id: null,
     channel,
+    name: null,
     type: "S2S",
     status: "INACTIVE",
     endpoint: "",
@@ -27,25 +38,23 @@ function defaultSerialized(channel: PublisherPostbackChannel): SerializedPublish
   };
 }
 
-function serialize(
-  channel: PublisherPostbackChannel,
-  row: {
-    id: string;
-    channel: PublisherPostbackChannel;
-    status: GlobalPostbackStatus;
-    endpoint: string;
-    updatedAt: Date;
-  } | null,
-): SerializedPublisherPostback {
-  if (!row) return defaultSerialized(channel);
+function serializeRow(row: PostbackRow): SerializedPublisherPostback {
   return {
     id: row.id,
     channel: row.channel,
+    name: row.name,
     type: "S2S",
     status: row.status,
     endpoint: row.endpoint,
     updatedAt: row.updatedAt.toISOString(),
   };
+}
+
+function serialize(
+  channel: PublisherPostbackChannel,
+  row: PostbackRow | null,
+): SerializedPublisherPostback {
+  return row ? serializeRow(row) : defaultSerialized(channel);
 }
 
 export function assertHttpTemplateUrl(endpoint: string) {
@@ -61,14 +70,28 @@ export function assertHttpTemplateUrl(endpoint: string) {
   }
 }
 
+function normalizePostbackInput(input: {
+  status: GlobalPostbackStatus;
+  endpoint: string;
+  name?: string | null;
+}) {
+  const endpoint = input.endpoint.trim();
+  if (input.status === "ACTIVE" && !endpoint) {
+    throw Errors.validation("Endpoint is required when status is Active.");
+  }
+  if (endpoint) assertHttpTemplateUrl(endpoint);
+  const name = input.name?.trim().slice(0, 100) || null;
+  return { status: input.status, endpoint, name };
+}
+
+/** CPL keeps a single postback per publisher; the oldest row wins. */
 export async function getPublisherPostback(
   publisherId: string,
   channel: PublisherPostbackChannel = "CPL",
 ): Promise<SerializedPublisherPostback> {
-  const row = await prisma.publisherPostback.findUnique({
-    where: {
-      publisherId_channel: { publisherId, channel },
-    },
+  const row = await prisma.publisherPostback.findFirst({
+    where: { publisherId, channel },
+    orderBy: { createdAt: "asc" },
   });
   return serialize(channel, row);
 }
@@ -82,36 +105,87 @@ export async function upsertPublisherPostback(
   },
 ): Promise<SerializedPublisherPostback> {
   const channel = input.channel ?? "CPL";
-  const status = input.status;
-  const endpoint = input.endpoint.trim();
+  const { status, endpoint } = normalizePostbackInput(input);
 
-  if (status === "ACTIVE" && !endpoint) {
-    throw Errors.validation("Endpoint is required when status is Active.");
-  }
-
-  if (endpoint) {
-    assertHttpTemplateUrl(endpoint);
-  }
-
-  const row = await prisma.publisherPostback.upsert({
-    where: {
-      publisherId_channel: { publisherId, channel },
-    },
-    create: {
-      publisherId,
-      channel,
-      type: "S2S",
-      status,
-      endpoint,
-    },
-    update: {
-      type: "S2S",
-      status,
-      endpoint,
-    },
+  const existing = await prisma.publisherPostback.findFirst({
+    where: { publisherId, channel },
+    orderBy: { createdAt: "asc" },
+    select: { id: true },
   });
 
+  const row = existing
+    ? await prisma.publisherPostback.update({
+        where: { id: existing.id },
+        data: { type: "S2S", status, endpoint },
+      })
+    : await prisma.publisherPostback.create({
+        data: { publisherId, channel, type: "S2S", status, endpoint },
+      });
+
   return serialize(channel, row);
+}
+
+export async function listPublisherPostbacks(
+  publisherId: string,
+  channel: PublisherPostbackChannel,
+): Promise<SerializedPublisherPostback[]> {
+  const rows = await prisma.publisherPostback.findMany({
+    where: { publisherId, channel },
+    orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+  });
+  return rows.map(serializeRow);
+}
+
+export async function createPublisherPostback(
+  publisherId: string,
+  channel: PublisherPostbackChannel,
+  input: { name?: string | null; status: GlobalPostbackStatus; endpoint: string },
+): Promise<SerializedPublisherPostback> {
+  const data = normalizePostbackInput(input);
+  const row = await prisma.publisherPostback.create({
+    data: { publisherId, channel, type: "S2S", ...data },
+  });
+  return serializeRow(row);
+}
+
+async function findOwnedPostback(
+  publisherId: string,
+  postbackId: string,
+  channel?: PublisherPostbackChannel,
+) {
+  const row = await prisma.publisherPostback.findFirst({
+    where: { id: postbackId, publisherId, ...(channel ? { channel } : {}) },
+  });
+  if (!row) throw Errors.notFound("Postback");
+  return row;
+}
+
+export async function updatePublisherPostback(
+  publisherId: string,
+  postbackId: string,
+  input: { name?: string | null; status: GlobalPostbackStatus; endpoint: string },
+  channel?: PublisherPostbackChannel,
+): Promise<SerializedPublisherPostback> {
+  const existing = await findOwnedPostback(publisherId, postbackId, channel);
+  const data = normalizePostbackInput({
+    ...input,
+    name: input.name === undefined ? existing.name : input.name,
+  });
+  const row = await prisma.publisherPostback.update({
+    where: { id: existing.id },
+    data: { type: "S2S", ...data },
+  });
+  return serializeRow(row);
+}
+
+export async function deletePublisherPostback(
+  publisherId: string,
+  postbackId: string,
+  channel?: PublisherPostbackChannel,
+): Promise<SerializedPublisherPostback> {
+  const existing = await findOwnedPostback(publisherId, postbackId, channel);
+  await prisma.publisherPostback.delete({ where: { id: existing.id } });
+  return serializeRow(existing);
 }
 
 export type PublisherPostbackDeliveryRow = {
@@ -211,6 +285,9 @@ export async function listPublisherPostbackDeliveries(filters: {
 export type ChannelPostbackDeliveryRow = {
   id: string;
   refId: string;
+  postbackId: string | null;
+  /** Postback name, or its URL when unnamed; null once the postback is deleted. */
+  postbackLabel: string | null;
   url: string;
   status: CpaPostbackDeliveryStatus;
   httpStatus: number | null;
@@ -218,6 +295,16 @@ export type ChannelPostbackDeliveryRow = {
   payout: number | null;
   createdAt: string;
 };
+
+async function loadPostbackLabels(ids: string[]): Promise<Map<string, string>> {
+  const unique = [...new Set(ids.filter(Boolean))];
+  if (unique.length === 0) return new Map();
+  const rows = await prisma.publisherPostback.findMany({
+    where: { id: { in: unique } },
+    select: { id: true, name: true, endpoint: true },
+  });
+  return new Map(rows.map((row) => [row.id, row.name?.trim() || row.endpoint]));
+}
 
 export async function listPublisherCpaPostbackDeliveries(
   publisherId: string,
@@ -235,6 +322,7 @@ export async function listPublisherCpaPostbackDeliveries(
     select: {
       id: true,
       conversionId: true,
+      postbackId: true,
       url: true,
       status: true,
       httpStatus: true,
@@ -244,9 +332,12 @@ export async function listPublisherCpaPostbackDeliveries(
     },
   });
 
+  const labels = await loadPostbackLabels(rows.map((row) => row.postbackId));
   return rows.map((row) => ({
     id: row.id,
     refId: row.conversionId,
+    postbackId: row.postbackId || null,
+    postbackLabel: labels.get(row.postbackId) ?? null,
     url: row.url,
     status: row.status,
     httpStatus: row.httpStatus,
@@ -267,6 +358,7 @@ export async function listPublisherDigitalProductPostbackDeliveries(
     select: {
       id: true,
       webhookEventId: true,
+      postbackId: true,
       url: true,
       status: true,
       httpStatus: true,
@@ -276,9 +368,12 @@ export async function listPublisherDigitalProductPostbackDeliveries(
     },
   });
 
+  const labels = await loadPostbackLabels(rows.map((row) => row.postbackId));
   return rows.map((row) => ({
     id: row.id,
     refId: row.webhookEventId,
+    postbackId: row.postbackId === "legacy" ? null : row.postbackId,
+    postbackLabel: labels.get(row.postbackId) ?? null,
     url: row.url,
     status: row.status,
     httpStatus: row.httpStatus,
