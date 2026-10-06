@@ -1,10 +1,9 @@
 import { Prisma, type AffiliateInvoiceStatus, type PayoutMethod } from "@prisma/client";
-import { addDays } from "date-fns";
 import { prisma } from "@/lib/prisma";
 import { AppError, Errors } from "@/lib/errors";
 import { invoiceWeekStart, resolveInvoicePeriod } from "@/lib/affiliate-invoice-period";
 import { loadAffiliateInvoicingConfig } from "@/services/affiliate-invoicing-settings.service";
-import { isWeeklyAutoInvoicing } from "@/lib/affiliate-invoicing-settings";
+import { AFFILIATE_INVOICE_PAYMENT_HOURS } from "@/lib/affiliate-invoicing-settings";
 import {
   debitWalletForPayout,
   getPlatformSettings,
@@ -13,7 +12,7 @@ import {
   reconcilePublisherDigitalCommissionsForUser,
   releaseWalletHold,
 } from "@/services/wallet.service";
-import { notifyAdminAlert, notifyApproved, notifyUserById } from "@/services/notify.service";
+import { notifyApproved, notifyUserById } from "@/services/notify.service";
 import { resolvePublisherPayeeSnapshot } from "@/lib/payout-payment-details";
 
 /** Ledger reference types that represent money leaving the wallet, never earnings. */
@@ -133,7 +132,6 @@ export async function generateAffiliateInvoices(
         createdAtFilter,
         periodEnd,
         minimumAmount,
-        netTermDays: config.netTermDays,
         timezone: config.timezone,
         weeklyCycle: config.weeklyCycle,
         issuedAt: runAt,
@@ -164,86 +162,8 @@ export async function generateAffiliateInvoices(
   return result;
 }
 
-/**
- * Self-service invoice for when weekly invoicing is off: bills every
- * uninvoiced earning up to now. One outstanding invoice at a time.
- */
-export async function requestAffiliateInvoice(
-  publisherId: string,
-  now: Date = new Date(),
-): Promise<{ id: string; number: string; publisherId: string; total: number }> {
-  const config = await loadAffiliateInvoicingConfig();
-  if (isWeeklyAutoInvoicing(config)) {
-    throw new AppError(
-      "WEEKLY_INVOICING_ON",
-      "Your earnings are invoiced automatically every Monday.",
-      422,
-    );
-  }
-
-  const unpaid = await prisma.affiliateInvoice.findFirst({
-    where: { publisherId, status: "UNPAID" },
-    select: { number: true },
-  });
-  if (unpaid) {
-    throw Errors.validation(
-      `Invoice ${unpaid.number} is still awaiting payment. You can request a new invoice once it is paid.`,
-    );
-  }
-
-  await reconcilePublisherDigitalCommissionsForUser(publisherId);
-  // Commissions backfilled just now are stamped after `now`; include them.
-  const billedUntil = new Date(Math.max(now.getTime(), Date.now()) + 1);
-
-  const wallet = await prisma.wallet.findUnique({
-    where: { userId: publisherId },
-    select: { id: true },
-  });
-
-  const platformSettings = await getPlatformSettings();
-  const minimumAmount = platformSettings.minPayoutAmount;
-  const belowMinimum = () =>
-    Errors.validation(
-      `Your uninvoiced earnings are below the minimum of $${round2(minimumAmount).toFixed(2)}.`,
-    );
-  if (!wallet) throw belowMinimum();
-
-  const createdAtFilter: Prisma.DateTimeFilter = { lt: billedUntil };
-  if (config.startAt) createdAtFilter.gte = new Date(config.startAt);
-
-  let invoice: Awaited<ReturnType<typeof createInvoiceForWallet>>;
-  try {
-    invoice = await createInvoiceForWallet(wallet.id, {
-      createdAtFilter,
-      periodEnd: now,
-      minimumAmount,
-      netTermDays: config.netTermDays,
-      timezone: config.timezone,
-      weeklyCycle: false,
-      issuedAt: now,
-      adminId: publisherId,
-    });
-  } catch (error) {
-    if (error instanceof Error && error.message === "INSUFFICIENT_FUNDS") {
-      throw new AppError(
-        "WALLET_INSUFFICIENT_FUNDS",
-        "Your available balance is lower than the earnings to invoice. Please contact support.",
-        422,
-      );
-    }
-    throw error;
-  }
-  if (!invoice) throw belowMinimum();
-
-  void notifyAdminAlert({
-    title: "New affiliate invoice requested",
-    message: `Invoice ${invoice.number} for $${round2(invoice.total).toFixed(2)} was requested by an affiliate.`,
-    actionPath: "/admin/invoices",
-    actionLabel: "View invoice",
-    metadata: { invoiceId: invoice.id, publisherId },
-  });
-
-  return invoice;
+export function affiliateInvoiceDueAt(issuedAt: Date): Date {
+  return new Date(issuedAt.getTime() + AFFILIATE_INVOICE_PAYMENT_HOURS * 3_600_000);
 }
 
 async function createInvoiceForWallet(
@@ -252,7 +172,6 @@ async function createInvoiceForWallet(
     createdAtFilter: Prisma.DateTimeFilter;
     periodEnd: Date;
     minimumAmount: number;
-    netTermDays: number;
     timezone: string;
     weeklyCycle: boolean;
     issuedAt: Date;
@@ -324,7 +243,7 @@ async function createInvoiceForWallet(
         periodEnd: options.periodEnd,
         periodKey: options.periodEnd.toISOString(),
         issuedAt: options.issuedAt,
-        dueAt: addDays(options.issuedAt, options.netTermDays),
+        dueAt: affiliateInvoiceDueAt(options.issuedAt),
         subtotal: total,
         total,
         currency: wallet.currency,
@@ -424,6 +343,12 @@ export async function payAffiliateInvoice(
 
   try {
     await prisma.$transaction(async (tx) => {
+      const profile = await tx.publisherProfile.findUnique({
+        where: { userId: invoice.publisherId },
+        select: payeeProfileSelect,
+      });
+      const payee = resolvePublisherPayeeSnapshot(profile);
+
       await debitWalletForPayout(
         tx,
         invoice.publisherId,
@@ -462,6 +387,8 @@ export async function payAffiliateInvoice(
           paymentReference: reference,
           adminNote: note,
           payoutId: payout.id,
+          payeeMethod: payee?.method ?? null,
+          payeeDetails: payee ? (payee.details as Prisma.InputJsonValue) : Prisma.DbNull,
         },
       });
 
@@ -577,12 +504,39 @@ export type SerializedAffiliateInvoice = {
   lines: { id: string; source: string; entryCount: number; amount: number }[];
 };
 
+const payeeProfileSelect = {
+  defaultPayoutMethod: true,
+  payoutWiseId: true,
+  payoutBankDetails: true,
+} satisfies Prisma.PublisherProfileSelect;
+
 const invoiceInclude = {
-  publisher: { select: { id: true, name: true, email: true } },
+  publisher: {
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      publisherProfile: { select: payeeProfileSelect },
+    },
+  },
   lines: { orderBy: { amount: "desc" } },
 } satisfies Prisma.AffiliateInvoiceInclude;
 
 type InvoiceWithRelations = Prisma.AffiliateInvoiceGetPayload<{ include: typeof invoiceInclude }>;
+
+/**
+ * Unpaid invoices are paid to the affiliate's current default method; paid and
+ * cancelled invoices keep the details stored on them.
+ */
+function resolveInvoicePayee(
+  invoice: Pick<InvoiceWithRelations, "status" | "payeeMethod" | "payeeDetails" | "publisher">,
+): { payeeMethod: PayoutMethod | null; payeeDetails: unknown | null } {
+  if (invoice.status === "UNPAID") {
+    const live = resolvePublisherPayeeSnapshot(invoice.publisher.publisherProfile);
+    return { payeeMethod: live?.method ?? null, payeeDetails: live?.details ?? null };
+  }
+  return { payeeMethod: invoice.payeeMethod, payeeDetails: invoice.payeeDetails ?? null };
+}
 
 function serializeInvoice(
   invoice: InvoiceWithRelations,
@@ -607,8 +561,7 @@ function serializeInvoice(
     paymentReference: invoice.paymentReference,
     adminNote: invoice.adminNote,
     cancelReason: invoice.cancelReason,
-    payeeMethod: invoice.payeeMethod,
-    payeeDetails: invoice.payeeDetails ?? null,
+    ...resolveInvoicePayee(invoice),
     lines: invoice.lines.map((line) => ({
       id: line.id,
       source: line.source,

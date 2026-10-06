@@ -10,7 +10,10 @@ import { loadAffiliateInvoicingConfig } from "@/services/affiliate-invoicing-set
 import { getSession } from "@/lib/session";
 import { formatUserDateTime } from "@/lib/user-timezone";
 import { formatInvoicePeriod } from "@/lib/affiliate-invoice-period";
-import { isWeeklyAutoInvoicing } from "@/lib/affiliate-invoicing-settings";
+import {
+  AFFILIATE_INVOICE_PAYMENT_HOURS,
+  isWeeklyAutoInvoicing,
+} from "@/lib/affiliate-invoicing-settings";
 import { GradientStatCard, NeutralStatCard } from "@/components/admin/gradient-stat-card";
 import { AffiliateInvoiceStatusBadge, formatCurrency } from "@/components/admin/admin-ui";
 import { AdminInvoicesFilters } from "@/components/admin/admin-invoices-filters";
@@ -99,11 +102,12 @@ export default async function AdminInvoicesPage({ searchParams }: PageProps) {
       </div>
 
       <p className="text-sm text-muted-foreground">
-        Weekly Monday-to-Sunday earnings, invoiced on Net-{config.netTermDays} terms once an
-        affiliate reaches {formatCurrency(config.minimumAmount)}.
+        Weekly Monday-to-Sunday earnings, invoiced once an affiliate reaches{" "}
+        {formatCurrency(config.minimumAmount)} and payable within {AFFILIATE_INVOICE_PAYMENT_HOURS}{" "}
+        hours.
         {isWeeklyAutoInvoicing(config)
           ? ""
-          : " Weekly invoicing is off, so affiliates request their own invoices, which appear here."}
+          : " Weekly invoicing is off, so invoices are only created when you click Generate invoices."}
       </p>
 
       <div className="overflow-hidden rounded-[var(--radius-card,0.875rem)] border border-border bg-card shadow-[var(--shadow-card)]">

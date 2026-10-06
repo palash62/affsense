@@ -105,7 +105,7 @@ const SECTIONS: SectionItem[] = [
     label: "Invoicing",
     icon: Receipt,
     title: "Affiliate Invoicing",
-    description: "Weekly Net-7 invoices — payment term, timezone, and cutover date",
+    description: "Weekly invoices paid within 48 hours — timezone and cutover date",
     gradient: "revenue",
   },
   {

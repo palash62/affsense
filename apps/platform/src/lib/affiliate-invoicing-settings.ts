@@ -1,11 +1,14 @@
 export const AFFILIATE_INVOICING_SETTINGS_KEY = "affiliate_invoicing";
 
+/** Affiliate invoices fall due this many hours after they are issued. */
+export const AFFILIATE_INVOICE_PAYMENT_HOURS = 48;
+
 export type AffiliateInvoicingConfig = {
   version: 1;
   enabled: boolean;
   /** Minimum uninvoiced total required before an invoice is generated. */
   minimumAmount: number;
-  /** Net term in days; the due date is issue date + this. */
+  /** Legacy; no longer used. Due date is AFFILIATE_INVOICE_PAYMENT_HOURS after issue. */
   netTermDays: number;
   /** Timezone used to resolve Monday/Sunday week boundaries. */
   timezone: string;

@@ -316,8 +316,8 @@ function PayToSummary({ invoice }: { invoice: SerializedAffiliateInvoice }) {
   if (!invoice.payeeMethod || !invoice.payeeDetails) {
     return (
       <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-        No publisher payout details on this invoice. Ask them to set a default Bank or Wise method
-        in Profile Settings (new invoices will snapshot it).
+        This affiliate has no default Bank or Wise method set. Ask them to add one in Profile
+        Settings.
       </div>
     );
   }
@@ -328,7 +328,7 @@ function PayToSummary({ invoice }: { invoice: SerializedAffiliateInvoice }) {
   return (
     <div className="rounded-lg border border-border bg-card px-3 py-2 text-sm">
       <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-        Pay to (publisher default)
+        {invoice.status === "UNPAID" ? "Pay to (current default)" : "Paid to"}
       </p>
       <p className="mt-1 font-semibold text-foreground">
         {formatPayoutMethodLabel(method)} · {payoutDetailsSummary(method, details)}

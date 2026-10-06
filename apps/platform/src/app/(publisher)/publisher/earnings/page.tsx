@@ -3,12 +3,11 @@ export const dynamic = "force-dynamic";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { formatUserDateTime } from "@/lib/user-timezone";
-import { ArrowDownLeft, Banknote, CheckCircle, Clock, History, Plus, TrendingUp, Wallet } from "lucide-react";
+import { ArrowDownLeft, Banknote, CheckCircle, Clock, History, TrendingUp, Wallet } from "lucide-react";
 import { getSession } from "@/lib/session";
 import { getWalletBalance, listPublisherLedger } from "@/services/wallet.service";
 import { listPayouts } from "@/services/payout.service";
-import { loadAffiliateInvoicingConfig } from "@/services/affiliate-invoicing-settings.service";
-import { isWeeklyAutoInvoicing } from "@/lib/affiliate-invoicing-settings";
+import { AFFILIATE_INVOICE_PAYMENT_HOURS } from "@/lib/affiliate-invoicing-settings";
 import { prisma } from "@/lib/prisma";
 import { PENDING_PAYOUT_STATUSES } from "@/lib/payout-status";
 import { GradientStatCard, NeutralStatCard } from "@/components/admin/gradient-stat-card";
@@ -80,7 +79,7 @@ export default async function PublisherEarningsPage({ searchParams }: PageProps)
   const limit = 10;
   const userId = session.user.id;
 
-  const [balance, approvedLeads, pendingPayouts, invoicingConfig] = await Promise.all([
+  const [balance, approvedLeads, pendingPayouts] = await Promise.all([
     getWalletBalance(userId),
     prisma.lead.count({
       where: { publisherId: userId, status: { in: ["APPROVED", "PAID"] } },
@@ -88,10 +87,7 @@ export default async function PublisherEarningsPage({ searchParams }: PageProps)
     prisma.payout.count({
       where: { publisherId: userId, status: { in: [...PENDING_PAYOUT_STATUSES] } },
     }),
-    loadAffiliateInvoicingConfig(),
   ]);
-
-  const invoicingEnabled = isWeeklyAutoInvoicing(invoicingConfig);
 
   const wallet = balance ?? {
     balance: 0,
@@ -137,10 +133,9 @@ export default async function PublisherEarningsPage({ searchParams }: PageProps)
 
       <PublisherInfoBanner>
         Earnings are credited to your wallet when leads are paid. Approved leads show an estimated
-        payout until payment completes.{" "}
-        {invoicingEnabled
-          ? "Your earnings are invoiced every Monday once they meet the platform minimum."
-          : "Request an invoice once your available balance meets the platform minimum."}
+        payout until payment completes. Your earnings are invoiced automatically every Monday once
+        they meet the platform minimum, and each invoice is paid within{" "}
+        {AFFILIATE_INVOICE_PAYMENT_HOURS} hours.
       </PublisherInfoBanner>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -177,21 +172,15 @@ export default async function PublisherEarningsPage({ searchParams }: PageProps)
       {tab === "earnings" ? (
         <>
           <PageSection
-            title={invoicingEnabled ? "Weekly Payout" : "Invoice Payout"}
-            description={
-              invoicingEnabled
-                ? "Your earnings are invoiced automatically every Monday"
-                : "Request an invoice for your available earnings"
-            }
+            title="Weekly Payout"
+            description={`Invoiced automatically every Monday, paid within ${AFFILIATE_INVOICE_PAYMENT_HOURS} hours`}
             icon={ArrowDownLeft}
             gradient="revenue"
             contentClassName="p-6"
           >
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">
-                  {invoicingEnabled ? "Awaiting invoicing" : "Ready to invoice"}
-                </p>
+                <p className="text-sm text-muted-foreground">Awaiting invoicing</p>
                 <p className="text-2xl font-bold text-foreground">
                   {formatCurrency(wallet.availableBalance)}
                 </p>
@@ -200,7 +189,7 @@ export default async function PublisherEarningsPage({ searchParams }: PageProps)
                 href="/publisher/invoices"
                 className="h-10 rounded-xl bg-[var(--theme-primary)] px-6 hover:opacity-90"
               >
-                {invoicingEnabled ? "View Invoices" : "Request Invoice"}
+                View Invoices
               </ButtonLink>
             </div>
           </PageSection>
@@ -344,16 +333,14 @@ export default async function PublisherEarningsPage({ searchParams }: PageProps)
                 <>
                   <h3 className="text-lg font-semibold text-foreground">No payout history yet</h3>
                   <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-                    {invoicingEnabled
-                      ? `Your earnings are invoiced every Monday and paid on Net-${invoicingConfig.netTermDays} terms.`
-                      : "Once you have available earnings, request an invoice and it will be paid on your payment method."}
+                    Your earnings are invoiced every Monday and paid within{" "}
+                    {AFFILIATE_INVOICE_PAYMENT_HOURS} hours to your default payment method.
                   </p>
                   <ButtonLink
                     href="/publisher/invoices"
                     className="mt-4 h-9 gap-1.5 rounded-lg bg-[var(--theme-primary)] px-4 text-sm hover:opacity-90"
                   >
-                    {invoicingEnabled ? null : <Plus className="h-4 w-4" />}
-                    {invoicingEnabled ? "View Invoices" : "Request Invoice"}
+                    View Invoices
                   </ButtonLink>
                 </>
               )}

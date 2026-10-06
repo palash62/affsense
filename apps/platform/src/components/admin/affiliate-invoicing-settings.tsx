@@ -19,11 +19,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { TIMEZONE_OPTIONS } from "@/lib/user-timezone";
+import { AFFILIATE_INVOICE_PAYMENT_HOURS } from "@/lib/affiliate-invoicing-settings";
 
 type SettingsState = {
   enabled: boolean;
   minimumAmount: number;
-  netTermDays: number;
   timezone: string;
   startAt: string;
   weeklyCycle: boolean;
@@ -65,7 +65,6 @@ export function AffiliateInvoicingSettingsForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           enabled: settings.enabled,
-          netTermDays: settings.netTermDays,
           timezone: settings.timezone,
           startAt: settings.startAt,
           weeklyCycle: settings.weeklyCycle,
@@ -115,8 +114,8 @@ export function AffiliateInvoicingSettingsForm() {
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">
-              On with Weekly cycle on: invoices are raised every Monday. Otherwise affiliates
-              request invoices themselves from their Invoices page.
+              On with Weekly cycle on: invoices are raised automatically every Monday. Otherwise
+              invoices are only created when an admin clicks Generate invoices.
             </p>
           </div>
 
@@ -142,8 +141,8 @@ export function AffiliateInvoicingSettingsForm() {
               </p>
             ) : (
               <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
-                Affiliates request invoices themselves; admins can still Generate invoices, which
-                bills all earnings up to now.
+                No automatic Monday run. Admins can still Generate invoices, which bills all
+                earnings up to now. Affiliates cannot request invoices.
               </p>
             )}
           </div>
@@ -160,19 +159,9 @@ export function AffiliateInvoicingSettingsForm() {
           </div>
 
           <div className="space-y-2">
-            <Label>Payment term (days)</Label>
-            <Input
-              type="number"
-              min={0}
-              value={settings.netTermDays}
-              onChange={(e) =>
-                setSettings({ ...settings, netTermDays: Number(e.target.value) || 0 })
-              }
-              className="max-w-xs"
-            />
-            <p className="text-xs text-muted-foreground">
-              Net-{settings.netTermDays}: invoices fall due {settings.netTermDays} days after
-              they are issued.
+            <Label>Payment term</Label>
+            <p className="rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
+              Invoices fall due {AFFILIATE_INVOICE_PAYMENT_HOURS} hours after they are issued.
             </p>
           </div>
 
