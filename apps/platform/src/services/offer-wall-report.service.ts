@@ -1,6 +1,10 @@
+import type { Prisma } from "@prisma/client";
+import { formatMemberId } from "@cpl/shared";
 import { prisma } from "@/lib/prisma";
 import { AppError, Errors } from "@/lib/errors";
 import { loadOgadsOfferWallConfig } from "@/services/ogads-offer-wall-settings.service";
+
+export type OfferWallReportGroupBy = "offer" | "affiliate";
 
 export type OfferWallReportFilters = {
   q?: string;
@@ -11,6 +15,7 @@ export type OfferWallReportFilters = {
   to?: string;
   page?: number;
   limit?: number;
+  groupBy?: OfferWallReportGroupBy;
 };
 
 export type SerializedOfferWallReportRow = {
@@ -24,8 +29,24 @@ export type SerializedOfferWallReportRow = {
   networkPayout: number;
 };
 
+export type SerializedOfferWallAffiliateRow = {
+  publisherId: string;
+  publisherName: string | null;
+  publisherEmail: string | null;
+  memberId: string | null;
+  /** Distinct offers the affiliate converted on. */
+  offers: number;
+  clicks: number;
+  conversions: number;
+  conversionRate: number;
+  epc: number;
+  payout: number;
+  networkPayout: number;
+};
+
 export type OfferWallReportResult = {
-  items: SerializedOfferWallReportRow[];
+  groupBy: OfferWallReportGroupBy;
+  items: SerializedOfferWallReportRow[] | SerializedOfferWallAffiliateRow[];
   total: number;
   page: number;
   limit: number;
@@ -69,7 +90,7 @@ async function buildOfferWallReport(
   const subId = filters.subId?.trim() || undefined;
   const q = filters.q?.trim().toLowerCase() || undefined;
 
-  const clickWhere = {
+  const clickWhere: Prisma.OfferwallClickWhereInput = {
     ...(publisherId ? { publisherId } : {}),
     ...(offerId ? { offerId } : {}),
     ...(subId ? { subId } : {}),
@@ -85,7 +106,7 @@ async function buildOfferWallReport(
       : {}),
   };
 
-  const conversionWhere = {
+  const conversionWhere: Prisma.OfferwallConversionWhereInput = {
     ...(publisherId ? { publisherId } : {}),
     ...(offerId ? { offerId } : {}),
     ...(subId ? { subId } : {}),
@@ -97,7 +118,133 @@ async function buildOfferWallReport(
       : {}),
   };
 
-  const [clickGroups, conversionGroups, clickTotal, conversionAgg] = await Promise.all([
+  const [clickTotal, conversionAgg] = await Promise.all([
+    prisma.offerwallClick.count({ where: clickWhere }),
+    prisma.offerwallConversion.aggregate({
+      where: conversionWhere,
+      _count: { _all: true },
+      _sum: { payout: true, networkPayout: true },
+    }),
+  ]);
+
+  const conversions = conversionAgg._count._all;
+  const payout = Number(conversionAgg._sum.payout ?? 0);
+  const networkPayout = Number(conversionAgg._sum.networkPayout ?? 0);
+  const clicks = clickTotal;
+  const stats = {
+    clicks,
+    conversions,
+    conversionRate: clicks > 0 ? (conversions / clicks) * 100 : 0,
+    epc: clicks > 0 ? payout / clicks : 0,
+    payout,
+    networkPayout,
+  };
+
+  const groupBy: OfferWallReportGroupBy =
+    filters.groupBy === "affiliate" && !scopePublisherId ? "affiliate" : "offer";
+  const allRows =
+    groupBy === "affiliate"
+      ? await buildAffiliateRows(clickWhere, conversionWhere)
+      : await buildOfferRows(clickWhere, conversionWhere);
+  const total = allRows.length;
+
+  return {
+    groupBy,
+    items: allRows.slice((page - 1) * limit, page * limit) as OfferWallReportResult["items"],
+    total,
+    page,
+    limit,
+    totalPages: Math.max(1, Math.ceil(total / limit)),
+    stats,
+  };
+}
+
+function finalizeRates<T extends { clicks: number; conversions: number; payout: number; conversionRate: number; epc: number }>(row: T) {
+  row.conversionRate = row.clicks > 0 ? (row.conversions / row.clicks) * 100 : 0;
+  row.epc = row.clicks > 0 ? row.payout / row.clicks : 0;
+}
+
+function sortByPerformance<T extends { payout: number; conversions: number; clicks: number }>(rows: T[]) {
+  return rows.sort(
+    (a, b) => b.payout - a.payout || b.conversions - a.conversions || b.clicks - a.clicks,
+  );
+}
+
+async function buildAffiliateRows(
+  clickWhere: Prisma.OfferwallClickWhereInput,
+  conversionWhere: Prisma.OfferwallConversionWhereInput,
+): Promise<SerializedOfferWallAffiliateRow[]> {
+  const [clickGroups, conversionGroups, offerPairs] = await Promise.all([
+    prisma.offerwallClick.groupBy({
+      by: ["publisherId"],
+      where: clickWhere,
+      _count: { _all: true },
+    }),
+    prisma.offerwallConversion.groupBy({
+      by: ["publisherId"],
+      where: conversionWhere,
+      _count: { _all: true },
+      _sum: { payout: true, networkPayout: true },
+    }),
+    prisma.offerwallConversion.groupBy({
+      by: ["publisherId", "offerId"],
+      where: conversionWhere,
+    }),
+  ]);
+
+  const byPublisher = new Map<string, SerializedOfferWallAffiliateRow>();
+  const ensure = (publisherId: string) => {
+    let row = byPublisher.get(publisherId);
+    if (!row) {
+      row = {
+        publisherId,
+        publisherName: null,
+        publisherEmail: null,
+        memberId: null,
+        offers: 0,
+        clicks: 0,
+        conversions: 0,
+        conversionRate: 0,
+        epc: 0,
+        payout: 0,
+        networkPayout: 0,
+      };
+      byPublisher.set(publisherId, row);
+    }
+    return row;
+  };
+
+  for (const g of clickGroups) ensure(g.publisherId).clicks = g._count._all;
+  for (const g of conversionGroups) {
+    const row = ensure(g.publisherId);
+    row.conversions = g._count._all;
+    row.payout = Number(g._sum.payout ?? 0);
+    row.networkPayout = Number(g._sum.networkPayout ?? 0);
+  }
+  for (const pair of offerPairs) ensure(pair.publisherId).offers += 1;
+
+  const users = await prisma.user.findMany({
+    where: { id: { in: [...byPublisher.keys()] } },
+    select: { id: true, name: true, email: true, memberNo: true },
+  });
+  for (const user of users) {
+    const row = byPublisher.get(user.id);
+    if (!row) continue;
+    row.publisherName = user.name;
+    row.publisherEmail = user.email;
+    row.memberId = formatMemberId(user.memberNo);
+  }
+
+  const rows = [...byPublisher.values()];
+  rows.forEach(finalizeRates);
+  return sortByPerformance(rows);
+}
+
+async function buildOfferRows(
+  clickWhere: Prisma.OfferwallClickWhereInput,
+  conversionWhere: Prisma.OfferwallConversionWhereInput,
+): Promise<SerializedOfferWallReportRow[]> {
+  const [clickGroups, conversionGroups] = await Promise.all([
     prisma.offerwallClick.groupBy({
       by: ["offerId"],
       where: clickWhere,
@@ -106,12 +253,6 @@ async function buildOfferWallReport(
     }),
     prisma.offerwallConversion.groupBy({
       by: ["offerId"],
-      where: conversionWhere,
-      _count: { _all: true },
-      _sum: { payout: true, networkPayout: true },
-    }),
-    prisma.offerwallClick.count({ where: clickWhere }),
-    prisma.offerwallConversion.aggregate({
       where: conversionWhere,
       _count: { _all: true },
       _sum: { payout: true, networkPayout: true },
@@ -156,43 +297,17 @@ async function buildOfferWallReport(
       const named = clickGroups.find((c) => c.offerId === id)?._max.offerName;
       if (named) row.offerName = named;
     }
-    row.conversionRate = row.clicks > 0 ? (row.conversions / row.clicks) * 100 : 0;
-    row.epc = row.clicks > 0 ? row.payout / row.clicks : 0;
+    finalizeRates(row);
   }
 
-  const allRows = Array.from(byOffer.values()).sort(
-    (a, b) => b.payout - a.payout || b.conversions - a.conversions || b.clicks - a.clicks,
-  );
-  const total = allRows.length;
-  const items = allRows.slice((page - 1) * limit, page * limit);
-
-  const conversions = conversionAgg._count._all;
-  const payout = Number(conversionAgg._sum.payout ?? 0);
-  const networkPayout = Number(conversionAgg._sum.networkPayout ?? 0);
-  const clicks = clickTotal;
-
-  return {
-    items,
-    total,
-    page,
-    limit,
-    totalPages: Math.max(1, Math.ceil(total / limit)),
-    stats: {
-      clicks,
-      conversions,
-      conversionRate: clicks > 0 ? (conversions / clicks) * 100 : 0,
-      epc: clicks > 0 ? payout / clicks : 0,
-      payout,
-      networkPayout,
-    },
-  };
+  return sortByPerformance(Array.from(byOffer.values()));
 }
 
 export function listOfferWallReportForPublisher(
   publisherId: string,
   filters: OfferWallReportFilters,
 ) {
-  return buildOfferWallReport(filters, publisherId);
+  return buildOfferWallReport({ ...filters, groupBy: "offer" }, publisherId);
 }
 
 export function listOfferWallReportForAdmin(filters: OfferWallReportFilters) {

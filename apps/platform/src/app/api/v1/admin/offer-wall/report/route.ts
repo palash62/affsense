@@ -30,7 +30,8 @@ export async function GET(request: Request) {
           { status: 422 },
         );
       }
-      const data = await listOfferWallReportForAdmin(parsed.data);
+      const groupBy = searchParams.get("groupBy") === "affiliate" ? "affiliate" : "offer";
+      const data = await listOfferWallReportForAdmin({ ...parsed.data, groupBy });
       return Response.json({ data });
     } catch (error) {
       return errorResponse(error);

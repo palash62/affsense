@@ -13,8 +13,13 @@ import {
   NeutralStatCard,
 } from "@/components/admin/gradient-stat-card";
 import { formatCurrency } from "@/components/admin/admin-ui";
+import {
+  AffiliateSearchSelect,
+  type SelectedAffiliate,
+} from "@/components/admin/affiliate-search-select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
   TableBody,
@@ -24,7 +29,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type {
+  OfferWallReportGroupBy,
   OfferWallReportResult,
+  SerializedOfferWallAffiliateRow,
   SerializedOfferWallReportRow,
 } from "@/services/offer-wall-report.service";
 
@@ -34,7 +41,7 @@ type AppliedFilters = {
   q: string;
   offerId: string;
   subId: string;
-  publisherId: string;
+  affiliate: SelectedAffiliate | null;
   from: string;
   to: string;
 };
@@ -43,10 +50,13 @@ const emptyFilters: AppliedFilters = {
   q: "",
   offerId: "",
   subId: "",
-  publisherId: "",
+  affiliate: null,
   from: "",
   to: "",
 };
+
+const TAB_TRIGGER_CLASS =
+  "rounded-none border-b-2 border-transparent px-4 py-2.5 data-active:border-primary data-active:bg-transparent data-active:shadow-none";
 
 export function OfferWallReportPanel({
   apiPath,
@@ -55,6 +65,7 @@ export function OfferWallReportPanel({
   eyebrow,
   showPublisherFilter = false,
   showNetworkPayout = false,
+  showAffiliateView = false,
 }: {
   apiPath: string;
   title: string;
@@ -62,12 +73,14 @@ export function OfferWallReportPanel({
   eyebrow: string;
   showPublisherFilter?: boolean;
   showNetworkPayout?: boolean;
+  showAffiliateView?: boolean;
 }) {
   const [result, setResult] = useState<OfferWallReportResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [draft, setDraft] = useState<AppliedFilters>(emptyFilters);
   const [applied, setApplied] = useState<AppliedFilters>(emptyFilters);
   const [page, setPage] = useState(1);
+  const [groupBy, setGroupBy] = useState<OfferWallReportGroupBy>("offer");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -77,9 +90,10 @@ export function OfferWallReportPanel({
     if (applied.q.trim()) params.set("q", applied.q.trim());
     if (applied.offerId.trim()) params.set("offerId", applied.offerId.trim());
     if (applied.subId.trim()) params.set("subId", applied.subId.trim());
-    if (showPublisherFilter && applied.publisherId.trim()) {
-      params.set("publisherId", applied.publisherId.trim());
+    if (showPublisherFilter && applied.affiliate) {
+      params.set("publisherId", applied.affiliate.id);
     }
+    if (showAffiliateView && groupBy === "affiliate") params.set("groupBy", "affiliate");
     if (applied.from.trim()) params.set("from", new Date(applied.from).toISOString());
     if (applied.to.trim()) {
       const end = new Date(applied.to);
@@ -91,7 +105,7 @@ export function OfferWallReportPanel({
     const body = await res.json().catch(() => ({}));
     setResult(body.data ?? null);
     setLoading(false);
-  }, [apiPath, page, applied, showPublisherFilter]);
+  }, [apiPath, page, applied, showPublisherFilter, showAffiliateView, groupBy]);
 
   useEffect(() => {
     void load();
@@ -108,7 +122,30 @@ export function OfferWallReportPanel({
     setPage(1);
   }
 
-  const items = (result?.items ?? []) as SerializedOfferWallReportRow[];
+  function onTabChange(next: string | number | null) {
+    const value = String(next ?? "offer");
+    if (value !== "offer" && value !== "affiliate") return;
+    setGroupBy(value);
+    setPage(1);
+  }
+
+  function drillIntoAffiliate(row: SerializedOfferWallAffiliateRow) {
+    const affiliate: SelectedAffiliate = {
+      id: row.publisherId,
+      name: row.publisherName ?? row.publisherId,
+      email: row.publisherEmail ?? "",
+      memberId: row.memberId ?? undefined,
+    };
+    setDraft((d) => ({ ...d, affiliate }));
+    setApplied((a) => ({ ...a, affiliate }));
+    setGroupBy("offer");
+    setPage(1);
+  }
+
+  const resultGroupBy = result?.groupBy ?? "offer";
+  const isAffiliateTable = showAffiliateView && resultGroupBy === "affiliate";
+  const offerItems = (isAffiliateTable ? [] : (result?.items ?? [])) as SerializedOfferWallReportRow[];
+  const affiliateItems = (isAffiliateTable ? (result?.items ?? []) : []) as SerializedOfferWallAffiliateRow[];
   const total = result?.total ?? 0;
   const totalPages = result?.totalPages ?? 1;
   const stats = result?.stats;
@@ -120,13 +157,20 @@ export function OfferWallReportPanel({
     return "All time";
   }, [applied.from, applied.to]);
 
+  const offerColSpan = showNetworkPayout ? 7 : 6;
+  const affiliateColSpan = showNetworkPayout ? 8 : 7;
+
   return (
     <div className="space-y-6">
       <PageHero
         eyebrow={eyebrow}
         title={title}
         description={description}
-        badge={loading ? undefined : `${total} offers · ${rangeLabel}`}
+        badge={
+          loading
+            ? undefined
+            : `${total} ${isAffiliateTable ? "affiliates" : "offers"} · ${rangeLabel}`
+        }
       />
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -187,11 +231,13 @@ export function OfferWallReportPanel({
             onChange={(e) => setDraft((d) => ({ ...d, subId: e.target.value }))}
           />
           {showPublisherFilter ? (
-            <Input
-              placeholder="Publisher ID"
-              value={draft.publisherId}
-              onChange={(e) => setDraft((d) => ({ ...d, publisherId: e.target.value }))}
-            />
+            <div className="sm:col-span-2 lg:col-span-1 xl:col-span-1">
+              <AffiliateSearchSelect
+                value={draft.affiliate}
+                onChange={(affiliate) => setDraft((d) => ({ ...d, affiliate }))}
+                placeholder="All affiliates"
+              />
+            </div>
           ) : null}
           <Input
             type="date"
@@ -214,66 +260,160 @@ export function OfferWallReportPanel({
         </div>
       </div>
 
+      {showAffiliateView ? (
+        <Tabs value={groupBy} onValueChange={onTabChange}>
+          <TabsList
+            variant="line"
+            className="h-auto w-full justify-start rounded-none border-b border-border bg-transparent p-0"
+          >
+            <TabsTrigger value="offer" className={TAB_TRIGGER_CLASS}>
+              By offer
+            </TabsTrigger>
+            <TabsTrigger value="affiliate" className={TAB_TRIGGER_CLASS}>
+              By affiliate
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+      ) : null}
+
       <div className="overflow-hidden rounded-[var(--radius-card,0.875rem)] border border-border bg-card shadow-[var(--shadow-card)]">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Offer</TableHead>
-              <TableHead className="text-right">Clicks</TableHead>
-              <TableHead className="text-right">Conv.</TableHead>
-              <TableHead className="text-right">CR</TableHead>
-              <TableHead className="text-right">EPC</TableHead>
-              <TableHead className="text-right">Payout</TableHead>
-              {showNetworkPayout ? (
-                <TableHead className="text-right">Network</TableHead>
-              ) : null}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading ? (
+        {isAffiliateTable ? (
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={showNetworkPayout ? 7 : 6} className="text-muted-foreground">
-                  Loading…
-                </TableCell>
+                <TableHead>Affiliate</TableHead>
+                <TableHead className="text-right">Offers</TableHead>
+                <TableHead className="text-right">Clicks</TableHead>
+                <TableHead className="text-right">Conv.</TableHead>
+                <TableHead className="text-right">CR</TableHead>
+                <TableHead className="text-right">EPC</TableHead>
+                <TableHead className="text-right">Payout</TableHead>
+                {showNetworkPayout ? (
+                  <TableHead className="text-right">Network</TableHead>
+                ) : null}
               </TableRow>
-            ) : items.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={showNetworkPayout ? 7 : 6} className="text-muted-foreground">
-                  No Offer Wall activity for this range.
-                </TableCell>
-              </TableRow>
-            ) : (
-              items.map((row) => (
-                <TableRow key={row.offerId}>
-                  <TableCell>
-                    <div className="min-w-0">
-                      <p className="truncate font-medium text-foreground">
-                        {row.offerName || row.offerId}
-                      </p>
-                      <p className="font-mono text-[11px] text-muted-foreground">{row.offerId}</p>
-                    </div>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={affiliateColSpan} className="text-muted-foreground">
+                    Loading…
                   </TableCell>
-                  <TableCell className="text-right tabular-nums">{row.clicks}</TableCell>
-                  <TableCell className="text-right tabular-nums">{row.conversions}</TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {row.conversionRate.toFixed(2)}%
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {formatCurrency(row.epc)}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums font-medium text-[var(--theme-success)]">
-                    {formatCurrency(row.payout)}
-                  </TableCell>
-                  {showNetworkPayout ? (
-                    <TableCell className="text-right tabular-nums">
-                      {formatCurrency(row.networkPayout)}
-                    </TableCell>
-                  ) : null}
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+              ) : affiliateItems.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={affiliateColSpan} className="text-muted-foreground">
+                    No Offer Wall activity for this range.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                affiliateItems.map((row) => (
+                  <TableRow
+                    key={row.publisherId}
+                    className="cursor-pointer hover:bg-muted/50"
+                    title="View this affiliate's offers"
+                    onClick={() => drillIntoAffiliate(row)}
+                  >
+                    <TableCell>
+                      <div className="min-w-0">
+                        <p className="truncate font-medium text-foreground">
+                          {row.publisherName || row.publisherId}
+                        </p>
+                        {row.publisherEmail ? (
+                          <p className="truncate text-[11px] text-muted-foreground">
+                            {row.publisherEmail}
+                          </p>
+                        ) : null}
+                        {row.memberId ? (
+                          <p className="font-mono text-[11px] text-muted-foreground">
+                            {row.memberId}
+                          </p>
+                        ) : null}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">{row.offers}</TableCell>
+                    <TableCell className="text-right tabular-nums">{row.clicks}</TableCell>
+                    <TableCell className="text-right tabular-nums">{row.conversions}</TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {row.conversionRate.toFixed(2)}%
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {formatCurrency(row.epc)}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums font-medium text-[var(--theme-success)]">
+                      {formatCurrency(row.payout)}
+                    </TableCell>
+                    {showNetworkPayout ? (
+                      <TableCell className="text-right tabular-nums">
+                        {formatCurrency(row.networkPayout)}
+                      </TableCell>
+                    ) : null}
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Offer</TableHead>
+                <TableHead className="text-right">Clicks</TableHead>
+                <TableHead className="text-right">Conv.</TableHead>
+                <TableHead className="text-right">CR</TableHead>
+                <TableHead className="text-right">EPC</TableHead>
+                <TableHead className="text-right">Payout</TableHead>
+                {showNetworkPayout ? (
+                  <TableHead className="text-right">Network</TableHead>
+                ) : null}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={offerColSpan} className="text-muted-foreground">
+                    Loading…
+                  </TableCell>
+                </TableRow>
+              ) : offerItems.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={offerColSpan} className="text-muted-foreground">
+                    No Offer Wall activity for this range.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                offerItems.map((row) => (
+                  <TableRow key={row.offerId}>
+                    <TableCell>
+                      <div className="min-w-0">
+                        <p className="truncate font-medium text-foreground">
+                          {row.offerName || row.offerId}
+                        </p>
+                        <p className="font-mono text-[11px] text-muted-foreground">{row.offerId}</p>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">{row.clicks}</TableCell>
+                    <TableCell className="text-right tabular-nums">{row.conversions}</TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {row.conversionRate.toFixed(2)}%
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {formatCurrency(row.epc)}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums font-medium text-[var(--theme-success)]">
+                      {formatCurrency(row.payout)}
+                    </TableCell>
+                    {showNetworkPayout ? (
+                      <TableCell className="text-right tabular-nums">
+                        {formatCurrency(row.networkPayout)}
+                      </TableCell>
+                    ) : null}
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        )}
       </div>
 
       {totalPages > 1 ? (

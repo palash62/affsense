@@ -11,6 +11,7 @@ export function AdminOfferWallReport() {
       description="Affiliate Offer Wall performance — clicks, conversions, and payouts."
       showPublisherFilter
       showNetworkPayout
+      showAffiliateView
     />
   );
 }
