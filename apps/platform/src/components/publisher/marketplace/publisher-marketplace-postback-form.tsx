@@ -10,7 +10,6 @@ export function PublisherMarketplacePostbackForm() {
       eyebrow="Marketplace"
       title="Digital Product Postback"
       description="Receive a server-to-server callback every time one of your digital product sales is recorded."
-      banner="When a ClickFunnels sale is attributed to you, we send an HTTP GET to your postback URL with commission macros replaced. Refunds are skipped."
       tip="Add one or more tracker postback URLs and set them to Active. Every active postback fires once per attributed sale event."
       apiBase="/api/v1/publisher/digital-products/postback"
       macros={PUBLISHER_DIGITAL_PRODUCT_POSTBACK_MACROS}

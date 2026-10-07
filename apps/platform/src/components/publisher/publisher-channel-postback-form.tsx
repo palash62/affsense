@@ -30,7 +30,7 @@ export function PublisherChannelPostbackForm({
   eyebrow: string;
   title: string;
   description: string;
-  banner: string;
+  banner?: string;
   tip: string;
   apiBase: string;
   macros: readonly MacroItem[];
@@ -61,7 +61,7 @@ export function PublisherChannelPostbackForm({
     <div className="space-y-6">
       <RoleHero eyebrow={eyebrow} title={title} description={description} />
 
-      <PublisherInfoBanner>{banner}</PublisherInfoBanner>
+      {banner ? <PublisherInfoBanner>{banner}</PublisherInfoBanner> : null}
 
       <div className="rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900">
         {tip}
