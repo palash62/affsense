@@ -37,7 +37,7 @@ export function ReferralsOverview({ data }: { data: ReferralsOverviewData }) {
     <DashboardCard className="flex h-full flex-col">
       <div className="flex items-center justify-between gap-2">
         <DashboardCardTitle>Referrals Overview</DashboardCardTitle>
-        <DashboardViewAllLink href="/publisher/reports/referrals" />
+        <DashboardViewAllLink href="/publisher/referrals" />
       </div>
 
       <div className="mt-4 flex items-start justify-between gap-3">

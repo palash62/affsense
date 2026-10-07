@@ -8,10 +8,13 @@ import {
   useMemo,
   useState,
 } from "react";
+import { usePathname } from "next/navigation";
 import {
   DEFAULT_THEME,
+  FIXED_PORTAL_THEME,
   THEME_STORAGE_KEY,
   type ThemeId,
+  isFixedThemePath,
   isThemeId,
 } from "@/lib/themes";
 
@@ -23,24 +26,31 @@ interface ThemeContextValue {
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<ThemeId>(DEFAULT_THEME);
+  const pathname = usePathname();
+  const locked = isFixedThemePath(pathname);
+  const [storedTheme, setStoredTheme] = useState<ThemeId>(DEFAULT_THEME);
   const [mounted, setMounted] = useState(false);
+  const theme = locked ? FIXED_PORTAL_THEME : storedTheme;
 
   useEffect(() => {
     const stored = localStorage.getItem(THEME_STORAGE_KEY);
-    setThemeState(stored && isThemeId(stored) ? stored : DEFAULT_THEME);
+    setStoredTheme(stored && isThemeId(stored) ? stored : DEFAULT_THEME);
     setMounted(true);
   }, []);
 
   useEffect(() => {
     if (!mounted) return;
     document.documentElement.setAttribute("data-theme", theme);
-    localStorage.setItem(THEME_STORAGE_KEY, theme);
   }, [theme, mounted]);
 
-  const setTheme = useCallback((next: ThemeId) => {
-    setThemeState(next);
-  }, []);
+  const setTheme = useCallback(
+    (next: ThemeId) => {
+      if (locked) return;
+      setStoredTheme(next);
+      localStorage.setItem(THEME_STORAGE_KEY, next);
+    },
+    [locked],
+  );
 
   const value = useMemo(() => ({ theme, setTheme }), [theme, setTheme]);
 

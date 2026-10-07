@@ -20,3 +20,10 @@ export const PLATFORM_EMAILS = {
 export function formatSupportFrom(email: string) {
   return `Affsense <${email.trim()}>`;
 }
+
+/** Inboxes show the local part ("support") when From has no display name. */
+export function withSenderName(from: string) {
+  const trimmed = from.trim();
+  if (!trimmed || /<[^>]+>/.test(trimmed)) return trimmed;
+  return formatSupportFrom(trimmed);
+}

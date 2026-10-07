@@ -50,7 +50,6 @@ export function getPublisherPageMeta(
       title: "CPA Postback",
       subtitle: "S2S callback when your CPA offers convert",
     },
-    "/publisher/promotions": { title: "My Links", subtitle: "Manage your active promotions" },
     "/publisher/referrals": { title: "Referrals", subtitle: "Invite affiliates and earn commissions" },
     "/publisher/earnings": {
       title: "Earnings & Payouts",
@@ -70,11 +69,15 @@ export function getPublisherPageMeta(
       title: "Commissions Report",
       subtitle: "View all your earnings, sales and commissions in detail.",
     },
-    "/publisher/reports/performance": { title: "Performance Reports" },
-    "/publisher/reports/offers": { title: "Offer Reports" },
+    "/publisher/reports/performance": {
+      title: "Performance",
+      subtitle: "Daily clicks, conversions and earnings across CPA offers and digital products.",
+    },
     "/publisher/reports/tasks": { title: "Task Reports" },
-    "/publisher/reports/referrals": { title: "Referral Reports" },
-    "/publisher/reports/payouts": { title: "Payout Reports" },
+    "/publisher/reports/payouts": {
+      title: "Payout Reports",
+      subtitle: "Every invoice and payout paid to you, with status and method.",
+    },
     "/publisher/tutorials": {
       title: "Tutorials",
       subtitle: "Guides to help you promote offers and grow your earnings",

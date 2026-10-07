@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { buildReportOrderBy, nextReportSort, sortRows } from "@/lib/report-sort";
+import {
+  CPA_AFFILIATE_REPORT_SORT_ACCESSORS,
+  type SerializedCpaAffiliateOfferReportRow,
+} from "@/services/cpa-offer.service";
+import {
+  DIGITAL_AFFILIATE_REPORT_SORT_ACCESSORS,
+  type SerializedDigitalProductAffiliateReportRow,
+} from "@/services/digital-product.service";
 
 type Row = { id: string; amount: number | null; name: string | null; at: string };
 
@@ -32,6 +40,41 @@ describe("sortRows", () => {
   it("leaves the order alone for unknown or missing columns", () => {
     expect(sortRows(rows, { sortBy: "nope", sortDir: "asc" }, accessors)).toBe(rows);
     expect(sortRows(rows, {}, accessors)).toBe(rows);
+  });
+});
+
+describe("affiliate report accessors", () => {
+  const cpaRows = [
+    { offerName: "Zeta", subId: null, payout: "9.50", clicks: 40 },
+    { offerName: "alpha", subId: "s1", payout: "100.00", clicks: 3 },
+    { offerName: "Mid", subId: "s0", payout: "20.25", clicks: 12 },
+  ] as unknown as SerializedCpaAffiliateOfferReportRow[];
+
+  it("sorts money strings numerically", () => {
+    const sorted = sortRows(cpaRows, { sortBy: "payout", sortDir: "desc" }, CPA_AFFILIATE_REPORT_SORT_ACCESSORS);
+    expect(sorted.map((r) => r.payout)).toEqual(["100.00", "20.25", "9.50"]);
+  });
+
+  it("sorts offer names and sub IDs with empty values last", () => {
+    expect(
+      sortRows(cpaRows, { sortBy: "offer", sortDir: "asc" }, CPA_AFFILIATE_REPORT_SORT_ACCESSORS).map((r) => r.offerName),
+    ).toEqual(["alpha", "Mid", "Zeta"]);
+    expect(
+      sortRows(cpaRows, { sortBy: "subId", sortDir: "asc" }, CPA_AFFILIATE_REPORT_SORT_ACCESSORS).map((r) => r.subId),
+    ).toEqual(["s0", "s1", null]);
+  });
+
+  it("sorts digital commission numerically", () => {
+    const digitalRows = [
+      { commission: "5.00" },
+      { commission: "45.00" },
+      { commission: "12.00" },
+    ] as unknown as SerializedDigitalProductAffiliateReportRow[];
+    expect(
+      sortRows(digitalRows, { sortBy: "commission", sortDir: "asc" }, DIGITAL_AFFILIATE_REPORT_SORT_ACCESSORS).map(
+        (r) => r.commission,
+      ),
+    ).toEqual(["5.00", "12.00", "45.00"]);
   });
 });
 

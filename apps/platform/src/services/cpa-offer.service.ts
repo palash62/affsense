@@ -10,7 +10,7 @@ import { formatMemberId } from "@cpl/shared";
 import { prisma } from "@/lib/prisma";
 import { Errors } from "@/lib/errors";
 import { parseUserAgent } from "@/lib/publisher-leads";
-import { buildReportOrderBy, type SortDir } from "@/lib/report-sort";
+import { buildReportOrderBy, sortRows, type ReportSortQuery, type SortDir } from "@/lib/report-sort";
 import { getPublisherCpaPlanPayouts } from "@/services/commission-plan.service";
 import {
   cpaOfferDetailsToJson,
@@ -2427,6 +2427,25 @@ export type CpaAffiliateOfferReportResult = {
   stats: CpaAffiliateOfferReportStats;
 };
 
+export const CPA_AFFILIATE_REPORT_SORT_ACCESSORS: Record<
+  string,
+  (row: SerializedCpaAffiliateOfferReportRow) => string | number | null
+> = {
+  publisher: (row) => row.publisherName,
+  offer: (row) => row.offerName,
+  subId: (row) => row.subId,
+  subId2: (row) => row.subId2,
+  subId3: (row) => row.subId3,
+  subId4: (row) => row.subId4,
+  clicks: (row) => row.clicks,
+  conversions: (row) => row.conversions,
+  conversionRate: (row) => row.conversionRate,
+  epc: (row) => Number(row.epc),
+  payout: (row) => Number(row.payout),
+  revenue: (row) => Number(row.revenue),
+  profit: (row) => Number(row.profit),
+};
+
 function buildAffiliateOfferClickWhere(
   filters: CpaConversionListFilters,
 ): Prisma.CpaOfferClickWhereInput {
@@ -2731,7 +2750,10 @@ export async function listCpaAffiliateOfferReportForAdmin(
 
   const total = allRows.length;
   const totalPages = Math.max(1, Math.ceil(total / limit));
-  const items = allRows.slice((page - 1) * limit, page * limit);
+  const items = sortRows(allRows, filters, CPA_AFFILIATE_REPORT_SORT_ACCESSORS).slice(
+    (page - 1) * limit,
+    page * limit,
+  );
 
   return {
     items,
@@ -2789,7 +2811,7 @@ export async function listCpaAffiliateOfferReportForAdvertiserOwner(
     offer: { ownerAdvertiserId },
   };
 
-  return listCpaAffiliateOfferReportFromWhere(clickWhere, conversionWhere, page, limit);
+  return listCpaAffiliateOfferReportFromWhere(clickWhere, conversionWhere, page, limit, filters);
 }
 
 async function listCpaAffiliateOfferReportFromWhere(
@@ -2797,6 +2819,7 @@ async function listCpaAffiliateOfferReportFromWhere(
   conversionWhere: Prisma.CpaOfferConversionWhereInput,
   page: number,
   limit: number,
+  filters: ReportSortQuery,
 ): Promise<CpaAffiliateOfferReportResult> {
   const [clickGroups, conversionRows] = await Promise.all([
     prisma.cpaOfferClick.groupBy({
@@ -2992,7 +3015,10 @@ async function listCpaAffiliateOfferReportFromWhere(
 
   const total = allRows.length;
   const totalPages = Math.max(1, Math.ceil(total / limit));
-  const items = allRows.slice((page - 1) * limit, page * limit);
+  const items = sortRows(allRows, filters, CPA_AFFILIATE_REPORT_SORT_ACCESSORS).slice(
+    (page - 1) * limit,
+    page * limit,
+  );
 
   return {
     items,

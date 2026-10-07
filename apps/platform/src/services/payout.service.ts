@@ -15,6 +15,17 @@ import { payoutPublisherSelect, payoutCpaPublisherSelect, serializePayoutForClie
 import type { PayoutPaymentDetails } from "@/lib/payout-payment-details";
 import type { Prisma, PayoutKind, PayoutMethod } from "@prisma/client";
 import { REFERRAL_MIN_PAYOUT } from "@/lib/referral";
+import type { ReportSortQuery } from "@/lib/report-sort";
+import {
+  buildPayoutReportRows,
+  filterPayoutReportRows,
+  monthlyPaidSeries,
+  sortPayoutReportRows,
+  summarizePayoutReport,
+  type PayoutReportFilters,
+  type PayoutReportKpis,
+  type PayoutReportRow,
+} from "@/lib/publisher-payout-report";
 import { getReferralBalanceSummary } from "@/services/referral.service";
 import {
   notifyAdminAlert,
@@ -382,6 +393,73 @@ function payoutOrderBy(sort?: string): Prisma.PayoutOrderByWithRelationInput {
     default:
       return { createdAt: "desc" };
   }
+}
+
+export type PublisherPayoutReport = {
+  items: PayoutReportRow[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  kpis: PayoutReportKpis;
+  monthly: { month: string; paid: number }[];
+  methods: string[];
+};
+
+export async function getPublisherPayoutReport(
+  publisherId: string,
+  opts: PayoutReportFilters & ReportSortQuery & { page?: number; limit?: number },
+): Promise<PublisherPayoutReport> {
+  const page = Math.max(1, opts.page ?? 1);
+  const limit = Math.min(100, Math.max(1, opts.limit ?? 10));
+
+  const [invoices, payouts] = await Promise.all([
+    prisma.affiliateInvoice.findMany({
+      where: { publisherId },
+      select: {
+        id: true,
+        number: true,
+        issuedAt: true,
+        total: true,
+        status: true,
+        paidAt: true,
+        paymentMethod: true,
+        payeeMethod: true,
+        payoutId: true,
+      },
+    }),
+    prisma.payout.findMany({
+      where: { publisherId },
+      select: {
+        id: true,
+        createdAt: true,
+        amount: true,
+        method: true,
+        status: true,
+        processedAt: true,
+        idempotencyKey: true,
+      },
+    }),
+  ]);
+
+  const allRows = buildPayoutReportRows(
+    invoices.map((inv) => ({ ...inv, total: Number(inv.total) })),
+    payouts.map((p) => ({ ...p, amount: Number(p.amount) })),
+  );
+  const filtered = filterPayoutReportRows(allRows, opts);
+  const sorted = sortPayoutReportRows(filtered, opts);
+  const total = sorted.length;
+
+  return {
+    items: sorted.slice((page - 1) * limit, page * limit),
+    total,
+    page,
+    limit,
+    totalPages: Math.max(1, Math.ceil(total / limit)),
+    kpis: summarizePayoutReport(filtered),
+    monthly: monthlyPaidSeries(allRows),
+    methods: [...new Set(allRows.flatMap((row) => (row.method ? [row.method] : [])))].sort(),
+  };
 }
 
 export async function listPayouts(filters: {

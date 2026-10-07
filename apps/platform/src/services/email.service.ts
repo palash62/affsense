@@ -1,4 +1,5 @@
 import type { Prisma } from "@prisma/client";
+import { withSenderName } from "@/lib/email/addresses";
 import type { SendEmailInput } from "@/lib/email/types";
 import { getMailgunConfig, isMailgunConfigured, sendViaMailgun } from "@/lib/email/mailgun";
 import { getTransporterForConfig, resetEmailTransport } from "@/lib/email/transport";
@@ -67,7 +68,7 @@ async function sendViaSmtp(
 
   try {
     await transport.sendMail({
-      from: input.from ?? smtpConfig.from,
+      from: withSenderName(input.from ?? smtpConfig.from),
       to: input.to,
       subject: input.subject,
       html: input.html,
@@ -107,7 +108,7 @@ export async function sendEmail(
     const mailgun = getMailgunConfig()!;
     const result = await sendViaMailgun({
       to: input.to,
-      from: input.from ?? mailgun.from,
+      from: withSenderName(input.from ?? mailgun.from),
       subject: input.subject,
       html: input.html,
       text: input.text,

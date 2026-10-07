@@ -14,14 +14,14 @@ export default function ThemePreviewPage() {
     <div className="space-y-8">
       <PageHeader
         title="Compare Color Themes"
-        description="Pick a theme below to apply it across the entire site. Each preview shows sidebar, hero, KPI cards, and chart colors. Your choice is saved automatically."
+        description="Pick a theme for the admin panel. Each preview shows sidebar, hero, KPI cards, and chart colors. Advertiser and publisher portals always use Coral + Navy."
         breadcrumbs={[
           { label: "Admin", href: "/admin" },
           { label: "Themes" },
         ]}
-      >
-        <ThemeSwitcher variant="bar" className="max-w-full" />
-      </PageHeader>
+      />
+
+      <ThemeSwitcher variant="bar" />
 
       <div className="rounded-[var(--radius-card,0.875rem)] border border-border bg-card p-4 shadow-[var(--shadow-card)]">
         <p className="mb-3 text-sm font-medium text-foreground">

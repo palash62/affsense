@@ -31,10 +31,11 @@ import {
   Table,
   TableBody,
   TableCell,
-  TableHead,
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { SortableTableHead } from "@/components/ui/sortable-table-head";
+import { nextReportSort, setReportSortParams, type ReportSort } from "@/lib/report-sort";
 import type {
   DigitalProductAffiliateReportResult,
   DigitalProductConversionStatus,
@@ -94,12 +95,14 @@ export function AdminDigitalProductsAffiliateReport({
   const [draft, setDraft] = useState<AppliedFilters>(emptyFilters);
   const [applied, setApplied] = useState<AppliedFilters>(emptyFilters);
   const [page, setPage] = useState(1);
+  const [sort, setSort] = useState<ReportSort | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     const params = new URLSearchParams();
     params.set("page", String(page));
     params.set("limit", String(PAGE_SIZE));
+    setReportSortParams(params, sort);
     if (applied.q.trim()) params.set("q", applied.q.trim());
     if (applied.productId.trim()) params.set("productId", applied.productId.trim());
     for (const key of ["subId", "subId2", "subId3", "subId4"] as const) {
@@ -121,11 +124,16 @@ export function AdminDigitalProductsAffiliateReport({
     const body = await res.json().catch(() => ({}));
     setResult(body.data ?? null);
     setLoading(false);
-  }, [page, applied]);
+  }, [page, applied, sort]);
 
   useEffect(() => {
     void load();
   }, [load]);
+
+  function handleSort(column: string) {
+    setSort((current) => nextReportSort(current, column));
+    setPage(1);
+  }
 
   function applyFilters() {
     setPage(1);
@@ -357,20 +365,20 @@ export function AdminDigitalProductsAffiliateReport({
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/40 hover:bg-muted/40">
-              <TableHead>Affiliate</TableHead>
-              <TableHead>Product</TableHead>
-              <TableHead>Sub ID 1</TableHead>
-              <TableHead>Sub ID 2</TableHead>
-              <TableHead>Sub ID 3</TableHead>
-              <TableHead>Sub ID 4</TableHead>
-              <TableHead>Source</TableHead>
-              <TableHead className="text-right">Clicks</TableHead>
-              <TableHead className="text-right">Conversions</TableHead>
-              <TableHead className="text-right">CR%</TableHead>
-              <TableHead className="text-right">EPC</TableHead>
-              <TableHead className="text-right">Commission</TableHead>
-              <TableHead className="text-right">Revenue</TableHead>
-              <TableHead className="text-right">Profit</TableHead>
+              <SortableTableHead label="Affiliate" column="publisher" sort={sort} onSort={handleSort} />
+              <SortableTableHead label="Product" column="product" sort={sort} onSort={handleSort} />
+              <SortableTableHead label="Sub ID 1" column="subId" sort={sort} onSort={handleSort} />
+              <SortableTableHead label="Sub ID 2" column="subId2" sort={sort} onSort={handleSort} />
+              <SortableTableHead label="Sub ID 3" column="subId3" sort={sort} onSort={handleSort} />
+              <SortableTableHead label="Sub ID 4" column="subId4" sort={sort} onSort={handleSort} />
+              <SortableTableHead label="Source" column="source" sort={sort} onSort={handleSort} />
+              <SortableTableHead label="Clicks" column="clicks" sort={sort} onSort={handleSort} align="right" />
+              <SortableTableHead label="Conversions" column="conversions" sort={sort} onSort={handleSort} align="right" />
+              <SortableTableHead label="CR%" column="conversionRate" sort={sort} onSort={handleSort} align="right" />
+              <SortableTableHead label="EPC" column="epc" sort={sort} onSort={handleSort} align="right" />
+              <SortableTableHead label="Commission" column="commission" sort={sort} onSort={handleSort} align="right" />
+              <SortableTableHead label="Revenue" column="revenue" sort={sort} onSort={handleSort} align="right" />
+              <SortableTableHead label="Profit" column="profit" sort={sort} onSort={handleSort} align="right" />
             </TableRow>
           </TableHeader>
           <TableBody>

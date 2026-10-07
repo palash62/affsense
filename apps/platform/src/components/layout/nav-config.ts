@@ -279,7 +279,6 @@ export const PUBLISHER_NAV: AdminNavEntry[] = [
     : []),
 
   { kind: "divider" },
-  { kind: "item", item: { label: "My Links", href: "/publisher/promotions", icon: Link2 } },
   {
     kind: "item",
     item: {
@@ -290,11 +289,9 @@ export const PUBLISHER_NAV: AdminNavEntry[] = [
       children: [
         { label: "Commissions Report", href: "/publisher/reports/commissions", icon: Percent },
         { label: "Performance", href: "/publisher/reports/performance", icon: BarChart3 },
-        { label: "Offer Reports", href: "/publisher/reports/offers", icon: Store },
         ...(PUBLISHER_GET_PAID_TASKS_ENABLED
           ? [{ label: "Task Reports", href: "/publisher/reports/tasks", icon: ListTodo }]
           : []),
-        { label: "Referral Reports", href: "/publisher/reports/referrals", icon: Gift },
         { label: "Payout Reports", href: "/publisher/reports/payouts", icon: Banknote },
       ],
     },

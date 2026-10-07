@@ -26,7 +26,7 @@ export function TopPerformingOffers({ rows }: { rows: TopOfferRow[] }) {
     <DashboardCard className="flex h-full flex-col">
       <div className="flex items-center justify-between gap-2">
         <DashboardCardTitle>Top Performing Offers</DashboardCardTitle>
-        <DashboardViewAllLink href="/publisher/reports/offers" />
+        <DashboardViewAllLink href="/publisher/cpa-offers/report-log" />
       </div>
       {rows.length === 0 ? (
         <div className="flex min-h-[180px] flex-1 items-center justify-center text-sm text-muted-foreground">

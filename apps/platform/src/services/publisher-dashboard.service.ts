@@ -7,6 +7,11 @@ import {
 } from "@/services/digital-product.service";
 import { getUninvoicedTotalForPublisher } from "@/services/affiliate-invoice.service";
 import { ensureReferralCode, getReferralBalanceSummary } from "@/services/referral.service";
+import {
+  withPerformanceRatios,
+  type PerformanceRow,
+  type PerformanceSource,
+} from "@/lib/publisher-performance";
 
 export type PublisherDashboardPeriod = "7d" | "30d" | "month" | "year";
 
@@ -579,5 +584,34 @@ export async function getAffsensePublisherDashboard(
       tone: a.tone,
       publishedAt: a.publishedAt ?? a.createdAt,
     })),
+  };
+}
+
+export type PublisherPerformanceDay = PerformanceRow & { date: string };
+
+export type PublisherPerformanceReport = {
+  kpis: PerformanceRow;
+  series: PublisherPerformanceDay[];
+};
+
+export async function getPublisherPerformanceReport(
+  publisherId: string,
+  opts: { from: Date; to: Date; source: PerformanceSource },
+): Promise<PublisherPerformanceReport> {
+  const { from, to, source } = opts;
+  const loaders = source === "all" ? [cpaMetrics, digitalMetrics] : [source === "cpa" ? cpaMetrics : digitalMetrics];
+  const parts = await Promise.all(loaders.map((load) => load(publisherId, from, to)));
+  const merged = emptyMetrics();
+  for (const part of parts) {
+    for (const [key, bucket] of part.byDay) addToDay(merged, key, bucket);
+  }
+
+  return {
+    kpis: withPerformanceRatios({
+      clicks: merged.clicks,
+      conversions: merged.conversions,
+      earnings: merged.earnings,
+    }),
+    series: dailySeries(merged, from, to).map((day) => withPerformanceRatios(day)),
   };
 }

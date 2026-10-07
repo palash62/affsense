@@ -18,6 +18,8 @@ export async function GET(request: Request) {
         src: searchParams.get("src") ?? undefined,
         from: searchParams.get("from") ?? undefined,
         to: searchParams.get("to") ?? undefined,
+        sortBy: searchParams.get("sortBy") || undefined,
+        sortDir: searchParams.get("sortDir") || undefined,
         page,
         limit,
       });
@@ -49,6 +51,8 @@ export async function GET(request: Request) {
           to: parsed.data.to,
           page: parsed.data.page,
           limit: parsed.data.limit,
+          sortBy: parsed.data.sortBy,
+          sortDir: parsed.data.sortDir,
         },
       );
       return Response.json({ data });

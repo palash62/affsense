@@ -2391,6 +2391,26 @@ export type DigitalProductAffiliateReportResult = {
   stats: DigitalProductAffiliateReportStats;
 };
 
+export const DIGITAL_AFFILIATE_REPORT_SORT_ACCESSORS: Record<
+  string,
+  (row: SerializedDigitalProductAffiliateReportRow) => string | number | null
+> = {
+  publisher: (row) => row.publisherName,
+  product: (row) => row.productName,
+  subId: (row) => row.subId,
+  subId2: (row) => row.subId2,
+  subId3: (row) => row.subId3,
+  subId4: (row) => row.subId4,
+  source: (row) => row.source,
+  clicks: (row) => row.clicks,
+  conversions: (row) => row.conversions,
+  conversionRate: (row) => row.conversionRate,
+  epc: (row) => Number(row.epc),
+  commission: (row) => Number(row.commission),
+  revenue: (row) => Number(row.revenue),
+  profit: (row) => Number(row.profit),
+};
+
 export async function listDigitalProductAffiliateProductReportForAdmin(
   filters: DigitalProductClickListFilters,
 ): Promise<DigitalProductAffiliateReportResult> {
@@ -2709,7 +2729,10 @@ export async function listDigitalProductAffiliateProductReportForAdmin(
 
   const total = allRows.length;
   const totalPages = Math.max(1, Math.ceil(total / limit));
-  const items = allRows.slice((page - 1) * limit, page * limit);
+  const items = sortRows(allRows, filters, DIGITAL_AFFILIATE_REPORT_SORT_ACCESSORS).slice(
+    (page - 1) * limit,
+    page * limit,
+  );
 
   return {
     items,

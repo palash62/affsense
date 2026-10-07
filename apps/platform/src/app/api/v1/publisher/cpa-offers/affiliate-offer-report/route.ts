@@ -17,6 +17,8 @@ export async function GET(request: Request) {
         subId4: searchParams.get("subId4") ?? undefined,
         from: searchParams.get("from") ?? undefined,
         to: searchParams.get("to") ?? undefined,
+        sortBy: searchParams.get("sortBy") || undefined,
+        sortDir: searchParams.get("sortDir") || undefined,
         page,
         limit,
       });
@@ -45,6 +47,8 @@ export async function GET(request: Request) {
         to: parsed.data.to,
         page: parsed.data.page,
         limit: parsed.data.limit,
+        sortBy: parsed.data.sortBy,
+        sortDir: parsed.data.sortDir,
       });
       return Response.json({ data });
     } catch (error) {

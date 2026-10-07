@@ -13,6 +13,13 @@ export type ThemeId = (typeof THEME_IDS)[number];
 
 export const DEFAULT_THEME: ThemeId = "coral-navy";
 
+/** Advertiser and publisher portals always use this theme, whatever is saved in the browser. */
+export const FIXED_PORTAL_THEME: ThemeId = "coral-navy";
+
+export function isFixedThemePath(pathname: string | null | undefined) {
+  return /^\/(advertiser|publisher)(\/|$)/.test(pathname ?? "");
+}
+
 export const THEME_STORAGE_KEY = "cpl-theme";
 
 export interface ThemeMeta {

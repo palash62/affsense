@@ -130,8 +130,8 @@ export function Header({ role, title, breadcrumbs, premium, onOpenMobileNav }: H
           <Input
             placeholder="Search anything..."
             className={cn(
-              "h-10 w-72 rounded-xl border-slate-200 bg-slate-50/80 pl-10 text-sm shadow-sm transition-colors focus:bg-white",
-              !premium && "w-64",
+              "h-10 w-44 rounded-xl border-slate-200 bg-slate-50/80 pl-10 text-sm shadow-sm transition-colors focus:bg-white xl:w-72",
+              !premium && "xl:w-64",
             )}
           />
         </div>

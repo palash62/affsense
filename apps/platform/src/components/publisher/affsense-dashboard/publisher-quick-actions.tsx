@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
-import { BarChart3, Box, ChevronRight, ClipboardList, FileText, Link2, Target } from "lucide-react";
+import { BarChart3, Box, ChevronRight, ClipboardList, FileText, Target } from "lucide-react";
 import {
   DashboardCard,
   DashboardCardTitle,
@@ -31,12 +31,6 @@ const ACTIONS: Array<{ label: string; href: string; icon: LucideIcon; iconClass:
         },
       ]
     : []),
-  {
-    label: "Create Affiliate Link",
-    href: "/publisher/promotions",
-    icon: Link2,
-    iconClass: "text-[var(--theme-primary)]",
-  },
   {
     label: "View Reports",
     href: "/publisher/reports/commissions",
