@@ -1,4 +1,5 @@
 import { DIGITAL_PRODUCT_CLICK_PARAM, sanitizeTrackingParam } from "@cpl/shared";
+import type { WebhookAttributionMethod } from "@cpl/tracking-core";
 import { prisma } from "@/lib/prisma";
 import {
   asRecord,
@@ -176,6 +177,8 @@ export type DigitalProductWebhookAttribution = {
   subId3: string | null;
   subId4: string | null;
   src: string | null;
+  /** How the click was matched. Only `exact_click` is proof of a specific visit. */
+  method?: WebhookAttributionMethod;
 };
 
 export async function resolveDigitalProductWebhookAttribution(input: {
@@ -237,6 +240,7 @@ export async function resolveDigitalProductWebhookAttribution(input: {
         subId3: exact.subId3,
         subId4: exact.subId4,
         src: exact.src,
+        method: "exact_click",
       };
     }
   }
@@ -252,7 +256,7 @@ export async function resolveDigitalProductWebhookAttribution(input: {
     landing.subId || landing.subId2 || landing.subId3 || landing.subId4 || landing.source,
   );
   if (!productId) {
-    return { ...base, clickId: null, ...landingTracking };
+    return { ...base, clickId: null, ...landingTracking, method: "affiliate_ref" };
   }
 
   const at = input.at ?? new Date();
@@ -275,7 +279,12 @@ export async function resolveDigitalProductWebhookAttribution(input: {
   });
 
   if (hasLandingParams) {
-    return { ...base, clickId: click?.id ?? null, ...landingTracking };
+    return {
+      ...base,
+      clickId: click?.id ?? null,
+      ...landingTracking,
+      method: click ? "sub_match" : "affiliate_ref",
+    };
   }
 
   return {
@@ -286,5 +295,6 @@ export async function resolveDigitalProductWebhookAttribution(input: {
     subId3: click?.subId3 ?? null,
     subId4: click?.subId4 ?? null,
     src: click?.src ?? null,
+    method: click ? "recent_click" : "affiliate_ref",
   };
 }

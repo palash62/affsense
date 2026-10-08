@@ -255,4 +255,10 @@ export const Errors = {
     ),
   campaignInvalidTransition: (message: string) =>
     new AppError("CAMPAIGN_INVALID_TRANSITION", message, 422),
+  usedBySoloAds: (entity: string) =>
+    new AppError(
+      "USED_BY_SOLO_ADS",
+      `This ${entity} is used by Solo Ads campaigns and cannot be deleted. Set it inactive instead.`,
+      409,
+    ),
 };

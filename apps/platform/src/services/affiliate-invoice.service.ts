@@ -32,6 +32,7 @@ const SOURCE_LABELS: Record<string, string> = {
   digital_product_reject: "Marketplace sales",
   adjustment: "Adjustments",
   deposit: "Deposits",
+  solo_ads_transfer: "Solo Ads transfers",
 };
 
 /**

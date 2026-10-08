@@ -1,3 +1,4 @@
+import { syncSoloDigitalConversion } from "@cpl/tracking-core";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import {
@@ -230,6 +231,7 @@ export async function handleClickFunnelsWebhookPost(request: Request): Promise<R
       cfOrderId: result.identifiers.orderId,
       cfSubscriptionId: result.identifiers.subscriptionKey,
       isRecurring: result.isRecurring,
+      attributionMethod: result.attributionMethod,
     };
 
     if (result.status !== "PROCESSED") {
@@ -272,6 +274,11 @@ export async function handleClickFunnelsWebhookPost(request: Request): Promise<R
         await recordDigitalProductCommission(created.id);
       } catch (error) {
         console.error("[clickfunnels-webhook] wallet posting failed", created.id, error);
+      }
+      try {
+        await syncSoloDigitalConversion(created.id);
+      } catch (error) {
+        console.error("[clickfunnels-webhook] solo ads sync failed", created.id, error);
       }
     }
 

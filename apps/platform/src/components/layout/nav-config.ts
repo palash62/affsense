@@ -36,6 +36,7 @@ import {
   ShoppingBag,
   Receipt,
   LayoutGrid,
+  Send,
 } from "lucide-react";
 import { ASSIGNABLE_STAFF_MENU_HREFS, parseStaffMenuAccess, STAFF_USERS_PATH } from "@/lib/admin-portal";
 import { PUBLISHER_GET_PAID_TASKS_ENABLED } from "@/lib/feature-flags";
@@ -154,6 +155,22 @@ export const ADMIN_NAV: AdminNavEntry[] = [
   {
     kind: "item",
     item: {
+      label: "Solo Ads",
+      href: "/admin/solo-ads",
+      icon: Send,
+      children: [
+        { label: "Overview", href: "/admin/solo-ads", icon: LayoutDashboard },
+        { label: "Campaigns", href: "/admin/solo-ads/campaigns", icon: Megaphone },
+        { label: "Providers", href: "/admin/solo-ads/providers", icon: Users },
+        { label: "Wallets", href: "/admin/solo-ads/wallets", icon: Wallet },
+        { label: "Traffic Quality", href: "/admin/solo-ads/fraud", icon: ShieldAlert },
+        { label: "Settings", href: "/admin/solo-ads/settings", icon: Settings },
+      ],
+    },
+  },
+  {
+    kind: "item",
+    item: {
       label: "Commissions",
       href: "/admin/commissions",
       icon: Percent,
@@ -259,6 +276,23 @@ export const PUBLISHER_NAV: AdminNavEntry[] = [
       children: [
         { label: "Browse Offers", href: "/publisher/offer-wall", icon: LayoutGrid },
         { label: "Report", href: "/publisher/offer-wall/report", icon: BarChart3 },
+      ],
+    },
+  },
+  {
+    kind: "item",
+    item: {
+      label: "Solo Ads",
+      href: "/publisher/solo-ads",
+      icon: Send,
+      badge: "NEW",
+      children: [
+        { label: "Overview", href: "/publisher/solo-ads", icon: LayoutDashboard },
+        { label: "Campaigns", href: "/publisher/solo-ads/campaigns", icon: Megaphone },
+        { label: "New Campaign", href: "/publisher/solo-ads/campaigns/new", icon: Plus },
+        { label: "Reports", href: "/publisher/solo-ads/reports", icon: BarChart3 },
+        { label: "Ad Wallet", href: "/publisher/solo-ads/wallet", icon: Wallet },
+        { label: "Tracking Setup", href: "/publisher/solo-ads/tracking", icon: Webhook },
       ],
     },
   },
@@ -427,6 +461,7 @@ export function getNavForRole(
   options?: {
     canAccessCpaOffers?: boolean;
     canAccessAutoresponder?: boolean;
+    canAccessSoloAds?: boolean;
     staffMenuAccess?: string[];
   },
 ): AdminNavEntry[] {
@@ -449,7 +484,9 @@ export function getNavForRole(
       return asNavEntries(items);
     }
     case "PUBLISHER":
-      return PUBLISHER_NAV;
+      return options?.canAccessSoloAds
+        ? PUBLISHER_NAV
+        : PUBLISHER_NAV.filter((entry) => entry.kind !== "item" || entry.item.href !== "/publisher/solo-ads");
     default:
       return [];
   }

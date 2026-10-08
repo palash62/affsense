@@ -241,6 +241,7 @@ export async function createWebhookEvent(input: {
   cfOrderId?: string | null;
   cfSubscriptionId?: string | null;
   isRecurring?: boolean;
+  attributionMethod?: string | null;
 }) {
   return prisma.webhookEvent.create({
     data: {
@@ -269,6 +270,7 @@ export async function createWebhookEvent(input: {
       cfOrderId: input.cfOrderId?.slice(0, 191) ?? null,
       cfSubscriptionId: input.cfSubscriptionId?.slice(0, 191) ?? null,
       isRecurring: input.isRecurring ?? false,
+      attributionMethod: input.attributionMethod ?? null,
     },
   });
 }

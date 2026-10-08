@@ -1,18 +1,13 @@
 import { prisma } from "@cpl/database";
-import {
-  buildDigitalProductDestinationUrl,
-  formatMemberId,
-  readSubIds,
-  sanitizeTrackingParam,
-} from "@cpl/shared";
+import { readSubIds, sanitizeTrackingParam } from "@cpl/shared";
 import { NextResponse } from "next/server";
 import { findActivePublisherByRef } from "@/lib/member-ref";
-
-function clientIp(request: Request): string | null {
-  const forwarded = request.headers.get("x-forwarded-for");
-  if (forwarded) return forwarded.split(",")[0]?.trim() || null;
-  return request.headers.get("x-real-ip");
-}
+import {
+  buildDigitalProductDestination,
+  clientIp,
+  createDigitalProductPublisherClick,
+} from "@/lib/offer-clicks";
+import { SOLO_CLICK_PARAM, findLinkedDigitalProductClick, resolveSoloClickLink } from "@/lib/solo-link";
 
 export async function GET(
   request: Request,
@@ -56,13 +51,15 @@ export async function GET(
   }
 
   const pubId = requestUrl.searchParams.get("pub_id")?.trim() || null;
-  const src = sanitizeTrackingParam(requestUrl.searchParams.get("src"));
+  const src = sanitizeTrackingParam(requestUrl.searchParams.get("src")) ?? null;
   const rawSubIds = readSubIds(requestUrl.searchParams);
-  const subId = sanitizeTrackingParam(rawSubIds.sub1);
-  const subId2 = sanitizeTrackingParam(rawSubIds.sub2);
-  const subId3 = sanitizeTrackingParam(rawSubIds.sub3);
-  const subId4 = sanitizeTrackingParam(rawSubIds.sub4);
-  const campaign = sanitizeTrackingParam(requestUrl.searchParams.get("campaign"));
+  const subIds = {
+    sub1: sanitizeTrackingParam(rawSubIds.sub1) ?? null,
+    sub2: sanitizeTrackingParam(rawSubIds.sub2) ?? null,
+    sub3: sanitizeTrackingParam(rawSubIds.sub3) ?? null,
+    sub4: sanitizeTrackingParam(rawSubIds.sub4) ?? null,
+  };
+  const campaign = sanitizeTrackingParam(requestUrl.searchParams.get("campaign")) ?? null;
 
   if (!pubId) {
     return NextResponse.json(
@@ -95,41 +92,41 @@ export async function GET(
 
   let clickId: string | undefined;
   try {
-    const click = await prisma.digitalProductClick.create({
-      data: {
+    const soloClickId = await resolveSoloClickLink({
+      rawId: requestUrl.searchParams.get(SOLO_CLICK_PARAM),
+      publisherId: publisher.id,
+      offerType: "DIGITAL",
+      offerId: product.id,
+    });
+    const existing = soloClickId ? await findLinkedDigitalProductClick(soloClickId) : null;
+    if (existing) {
+      clickId = existing.id;
+    } else {
+      const click = await createDigitalProductPublisherClick(prisma, {
         productId: product.id,
         publisherId: publisher.id,
         salesPageId: salesPage?.pageUrl?.trim() ? salesPage.id : null,
-        src: src?.slice(0, 191) || null,
-        subId: subId?.slice(0, 191) || null,
-        subId2: subId2?.slice(0, 191) || null,
-        subId3: subId3?.slice(0, 191) || null,
-        subId4: subId4?.slice(0, 191) || null,
-        campaign: campaign?.slice(0, 191) || null,
-        ip: clientIp(request)?.slice(0, 191) || null,
-        userAgent: request.headers.get("user-agent")?.slice(0, 1000) || null,
-      },
-      select: { id: true },
-    });
-    clickId = click.id;
+        subIds,
+        src,
+        campaign,
+        visitor: { ip: clientIp(request), userAgent: request.headers.get("user-agent") },
+        soloClickId,
+      });
+      clickId = click.id;
+    }
   } catch {
     // Best-effort: still redirect even if click write fails.
   }
 
-  const destination = buildDigitalProductDestinationUrl(
+  const destination = buildDigitalProductDestination({
     salesPageUrl,
-    product.affiliateTrackingParam,
-    formatMemberId(publisher.memberNo),
-    {
-      source: src,
-      subid: subId,
-      subid2: subId2,
-      subid3: subId3,
-      subid4: subId4,
-      campaign,
-      clickId,
-    },
-  );
+    affiliateTrackingParam: product.affiliateTrackingParam,
+    memberNo: publisher.memberNo,
+    subIds,
+    src,
+    campaign,
+    clickId,
+  });
 
   if (!destination) {
     return NextResponse.json({ error: { code: "GONE" } }, { status: 410 });

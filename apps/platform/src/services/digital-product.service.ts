@@ -925,6 +925,9 @@ export async function updateDigitalProduct(
 }
 
 export async function deleteDigitalProduct(id: string) {
+  if (await prisma.soloCampaign.count({ where: { digitalProductId: id } })) {
+    throw Errors.usedBySoloAds("product");
+  }
   await prisma.digitalProduct.delete({ where: { id } });
   return { id };
 }

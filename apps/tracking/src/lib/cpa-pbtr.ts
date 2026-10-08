@@ -13,7 +13,14 @@ import {
   resolveInboundClickId,
   inboundClickIdErrorMessage,
   normalizeClickId,
+  recordSoloCpaConversion,
 } from "@cpl/tracking-core";
+
+function readTransactionId(getParam: (key: string) => string | null): string | null {
+  const raw = (getParam("transaction_id") ?? getParam("txn_id"))?.trim();
+  if (!raw || /^\{.*\}$/.test(raw)) return null;
+  return raw.slice(0, 191);
+}
 
 type ClickRow = {
   id: string;
@@ -133,6 +140,7 @@ async function createConversionAndDispatch(input: {
   attribution: ReturnType<typeof resolveCpaClickAttribution>;
   payout: Prisma.Decimal | null;
   rawPayload: Prisma.InputJsonValue;
+  transactionId?: string | null;
 }) {
   const offer = await prisma.cpaOffer.findUnique({
     where: { id: input.offerId },
@@ -168,6 +176,18 @@ async function createConversionAndDispatch(input: {
       rawQuery: input.rawPayload,
     },
   });
+
+  try {
+    await recordSoloCpaConversion({
+      cpaOfferConversionId: event.id,
+      clickRecordId: input.attribution.clickRecordId ?? null,
+      offerId: input.offerId,
+      publisherPayout,
+      transactionId: input.transactionId,
+    });
+  } catch (error) {
+    console.error("[pbtr] solo ads conversion failed", error);
+  }
 
   if (input.attribution.advertiserId) {
     const earningAmount = effectivePayout != null ? Number(effectivePayout) : 0;
@@ -290,6 +310,7 @@ export async function handleGlobalCpaPostback(request: Request) {
       attribution,
       payout,
       rawPayload,
+      transactionId: readTransactionId(getParam),
     });
 
     return Response.json({
@@ -348,6 +369,7 @@ export async function handleLegacyTokenCpaPostback(request: Request, token: stri
       attribution,
       payout,
       rawPayload,
+      transactionId: readTransactionId(getParam),
     });
 
     return Response.json({

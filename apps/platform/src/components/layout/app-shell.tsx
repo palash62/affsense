@@ -21,6 +21,8 @@ interface AppShellProps {
   canAccessCpaOffers?: boolean;
   /** When false, advertiser Autoresponder nav is hidden. Default: show. */
   canAccessAutoresponder?: boolean;
+  /** When true, publisher Solo Ads nav is shown. Default: hidden. */
+  canAccessSoloAds?: boolean;
   /** Platform Manager menu allowlist (top-level admin hrefs). */
   staffMenuAccess?: string[];
   children: React.ReactNode;
@@ -33,6 +35,7 @@ function AppShellInner({
   viewAs,
   canAccessCpaOffers = true,
   canAccessAutoresponder = true,
+  canAccessSoloAds = false,
   staffMenuAccess,
   children,
 }: AppShellProps) {
@@ -44,18 +47,21 @@ function AppShellInner({
         role={role}
         canAccessCpaOffers={canAccessCpaOffers}
         canAccessAutoresponder={canAccessAutoresponder}
+        canAccessSoloAds={canAccessSoloAds}
         staffMenuAccess={staffMenuAccess}
       />
       <Sidebar
         role={role}
         canAccessCpaOffers={canAccessCpaOffers}
         canAccessAutoresponder={canAccessAutoresponder}
+        canAccessSoloAds={canAccessSoloAds}
         staffMenuAccess={staffMenuAccess}
       />
       <MobileNav
         role={role}
         canAccessCpaOffers={canAccessCpaOffers}
         canAccessAutoresponder={canAccessAutoresponder}
+        canAccessSoloAds={canAccessSoloAds}
         staffMenuAccess={staffMenuAccess}
         open={mobileNavOpen}
         onOpenChange={setMobileNavOpen}

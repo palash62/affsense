@@ -948,6 +948,21 @@ export async function deleteManagedUser(userId: string, adminId: string) {
     );
   }
 
+  if (user.role === "PUBLISHER") {
+    const [soloCampaigns, soloLedger, soloDeposits] = await Promise.all([
+      prisma.soloCampaign.count({ where: { publisherId: userId } }),
+      prisma.soloWalletLedger.count({ where: { wallet: { publisherId: userId } } }),
+      prisma.soloDeposit.count({ where: { wallet: { publisherId: userId } } }),
+    ]);
+    if (soloCampaigns || soloLedger || soloDeposits) {
+      throw new AppError(
+        "USER_DELETE_BLOCKED",
+        "This affiliate has Solo Ads campaigns or ad wallet history and cannot be deleted. Suspend the account instead.",
+        422,
+      );
+    }
+  }
+
   await prisma.$transaction(async (tx) => {
     await tx.impersonationToken.deleteMany({
       where: { OR: [{ adminId: userId }, { targetUserId: userId }] },

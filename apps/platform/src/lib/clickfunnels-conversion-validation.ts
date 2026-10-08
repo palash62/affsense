@@ -10,6 +10,7 @@ import {
   type DigitalProductWebhookAttribution,
 } from "@/lib/clickfunnels-webhook-attribution";
 import { derivePageSlugFromUrl, normalizePageSlug } from "@/lib/digital-product-page-slug";
+import type { WebhookAttributionMethod } from "@cpl/tracking-core";
 
 export const CONVERSION_REJECT_REASONS = {
   NO_AFFSENSE_ATTRIBUTION: "No Affsense affiliate tracking on this sale",
@@ -88,6 +89,8 @@ export type ConversionValidationResult = {
   subId4: string | null;
   src: string | null;
   isRecurring: boolean;
+  /** How the affiliate was matched; null when the sale was not attributed. */
+  attributionMethod: WebhookAttributionMethod | null;
   /** Idempotency key; set only for PROCESSED events. */
   externalEventKey: string | null;
   /** Save subscription attribution after insert (initial subscription sale). */
@@ -205,6 +208,7 @@ async function validateWithDeps(
     subId4: null,
     src: null,
     isRecurring: false,
+    attributionMethod: null,
     externalEventKey: null,
     storeSubscription: false,
   };
@@ -259,6 +263,7 @@ async function validateWithDeps(
           status: "PROCESSED",
           isRecurring,
           ...referrer,
+          attributionMethod: "lifetime_email",
           externalEventKey: buildExternalEventKey({ identifiers, isRecurring, productKey, at }),
         };
       }
@@ -280,6 +285,7 @@ async function validateWithDeps(
       subId3: subscription.subId3,
       subId4: subscription.subId4,
       src: subscription.src,
+      attributionMethod: "subscription",
       externalEventKey: buildExternalEventKey({ identifiers, isRecurring, productKey, at }),
     };
   }
@@ -295,6 +301,7 @@ async function validateWithDeps(
         ...withProduct,
         status: "PROCESSED",
         ...referrer,
+        attributionMethod: "lifetime_email",
         externalEventKey: buildExternalEventKey({ identifiers, isRecurring: false, productKey, at }),
         storeSubscription: Boolean(identifiers.subscriptionKey) && !subscription,
       };
@@ -331,6 +338,7 @@ async function validateWithDeps(
     subId3: attribution.subId3,
     subId4: attribution.subId4,
     src: attribution.src,
+    attributionMethod: attribution.method ?? (attribution.clickId ? "recent_click" : "affiliate_ref"),
     externalEventKey: buildExternalEventKey({ identifiers, isRecurring: false, productKey, at }),
     storeSubscription: Boolean(identifiers.subscriptionKey) && !subscription && !identifiers.isRefund,
   };

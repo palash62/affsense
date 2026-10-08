@@ -1,13 +1,9 @@
 import { prisma } from "@cpl/database";
-import { injectClickIdIntoTrackingUrl, readSubIds } from "@cpl/shared";
+import { readSubIds } from "@cpl/shared";
 import { NextResponse } from "next/server";
 import { findActivePublisherByRef } from "@/lib/member-ref";
-
-function clientIp(request: Request): string | null {
-  const forwarded = request.headers.get("x-forwarded-for");
-  if (forwarded) return forwarded.split(",")[0]?.trim() || null;
-  return request.headers.get("x-real-ip");
-}
+import { buildCpaOfferDestination, clientIp, createCpaPublisherClick } from "@/lib/offer-clicks";
+import { SOLO_CLICK_PARAM, findLinkedCpaClick, resolveSoloClickLink } from "@/lib/solo-link";
 
 export async function GET(
   request: Request,
@@ -31,14 +27,9 @@ export async function GET(
   const advId = requestUrl.searchParams.get("adv_id")?.trim() || null;
   const pubId = requestUrl.searchParams.get("pub_id")?.trim() || null;
   const subIds = readSubIds(requestUrl.searchParams);
-  const subColumns = {
-    subId: subIds.sub1?.slice(0, 191) || null,
-    subId2: subIds.sub2?.slice(0, 191) || null,
-    subId3: subIds.sub3?.slice(0, 191) || null,
-    subId4: subIds.sub4?.slice(0, 191) || null,
-  };
   const src = requestUrl.searchParams.get("src")?.trim() || null;
   const leadIdParam = requestUrl.searchParams.get("lead_id")?.trim() || null;
+  const visitor = { ip: clientIp(request), userAgent: request.headers.get("user-agent") };
 
   let clickId: string | null = null;
   let leadId: string | null = null;
@@ -66,10 +57,13 @@ export async function GET(
           offerId: offer.id,
           advertiserId: advertiser.id,
           leadId,
-          ...subColumns,
+          subId: subIds.sub1?.slice(0, 191) || null,
+          subId2: subIds.sub2?.slice(0, 191) || null,
+          subId3: subIds.sub3?.slice(0, 191) || null,
+          subId4: subIds.sub4?.slice(0, 191) || null,
           src: src?.slice(0, 191) || null,
-          ip: clientIp(request)?.slice(0, 191) || null,
-          userAgent: request.headers.get("user-agent")?.slice(0, 1000) || null,
+          ip: visitor.ip?.slice(0, 191) || null,
+          userAgent: visitor.userAgent?.slice(0, 1000) || null,
         },
       });
       clickId = click.id;
@@ -100,47 +94,43 @@ export async function GET(
         }
       }
 
-      const click = await prisma.cpaOfferClick.create({
-        data: {
-          offerId: offer.id,
-          publisherId: publisher.id,
-          ...subColumns,
-          src: src?.slice(0, 191) || null,
-          ip: clientIp(request)?.slice(0, 191) || null,
-          userAgent: request.headers.get("user-agent")?.slice(0, 1000) || null,
-        },
+      const soloClickId = await resolveSoloClickLink({
+        rawId: requestUrl.searchParams.get(SOLO_CLICK_PARAM),
+        publisherId: publisher.id,
+        offerType: "CPA",
+        offerId: offer.id,
       });
-      clickId = click.id;
+      const existing = soloClickId ? await findLinkedCpaClick(soloClickId) : null;
+      if (existing) {
+        clickId = existing.id;
+      } else {
+        try {
+          const click = await createCpaPublisherClick(prisma, {
+            offerId: offer.id,
+            publisherId: publisher.id,
+            subIds,
+            src,
+            visitor,
+            soloClickId,
+          });
+          clickId = click.id;
+        } catch (error) {
+          if (!soloClickId) throw error;
+          clickId = (await findLinkedCpaClick(soloClickId))?.id ?? null;
+        }
+      }
     }
   }
 
-  let destination = offer.trackingUrl;
-
-  // Replace {click_id} macros before URL serialization encodes braces to %7B...%7D.
-  if (clickId) {
-    destination = injectClickIdIntoTrackingUrl(destination, clickId, requestUrl.origin);
-  }
-
-  try {
-    const target = destination.startsWith("/")
-      ? new URL(destination, requestUrl.origin)
-      : new URL(destination);
-
-    if (advId) target.searchParams.set("adv_id", advId);
-    if (pubId) target.searchParams.set("pub_id", pubId);
-    if (subIds.sub1) {
-      target.searchParams.set("sub_id", subIds.sub1);
-      target.searchParams.set("sub1", subIds.sub1);
-    }
-    if (subIds.sub2) target.searchParams.set("sub2", subIds.sub2);
-    if (subIds.sub3) target.searchParams.set("sub3", subIds.sub3);
-    if (subIds.sub4) target.searchParams.set("sub4", subIds.sub4);
-    if (src) target.searchParams.set("src", src);
-
-    destination = target.toString();
-  } catch {
-    // keep original destination
-  }
+  const destination = buildCpaOfferDestination({
+    trackingUrl: offer.trackingUrl,
+    clickId,
+    origin: requestUrl.origin,
+    advId,
+    pubId,
+    subIds,
+    src,
+  });
 
   return NextResponse.redirect(destination, 302);
 }

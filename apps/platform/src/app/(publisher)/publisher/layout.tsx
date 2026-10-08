@@ -2,6 +2,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/layout/app-shell";
 import { getSession } from "@/lib/session";
+import { getSoloAdsAccess } from "@/lib/solo-ads-access";
 import {
   reconcilePublisherDigitalCommissionsForUser,
   reconcilePublisherLeadCreditsForUser,
@@ -30,10 +31,12 @@ export default async function PublisherLayout({
   await reconcilePublisherDigitalCommissionsForUser(session.user.id).catch((error) => {
     console.error("[publisher-layout] marketplace commission reconcile failed", error);
   });
+  const soloAds = await getSoloAdsAccess(session.user.id).catch(() => ({ available: false }));
 
   return (
     <AppShell
       role={session.user.role}
+      canAccessSoloAds={soloAds.available}
       viewAs={
         session.viewAsMode
           ? { userName: session.user.name, userRole: session.user.role }

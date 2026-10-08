@@ -18,6 +18,7 @@ export function MobileNav({
   onOpenChange,
   canAccessCpaOffers,
   canAccessAutoresponder,
+  canAccessSoloAds,
   staffMenuAccess,
 }: {
   role: UserRole;
@@ -25,6 +26,7 @@ export function MobileNav({
   onOpenChange: (open: boolean) => void;
   canAccessCpaOffers?: boolean;
   canAccessAutoresponder?: boolean;
+  canAccessSoloAds?: boolean;
   staffMenuAccess?: string[];
 }) {
   const pathname = usePathname();
@@ -81,6 +83,7 @@ export function MobileNav({
             role={role}
             canAccessCpaOffers={canAccessCpaOffers}
             canAccessAutoresponder={canAccessAutoresponder}
+            canAccessSoloAds={canAccessSoloAds}
             staffMenuAccess={staffMenuAccess}
             onNavigate={() => onOpenChange(false)}
           />

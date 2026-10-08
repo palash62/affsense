@@ -14,6 +14,7 @@ interface SidebarProps {
   collapsed?: boolean;
   canAccessCpaOffers?: boolean;
   canAccessAutoresponder?: boolean;
+  canAccessSoloAds?: boolean;
   staffMenuAccess?: string[];
   className?: string;
 }
@@ -23,6 +24,7 @@ export function Sidebar({
   collapsed,
   canAccessCpaOffers,
   canAccessAutoresponder,
+  canAccessSoloAds,
   staffMenuAccess,
   className,
 }: SidebarProps) {
@@ -72,6 +74,7 @@ export function Sidebar({
         collapsed={collapsed}
         canAccessCpaOffers={canAccessCpaOffers}
         canAccessAutoresponder={canAccessAutoresponder}
+        canAccessSoloAds={canAccessSoloAds}
         staffMenuAccess={staffMenuAccess}
       />
       {!collapsed && !isPublisherPortalRole(role) ? <SidebarStatusCard /> : null}

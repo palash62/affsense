@@ -131,6 +131,7 @@ describe("resolveDigitalProductWebhookAttribution click enrichment", () => {
       subId3: null,
       subId4: null,
       src: "facebook",
+      method: "recent_click",
     });
     expect(digitalProductClickFindFirst).toHaveBeenCalledWith(
       expect.objectContaining({

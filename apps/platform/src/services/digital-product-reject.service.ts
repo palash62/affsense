@@ -1,3 +1,4 @@
+import { reverseSoloConversionForWebhookEvent } from "@cpl/tracking-core";
 import { prisma } from "@/lib/prisma";
 import { AppError, Errors } from "@/lib/errors";
 import { extractClickFunnelsIdentifiers } from "@/lib/clickfunnels-webhook-payload";
@@ -48,7 +49,7 @@ export async function rejectDigitalProductConversion(
   }
   const publisherId = event.publisherId;
 
-  return prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx) => {
     // Same lock as commission posting, so a concurrent post cannot slip in between.
     await tx.$queryRaw`SELECT id FROM wallets WHERE user_id = ${publisherId} FOR UPDATE`;
 
@@ -119,4 +120,11 @@ export async function rejectDigitalProductConversion(
 
     return { rejectedEventIds, reversedAmount };
   });
+
+  for (const id of result.rejectedEventIds) {
+    await reverseSoloConversionForWebhookEvent(id, "admin_rejected").catch((error) =>
+      console.error("[solo] reversal after reject failed", id, error),
+    );
+  }
+  return result;
 }

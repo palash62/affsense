@@ -11,7 +11,7 @@ type StripeUserProfile = {
   stripeCustomerId: string | null;
 };
 
-async function getStripeClient(): Promise<Stripe> {
+export async function getStripeClient(): Promise<Stripe> {
   const config = await getResolvedStripeConfig();
   if (!config.enabled || !config.secretKey) {
     throw new Error("STRIPE_NOT_CONFIGURED");

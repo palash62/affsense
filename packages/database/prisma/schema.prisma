@@ -352,6 +352,9 @@ model User {
   allowedDigitalProducts DigitalProductAllowedPublisher[] @relation("DigitalProductAllowedPublishers")
   promotion              Promotion? @relation(fields: [promotionId], references: [id], onDelete: SetNull)
   createdPromotions      Promotion[] @relation("PromotionCreatedBy")
+  soloCampaigns          SoloCampaign[] @relation("SoloCampaignOwner")
+  soloWallet             SoloWallet?
+  soloTrackingSite       SoloTrackingSite?
 
   @@index([role])
   @@index([status])
@@ -1660,6 +1663,7 @@ model CpaOffer {
   publisherAccessRequests PublisherCpaOfferAccess[]
   commissionPlans CpaOfferCommissionPlan[]
   commissionPlanMembers CpaOfferCommissionPlanMember[]
+  soloCampaigns   SoloCampaign[]
   createdBy       User?          @relation("CpaOfferCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
   ownerAdvertiser User?          @relation("AdvertiserOwnedCpaOffers", fields: [ownerAdvertiserId], references: [id], onDelete: SetNull)
 
@@ -1726,6 +1730,8 @@ model CpaOfferClick {
   src          String?
   ip           String?
   userAgent    String?  @map("user_agent") @db.Text
+  /// Set when this click was created by (or linked to) a Solo Ads click.
+  soloClickId  String?  @unique @map("solo_click_id")
   createdAt    DateTime @default(now()) @map("created_at")
   offer        CpaOffer @relation(fields: [offerId], references: [id], onDelete: Cascade)
   advertiser   User?    @relation("AdvertiserCpaOfferClicks", fields: [advertiserId], references: [id], onDelete: Cascade)
@@ -1969,6 +1975,7 @@ model DigitalProduct {
   cfMappings            DigitalProductCfMapping[]
   subscriptionAttributions DigitalProductSubscriptionAttribution[]
   allowedPublishers     DigitalProductAllowedPublisher[]
+  soloCampaigns         SoloCampaign[]
 
   @@index([status])
   @@index([categoryId])
@@ -2126,6 +2133,8 @@ model DigitalProductClick {
   campaign    String?
   ip          String?
   userAgent   String?        @map("user_agent") @db.Text
+  /// Set when this click was created by (or linked to) a Solo Ads click.
+  soloClickId String?        @unique @map("solo_click_id")
   createdAt   DateTime       @default(now()) @map("created_at")
   product     DigitalProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
   publisher   User           @relation("PublisherDigitalProductClicks", fields: [publisherId], references: [id], onDelete: Cascade)
@@ -2356,6 +2365,8 @@ model WebhookEvent {
   cfOrderId               String?  @map("cf_order_id")
   cfSubscriptionId        String?  @map("cf_subscription_id")
   isRecurring             Boolean  @default(false) @map("is_recurring")
+  /// How the affiliate was matched: exact_click, sub_match, recent_click, affiliate_ref, subscription, lifetime_email.
+  attributionMethod       String?  @map("attribution_method")
   createdAt    DateTime           @default(now()) @map("created_at")
   publisher    User?              @relation("WebhookEventPublisher", fields: [publisherId], references: [id], onDelete: SetNull)
   click        DigitalProductClick? @relation(fields: [clickId], references: [id], onDelete: SetNull)
@@ -2430,4 +2441,444 @@ model OfferwallConversion {
   @@index([offerId])
   @@index([subId])
   @@map("offerwall_conversions")
+}
+
+
+// ---------------------------------------------------------------------------
+// Solo Ads: affiliates buy CPC traffic from admin-managed provider pools.
+// All money is stored as integer US cents.
+// ---------------------------------------------------------------------------
+
+enum SoloTrafficType {
+  REGULAR
+  WARM
+}
+
+enum SoloProviderClass {
+  REGULAR
+  WARM
+  BOTH
+}
+
+enum SoloProviderStatus {
+  ACTIVE
+  PAUSED
+  DISABLED
+}
+
+enum SoloTokenStatus {
+  ACTIVE
+  REVOKED
+}
+
+enum SoloOfferType {
+  CPA
+  DIGITAL
+}
+
+enum SoloDestinationMode {
+  DIRECT
+  EXTERNAL
+}
+
+enum SoloCampaignStatus {
+  DRAFT
+  PENDING_REVIEW
+  ACTIVE
+  PAUSED
+  BUDGET_EXHAUSTED
+  INSUFFICIENT_FUNDS
+  COMPLETED
+  REJECTED
+}
+
+enum SoloClickBillingStatus {
+  PENDING
+  BILLED
+  INVALID
+  REFUNDED
+  FALLBACK
+}
+
+enum SoloLedgerType {
+  DEPOSIT
+  EARNINGS_TRANSFER
+  CHARGE
+  REFUND
+  ADJUSTMENT
+  CHARGEBACK
+  REVERSAL
+}
+
+enum SoloDepositStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  REFUNDED
+  DISPUTED
+}
+
+enum SoloLeadSource {
+  SCRIPT
+  API
+}
+
+enum SoloLeadStatus {
+  VALID
+  DUPLICATE
+  REJECTED
+}
+
+enum SoloConversionSource {
+  CPA
+  DIGITAL
+}
+
+enum SoloConversionStatus {
+  PENDING
+  APPROVED
+  REVERSED
+}
+
+model SoloProvider {
+  id            String             @id @default(cuid())
+  /// Stable public number shown to affiliates (e.g. 101). Never reused.
+  publicCode    Int                @unique @map("public_code")
+  realName      String             @map("real_name")
+  contact       String?            @db.Text
+  trafficClass  SoloProviderClass  @default(BOTH) @map("traffic_class")
+  status        SoloProviderStatus @default(ACTIVE)
+  /// ISO country codes this provider may deliver; empty = any supported geo.
+  geoRules      Json?              @map("geo_rules")
+  /// Max routed clicks per UTC day; null = unlimited.
+  dailyCapacity Int?               @map("daily_capacity")
+  notes         String?            @db.Text
+  createdAt     DateTime           @default(now()) @map("created_at")
+  updatedAt     DateTime           @updatedAt @map("updated_at")
+
+  tokens SoloProviderToken[]
+  blocks SoloCampaignProviderBlock[]
+  usage  SoloProviderDailyUsage[]
+
+  @@index([status])
+  @@map("solo_providers")
+}
+
+model SoloProviderToken {
+  id          String          @id @default(cuid())
+  providerId  String          @map("provider_id")
+  trafficType SoloTrafficType @map("traffic_type")
+  /// SHA-256 of the secret token; the secret itself is shown once and never stored.
+  tokenHash   String          @unique @map("token_hash")
+  prefix      String
+  status      SoloTokenStatus @default(ACTIVE)
+  createdById String?         @map("created_by_id")
+  revokedAt   DateTime?       @map("revoked_at")
+  lastUsedAt  DateTime?       @map("last_used_at")
+  createdAt   DateTime        @default(now()) @map("created_at")
+
+  provider SoloProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  @@index([providerId, status])
+  @@map("solo_provider_tokens")
+}
+
+model SoloCampaign {
+  id                  String              @id @default(cuid())
+  publisherId         String              @map("publisher_id")
+  name                String
+  offerType           SoloOfferType       @map("offer_type")
+  cpaOfferId          String?             @map("cpa_offer_id")
+  digitalProductId    String?             @map("digital_product_id")
+  trafficType         SoloTrafficType     @map("traffic_type")
+  destinationMode     SoloDestinationMode @map("destination_mode")
+  /// External landing/opt-in page (EXTERNAL mode only).
+  destinationUrl      String?             @map("destination_url") @db.Text
+  destinationHost     String?             @map("destination_host")
+  /// Set when the global script was seen on destinationHost.
+  trackingVerifiedAt  DateTime?           @map("tracking_verified_at")
+  /// ISO-2 country codes.
+  countries           Json
+  /// ["desktop","mobile","tablet"]; empty = all.
+  devices             Json?
+  /// Local hours (0-23) when traffic may be delivered; empty = all day.
+  activeHours         Json?               @map("active_hours")
+  timezone            String              @default("UTC")
+  startAt             DateTime?           @map("start_at")
+  endAt               DateTime?           @map("end_at")
+  dailyBudgetCents    Int                 @map("daily_budget_cents")
+  lifetimeBudgetCents Int                 @map("lifetime_budget_cents")
+  /// CPC locked when the campaign was created; admin price changes apply to new campaigns.
+  cpcCentsSnapshot    Int                 @map("cpc_cents_snapshot")
+  spentCents          Int                 @default(0) @map("spent_cents")
+  reservedCents       Int                 @default(0) @map("reserved_cents")
+  paidClicks          Int                 @default(0) @map("paid_clicks")
+  status              SoloCampaignStatus  @default(DRAFT)
+  statusReason        String?             @map("status_reason") @db.Text
+  /// Admin routing weight multiplier (1 = normal). Changes are audited.
+  priority            Int                 @default(1)
+  submittedAt         DateTime?           @map("submitted_at")
+  reviewedAt          DateTime?           @map("reviewed_at")
+  reviewedById        String?             @map("reviewed_by_id")
+  createdAt           DateTime            @default(now()) @map("created_at")
+  updatedAt           DateTime            @updatedAt @map("updated_at")
+
+  publisher      User                        @relation("SoloCampaignOwner", fields: [publisherId], references: [id], onDelete: Cascade)
+  cpaOffer       CpaOffer?                   @relation(fields: [cpaOfferId], references: [id], onDelete: Restrict)
+  digitalProduct DigitalProduct?             @relation(fields: [digitalProductId], references: [id], onDelete: Restrict)
+  providerBlocks SoloCampaignProviderBlock[]
+  usage          SoloDailyUsage[]
+  clicks         SoloClick[]
+  conversions    SoloConversion[]
+  leads          SoloLeadEvent[]
+  stats          SoloDailyStats[]
+
+  @@index([publisherId, status])
+  @@index([status, trafficType])
+  @@index([destinationHost])
+  @@map("solo_campaigns")
+}
+
+model SoloCampaignProviderBlock {
+  id         String   @id @default(cuid())
+  campaignId String   @map("campaign_id")
+  providerId String   @map("provider_id")
+  actorId    String   @map("actor_id")
+  blockedAt  DateTime @default(now()) @map("blocked_at")
+
+  campaign SoloCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  provider SoloProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, providerId])
+  @@map("solo_campaign_provider_blocks")
+}
+
+model SoloDailyUsage {
+  id            String @id @default(cuid())
+  campaignId    String @map("campaign_id")
+  /// Campaign-local date, YYYY-MM-DD.
+  localDate     String @map("local_date") @db.VarChar(10)
+  reservedCents Int    @default(0) @map("reserved_cents")
+  spentCents    Int    @default(0) @map("spent_cents")
+  paidClicks    Int    @default(0) @map("paid_clicks")
+
+  campaign SoloCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, localDate])
+  @@map("solo_daily_usage")
+}
+
+model SoloProviderDailyUsage {
+  id         String @id @default(cuid())
+  providerId String @map("provider_id")
+  /// UTC date, YYYY-MM-DD.
+  date       String @db.VarChar(10)
+  clicks     Int    @default(0)
+
+  provider SoloProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  @@unique([providerId, date])
+  @@map("solo_provider_daily_usage")
+}
+
+model SoloClick {
+  /// Canonical opaque click id (sc_ + 24 base62), passed as affs_click_id.
+  id               String                 @id
+  campaignId       String?                @map("campaign_id")
+  providerId       String                 @map("provider_id")
+  tokenId          String                 @map("token_id")
+  publisherId      String?                @map("publisher_id")
+  trafficType      SoloTrafficType        @map("traffic_type")
+  offerType        SoloOfferType?         @map("offer_type")
+  cpaOfferId       String?                @map("cpa_offer_id")
+  digitalProductId String?                @map("digital_product_id")
+  ipHash           String                 @map("ip_hash") @db.VarChar(64)
+  country          String?                @db.VarChar(2)
+  device           String?                @db.VarChar(16)
+  uaHash           String?                @map("ua_hash") @db.VarChar(64)
+  targetUrl        String?                @map("target_url") @db.Text
+  billingStatus    SoloClickBillingStatus @default(PENDING) @map("billing_status")
+  invalidReason    String?                @map("invalid_reason")
+  chargeCents      Int                    @default(0) @map("charge_cents")
+  /// Campaign-local date the reservation was counted against.
+  localDate        String?                @map("local_date") @db.VarChar(10)
+  finalizedAt      DateTime?              @map("finalized_at")
+  createdAt        DateTime               @default(now()) @map("created_at")
+
+  campaign    SoloCampaign?    @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  conversions SoloConversion[]
+  leads       SoloLeadEvent[]
+
+  @@index([campaignId, createdAt])
+  @@index([publisherId, createdAt])
+  @@index([providerId, createdAt])
+  @@index([billingStatus, createdAt])
+  @@index([ipHash, createdAt])
+  @@map("solo_clicks")
+}
+
+model SoloWallet {
+  id            String   @id @default(cuid())
+  publisherId   String   @unique @map("publisher_id")
+  balanceCents  Int      @default(0) @map("balance_cents")
+  /// Reserved for pending (not yet finalized) clicks; counts against spendable balance.
+  reservedCents Int      @default(0) @map("reserved_cents")
+  version       Int      @default(0)
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  publisher User               @relation(fields: [publisherId], references: [id], onDelete: Cascade)
+  ledger    SoloWalletLedger[]
+  deposits  SoloDeposit[]
+
+  @@map("solo_wallets")
+}
+
+/// Append-only. Rows are never updated or deleted.
+model SoloWalletLedger {
+  id                String         @id @default(cuid())
+  walletId          String         @map("wallet_id")
+  type              SoloLedgerType
+  /// Signed: positive adds to the balance, negative removes.
+  amountCents       Int            @map("amount_cents")
+  balanceAfterCents Int            @map("balance_after_cents")
+  idempotencyKey    String         @unique @map("idempotency_key")
+  sourceType        String?        @map("source_type")
+  sourceId          String?        @map("source_id")
+  actorId           String?        @map("actor_id")
+  reason            String?        @db.Text
+  createdAt         DateTime       @default(now()) @map("created_at")
+
+  wallet SoloWallet @relation(fields: [walletId], references: [id], onDelete: Restrict)
+
+  @@index([walletId, createdAt])
+  @@index([type, createdAt])
+  @@map("solo_wallet_ledger")
+}
+
+model SoloDeposit {
+  id                    String            @id @default(cuid())
+  walletId              String            @map("wallet_id")
+  publisherId           String            @map("publisher_id")
+  amountCents           Int               @map("amount_cents")
+  stripePaymentIntentId String?           @unique @map("stripe_payment_intent_id")
+  status                SoloDepositStatus @default(PENDING)
+  failureReason         String?           @map("failure_reason") @db.Text
+  refundedCents         Int               @default(0) @map("refunded_cents")
+  completedAt           DateTime?         @map("completed_at")
+  createdAt             DateTime          @default(now()) @map("created_at")
+  updatedAt             DateTime          @updatedAt @map("updated_at")
+
+  wallet SoloWallet @relation(fields: [walletId], references: [id], onDelete: Restrict)
+
+  @@index([publisherId, createdAt])
+  @@index([status])
+  @@map("solo_deposits")
+}
+
+model SoloTrackingSite {
+  id           String    @id @default(cuid())
+  publisherId  String    @unique @map("publisher_id")
+  /// Public key embedded in the global script tag.
+  siteKey      String    @unique @map("site_key")
+  /// SHA-256 of the server-side lead API key.
+  apiKeyHash   String    @unique @map("api_key_hash")
+  apiKeyPrefix String    @map("api_key_prefix")
+  lastSeenAt   DateTime? @map("last_seen_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  publisher User               @relation(fields: [publisherId], references: [id], onDelete: Cascade)
+  hosts     SoloTrackingHost[]
+
+  @@map("solo_tracking_sites")
+}
+
+model SoloTrackingHost {
+  id          String   @id @default(cuid())
+  siteId      String   @map("site_id")
+  host        String
+  firstSeenAt DateTime @default(now()) @map("first_seen_at")
+  lastSeenAt  DateTime @default(now()) @map("last_seen_at")
+
+  site SoloTrackingSite @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@unique([siteId, host])
+  @@map("solo_tracking_hosts")
+}
+
+model SoloLeadEvent {
+  id          String         @id @default(cuid())
+  /// Client- or server-supplied idempotency key, scoped to the publisher.
+  eventKey    String         @unique @map("event_key")
+  publisherId String         @map("publisher_id")
+  soloClickId String         @map("solo_click_id")
+  campaignId  String         @map("campaign_id")
+  source      SoloLeadSource
+  emailHash   String?        @map("email_hash") @db.VarChar(64)
+  status      SoloLeadStatus @default(VALID)
+  reason      String?
+  createdAt   DateTime       @default(now()) @map("created_at")
+
+  click    SoloClick    @relation(fields: [soloClickId], references: [id], onDelete: Cascade)
+  campaign SoloCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@index([campaignId, createdAt])
+  @@index([campaignId, emailHash])
+  @@map("solo_lead_events")
+}
+
+model SoloConversion {
+  id                   String               @id @default(cuid())
+  soloClickId          String               @map("solo_click_id")
+  campaignId           String               @map("campaign_id")
+  providerId           String               @map("provider_id")
+  publisherId          String               @map("publisher_id")
+  source               SoloConversionSource
+  /// Unique identity of the verified source event (prevents duplicate credit).
+  dedupeKey            String               @unique @map("dedupe_key")
+  cpaOfferConversionId String?              @map("cpa_offer_conversion_id")
+  webhookEventId       String?              @map("webhook_event_id")
+  externalTxnId        String?              @map("external_txn_id")
+  commissionCents      Int                  @map("commission_cents")
+  status               SoloConversionStatus @default(PENDING)
+  isRecurring          Boolean              @default(false) @map("is_recurring")
+  /// Credited through a follow-up (subscription / email) rather than the first visit.
+  assisted             Boolean              @default(false)
+  reversedAt           DateTime?            @map("reversed_at")
+  reverseReason        String?              @map("reverse_reason")
+  createdAt            DateTime             @default(now()) @map("created_at")
+  updatedAt            DateTime             @updatedAt @map("updated_at")
+
+  click    SoloClick    @relation(fields: [soloClickId], references: [id], onDelete: Restrict)
+  campaign SoloCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@index([campaignId, createdAt])
+  @@index([publisherId, createdAt])
+  @@index([providerId, createdAt])
+  @@index([cpaOfferConversionId])
+  @@index([webhookEventId])
+  @@map("solo_conversions")
+}
+
+/// Rollup per campaign x provider x campaign-local date, for fast reports.
+model SoloDailyStats {
+  id              String @id @default(cuid())
+  campaignId      String @map("campaign_id")
+  providerId      String @map("provider_id")
+  localDate       String @map("local_date") @db.VarChar(10)
+  clicks          Int    @default(0)
+  billedClicks    Int    @default(0) @map("billed_clicks")
+  invalidClicks   Int    @default(0) @map("invalid_clicks")
+  spendCents      Int    @default(0) @map("spend_cents")
+  leads           Int    @default(0)
+  conversions     Int    @default(0)
+  commissionCents Int    @default(0) @map("commission_cents")
+  reversedCents   Int    @default(0) @map("reversed_cents")
+
+  campaign SoloCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, providerId, localDate])
+  @@index([providerId, localDate])
+  @@map("solo_daily_stats")
 }

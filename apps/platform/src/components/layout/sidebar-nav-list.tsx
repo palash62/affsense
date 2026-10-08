@@ -432,6 +432,7 @@ export function SidebarNavList({
   onNavigate,
   canAccessCpaOffers,
   canAccessAutoresponder,
+  canAccessSoloAds,
   staffMenuAccess,
 }: {
   role: UserRole;
@@ -439,12 +440,14 @@ export function SidebarNavList({
   onNavigate?: () => void;
   canAccessCpaOffers?: boolean;
   canAccessAutoresponder?: boolean;
+  canAccessSoloAds?: boolean;
   staffMenuAccess?: string[];
 }) {
   const pathname = usePathname();
   const entries = getNavForRole(role, {
     canAccessCpaOffers,
     canAccessAutoresponder,
+    canAccessSoloAds,
     staffMenuAccess,
   });
 

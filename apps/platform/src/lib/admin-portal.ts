@@ -13,6 +13,7 @@ export const ASSIGNABLE_STAFF_MENU_HREFS = [
   "/admin/get-paid-tasks",
   "/admin/offer-wall",
   "/admin/offer-network",
+  "/admin/solo-ads",
   "/admin/commissions",
   "/admin/invoices",
   "/admin/support-tickets",

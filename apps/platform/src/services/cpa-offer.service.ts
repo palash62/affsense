@@ -780,6 +780,7 @@ export async function updateCpaOffer(
 export async function deleteCpaOffer(id: string): Promise<{ id: string }> {
   const existing = await prisma.cpaOffer.findUnique({ where: { id } });
   if (!existing) throw Errors.notFound("CPA offer");
+  if (await prisma.soloCampaign.count({ where: { cpaOfferId: id } })) throw Errors.usedBySoloAds("offer");
   await prisma.cpaOffer.delete({ where: { id } });
   return { id };
 }

@@ -17,26 +17,29 @@ export function NavPrefetch({
   role,
   canAccessCpaOffers = true,
   canAccessAutoresponder = true,
+  canAccessSoloAds = false,
   staffMenuAccess,
 }: {
   role: UserRole;
   canAccessCpaOffers?: boolean;
   canAccessAutoresponder?: boolean;
+  canAccessSoloAds?: boolean;
   staffMenuAccess?: string[];
 }) {
   const router = useRouter();
   // Single stable key so adding more access flags never changes useEffect deps size.
-  const accessKey = `${canAccessCpaOffers ? 1 : 0}:${canAccessAutoresponder ? 1 : 0}:${(staffMenuAccess ?? []).join(",")}`;
+  const accessKey = `${canAccessCpaOffers ? 1 : 0}:${canAccessAutoresponder ? 1 : 0}:${canAccessSoloAds ? 1 : 0}:${(staffMenuAccess ?? []).join(",")}`;
 
   useEffect(() => {
     let cancelled = false;
 
     const prefetchNav = () => {
       if (cancelled) return;
-      const [cpa, autoresponder, menus] = accessKey.split(":");
+      const [cpa, autoresponder, solo, menus] = accessKey.split(":");
       for (const entry of getNavForRole(role, {
         canAccessCpaOffers: cpa === "1",
         canAccessAutoresponder: autoresponder === "1",
+        canAccessSoloAds: solo === "1",
         staffMenuAccess: menus ? menus.split(",").filter(Boolean) : [],
       })) {
         if (entry.kind !== "item") continue;
