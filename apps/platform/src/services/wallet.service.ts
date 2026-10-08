@@ -17,6 +17,7 @@ import {
 import {
   notifyApproved,
   notifyCampaignBudgetReached,
+  notifyAffiliateEarning,
   notifyLowBalanceTiers,
   notifyUserById,
 } from "@/services/notify.service";
@@ -661,7 +662,7 @@ async function postDigitalProductCommission(
   if (!resolved) return false;
   try {
     await ensurePublisherWallet(resolved.publisherId);
-    return await prisma.$transaction(async (tx) => {
+    const posted = await prisma.$transaction(async (tx) => {
       // The lock must be the first statement: under REPEATABLE READ the first
       // plain read fixes the snapshot, and a snapshot taken before another
       // posting commits would miss its ledger entry and its new balance.
@@ -712,9 +713,37 @@ async function postDigitalProductCommission(
       }
       return true;
     });
+    if (posted && !resolved.isRefund) void announceDigitalProductSale(eventId, resolved);
+    return posted;
   } catch (error) {
     console.error(`Failed to record marketplace commission for event ${eventId}`, error);
     return false;
+  }
+}
+
+/** Sales older than this were backfilled by a reconcile, so the affiliate is not emailed about them. */
+const SALE_NOTIFICATION_MAX_AGE_MS = 48 * 60 * 60 * 1000;
+
+async function announceDigitalProductSale(eventId: string, resolved: WebhookEventCommission) {
+  try {
+    const event = await prisma.webhookEvent.findUnique({
+      where: { id: eventId },
+      select: { createdAt: true, digitalProductId: true },
+    });
+    if (!event || Date.now() - event.createdAt.getTime() > SALE_NOTIFICATION_MAX_AGE_MS) return;
+    const product = event.digitalProductId
+      ? await prisma.digitalProduct.findUnique({
+          where: { id: event.digitalProductId },
+          select: { name: true },
+        })
+      : null;
+    notifyAffiliateEarning(resolved.publisherId, {
+      source: "digital",
+      amount: resolved.commission,
+      label: product?.name,
+    });
+  } catch (error) {
+    console.error(`Failed to announce marketplace sale ${eventId}`, error);
   }
 }
 

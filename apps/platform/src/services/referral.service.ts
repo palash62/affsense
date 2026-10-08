@@ -25,6 +25,7 @@ import {
   ensurePublisherWallet,
   forceDebitWallet,
 } from "@/services/wallet.service";
+import { notifyAffiliateEarning } from "@/services/notify.service";
 
 type ReferralUserRow = {
   id: string;
@@ -813,7 +814,7 @@ export async function reconcilePublisherReferralCommissions(referrerId?: string)
     let posted = 0;
     for (const [walletUserId, entries] of byReferrer) {
       await ensurePublisherWallet(walletUserId);
-      posted += await prisma.$transaction(async (tx) => {
+      const postedEntries = await prisma.$transaction(async (tx) => {
         await tx.$queryRaw`SELECT id FROM wallets WHERE user_id = ${walletUserId} FOR UPDATE`;
         const already = await tx.ledgerEntry.findMany({
           where: {
@@ -826,7 +827,7 @@ export async function reconcilePublisherReferralCommissions(referrerId?: string)
           already.map((entry) => referralEntryKey(entry.referenceType, entry.referenceId ?? "")),
         );
 
-        let count = 0;
+        const done: typeof entries = [];
         for (const entry of entries) {
           if (alreadyKeys.has(referralEntryKey(entry.referenceType, entry.referenceId))) continue;
           if (entry.type === "CREDIT") {
@@ -848,10 +849,19 @@ export async function reconcilePublisherReferralCommissions(referrerId?: string)
               entry.description,
             );
           }
-          count += 1;
+          done.push(entry);
         }
-        return count;
+        return done;
       });
+      posted += postedEntries.length;
+      for (const entry of postedEntries) {
+        if (entry.type !== "CREDIT") continue;
+        notifyAffiliateEarning(walletUserId, {
+          source: "referral",
+          amount: entry.amount,
+          label: entry.notificationLabel,
+        });
+      }
     }
     return posted;
   } catch (error) {

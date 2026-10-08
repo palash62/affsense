@@ -30,6 +30,8 @@ export type PlannedReferralEntry = {
   referenceId: string;
   amount: number;
   description: string;
+  /** Short "who and what" text for the referrer's notification. */
+  notificationLabel: string;
 };
 
 export function referralEntryKey(referenceType: string, referenceId: string) {
@@ -67,6 +69,7 @@ export function planPublisherReferralEntries(input: {
       referenceId: source.saleEventId,
       amount,
       description: `10% referral commission on Digital Product sale by ${nameOf(source.publisherId)}`,
+      notificationLabel: `${nameOf(source.publisherId)}'s Digital Product sale`,
     });
   }
 
@@ -85,6 +88,7 @@ export function planPublisherReferralEntries(input: {
       referenceId: source.saleEventId,
       amount: credited,
       description: `Referral commission reversed: Digital Product sale by ${nameOf(source.publisherId)} was refunded`,
+      notificationLabel: `${nameOf(source.publisherId)}'s refunded Digital Product sale`,
     });
   }
 
@@ -104,6 +108,7 @@ export function planPublisherReferralEntries(input: {
       referenceId: source.conversionId,
       amount,
       description: `5% referral commission on CPA conversion${offer} by ${nameOf(source.publisherId)}`,
+      notificationLabel: `${nameOf(source.publisherId)}'s CPA conversion`,
     });
   }
 

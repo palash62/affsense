@@ -319,7 +319,7 @@ export function PublisherMarketplaceReport() {
                   className="bg-white pl-9"
                   value={draft.q}
                   onChange={(e) => setDraft((prev) => ({ ...prev, q: e.target.value }))}
-                  placeholder="Order, product, source…"
+                  placeholder="Order, product, customer, source…"
                   onKeyDown={(e) => {
                     if (e.key === "Enter") applyFilters();
                   }}
@@ -374,6 +374,7 @@ export function PublisherMarketplaceReport() {
                 <TableRow className="bg-muted/90 hover:bg-muted/90">
                   <SortableTableHead label="Date" column="date" sort={activeSort} onSort={onSort} />
                   <SortableTableHead label="Product" column="product" sort={activeSort} onSort={onSort} />
+                  <SortableTableHead label="Customer" column="customer" sort={activeSort} onSort={onSort} />
                   <SortableTableHead label="Type" column="type" sort={activeSort} onSort={onSort} />
                   <SortableTableHead label="Amount" column="amount" sort={activeSort} onSort={onSort} align="right" />
                   <SortableTableHead label="Commission" column="commission" sort={activeSort} onSort={onSort} align="right" />
@@ -388,12 +389,12 @@ export function PublisherMarketplaceReport() {
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={11} className="py-12 text-center text-sm text-muted-foreground">
+                    <TableCell colSpan={12} className="py-12 text-center text-sm text-muted-foreground">
                       Loading orders…
                     </TableCell>
                   </TableRow>
                 ) : orderItems.length === 0 ? (
-                  <EmptyRow colSpan={11} label="No orders found" />
+                  <EmptyRow colSpan={12} label="No orders found" />
                 ) : (
                   orderItems.map((row) => (
                     <TableRow key={row.id} className="hover:bg-sky-50/40">
@@ -405,6 +406,12 @@ export function PublisherMarketplaceReport() {
                       <TableCell>
                         <p className="font-medium text-foreground">{cellValue(row.product)}</p>
                         <p className="font-mono text-[11px] text-muted-foreground">{row.orderId}</p>
+                      </TableCell>
+                      <TableCell>
+                        <p className="text-sm font-medium text-foreground">{row.customerName ?? "—"}</p>
+                        {row.customerEmail ? (
+                          <p className="text-[11px] text-muted-foreground">{row.customerEmail}</p>
+                        ) : null}
                       </TableCell>
                       <TableCell>{cellValue(row.orderType)}</TableCell>
                       <TableCell className="text-right tabular-nums">

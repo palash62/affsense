@@ -10,9 +10,8 @@ type ReferralLinkVariant = "advertiser" | "publisher";
 const DEFAULT_DESCRIPTION =
   "Refer & earn passive income. Share this link — when users sign up and spend on ads, you earn commissions on 2 levels.";
 
-function referralPath(variant: ReferralLinkVariant, referralCode: string) {
-  const code = encodeURIComponent(referralCode);
-  return variant === "publisher" ? `/register?referral_by=${code}` : `/?referral_by=${code}`;
+function referralPath(referralCode: string) {
+  return `/?referral_by=${encodeURIComponent(referralCode)}`;
 }
 
 export function ReferralLinkPanel({
@@ -27,7 +26,7 @@ export function ReferralLinkPanel({
   const [copied, setCopied] = useState(false);
   const buildUrl = variant === "publisher" ? buildPublisherReferralUrl : buildReferralUrl;
   // Resolve origin after mount so server and client render the same markup.
-  const [referralUrl, setReferralUrl] = useState(() => referralPath(variant, referralCode));
+  const [referralUrl, setReferralUrl] = useState(() => referralPath(referralCode));
 
   useEffect(() => {
     setReferralUrl(buildUrl(window.location.origin, referralCode));
@@ -90,13 +89,13 @@ export function ReferralLinkPanel({
           Share link
         </Button>
         <a
-          href={referralPath(variant, referralCode)}
+          href={referralPath(referralCode)}
           target="_blank"
           rel="noreferrer"
           className="inline-flex h-9 items-center gap-2 rounded-lg border border-border bg-card px-3 text-sm font-medium text-foreground hover:bg-muted"
         >
           <ExternalLink className="h-4 w-4" />
-          {variant === "publisher" ? "Preview sign-up page" : "Preview landing page"}
+          Preview landing page
         </a>
       </div>
     </div>

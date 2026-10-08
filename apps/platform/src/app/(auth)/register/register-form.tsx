@@ -7,13 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { CountryCombobox } from "@/components/ui/country-combobox";
 import { AuthLayout } from "@/components/layout/auth-layout";
 import { PasswordRequirements } from "@/components/auth/password-requirements";
 import {
@@ -22,7 +16,6 @@ import {
   useSignupBotCheck,
 } from "@/components/auth/turnstile-widget";
 import { isStrongPassword } from "@/lib/password-policy";
-import { COUNTRY_BY_CODE, getCountryName } from "@/lib/campaign-form";
 import { readReferralCookie, writeReferralCookie } from "@/lib/referral";
 import {
   clearPromoUtmCookie,
@@ -36,10 +29,6 @@ import {
   metaUserDataFromSignup,
   trackSignupLead,
 } from "@/lib/tracking/public-page-tracking";
-
-const COUNTRY_OPTIONS = Object.keys(COUNTRY_BY_CODE).sort((a, b) =>
-  getCountryName(a).localeCompare(getCountryName(b)),
-);
 
 const inputClassName = "rounded-xl border-border bg-transparent";
 
@@ -218,18 +207,15 @@ export function RegisterForm() {
 
         <div className="space-y-1.5">
           <Label htmlFor="country">Country</Label>
-          <Select value={country} onValueChange={(value) => value && setCountry(value)} required>
-            <SelectTrigger id="country" className={`w-full ${inputClassName}`}>
-              <SelectValue placeholder="Select country" />
-            </SelectTrigger>
-            <SelectContent>
-              {COUNTRY_OPTIONS.map((code) => (
-                <SelectItem key={code} value={code}>
-                  {getCountryName(code)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <CountryCombobox
+            id="country"
+            value={country}
+            onChange={setCountry}
+            placeholder="Search country"
+            inputClassName={inputClassName}
+            uiInput
+            required
+          />
         </div>
 
         <div className="space-y-1.5">

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { timingSafeEqual } from "crypto";
 import { getInternalServiceToken } from "@cpl/shared";
 import { prisma } from "@/lib/prisma";
-import { notifyUserById } from "@/services/notify.service";
+import { notifyAffiliateEarning, notifyUserById } from "@/services/notify.service";
 
 export const runtime = "nodejs";
 
@@ -35,21 +35,28 @@ export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as {
       advertiserId?: unknown;
+      publisherId?: unknown;
       offerId?: unknown;
       amount?: unknown;
       conversionId?: unknown;
     };
 
     const advertiserId = typeof body.advertiserId === "string" ? body.advertiserId.trim() : "";
+    const publisherId = typeof body.publisherId === "string" ? body.publisherId.trim() : "";
     const offerId = typeof body.offerId === "string" ? body.offerId.trim() : "";
     const amount = typeof body.amount === "number" ? body.amount : Number(body.amount);
 
-    if (!advertiserId || !offerId || !Number.isFinite(amount) || amount <= 0) {
+    if (
+      Boolean(advertiserId) === Boolean(publisherId) ||
+      !offerId ||
+      !Number.isFinite(amount) ||
+      amount <= 0
+    ) {
       return NextResponse.json(
         {
           error: {
             code: "VALIDATION_ERROR",
-            message: "advertiserId, offerId, and positive amount are required",
+            message: "Exactly one of advertiserId or publisherId, plus offerId and a positive amount, are required",
             status: 422,
           },
         },
@@ -63,6 +70,12 @@ export async function POST(request: NextRequest) {
     });
 
     const offerLabel = offer?.name?.trim() || "CPA offer";
+
+    if (publisherId) {
+      notifyAffiliateEarning(publisherId, { source: "cpa", amount, label: offerLabel });
+      return NextResponse.json({ ok: true });
+    }
+
     const amountLabel = formatUsd(amount);
 
     void notifyUserById(advertiserId, {

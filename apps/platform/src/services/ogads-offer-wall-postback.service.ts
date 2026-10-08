@@ -4,6 +4,7 @@ import { AppError, Errors } from "@/lib/errors";
 import { applyOfferWallAffiliatePayout } from "@/lib/ogads-offer-wall-settings";
 import { creditWallet } from "@/services/wallet.service";
 import { loadOgadsOfferWallConfig } from "@/services/ogads-offer-wall-settings.service";
+import { notifyAffiliateEarning } from "@/services/notify.service";
 
 function pickParam(
   searchParams: URLSearchParams,
@@ -126,6 +127,11 @@ export async function handleOgadsOfferWallPostback(request: Request) {
       return row;
     });
 
+    notifyAffiliateEarning(publisherId, {
+      source: "offerwall",
+      amount: payout,
+      label: `offer ${offerId}`,
+    });
     return { ok: true, duplicate: false, conversionId: conversion.id };
   } catch (error) {
     if (

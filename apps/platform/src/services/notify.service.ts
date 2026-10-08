@@ -15,6 +15,10 @@ import { prisma } from "@/lib/prisma";
 import { sendEmail, getAdminAlertEmail } from "@/services/email.service";
 import { getResolvedEmailConfig } from "@/services/smtp-settings.service";
 import { createNotification } from "@/services/notification.service";
+import {
+  buildAffiliateEarningNotification,
+  type AffiliateEarningSource,
+} from "@/lib/affiliate-earning-notification";
 
 async function baseParams(recipientName?: string) {
   const config = await getResolvedEmailConfig();
@@ -483,6 +487,22 @@ async function loadUser(userId: string) {
   return prisma.user.findUnique({
     where: { id: userId },
     select: { id: true, email: true, name: true, role: true, status: true },
+  });
+}
+
+/** Tell an affiliate they just earned. Never throws, so crediting is never blocked by email. */
+export function notifyAffiliateEarning(
+  publisherId: string,
+  params: { source: AffiliateEarningSource; amount: number; label?: string | null },
+) {
+  const copy = buildAffiliateEarningNotification(params.source, params.amount, params.label);
+  if (!copy) return;
+  void (async () => {
+    const user = await loadUser(publisherId);
+    if (!user || user.role !== "PUBLISHER" || user.status !== "ACTIVE") return;
+    await notifyGeneric(user, copy);
+  })().catch((error) => {
+    console.error(`[notify] affiliate ${params.source} earning notification failed`, error);
   });
 }
 

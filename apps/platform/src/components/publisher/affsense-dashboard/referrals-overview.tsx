@@ -28,7 +28,7 @@ export function ReferralsOverview({ data }: { data: ReferralsOverviewData }) {
   const trendUp = data.totalTrend >= 0;
   // Resolve origin after mount so server and client render the same markup.
   const [referralUrl, setReferralUrl] = useState(
-    () => `/register?referral_by=${encodeURIComponent(data.referralCode)}`,
+    () => `/?referral_by=${encodeURIComponent(data.referralCode)}`,
   );
 
   useEffect(() => {

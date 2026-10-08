@@ -2219,7 +2219,7 @@ export async function listPublisherDigitalProductOrders(
       ? (row: DigitalProductOrderRow) => {
           if (productId && !`${row.product ?? ""}`.toLowerCase().includes(productId)) return false;
           if (q) {
-            const hay = `${row.orderId} ${row.product ?? ""} ${row.funnel ?? ""} ${row.source ?? ""} ${row.subId ?? ""} ${row.subId2 ?? ""} ${row.subId3 ?? ""} ${row.subId4 ?? ""}`.toLowerCase();
+            const hay = `${row.orderId} ${row.product ?? ""} ${row.funnel ?? ""} ${row.customerName ?? ""} ${row.customerEmail ?? ""} ${row.source ?? ""} ${row.subId ?? ""} ${row.subId2 ?? ""} ${row.subId3 ?? ""} ${row.subId4 ?? ""}`.toLowerCase();
             if (!hay.includes(q)) return false;
           }
           return true;

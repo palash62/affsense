@@ -37,9 +37,9 @@ describe("publisherReferralCommission", () => {
     expect(isPublisherReferralEligible(before)).toBe(false);
   });
 
-  it("builds a sign-up link", () => {
+  it("builds a home page link", () => {
     expect(buildPublisherReferralUrl("https://affsense.com", "AB12CD")).toBe(
-      "https://affsense.com/register?referral_by=AB12CD",
+      "https://affsense.com/?referral_by=AB12CD",
     );
   });
 });

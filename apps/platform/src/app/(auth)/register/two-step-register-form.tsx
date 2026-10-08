@@ -11,7 +11,7 @@ import {
   useSignupBotCheck,
 } from "@/components/auth/turnstile-widget";
 import { isStrongPassword } from "@/lib/password-policy";
-import { COUNTRY_BY_CODE, getCountryName } from "@/lib/campaign-form";
+import { CountryCombobox } from "@/components/ui/country-combobox";
 import { readReferralCookie, writeReferralCookie } from "@/lib/referral";
 import {
   metaUserDataFromSignup,
@@ -25,10 +25,6 @@ const inter = Inter({
   variable: "--font-inter",
   display: "swap",
 });
-
-const COUNTRY_OPTIONS = Object.keys(COUNTRY_BY_CODE).sort((a, b) =>
-  getCountryName(a).localeCompare(getCountryName(b)),
-);
 
 const HEARD_FROM = [
   "Facebook",
@@ -355,17 +351,16 @@ export function TwoStepRegisterForm() {
 
               <div className="tsrGrid2">
                 <div className="tsrField">
-                  <label>
+                  <label htmlFor="signup-country">
                     Country <span className="tsrReq">*</span>
                   </label>
-                  <select value={country} onChange={(e) => setCountry(e.target.value)} required>
-                    <option value="">Select country</option>
-                    {COUNTRY_OPTIONS.map((code) => (
-                      <option key={code} value={code}>
-                        {getCountryName(code)}
-                      </option>
-                    ))}
-                  </select>
+                  <CountryCombobox
+                    id="signup-country"
+                    value={country}
+                    onChange={setCountry}
+                    placeholder="Search country"
+                    required
+                  />
                 </div>
                 <div className="tsrField">
                   <label>

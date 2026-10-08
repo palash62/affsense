@@ -103,12 +103,13 @@ async function loadClick(inboundClickId: string | null): Promise<ClickRow | null
   });
 }
 
-function notifyAdvertiserCpaSale(input: {
-  advertiserId: string;
-  offerId: string;
-  amount: number;
-  conversionId: string;
-}) {
+function postCpaSaleNotify(
+  input: ({ advertiserId: string } | { publisherId: string }) & {
+    offerId: string;
+    amount: number;
+    conversionId: string;
+  },
+) {
   const token = getInternalServiceToken();
   if (!token) {
     console.error("[pbtr] CPA sale notify skipped: INTERNAL_SERVICE_TOKEN not configured");
@@ -194,7 +195,7 @@ async function createConversionAndDispatch(input: {
           });
         });
 
-        void notifyAdvertiserCpaSale({
+        void postCpaSaleNotify({
           advertiserId: input.attribution.advertiserId!,
           offerId: input.offerId,
           amount: earningAmount,
@@ -204,6 +205,16 @@ async function createConversionAndDispatch(input: {
         console.error("[pbtr] CPA earning creation failed", error);
       }
     }
+  }
+
+  const publisherAmount = publisherPayout != null ? Number(publisherPayout) : 0;
+  if (publisherId && publisherAmount > 0) {
+    postCpaSaleNotify({
+      publisherId,
+      offerId: input.offerId,
+      amount: publisherAmount,
+      conversionId: event.id,
+    });
   }
 
   try {

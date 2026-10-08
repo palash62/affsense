@@ -125,7 +125,7 @@ export function buildReferralUrl(origin: string, referralCode: string) {
 }
 
 export function buildPublisherReferralUrl(origin: string, referralCode: string) {
-  return `${origin}/register?referral_by=${encodeURIComponent(referralCode)}`;
+  return `${origin}/?referral_by=${encodeURIComponent(referralCode)}`;
 }
 
 export function readReferralCookie(): string {
