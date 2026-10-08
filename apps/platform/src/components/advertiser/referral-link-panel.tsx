@@ -3,21 +3,38 @@
 import { useEffect, useState } from "react";
 import { Check, Copy, ExternalLink, Gift, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { buildReferralUrl } from "@/lib/referral";
+import { buildPublisherReferralUrl, buildReferralUrl } from "@/lib/referral";
 
-export function ReferralLinkPanel({ referralCode }: { referralCode: string }) {
+type ReferralLinkVariant = "advertiser" | "publisher";
+
+const DEFAULT_DESCRIPTION =
+  "Refer & earn passive income. Share this link — when users sign up and spend on ads, you earn commissions on 2 levels.";
+
+function referralPath(variant: ReferralLinkVariant, referralCode: string) {
+  const code = encodeURIComponent(referralCode);
+  return variant === "publisher" ? `/register?referral_by=${code}` : `/?referral_by=${code}`;
+}
+
+export function ReferralLinkPanel({
+  referralCode,
+  variant = "advertiser",
+  description = DEFAULT_DESCRIPTION,
+}: {
+  referralCode: string;
+  variant?: ReferralLinkVariant;
+  description?: string;
+}) {
   const [copied, setCopied] = useState(false);
+  const buildUrl = variant === "publisher" ? buildPublisherReferralUrl : buildReferralUrl;
   // Resolve origin after mount so server and client render the same markup.
-  const [referralUrl, setReferralUrl] = useState(
-    () => `/?referral_by=${encodeURIComponent(referralCode)}`,
-  );
+  const [referralUrl, setReferralUrl] = useState(() => referralPath(variant, referralCode));
 
   useEffect(() => {
-    setReferralUrl(buildReferralUrl(window.location.origin, referralCode));
-  }, [referralCode]);
+    setReferralUrl(buildUrl(window.location.origin, referralCode));
+  }, [buildUrl, referralCode]);
 
   async function copyLink() {
-    const url = buildReferralUrl(window.location.origin, referralCode);
+    const url = buildUrl(window.location.origin, referralCode);
     await navigator.clipboard.writeText(url);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -38,10 +55,7 @@ export function ReferralLinkPanel({ referralCode }: { referralCode: string }) {
           </div>
           <div>
             <p className="text-sm font-semibold text-foreground">Your unique referral link</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Refer &amp; earn passive income. Share this link — when users sign up and spend on ads,
-              you earn commissions on 2 levels.
-            </p>
+            <p className="mt-1 text-sm text-muted-foreground">{description}</p>
             <p className="mt-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Referral code: <span className="text-[var(--theme-primary)]">{referralCode}</span>
             </p>
@@ -53,6 +67,7 @@ export function ReferralLinkPanel({ referralCode }: { referralCode: string }) {
         <input
           readOnly
           value={referralUrl}
+          aria-label="Referral link"
           className="h-11 min-w-0 flex-1 rounded-lg border border-border bg-card px-4 text-sm text-foreground shadow-sm"
         />
         <Button
@@ -75,13 +90,13 @@ export function ReferralLinkPanel({ referralCode }: { referralCode: string }) {
           Share link
         </Button>
         <a
-          href={`/?referral_by=${encodeURIComponent(referralCode)}`}
+          href={referralPath(variant, referralCode)}
           target="_blank"
           rel="noreferrer"
           className="inline-flex h-9 items-center gap-2 rounded-lg border border-border bg-card px-3 text-sm font-medium text-foreground hover:bg-muted"
         >
           <ExternalLink className="h-4 w-4" />
-          Preview landing page
+          {variant === "publisher" ? "Preview sign-up page" : "Preview landing page"}
         </a>
       </div>
     </div>

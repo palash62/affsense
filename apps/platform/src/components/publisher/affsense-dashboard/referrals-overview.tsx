@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowDown, ArrowUp, Check, Link2, Users } from "lucide-react";
 import {
   DashboardCard,
   DashboardCardTitle,
 } from "@/components/admin/affsense-dashboard/dashboard-card";
 import { DashboardViewAllLink } from "@/components/publisher/affsense-dashboard/dashboard-source-chip";
-import { buildReferralUrl } from "@/lib/referral";
+import { buildPublisherReferralUrl } from "@/lib/referral";
 import { cn } from "@/lib/utils";
 
 export type ReferralsOverviewData = {
@@ -26,9 +26,19 @@ function formatMoney(n: number) {
 export function ReferralsOverview({ data }: { data: ReferralsOverviewData }) {
   const [copied, setCopied] = useState(false);
   const trendUp = data.totalTrend >= 0;
+  // Resolve origin after mount so server and client render the same markup.
+  const [referralUrl, setReferralUrl] = useState(
+    () => `/register?referral_by=${encodeURIComponent(data.referralCode)}`,
+  );
+
+  useEffect(() => {
+    setReferralUrl(buildPublisherReferralUrl(window.location.origin, data.referralCode));
+  }, [data.referralCode]);
 
   async function copyLink() {
-    await navigator.clipboard.writeText(buildReferralUrl(window.location.origin, data.referralCode));
+    await navigator.clipboard.writeText(
+      buildPublisherReferralUrl(window.location.origin, data.referralCode),
+    );
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }
@@ -74,11 +84,21 @@ export function ReferralsOverview({ data }: { data: ReferralsOverviewData }) {
         </div>
         <div>
           <p className="text-base font-bold text-foreground">{formatMoney(data.pendingEarnings)}</p>
-          <p className="mt-0.5 text-[11px] text-muted-foreground">Pending Earnings</p>
+          <p className="mt-0.5 text-[11px] text-muted-foreground">Next Invoice</p>
         </div>
       </div>
 
       <div className="min-h-5 flex-1" />
+      <p className="mb-1.5 text-[11px] font-medium text-muted-foreground">
+        Your referral link · 10% Digital, 5% CPA
+      </p>
+      <input
+        readOnly
+        value={referralUrl}
+        aria-label="Your referral link"
+        onFocus={(event) => event.currentTarget.select()}
+        className="mb-2 h-9 w-full min-w-0 rounded-lg border border-border bg-card px-3 text-xs text-foreground"
+      />
       <button
         type="button"
         onClick={copyLink}

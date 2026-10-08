@@ -6,7 +6,11 @@ import {
   REFUNDED_WEBHOOK_STATUS,
 } from "@/services/digital-product.service";
 import { getUninvoicedTotalForPublisher } from "@/services/affiliate-invoice.service";
-import { ensureReferralCode, getReferralBalanceSummary } from "@/services/referral.service";
+import {
+  ensureReferralCode,
+  getPublisherReferralEarnings,
+  reconcilePublisherReferralCommissions,
+} from "@/services/referral.service";
 import {
   withPerformanceRatios,
   type PerformanceRow,
@@ -502,7 +506,7 @@ async function referralsOverview(
   current: { from: Date; to: Date },
   previous: { from: Date; to: Date },
 ) {
-  const [referralCode, total, active, newCurrent, newPrevious, balance] = await Promise.all([
+  const [referralCode, total, active, newCurrent, newPrevious, earnings] = await Promise.all([
     ensureReferralCode(publisherId),
     prisma.user.count({ where: { referredById: publisherId } }),
     prisma.user.count({ where: { referredById: publisherId, status: "ACTIVE" } }),
@@ -512,15 +516,15 @@ async function referralsOverview(
     prisma.user.count({
       where: { referredById: publisherId, createdAt: { gte: previous.from, lt: previous.to } },
     }),
-    getReferralBalanceSummary(publisherId),
+    getPublisherReferralEarnings(publisherId),
   ]);
   return {
     referralCode,
     total,
     totalTrend: calcTrend(newCurrent, newPrevious),
     active,
-    totalEarnings: balance.referralEarned,
-    pendingEarnings: balance.pendingReferralPayout,
+    totalEarnings: earnings.total,
+    pendingEarnings: earnings.uninvoiced,
   };
 }
 
@@ -530,6 +534,7 @@ export async function getAffsensePublisherDashboard(
   source: PublisherDashboardSource = "all",
 ) {
   await reconcilePublisherLeadCreditsForUser(publisherId);
+  await reconcilePublisherReferralCommissions(publisherId);
 
   const from = periodStart(period);
   const to = new Date();

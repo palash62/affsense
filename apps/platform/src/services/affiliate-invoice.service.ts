@@ -13,6 +13,7 @@ import {
   releaseWalletHold,
 } from "@/services/wallet.service";
 import { notifyApproved, notifyUserById } from "@/services/notify.service";
+import { reconcilePublisherReferralCommissions } from "@/services/referral.service";
 import { resolvePublisherPayeeSnapshot } from "@/lib/payout-payment-details";
 
 /** Ledger reference types that represent money leaving the wallet, never earnings. */
@@ -23,6 +24,9 @@ const SOURCE_LABELS: Record<string, string> = {
   lead_reversal: "CPL leads",
   offerwall_conversion: "Offer wall",
   referral: "Referrals",
+  referral_digital: "Referrals",
+  referral_digital_reversal: "Referrals",
+  referral_cpa: "Referrals",
   digital_product_sale: "Marketplace sales",
   digital_product_refund: "Marketplace sales",
   digital_product_reject: "Marketplace sales",
@@ -87,6 +91,7 @@ export async function generateAffiliateInvoices(
   }
 
   await reconcileAllDigitalCommissions();
+  await reconcilePublisherReferralCommissions();
   // Commissions backfilled just now are stamped after `runAt`; include them.
   const billedUntil = new Date(Math.max(runAt.getTime(), Date.now()));
 
