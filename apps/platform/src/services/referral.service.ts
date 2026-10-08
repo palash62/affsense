@@ -744,7 +744,7 @@ export async function reconcilePublisherReferralCommissions(referrerId?: string)
       if (key && !saleEventByKey.has(key)) saleEventByKey.set(key, entry.referenceId);
     }
 
-    const digital: ReferralDigitalSource[] = digitalEntries.flatMap((entry) => {
+    const digital = digitalEntries.flatMap((entry): ReferralDigitalSource[] => {
       if (!entry.referenceId) return [];
       const base = {
         publisherId: entry.wallet.userId,
