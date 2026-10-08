@@ -281,16 +281,18 @@ export function PublisherPayoutDetailsForm({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
+  const hasWise = Boolean(wiseId.trim());
+  const hasBank =
+    Boolean(bankDetails.beneficiaryName?.trim()) || Boolean(bankDetails.accountNumber?.trim());
+  // With only one method filled in, that method is the default.
+  const effectiveDefault: "WISE" | "BANK_TRANSFER" | "" =
+    hasWise && !hasBank ? "WISE" : hasBank && !hasWise ? "BANK_TRANSFER" : defaultMethod;
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
     setError(null);
     setSuccess(null);
-
-    const hasBank =
-      Boolean(bankDetails.beneficiaryName?.trim()) ||
-      Boolean(bankDetails.accountNumber?.trim()) ||
-      Boolean(bankDetails.country?.trim());
 
     const res = await fetch("/api/v1/users/me", {
       method: "PATCH",
@@ -303,7 +305,7 @@ export function PublisherPayoutDetailsForm({
         updatePayoutDetails: true,
         payoutWiseId: wiseId.trim() || null,
         payoutBankDetails: hasBank ? bankDetails : null,
-        defaultPayoutMethod: defaultMethod || null,
+        defaultPayoutMethod: effectiveDefault || null,
       }),
     });
     const data = await res.json();
@@ -324,8 +326,8 @@ export function PublisherPayoutDetailsForm({
         <h3 className="text-sm font-semibold text-foreground">Invoice payout details</h3>
       </div>
       <p className="text-sm text-muted-foreground">
-        Set Wise and/or bank details for weekly invoices. Choose one default — that account is
-        shown on each new invoice for admin payment.
+        Add Wise or bank details for weekly invoices — one method is enough. If you add both,
+        choose a default; that account is shown on each new invoice for admin payment.
       </p>
 
       {error && (
@@ -350,7 +352,11 @@ export function PublisherPayoutDetailsForm({
         />
       </div>
 
-      <PublisherBankPayoutFields value={bankDetails} onChange={setBankDetails} />
+      <PublisherBankPayoutFields
+        value={bankDetails}
+        onChange={setBankDetails}
+        required={effectiveDefault === "BANK_TRANSFER"}
+      />
 
       <div className="space-y-2">
         <Label>Default for invoices</Label>
@@ -359,7 +365,7 @@ export function PublisherPayoutDetailsForm({
             <input
               type="radio"
               name="defaultPayoutMethod"
-              checked={defaultMethod === "WISE"}
+              checked={effectiveDefault === "WISE"}
               onChange={() => setDefaultMethod("WISE")}
             />
             Wise
@@ -368,7 +374,7 @@ export function PublisherPayoutDetailsForm({
             <input
               type="radio"
               name="defaultPayoutMethod"
-              checked={defaultMethod === "BANK_TRANSFER"}
+              checked={effectiveDefault === "BANK_TRANSFER"}
               onChange={() => setDefaultMethod("BANK_TRANSFER")}
             />
             Bank transfer

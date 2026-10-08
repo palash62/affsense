@@ -447,7 +447,9 @@ export const updatePublisherProfileSchema = z
     trafficSource: z.string().trim().max(120).optional(),
     timezone: z.string().trim().min(1).optional(),
     payoutWiseId: z.string().trim().max(200).optional().nullable(),
-    payoutBankDetails: bankPayoutDetailsSchema.optional().nullable(),
+    // Strictly checked in superRefine only when bank is the default or actually filled in,
+    // so a Wise-only affiliate is not blocked by a half-filled bank form.
+    payoutBankDetails: z.record(z.string(), z.unknown()).optional().nullable(),
     defaultPayoutMethod: z.enum(["WISE", "BANK_TRANSFER"]).optional().nullable(),
     updatePayoutDetails: z.boolean().optional(),
   })
@@ -455,31 +457,8 @@ export const updatePublisherProfileSchema = z
     if (!data.updatePayoutDetails) return;
 
     const wiseId = data.payoutWiseId?.trim() || "";
-    const hasBank =
-      data.payoutBankDetails != null &&
-      Boolean(data.payoutBankDetails.beneficiaryName?.trim()) &&
-      Boolean(data.payoutBankDetails.accountNumber?.trim());
+    const bankFilled = isBankPayoutFilled(data.payoutBankDetails);
     const defaultMethod = data.defaultPayoutMethod ?? null;
-
-    if (!wiseId && !hasBank) {
-      if (defaultMethod) {
-        ctx.addIssue({
-          code: "custom",
-          message: "Set Wise or bank details before choosing a default",
-          path: ["defaultPayoutMethod"],
-        });
-      }
-      return;
-    }
-
-    if (!defaultMethod) {
-      ctx.addIssue({
-        code: "custom",
-        message: "Choose a default payout method (Wise or Bank)",
-        path: ["defaultPayoutMethod"],
-      });
-      return;
-    }
 
     if (defaultMethod === "WISE" && !wiseId) {
       ctx.addIssue({
@@ -489,7 +468,7 @@ export const updatePublisherProfileSchema = z
       });
     }
 
-    if (defaultMethod === "BANK_TRANSFER") {
+    if (defaultMethod === "BANK_TRANSFER" || bankFilled) {
       if (!data.payoutBankDetails) {
         ctx.addIssue({
           code: "custom",
@@ -508,7 +487,31 @@ export const updatePublisherProfileSchema = z
         }
       }
     }
+
+    if (wiseId && bankFilled && !defaultMethod) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Choose a default payout method (Wise or Bank)",
+        path: ["defaultPayoutMethod"],
+      });
+    }
+  })
+  .transform((data) => {
+    if (!data.updatePayoutDetails) return { ...data, payoutBankDetails: undefined };
+    const wiseId = data.payoutWiseId?.trim() || null;
+    const bank = isBankPayoutFilled(data.payoutBankDetails)
+      ? bankPayoutDetailsSchema.parse(data.payoutBankDetails)
+      : null;
+    const defaultPayoutMethod =
+      data.defaultPayoutMethod ?? (wiseId && !bank ? "WISE" : bank && !wiseId ? "BANK_TRANSFER" : null);
+    return { ...data, payoutWiseId: wiseId, payoutBankDetails: bank, defaultPayoutMethod };
   });
+
+function isBankPayoutFilled(bank: Record<string, unknown> | null | undefined): boolean {
+  if (!bank) return false;
+  const text = (value: unknown) => (typeof value === "string" ? value.trim() : "");
+  return Boolean(text(bank.beneficiaryName)) && Boolean(text(bank.accountNumber));
+}
 
 export const updateUserTimezoneSchema = z.object({
   timezone: z.string().trim().min(1, "Timezone is required"),

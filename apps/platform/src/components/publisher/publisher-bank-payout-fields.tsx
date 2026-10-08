@@ -17,9 +17,15 @@ const EU_IBAN_COUNTRIES = ["DE", "FR", "ES", "IT", "NL", "BE", "AT", "IE", "PT",
 type PublisherBankPayoutFieldsProps = {
   value: BankPayoutDetails;
   onChange: (value: BankPayoutDetails) => void;
+  /** Mark fields as browser-required. Off when bank is one optional method among others. */
+  required?: boolean;
 };
 
-export function PublisherBankPayoutFields({ value, onChange }: PublisherBankPayoutFieldsProps) {
+export function PublisherBankPayoutFields({
+  value,
+  onChange,
+  required = true,
+}: PublisherBankPayoutFieldsProps) {
   const country = value.country.toUpperCase();
   const isUS = country === "US";
   const isGB = country === "GB";
@@ -61,7 +67,7 @@ export function PublisherBankPayoutFields({ value, onChange }: PublisherBankPayo
           value={value.beneficiaryName}
           onChange={(e) => patch({ beneficiaryName: e.target.value })}
           placeholder="Full name on account"
-          required
+          required={required}
         />
       </div>
 
@@ -70,7 +76,7 @@ export function PublisherBankPayoutFields({ value, onChange }: PublisherBankPayo
         <Input
           value={value.accountNumber}
           onChange={(e) => patch({ accountNumber: e.target.value })}
-          required
+          required={required}
         />
       </div>
 
@@ -80,7 +86,7 @@ export function PublisherBankPayoutFields({ value, onChange }: PublisherBankPayo
           <Input
             value={value.routingNumber ?? ""}
             onChange={(e) => patch({ routingNumber: e.target.value })}
-            required
+            required={required}
           />
         </div>
       )}
@@ -92,7 +98,7 @@ export function PublisherBankPayoutFields({ value, onChange }: PublisherBankPayo
             value={value.sortCode ?? ""}
             onChange={(e) => patch({ sortCode: e.target.value })}
             placeholder="12-34-56"
-            required
+            required={required}
           />
         </div>
       )}
@@ -103,7 +109,7 @@ export function PublisherBankPayoutFields({ value, onChange }: PublisherBankPayo
           <Input
             value={value.iban ?? ""}
             onChange={(e) => patch({ iban: e.target.value })}
-            required
+            required={required}
           />
         </div>
       )}
@@ -159,7 +165,7 @@ export function PublisherBankPayoutFields({ value, onChange }: PublisherBankPayo
           <Input
             value={value.addressLine1 ?? ""}
             onChange={(e) => patch({ addressLine1: e.target.value })}
-            required={isUS}
+            required={required && isUS}
           />
         </div>
         <div className="space-y-2">
