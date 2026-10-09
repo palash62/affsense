@@ -5,6 +5,7 @@ import {
   checkSoloClickLink,
   checkSoloDestinationUrl,
   cpcCentsForTraffic,
+  providerCostCentsForTraffic,
   deviceFromUserAgent,
   dollarsToCents,
   generateSecret,
@@ -66,6 +67,14 @@ describe("solo settings", () => {
     expect(config.enabled).toBe(false);
     expect(config.betaOnly).toBe(true);
     expect(cpcCentsForTraffic(config, "WARM")).toBeGreaterThan(cpcCentsForTraffic(config, "REGULAR"));
+  });
+
+  it("defaults provider cost to 0 and reads it per traffic type", () => {
+    expect(providerCostCentsForTraffic(parseSoloAdsConfig(null), "REGULAR")).toBe(0);
+    const config = parseSoloAdsConfig({ regularProviderCostCents: 20.4, warmProviderCostCents: -3 });
+    expect(providerCostCentsForTraffic(config, "REGULAR")).toBe(20);
+    expect(providerCostCentsForTraffic(config, "WARM")).toBe(0);
+    expect(parseSoloAdsConfig({ warmProviderCostCents: "35" }).warmProviderCostCents).toBe(35);
   });
 
   it("clamps values and normalises countries", () => {

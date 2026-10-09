@@ -61,7 +61,7 @@ export default async function AdminProfitPage({ searchParams }: PageProps) {
       <PageHero
         eyebrow="Finance"
         title="Profit calculation"
-        description="Platform profit = advertiser invoices received − affiliate invoices paid − referral payouts, each counted on the date it was paid. Admin gets 80%, the partner 20%."
+        description="Platform profit = marketplace sales − refunds + Offer Wall network payout + Solo Ads click charges + paid CPA invoices − affiliate and referral commissions − Solo Ads provider cost. Each amount counts on the date it happened. Admin gets 80%, the partner 20%."
       />
 
       <Suspense fallback={<div className="h-28 animate-pulse rounded-[18px] bg-muted" />}>

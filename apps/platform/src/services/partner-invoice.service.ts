@@ -1,5 +1,6 @@
 import { parseISO, startOfDay } from "date-fns";
 import { Prisma, type PartnerInvoiceStatus } from "@prisma/client";
+import { loadSoloAdsConfig } from "@cpl/tracking-core";
 import { prisma } from "@/lib/prisma";
 import { Errors } from "@/lib/errors";
 import {
@@ -8,12 +9,14 @@ import {
   type InvoiceProfitTotals,
   type PartnerInvoiceRecord,
   type PartnerInvoiceSummary,
+  type ProfitLines,
 } from "@/lib/partner-invoice";
 import {
   generateProfitBuckets,
   splitPlatformProfit,
   type ProfitGroupBy,
 } from "@/services/admin-profit.service";
+import { getDigitalSaleAmountsByBucket } from "@/services/digital-product.service";
 
 /** Safety cap for the first backfill run. */
 const MAX_BACKFILL_MONTHS = 120;
@@ -30,17 +33,37 @@ function roundMoney(value: number) {
   return Math.round(value * 10000) / 10000;
 }
 
-export function buildProfitTotals(
-  received: number,
-  affiliateSent: number,
-  referralSent: number,
-): InvoiceProfitTotals {
-  const split = splitPlatformProfit(roundMoney(received - affiliateSent - referralSent));
+export const EMPTY_PROFIT_LINES: ProfitLines = {
+  digitalSales: 0,
+  digitalRefunds: 0,
+  offerwall: 0,
+  soloAds: 0,
+  cpaInvoices: 0,
+  digitalCommissions: 0,
+  otherCommissions: 0,
+  referralCommissions: 0,
+  soloProviderCost: 0,
+};
+
+/**
+ * Platform profit = income (marketplace sales − refunds + offer wall + Solo Ads + paid CPA
+ * invoices) − costs (affiliate and referral commissions + Solo Ads provider cost).
+ */
+export function buildProfitTotals(input: Partial<ProfitLines>): InvoiceProfitTotals {
+  const lines = Object.fromEntries(
+    Object.entries({ ...EMPTY_PROFIT_LINES, ...input }).map(([key, value]) => [key, roundMoney(value)]),
+  ) as ProfitLines;
+  const income = roundMoney(
+    lines.digitalSales - lines.digitalRefunds + lines.offerwall + lines.soloAds + lines.cpaInvoices,
+  );
+  const affiliateCommissions = roundMoney(lines.digitalCommissions + lines.otherCommissions);
+  const costs = roundMoney(affiliateCommissions + lines.referralCommissions + lines.soloProviderCost);
   return {
-    received: roundMoney(received),
-    affiliateSent: roundMoney(affiliateSent),
-    referralSent: roundMoney(referralSent),
-    ...split,
+    ...lines,
+    income,
+    affiliateCommissions,
+    costs,
+    ...splitPlatformProfit(roundMoney(income - costs)),
   };
 }
 
@@ -107,16 +130,35 @@ function toMap(rows: BucketRow[]) {
   return map;
 }
 
-function sumMap(map: Map<string, number>) {
-  let total = 0;
-  for (const value of map.values()) total += value;
-  return total;
+/** Wallet ledger earnings that are commission costs (reference types are mixed case). */
+const OTHER_COMMISSION_REFERENCES = ["lead", "lead_reversal", "offerwall_conversion"];
+const REFERRAL_COMMISSION_REFERENCES = [
+  "referral",
+  "referral_digital",
+  "referral_digital_reversal",
+  "referral_cpa",
+];
+
+function ledgerNetByBucket(pattern: string, from: Date, to: Date, referenceTypes: string[]) {
+  return prisma.$queryRaw<BucketRow[]>`
+    SELECT DATE_FORMAT(created_at, ${pattern}) AS bucket,
+           COALESCE(SUM(CASE WHEN type = 'CREDIT' THEN amount ELSE -amount END), 0) AS total
+    FROM ledger_entries
+    WHERE LOWER(reference_type) IN (${Prisma.join(referenceTypes)})
+      AND created_at >= ${from} AND created_at <= ${to}
+    GROUP BY bucket
+  `;
 }
 
-async function getGroupedInvoiceTotals(from: Date, to: Date, groupBy: ProfitGroupBy) {
+async function getGroupedProfitLines(
+  from: Date,
+  to: Date,
+  groupBy: ProfitGroupBy,
+): Promise<Map<string, ProfitLines>> {
   const pattern = dateFormatPattern(groupBy);
+  const soloConfig = await loadSoloAdsConfig();
 
-  const [receivedRows, affiliateRows, referralRows] = await Promise.all([
+  const [cpaRows, offerwallRows, soloRows, otherRows, referralRows, digital] = await Promise.all([
     prisma.$queryRaw<BucketRow[]>`
       SELECT DATE_FORMAT(paid_at, ${pattern}) AS bucket, COALESCE(SUM(total), 0) AS total
       FROM advertiser_cpa_invoices
@@ -124,41 +166,74 @@ async function getGroupedInvoiceTotals(from: Date, to: Date, groupBy: ProfitGrou
       GROUP BY bucket
     `,
     prisma.$queryRaw<BucketRow[]>`
-      SELECT DATE_FORMAT(paid_at, ${pattern}) AS bucket, COALESCE(SUM(total), 0) AS total
-      FROM affiliate_invoices
-      WHERE status = 'PAID' AND paid_at >= ${from} AND paid_at <= ${to}
+      SELECT DATE_FORMAT(created_at, ${pattern}) AS bucket,
+             COALESCE(SUM(COALESCE(network_payout, payout)), 0) AS total
+      FROM offerwall_conversions
+      WHERE created_at >= ${from} AND created_at <= ${to}
       GROUP BY bucket
     `,
-    prisma.$queryRaw<BucketRow[]>`
-      SELECT DATE_FORMAT(COALESCE(processed_at, created_at), ${pattern}) AS bucket,
-             COALESCE(SUM(amount), 0) AS total
-      FROM payouts
-      WHERE kind = 'REFERRAL' AND status = 'COMPLETED'
-        AND COALESCE(processed_at, created_at) >= ${from}
-        AND COALESCE(processed_at, created_at) <= ${to}
+    // A click refund gives back the charge and the provider cost of that click.
+    prisma.$queryRaw<Array<{ bucket: string | null; charges: unknown; providerCents: unknown }>>`
+      SELECT DATE_FORMAT(l.created_at, ${pattern}) AS bucket,
+             COALESCE(-SUM(l.amount_cents), 0) AS charges,
+             COALESCE(SUM(
+               CASE WHEN l.type = 'CHARGE' THEN 1 ELSE -1 END *
+               COALESCE(c.provider_cost_cents_snapshot,
+                        CASE WHEN k.traffic_type = 'WARM' THEN ${soloConfig.warmProviderCostCents}
+                             ELSE ${soloConfig.regularProviderCostCents} END)
+             ), 0) AS providerCents
+      FROM solo_wallet_ledger l
+      LEFT JOIN solo_clicks k ON k.id = l.source_id
+      LEFT JOIN solo_campaigns c ON c.id = k.campaign_id
+      WHERE l.type IN ('CHARGE', 'REFUND') AND l.source_type = 'solo_click'
+        AND l.created_at >= ${from} AND l.created_at <= ${to}
       GROUP BY bucket
     `,
+    ledgerNetByBucket(pattern, from, to, OTHER_COMMISSION_REFERENCES),
+    ledgerNetByBucket(pattern, from, to, REFERRAL_COMMISSION_REFERENCES),
+    getDigitalSaleAmountsByBucket(from, to, groupBy),
   ]);
 
-  return {
-    received: toMap(receivedRows),
-    affiliate: toMap(affiliateRows),
-    referral: toMap(referralRows),
+  const result = new Map<string, ProfitLines>();
+  const line = (bucket: string) => {
+    let lines = result.get(bucket);
+    if (!lines) {
+      lines = { ...EMPTY_PROFIT_LINES };
+      result.set(bucket, lines);
+    }
+    return lines;
   };
+
+  for (const [bucket, total] of toMap(cpaRows)) line(bucket).cpaInvoices += total;
+  for (const [bucket, total] of toMap(offerwallRows)) line(bucket).offerwall += total;
+  for (const [bucket, total] of toMap(otherRows)) line(bucket).otherCommissions += total;
+  for (const [bucket, total] of toMap(referralRows)) line(bucket).referralCommissions += total;
+  for (const row of soloRows) {
+    if (!row.bucket) continue;
+    const lines = line(String(row.bucket));
+    lines.soloAds += Number(row.charges ?? 0) / 100;
+    lines.soloProviderCost += Number(row.providerCents ?? 0) / 100;
+  }
+  for (const [bucket, sale] of digital) {
+    const lines = line(bucket);
+    lines.digitalSales += sale.sales;
+    lines.digitalRefunds += sale.refunds;
+    lines.digitalCommissions += sale.commissions - sale.refundedCommissions;
+  }
+  return result;
 }
 
-/**
- * Platform profit = paid advertiser invoices − paid affiliate invoices − completed referral
- * payouts, each dated by when it was paid. Payouts created by paying an affiliate invoice are
- * not counted again.
- */
+function sumLines(map: Map<string, ProfitLines>): ProfitLines {
+  const total = { ...EMPTY_PROFIT_LINES };
+  for (const lines of map.values()) {
+    for (const key of Object.keys(total) as Array<keyof ProfitLines>) total[key] += lines[key];
+  }
+  return total;
+}
+
+/** Every amount is dated by when it happened: sale, conversion, click charge, credit, refund. */
 export async function getInvoiceProfitForRange(from: Date, to: Date): Promise<InvoiceProfitTotals> {
-  const grouped = await getGroupedInvoiceTotals(from, to, "year");
-  return buildProfitTotals(
-    sumMap(grouped.received),
-    sumMap(grouped.affiliate),
-    sumMap(grouped.referral),
-  );
+  return buildProfitTotals(sumLines(await getGroupedProfitLines(from, to, "year")));
 }
 
 export async function getInvoiceProfitPageData(
@@ -166,27 +241,16 @@ export async function getInvoiceProfitPageData(
   to: Date,
   groupBy: ProfitGroupBy,
 ): Promise<InvoiceProfitPageData> {
-  const grouped = await getGroupedInvoiceTotals(from, to, groupBy);
+  const grouped = await getGroupedProfitLines(from, to, groupBy);
   const rows = generateProfitBuckets(from, to, groupBy)
     .reverse()
-    .map((period) => ({
-      period,
-      ...buildProfitTotals(
-        grouped.received.get(period) ?? 0,
-        grouped.affiliate.get(period) ?? 0,
-        grouped.referral.get(period) ?? 0,
-      ),
-    }));
+    .map((period) => ({ period, ...buildProfitTotals(grouped.get(period) ?? {}) }));
 
   return {
     from,
     to,
     groupBy,
-    summary: buildProfitTotals(
-      sumMap(grouped.received),
-      sumMap(grouped.affiliate),
-      sumMap(grouped.referral),
-    ),
+    summary: buildProfitTotals(sumLines(grouped)),
     rows,
   };
 }
@@ -203,6 +267,8 @@ function serializeInvoice(row: InvoiceWithPaidBy): PartnerInvoiceRecord {
     received: Number(row.received),
     affiliateSent: Number(row.affiliateSent),
     referralSent: Number(row.referralSent),
+    soloProviderCost: Number(row.soloProviderCost),
+    breakdown: (row.breakdown as InvoiceProfitTotals | null) ?? null,
     platformProfit: Number(row.platformProfit),
     amount: Number(row.amount),
     status: row.status,
@@ -248,10 +314,12 @@ export async function generatePartnerInvoice(
         periodMonth,
         periodStart: start,
         periodEnd: end,
-        received: totals.received,
-        affiliateSent: totals.affiliateSent,
-        referralSent: totals.referralSent,
+        received: totals.income,
+        affiliateSent: totals.affiliateCommissions,
+        referralSent: totals.referralCommissions,
+        soloProviderCost: totals.soloProviderCost,
         platformProfit: totals.platformProfit,
+        breakdown: totals,
         amount,
         status: partnerInvoiceStatusFor(amount),
         issuedAt: now,
@@ -276,10 +344,18 @@ async function firstMoneyMovementMonth(): Promise<string | null> {
     SELECT MIN(first) AS first FROM (
       SELECT MIN(paid_at) AS first FROM advertiser_cpa_invoices WHERE status = 'PAID'
       UNION ALL
-      SELECT MIN(paid_at) FROM affiliate_invoices WHERE status = 'PAID'
+      SELECT MIN(created_at) FROM webhook_events
+        WHERE status = 'PROCESSED' AND publisher_id IS NOT NULL
       UNION ALL
-      SELECT MIN(COALESCE(processed_at, created_at)) FROM payouts
-        WHERE kind = 'REFERRAL' AND status = 'COMPLETED'
+      SELECT MIN(created_at) FROM offerwall_conversions
+      UNION ALL
+      SELECT MIN(created_at) FROM solo_wallet_ledger WHERE type = 'CHARGE'
+      UNION ALL
+      SELECT MIN(created_at) FROM ledger_entries
+        WHERE LOWER(reference_type) IN (${Prisma.join([
+          ...OTHER_COMMISSION_REFERENCES,
+          ...REFERRAL_COMMISSION_REFERENCES,
+        ])})
     ) AS movements
   `;
   const first = rows[0]?.first;

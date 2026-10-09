@@ -9,6 +9,9 @@ export type SoloAdsConfig = {
   betaPublisherIds: string[];
   regularCpcCents: number;
   warmCpcCents: number;
+  /** What the platform pays its traffic provider per billed click (admin profit only). */
+  regularProviderCostCents: number;
+  warmProviderCostCents: number;
   minDepositCents: number;
   minDailyBudgetCents: number;
   maxDailyBudgetCents: number;
@@ -41,6 +44,8 @@ export const DEFAULT_SOLO_ADS_CONFIG: SoloAdsConfig = {
   betaPublisherIds: [],
   regularCpcCents: 45,
   warmCpcCents: 75,
+  regularProviderCostCents: 0,
+  warmProviderCostCents: 0,
   minDepositCents: 2500,
   minDailyBudgetCents: 1000,
   maxDailyBudgetCents: 500000,
@@ -94,6 +99,8 @@ export function parseSoloAdsConfig(value: unknown): SoloAdsConfig {
     betaPublisherIds: idList(raw.betaPublisherIds),
     regularCpcCents: int(raw.regularCpcCents, d.regularCpcCents, 1, 100_000),
     warmCpcCents: int(raw.warmCpcCents, d.warmCpcCents, 1, 100_000),
+    regularProviderCostCents: int(raw.regularProviderCostCents, d.regularProviderCostCents, 0, 100_000),
+    warmProviderCostCents: int(raw.warmProviderCostCents, d.warmProviderCostCents, 0, 100_000),
     minDepositCents: int(raw.minDepositCents, d.minDepositCents, 100, 10_000_000),
     minDailyBudgetCents: minDaily,
     maxDailyBudgetCents: Math.max(minDaily, int(raw.maxDailyBudgetCents, d.maxDailyBudgetCents, 100, 100_000_000)),
@@ -114,6 +121,10 @@ export function parseSoloAdsConfig(value: unknown): SoloAdsConfig {
 
 export function cpcCentsForTraffic(config: SoloAdsConfig, trafficType: "REGULAR" | "WARM"): number {
   return trafficType === "WARM" ? config.warmCpcCents : config.regularCpcCents;
+}
+
+export function providerCostCentsForTraffic(config: SoloAdsConfig, trafficType: "REGULAR" | "WARM"): number {
+  return trafficType === "WARM" ? config.warmProviderCostCents : config.regularProviderCostCents;
 }
 
 /** Whether a publisher may open the Solo Ads module. */

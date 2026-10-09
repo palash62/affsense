@@ -15,6 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { formatCurrency } from "@/components/admin/admin-ui";
+import { AdminProfitBreakdown } from "@/components/admin/admin-profit-breakdown";
 import {
   formatPartnerPeriodMonthLabel,
   type PartnerInvoiceRecord,
@@ -73,7 +74,7 @@ export function AdminPartnerInvoicePayDialog({ invoice }: { invoice: PartnerInvo
         <CheckCircle2 className="h-3.5 w-3.5" />
         Mark paid
       </DialogTrigger>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Invoice {invoice.number}</DialogTitle>
         </DialogHeader>
@@ -85,11 +86,12 @@ export function AdminPartnerInvoicePayDialog({ invoice }: { invoice: PartnerInvo
               Partner share (20%) for {formatPartnerPeriodMonthLabel(invoice.periodMonth)}
             </p>
             <p className="mt-2 text-xs text-muted-foreground">
-              {formatCurrency(invoice.received)} received − {formatCurrency(invoice.affiliateSent)}{" "}
-              affiliate − {formatCurrency(invoice.referralSent)} referral ={" "}
+              {formatCurrency(invoice.received)} income −{" "}
+              {formatCurrency(invoice.affiliateSent + invoice.referralSent + invoice.soloProviderCost)} costs ={" "}
               {formatCurrency(invoice.platformProfit)} platform profit
             </p>
           </div>
+          {invoice.breakdown ? <AdminProfitBreakdown totals={invoice.breakdown} /> : null}
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">

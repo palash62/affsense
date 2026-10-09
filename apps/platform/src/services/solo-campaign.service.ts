@@ -1,12 +1,13 @@
 import {
   assertSoloDestinationSafe,
   cpcCentsForTraffic,
+  providerCostCentsForTraffic,
   isValidTimeZone,
   loadSoloAdsConfig,
   SOLO_DEVICES,
   zonedInputToUtc,
 } from "@cpl/tracking-core";
-import type { Prisma, SoloCampaign, SoloOfferType } from "@prisma/client";
+import type { Prisma, SoloOfferType } from "@prisma/client";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { AppError, Errors } from "@/lib/errors";
@@ -205,8 +206,11 @@ const OFFER_SELECT = {
   digitalProduct: { select: { id: true, name: true, status: true } },
 } as const;
 
+/** Provider cost is the platform's own cost; publisher responses never include it. */
+const PUBLISHER_OMIT = { providerCostCentsSnapshot: true } as const;
+
 export async function getOwnedSoloCampaign(publisherId: string, campaignId: string) {
-  const campaign = await prisma.soloCampaign.findUnique({ where: { id: campaignId }, include: OFFER_SELECT });
+  const campaign = await prisma.soloCampaign.findUnique({ where: { id: campaignId }, include: OFFER_SELECT, omit: PUBLISHER_OMIT });
   if (!campaign) throw Errors.notFound("Campaign");
   if (campaign.publisherId !== publisherId) throw Errors.forbidden();
   return campaign;
@@ -217,6 +221,7 @@ export async function listSoloCampaigns(publisherId: string) {
     where: { publisherId },
     orderBy: { createdAt: "desc" },
     include: OFFER_SELECT,
+    omit: PUBLISHER_OMIT,
   });
 }
 
@@ -230,9 +235,11 @@ export async function createSoloCampaign(publisherId: string, raw: unknown) {
       ...data,
       publisherId,
       cpcCentsSnapshot: cpcCentsForTraffic(config, data.trafficType),
+      providerCostCentsSnapshot: providerCostCentsForTraffic(config, data.trafficType),
       trackingVerifiedAt: verified ? new Date() : null,
       status: "DRAFT",
     },
+    omit: PUBLISHER_OMIT,
   });
 }
 
@@ -273,12 +280,14 @@ export async function updateSoloCampaign(publisherId: string, campaignId: string
 
   const data = await normalize(publisherId, merged, existing.spentCents + existing.reservedCents);
   const changed = MATERIAL_FIELDS.filter(
-    (k) => JSON.stringify(data[k]) !== JSON.stringify(existing[k as keyof SoloCampaign]),
+    (k) => JSON.stringify(data[k]) !== JSON.stringify(existing[k as keyof typeof existing]),
   );
   const update: Prisma.SoloCampaignUpdateInput = { ...data };
 
   if (data.trafficType !== existing.trafficType) {
-    update.cpcCentsSnapshot = cpcCentsForTraffic(await loadSoloAdsConfig(), data.trafficType);
+    const config = await loadSoloAdsConfig();
+    update.cpcCentsSnapshot = cpcCentsForTraffic(config, data.trafficType);
+    update.providerCostCentsSnapshot = providerCostCentsForTraffic(config, data.trafficType);
   }
   if (data.destinationHost !== existing.destinationHost) {
     update.trackingVerifiedAt =
@@ -296,7 +305,7 @@ export async function updateSoloCampaign(publisherId: string, campaignId: string
     update.statusReason = null;
   }
 
-  return prisma.soloCampaign.update({ where: { id: campaignId }, data: update });
+  return prisma.soloCampaign.update({ where: { id: campaignId }, data: update, omit: PUBLISHER_OMIT });
 }
 
 export type SoloCampaignAction = "submit" | "pause" | "resume";
@@ -311,17 +320,18 @@ export async function changeSoloCampaignStatus(publisherId: string, campaignId: 
     return prisma.soloCampaign.update({
       where: { id: campaignId },
       data: { status: "PENDING_REVIEW", statusReason: null, submittedAt: new Date() },
+      omit: PUBLISHER_OMIT,
     });
   }
   if (action === "pause") {
     if (!["ACTIVE", "INSUFFICIENT_FUNDS", "BUDGET_EXHAUSTED"].includes(campaign.status)) {
       throw Errors.validation("Only running campaigns can be paused");
     }
-    return prisma.soloCampaign.update({ where: { id: campaignId }, data: { status: "PAUSED", statusReason: "Paused by you" } });
+    return prisma.soloCampaign.update({ where: { id: campaignId }, data: { status: "PAUSED", statusReason: "Paused by you" }, omit: PUBLISHER_OMIT });
   }
   if (campaign.status !== "PAUSED") throw Errors.validation("Only paused campaigns can be resumed");
   if (adminPaused) throw new AppError("ADMIN_PAUSED", "This campaign was paused by Affsense. Contact support to resume it.", 403);
-  return prisma.soloCampaign.update({ where: { id: campaignId }, data: { status: "ACTIVE", statusReason: null } });
+  return prisma.soloCampaign.update({ where: { id: campaignId }, data: { status: "ACTIVE", statusReason: null }, omit: PUBLISHER_OMIT });
 }
 
 export async function deleteSoloCampaign(publisherId: string, campaignId: string) {

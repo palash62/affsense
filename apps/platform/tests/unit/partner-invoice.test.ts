@@ -20,11 +20,18 @@ const prismaMock = vi.hoisted(() => {
 
 vi.mock("@/lib/prisma", () => ({ prisma: prismaMock }));
 
+const soloConfig = vi.hoisted(() => ({ regularProviderCostCents: 20, warmProviderCostCents: 35 }));
+vi.mock("@cpl/tracking-core", () => ({ loadSoloAdsConfig: () => Promise.resolve(soloConfig) }));
+
+const digitalMock = vi.hoisted(() => ({ getDigitalSaleAmountsByBucket: vi.fn() }));
+vi.mock("@/services/digital-product.service", () => digitalMock);
+
 import {
   buildProfitTotals,
   generateDuePartnerInvoices,
   generatePartnerInvoice,
   getInvoiceProfitForRange,
+  getInvoiceProfitPageData,
   markPartnerInvoicePaid,
   monthsBetween,
   partnerInvoiceStatusFor,
@@ -33,6 +40,8 @@ import {
   utcMonthRange,
 } from "@/services/partner-invoice.service";
 import type { PartnerInvoiceRecord } from "@/lib/partner-invoice";
+
+type SqlLike = { strings?: string[]; values?: unknown[] };
 
 function sqlText(callArgs: unknown[]): string {
   const first = callArgs[0];
@@ -43,21 +52,54 @@ function sqlText(callArgs: unknown[]): string {
   return String(first ?? "");
 }
 
-/** Routes each raw query to a total by the table it reads. */
-function mockTotals(totals: { received: number; affiliate: number; referral: number }) {
+/** Every bound value of a raw query, with Prisma.join lists flattened. */
+function sqlValues(callArgs: unknown[]): unknown[] {
+  return callArgs.slice(1).flatMap((value) => {
+    const sql = value as SqlLike;
+    return sql && typeof sql === "object" && Array.isArray(sql.values) ? sql.values : [value];
+  });
+}
+
+type MockLines = {
+  cpa?: number;
+  offerwall?: number;
+  soloChargesCents?: number;
+  soloProviderCents?: number;
+  otherCommissions?: number;
+  referral?: number;
+  digital?: Record<string, { sales: number; refunds: number; commissions: number; refundedCommissions: number }>;
+};
+
+/** Routes each raw query to a total by the table it reads; everything lands in `bucket`. */
+function mockLines(lines: MockLines, bucket = "2026") {
+  digitalMock.getDigitalSaleAmountsByBucket.mockResolvedValue(new Map(Object.entries(lines.digital ?? {})));
   prismaMock.$queryRaw.mockImplementation((...args: unknown[]) => {
     const sql = sqlText(args);
     if (sql.includes("MIN(")) return Promise.resolve([{ first: null }]);
-    if (sql.includes("advertiser_cpa_invoices")) {
-      return Promise.resolve([{ bucket: "2026", total: totals.received }]);
+    if (sql.includes("advertiser_cpa_invoices")) return Promise.resolve([{ bucket, total: lines.cpa ?? 0 }]);
+    if (sql.includes("offerwall_conversions")) return Promise.resolve([{ bucket, total: lines.offerwall ?? 0 }]);
+    if (sql.includes("solo_wallet_ledger")) {
+      return Promise.resolve([
+        { bucket, charges: lines.soloChargesCents ?? 0, providerCents: lines.soloProviderCents ?? 0 },
+      ]);
     }
-    if (sql.includes("affiliate_invoices")) {
-      return Promise.resolve([{ bucket: "2026", total: totals.affiliate }]);
+    if (sql.includes("ledger_entries")) {
+      const referral = sqlValues(args).includes("referral");
+      return Promise.resolve([{ bucket, total: (referral ? lines.referral : lines.otherCommissions) ?? 0 }]);
     }
-    if (sql.includes("payouts")) return Promise.resolve([{ bucket: "2026", total: totals.referral }]);
     return Promise.resolve([]);
   });
 }
+
+const FULL_MONTH: MockLines = {
+  cpa: 300,
+  offerwall: 50,
+  soloChargesCents: 9000,
+  soloProviderCents: 4000,
+  otherCommissions: 35,
+  referral: 15,
+  digital: { "2026": { sales: 500, refunds: 20, commissions: 200, refundedCommissions: 10 } },
+};
 
 function invoiceRow(overrides: Record<string, unknown> = {}) {
   return {
@@ -67,6 +109,8 @@ function invoiceRow(overrides: Record<string, unknown> = {}) {
     received: 1000,
     affiliateSent: 400,
     referralSent: 100,
+    soloProviderCost: 0,
+    breakdown: null,
     platformProfit: 500,
     amount: 100,
     status: "UNPAID",
@@ -85,33 +129,101 @@ describe("partner invoice profit", () => {
     vi.clearAllMocks();
   });
 
-  it("splits received minus affiliate and referral payments 80/20", () => {
-    expect(buildProfitTotals(1000, 400, 100)).toEqual({
-      received: 1000,
-      affiliateSent: 400,
-      referralSent: 100,
-      platformProfit: 500,
-      adminProfit: 400,
-      partnerProfit: 100,
+  it("subtracts commissions and provider cost from income and splits 80/20", () => {
+    expect(
+      buildProfitTotals({
+        digitalSales: 500,
+        digitalRefunds: 20,
+        offerwall: 50,
+        soloAds: 90,
+        cpaInvoices: 300,
+        digitalCommissions: 190,
+        otherCommissions: 35,
+        referralCommissions: 15,
+        soloProviderCost: 40,
+      }),
+    ).toMatchObject({
+      income: 920,
+      affiliateCommissions: 225,
+      costs: 280,
+      platformProfit: 640,
+      adminProfit: 512,
+      partnerProfit: 128,
     });
   });
 
-  it("only reads paid advertiser and affiliate invoices and completed referral payouts", async () => {
-    mockTotals({ received: 1000, affiliate: 400, referral: 100 });
+  it("includes every income and cost line", async () => {
+    mockLines(FULL_MONTH);
 
     const totals = await getInvoiceProfitForRange(new Date("2026-09-01"), new Date("2026-09-30"));
-    expect(totals.platformProfit).toBe(500);
 
+    expect(totals).toMatchObject({
+      digitalSales: 500,
+      digitalRefunds: 20,
+      offerwall: 50,
+      soloAds: 90,
+      cpaInvoices: 300,
+      digitalCommissions: 190,
+      otherCommissions: 35,
+      referralCommissions: 15,
+      soloProviderCost: 40,
+      platformProfit: 640,
+      partnerProfit: 128,
+    });
     const sql = prismaMock.$queryRaw.mock.calls.map((call) => sqlText(call));
-    const advertiser = sql.find((s) => s.includes("advertiser_cpa_invoices"))!;
-    const affiliate = sql.find((s) => s.includes("FROM affiliate_invoices"))!;
-    const referral = sql.find((s) => s.includes("FROM payouts"))!;
-    expect(advertiser).toContain("status = 'PAID'");
-    expect(affiliate).toContain("status = 'PAID'");
-    expect(referral).toContain("kind = 'REFERRAL'");
-    expect(referral).toContain("status = 'COMPLETED'");
-    // Payouts created by paying an affiliate invoice are PUBLISHER kind and must not count twice.
-    expect(sql.some((s) => s.includes("kind = 'PUBLISHER'"))).toBe(false);
+    expect(sql.find((s) => s.includes("advertiser_cpa_invoices"))).toContain("status = 'PAID'");
+    expect(sql.find((s) => s.includes("offerwall_conversions"))).toContain("COALESCE(network_payout, payout)");
+  });
+
+  it("does not count affiliate invoice payments, payouts or deposits", async () => {
+    mockLines(FULL_MONTH);
+
+    await getInvoiceProfitForRange(new Date("2026-09-01"), new Date("2026-09-30"));
+
+    const calls = prismaMock.$queryRaw.mock.calls;
+    const sql = calls.map((call) => sqlText(call));
+    expect(sql.some((s) => s.includes("affiliate_invoices") || s.includes("FROM payouts"))).toBe(false);
+    const referenceTypes = calls
+      .filter((call) => sqlText(call).includes("ledger_entries"))
+      .flatMap((call) => sqlValues(call))
+      .filter((value): value is string => typeof value === "string");
+    for (const excluded of ["payout", "referral_payout", "deposit", "adjustment", "solo_ads_transfer"]) {
+      expect(referenceTypes).not.toContain(excluded);
+    }
+    expect(referenceTypes).toEqual(expect.arrayContaining(["lead", "offerwall_conversion", "referral_cpa"]));
+    expect(sql.find((s) => s.includes("solo_wallet_ledger"))).toContain("l.type IN ('CHARGE', 'REFUND')");
+  });
+
+  it("prices provider cost from the campaign snapshot, falling back to the current setting", async () => {
+    mockLines(FULL_MONTH);
+
+    await getInvoiceProfitForRange(new Date("2026-09-01"), new Date("2026-09-30"));
+
+    const call = prismaMock.$queryRaw.mock.calls.find((c) => sqlText(c).includes("solo_wallet_ledger"))!;
+    expect(sqlText(call)).toContain("COALESCE(c.provider_cost_cents_snapshot");
+    expect(sqlValues(call)).toEqual(expect.arrayContaining([35, 20]));
+  });
+
+  it("lowers the month a refund arrived in, not the month of the sale", async () => {
+    mockLines(
+      {
+        digital: {
+          "2026-09": { sales: 100, refunds: 0, commissions: 40, refundedCommissions: 0 },
+          "2026-10": { sales: 0, refunds: 100, commissions: 0, refundedCommissions: 40 },
+        },
+      },
+      "2026-09",
+    );
+
+    const data = await getInvoiceProfitPageData(
+      new Date("2026-09-01T00:00:00Z"),
+      new Date("2026-10-31T23:59:59Z"),
+      "month",
+    );
+
+    const byPeriod = Object.fromEntries(data.rows.map((row) => [row.period, row.platformProfit]));
+    expect(byPeriod).toEqual({ "2026-09": 60, "2026-10": -60 });
+    expect(data.summary.platformProfit).toBe(0);
   });
 
   it("marks months with no profit as nothing due", () => {
@@ -143,7 +255,7 @@ describe("generatePartnerInvoice", () => {
   });
 
   it("creates an unpaid invoice for 20% of the month's platform profit", async () => {
-    mockTotals({ received: 1000, affiliate: 400, referral: 100 });
+    mockLines(FULL_MONTH);
     prismaMock.partnerProfitInvoice.findUnique.mockResolvedValue(null);
     prismaMock.partnerProfitInvoice.create.mockImplementation(({ data }) =>
       Promise.resolve(invoiceRow(data)),
@@ -156,14 +268,20 @@ describe("generatePartnerInvoice", () => {
     expect(data).toMatchObject({
       number: "PP-2026-09",
       periodMonth: "2026-09",
-      platformProfit: 500,
-      amount: 100,
+      received: 920,
+      affiliateSent: 225,
+      referralSent: 15,
+      soloProviderCost: 40,
+      platformProfit: 640,
+      amount: 128,
       status: "UNPAID",
     });
+    expect(data.breakdown).toMatchObject({ digitalRefunds: 20, offerwall: 50 });
+    expect(result.invoice.breakdown).toMatchObject({ income: 920 });
   });
 
   it("creates a nothing-due invoice for a loss month", async () => {
-    mockTotals({ received: 100, affiliate: 400, referral: 0 });
+    mockLines({ cpa: 100, otherCommissions: 400 });
     prismaMock.partnerProfitInvoice.findUnique.mockResolvedValue(null);
     prismaMock.partnerProfitInvoice.create.mockImplementation(({ data }) =>
       Promise.resolve(invoiceRow(data)),
@@ -192,7 +310,7 @@ describe("generatePartnerInvoice", () => {
   });
 
   it("monthly run backfills from the first month with money movement", async () => {
-    mockTotals({ received: 0, affiliate: 0, referral: 0 });
+    mockLines({});
     prismaMock.$queryRaw.mockImplementationOnce(() =>
       Promise.resolve([{ first: new Date("2026-07-20T10:00:00Z") }]),
     );

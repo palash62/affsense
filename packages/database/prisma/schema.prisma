@@ -851,10 +851,16 @@ model PartnerProfitInvoice {
   periodMonth      String               @unique @map("period_month") // YYYY-MM
   periodStart      DateTime             @map("period_start")
   periodEnd        DateTime             @map("period_end")
+  /// Total income of the month (all revenue streams).
   received         Decimal              @db.Decimal(12, 4)
+  /// Affiliate commissions earned in the month.
   affiliateSent    Decimal              @db.Decimal(12, 4) @map("affiliate_sent")
+  /// Referral commissions earned in the month.
   referralSent     Decimal              @db.Decimal(12, 4) @map("referral_sent")
+  soloProviderCost Decimal              @default(0) @db.Decimal(12, 4) @map("solo_provider_cost")
   platformProfit   Decimal              @db.Decimal(12, 4) @map("platform_profit")
+  /// Every income and cost line used for the invoice; null on invoices issued before it existed.
+  breakdown        Json?
   amount           Decimal              @db.Decimal(12, 4)
   status           PartnerInvoiceStatus @default(UNPAID)
   issuedAt         DateTime             @map("issued_at")
@@ -2633,6 +2639,9 @@ model SoloCampaign {
   lifetimeBudgetCents Int                 @map("lifetime_budget_cents")
   /// CPC locked when the campaign was created; admin price changes apply to new campaigns.
   cpcCentsSnapshot    Int                 @map("cpc_cents_snapshot")
+  /// Provider cost per click locked with the CPC; null on campaigns created before it existed.
+  /// Admin-only: never returned to the publisher.
+  providerCostCentsSnapshot Int?          @map("provider_cost_cents_snapshot")
   spentCents          Int                 @default(0) @map("spent_cents")
   reservedCents       Int                 @default(0) @map("reserved_cents")
   paidClicks          Int                 @default(0) @map("paid_clicks")

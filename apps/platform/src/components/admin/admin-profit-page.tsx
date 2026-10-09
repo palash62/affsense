@@ -17,6 +17,8 @@ import {
 import {
   formatPartnerDate,
   formatPartnerPeriodMonthLabel,
+  PROFIT_COST_LINES,
+  PROFIT_INCOME_LINES,
   type InvoiceProfitRow,
   type InvoiceProfitTotals,
   type PartnerInvoiceRecord,
@@ -24,6 +26,7 @@ import {
   type PartnerInvoiceSummary,
 } from "@/lib/partner-invoice";
 import { AdminPartnerInvoicePayDialog } from "@/components/admin/admin-partner-invoice-pay-dialog";
+import { AdminProfitBreakdown } from "@/components/admin/admin-profit-breakdown";
 import { cn } from "@/lib/utils";
 
 function moneyClass(value: number) {
@@ -119,8 +122,8 @@ export function AdminPartnerInvoiceTable({
               <tr>
                 <th className="px-4 py-3 pl-5">Invoice</th>
                 <th className="px-4 py-3">Month</th>
-                <th className="px-4 py-3">Received</th>
-                <th className="px-4 py-3">Sent</th>
+                <th className="px-4 py-3">Income</th>
+                <th className="px-4 py-3">Costs</th>
                 <th className="px-4 py-3">Platform profit</th>
                 <th className="px-4 py-3">Partner (20%)</th>
                 <th className="px-4 py-3">Status</th>
@@ -138,7 +141,7 @@ export function AdminPartnerInvoiceTable({
                   </td>
                   <td className="px-4 py-3 text-foreground">{formatCurrency(invoice.received)}</td>
                   <td className="px-4 py-3 text-foreground">
-                    {formatCurrency(invoice.affiliateSent + invoice.referralSent)}
+                    {formatCurrency(invoice.affiliateSent + invoice.referralSent + invoice.soloProviderCost)}
                   </td>
                   <td className={cn("px-4 py-3", moneyClass(invoice.platformProfit))}>
                     {formatCurrency(invoice.platformProfit)}
@@ -205,8 +208,8 @@ export function AdminProfitSummaryCards({
     {
       title: "Platform profit",
       value: summary.platformProfit,
-      description: "Advertiser invoices received − affiliate invoices − referral payouts",
-      detail: `${formatCurrency(summary.received)} − ${formatCurrency(summary.affiliateSent)} − ${formatCurrency(summary.referralSent)}`,
+      description: "Income − costs",
+      detail: `${formatCurrency(summary.income)} − ${formatCurrency(summary.costs)}`,
       accent: "emerald",
       icon: Landmark,
     },
@@ -229,18 +232,21 @@ export function AdminProfitSummaryCards({
   ];
 
   return (
-    <div className="grid gap-4 lg:grid-cols-3">
-      {cards.map((card) => (
-        <AffsenseStatCard
-          key={card.title}
-          label={card.title}
-          value={formatCurrency(card.value)}
-          icon={card.icon}
-          accent={card.accent}
-          valueClassName={moneyClass(card.value)}
-          footer={{ sub: `${card.description} · ${card.detail}` }}
-        />
-      ))}
+    <div className="space-y-4">
+      <div className="grid gap-4 lg:grid-cols-3">
+        {cards.map((card) => (
+          <AffsenseStatCard
+            key={card.title}
+            label={card.title}
+            value={formatCurrency(card.value)}
+            icon={card.icon}
+            accent={card.accent}
+            valueClassName={moneyClass(card.value)}
+            footer={{ sub: `${card.description} · ${card.detail}` }}
+          />
+        ))}
+      </div>
+      <AdminProfitBreakdown totals={summary} />
     </div>
   );
 }
@@ -266,9 +272,20 @@ export function AdminProfitReportTable({
 }) {
   const headers = [
     "Period",
-    "Advertiser invoices received",
-    "Affiliate invoices sent",
-    "Referral sent",
+    "Income",
+    "Affiliate commissions",
+    "Referral commissions",
+    "Provider cost",
+    "Platform profit",
+    "Admin profit (80%)",
+    "Partner profit (20%)",
+  ];
+  const csvHeaders = [
+    "Period",
+    ...PROFIT_INCOME_LINES.map((line) => line.label),
+    "Income",
+    ...PROFIT_COST_LINES.map((line) => line.label),
+    "Costs",
     "Platform profit",
     "Admin profit (80%)",
     "Partner profit (20%)",
@@ -279,9 +296,10 @@ export function AdminProfitReportTable({
 
   const csvRows = allRows.map((row) => [
     formatProfitPeriodLabel(row.period, groupBy),
-    row.received,
-    row.affiliateSent,
-    row.referralSent,
+    ...PROFIT_INCOME_LINES.map((line) => row[line.key]),
+    row.income,
+    ...PROFIT_COST_LINES.map((line) => row[line.key]),
+    row.costs,
     row.platformProfit,
     row.adminProfit,
     row.partnerProfit,
@@ -298,7 +316,7 @@ export function AdminProfitReportTable({
         </div>
         <ExportCsvButton
           filename={`admin-profit-${fromStr}-${toStr}.csv`}
-          headers={headers}
+          headers={csvHeaders}
           rows={csvRows}
         />
       </div>
@@ -308,7 +326,7 @@ export function AdminProfitReportTable({
       ) : (
         <>
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[720px] text-sm">
+            <table className="w-full min-w-[880px] text-sm">
               <thead className="bg-muted/90 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 <tr>
                   {headers.map((header) => (
@@ -324,9 +342,10 @@ export function AdminProfitReportTable({
                     <td className="px-4 py-3 pl-5 font-medium text-foreground">
                       {formatProfitPeriodLabel(row.period, groupBy)}
                     </td>
-                    <td className="px-4 py-3 text-foreground">{formatCurrency(row.received)}</td>
-                    <td className="px-4 py-3 text-foreground">{formatCurrency(row.affiliateSent)}</td>
-                    <td className="px-4 py-3 text-foreground">{formatCurrency(row.referralSent)}</td>
+                    <td className="px-4 py-3 text-foreground">{formatCurrency(row.income)}</td>
+                    <td className="px-4 py-3 text-foreground">{formatCurrency(row.affiliateCommissions)}</td>
+                    <td className="px-4 py-3 text-foreground">{formatCurrency(row.referralCommissions)}</td>
+                    <td className="px-4 py-3 text-foreground">{formatCurrency(row.soloProviderCost)}</td>
                     <td className={cn("px-4 py-3 font-semibold", moneyClass(row.platformProfit))}>
                       {formatCurrency(row.platformProfit)}
                     </td>

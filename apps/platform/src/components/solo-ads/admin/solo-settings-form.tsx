@@ -17,6 +17,8 @@ export type SoloSettingsValue = {
   betaPublisherIds: string[];
   regularCpcCents: number;
   warmCpcCents: number;
+  regularProviderCostCents: number;
+  warmProviderCostCents: number;
   minDepositCents: number;
   minDailyBudgetCents: number;
   maxDailyBudgetCents: number;
@@ -64,6 +66,8 @@ export function SoloSettingsForm({ initial, betaPublishers }: { initial: SoloSet
   const [money, setMoney] = useState({
     regularCpc: dollars(initial.regularCpcCents),
     warmCpc: dollars(initial.warmCpcCents),
+    regularProviderCost: dollars(initial.regularProviderCostCents),
+    warmProviderCost: dollars(initial.warmProviderCostCents),
     minDeposit: dollars(initial.minDepositCents),
     minDaily: dollars(initial.minDailyBudgetCents),
     maxDaily: dollars(initial.maxDailyBudgetCents),
@@ -97,6 +101,8 @@ export function SoloSettingsForm({ initial, betaPublishers }: { initial: SoloSet
           ...config,
           regularCpcCents: toCents(money.regularCpc),
           warmCpcCents: toCents(money.warmCpc),
+          regularProviderCostCents: toCents(money.regularProviderCost),
+          warmProviderCostCents: toCents(money.warmProviderCost),
           minDepositCents: toCents(money.minDeposit),
           minDailyBudgetCents: toCents(money.minDaily),
           maxDailyBudgetCents: toCents(money.maxDaily),
@@ -167,6 +173,12 @@ export function SoloSettingsForm({ initial, betaPublishers }: { initial: SoloSet
           </Field>
           <Field id="warm-cpc" label="Warm traffic cost per click">
             <Input id="warm-cpc" type="number" step="0.01" min="0.01" value={money.warmCpc} onChange={(e) => setMoney((m) => ({ ...m, warmCpc: e.target.value }))} />
+          </Field>
+          <Field id="regular-provider-cost" label="Regular provider cost per click" hint="What we pay the traffic provider. Used for the profit report only; affiliates never see it.">
+            <Input id="regular-provider-cost" type="number" step="0.01" min="0" value={money.regularProviderCost} onChange={(e) => setMoney((m) => ({ ...m, regularProviderCost: e.target.value }))} />
+          </Field>
+          <Field id="warm-provider-cost" label="Warm provider cost per click" hint="What we pay the traffic provider. Used for the profit report only; affiliates never see it.">
+            <Input id="warm-provider-cost" type="number" step="0.01" min="0" value={money.warmProviderCost} onChange={(e) => setMoney((m) => ({ ...m, warmProviderCost: e.target.value }))} />
           </Field>
           <Field id="min-deposit" label="Minimum card deposit">
             <Input id="min-deposit" type="number" step="0.01" min="1" value={money.minDeposit} onChange={(e) => setMoney((m) => ({ ...m, minDeposit: e.target.value }))} />

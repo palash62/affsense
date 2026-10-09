@@ -1256,15 +1256,12 @@ type SummaryOrderRow = DigitalCommissionSnapshot &
     externalEventKey?: string | null;
   };
 
-function summarizeDigitalProductOrders(
-  rows: Array<SummaryOrderRow & { orderId: string | null }>,
-  commissionLookup: Awaited<ReturnType<typeof loadDigitalProductCommissionLookup>>,
-  productNameById: Map<string, string>,
-  refundedKeys: Set<string>,
-): DigitalProductOrderSummary {
-  // Collapse by order id so retries don't inflate revenue / affiliate sales.
-  // Caller should pass newest-first; first attributed row wins, else first seen.
-  const best = new Map<string, SummaryOrderRow>();
+/**
+ * Collapse by order id so retries don't inflate revenue / affiliate sales.
+ * Caller should pass newest-first; first attributed row wins, else first seen.
+ */
+function pickReportLogOrderEvents<T extends SummaryOrderRow>(rows: T[]): T[] {
+  const best = new Map<string, T>();
   for (const [idx, ev] of rows.entries()) {
     const fields = extractOrderFields(ev.payloadJson);
     const orderId = ev.externalEventKey || fields.orderId || `idx-${idx}`;
@@ -1277,17 +1274,30 @@ function summarizeDigitalProductOrders(
       best.set(orderId, ev);
     }
   }
+  return [...best.values()];
+}
+
+function isRefundOrderEvent(ev: SummaryOrderRow, orderType: string | null): boolean {
+  return (orderType ?? ev.eventType ?? "").toLowerCase().includes("refund") || isRefundWebhookEvent(ev);
+}
+
+function summarizeDigitalProductOrders(
+  rows: Array<SummaryOrderRow & { orderId: string | null }>,
+  commissionLookup: Awaited<ReturnType<typeof loadDigitalProductCommissionLookup>>,
+  productNameById: Map<string, string>,
+  refundedKeys: Set<string>,
+): DigitalProductOrderSummary {
+  const best = pickReportLogOrderEvents(rows);
 
   let grossRevenue = 0;
   let affiliateSales = 0;
   let totalCommissions = 0;
   let refunds = 0;
 
-  for (const ev of best.values()) {
+  for (const ev of best) {
     const fields = extractOrderFields(ev.payloadJson);
     const amount = fields.amount ?? 0;
-    const type = (fields.orderType ?? ev.eventType ?? "").toLowerCase();
-    if (type.includes("refund")) {
+    if (isRefundOrderEvent(ev, fields.orderType)) {
       refunds += amount;
     } else {
       grossRevenue += amount;
@@ -1304,13 +1314,74 @@ function summarizeDigitalProductOrders(
   }
 
   return {
-    totalOrders: best.size,
+    totalOrders: best.length,
     grossRevenue,
     affiliateSales,
     totalCommissions,
     netRevenue: grossRevenue - totalCommissions - refunds,
     refunds,
   };
+}
+
+export type DigitalSaleBucketTotals = {
+  sales: number;
+  refunds: number;
+  /** Affiliate commission on the sales, dated by the sale (kept even if refunded later). */
+  commissions: number;
+  /** Commission taken back by refunds, dated by the refund. */
+  refundedCommissions: number;
+};
+
+/**
+ * Affiliate marketplace sales per UTC day, month or year, using the Report Log's events
+ * (processed, attributed, one per order). A refund lands in the bucket it arrived in, so
+ * totals for a finished period never change afterwards.
+ */
+export async function getDigitalSaleAmountsByBucket(
+  from: Date,
+  to: Date,
+  groupBy: "day" | "month" | "year",
+): Promise<Map<string, DigitalSaleBucketTotals>> {
+  const [rows, commissionLookup, productNameById] = await Promise.all([
+    prisma.webhookEvent.findMany({
+      where: { status: "PROCESSED", publisherId: { not: null }, createdAt: { gte: from, lte: to } },
+      select: {
+        eventType: true,
+        payloadJson: true,
+        createdAt: true,
+        ...DIGITAL_COMMISSION_SNAPSHOT_SELECT,
+        ...REFUND_MATCH_SELECT,
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+    loadDigitalProductCommissionLookup(),
+    loadDigitalProductNameMap(),
+  ]);
+
+  const keyLength = groupBy === "year" ? 4 : groupBy === "month" ? 7 : 10;
+  const buckets = new Map<string, DigitalSaleBucketTotals>();
+  for (const ev of pickReportLogOrderEvents(rows)) {
+    const fields = extractOrderFields(ev.payloadJson);
+    if (fields.amount == null) continue;
+    const amount = Math.abs(fields.amount);
+    const commission = Math.abs(
+      applyDigitalCommissionSnapshot(
+        resolveDigitalProductForEvent(commissionLookup, productNameById, ev, fields.pageSlug, amount),
+        ev,
+      ).commission ?? 0,
+    );
+    const key = ev.createdAt.toISOString().slice(0, keyLength);
+    const bucket = buckets.get(key) ?? { sales: 0, refunds: 0, commissions: 0, refundedCommissions: 0 };
+    if (isRefundOrderEvent(ev, fields.orderType)) {
+      bucket.refunds += amount;
+      bucket.refundedCommissions += commission;
+    } else {
+      bucket.sales += amount;
+      bucket.commissions += commission;
+    }
+    buckets.set(key, bucket);
+  }
+  return buckets;
 }
 
 const DIGITAL_ORDER_SORT_ACCESSORS: Record<string, (row: DigitalProductOrderRow) => string | number | null> = {

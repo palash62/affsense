@@ -2,13 +2,48 @@ import { format, parseISO } from "date-fns";
 
 export type PartnerInvoiceStatusValue = "UNPAID" | "PAID" | "NOTHING_DUE";
 
-export type InvoiceProfitTotals = {
-  /** Paid advertiser invoices (money in). */
-  received: number;
-  /** Paid affiliate invoices (money out). */
-  affiliateSent: number;
-  /** Completed referral payouts (money out). */
-  referralSent: number;
+/** The raw income and cost lines of a period, before totals and the split. */
+export type ProfitLines = {
+  /** Affiliate marketplace sales (Report Log), by sale date. */
+  digitalSales: number;
+  /** Marketplace refunds, by the date the refund arrived. */
+  digitalRefunds: number;
+  /** What the offer wall network paid us. */
+  offerwall: number;
+  /** Solo Ads click charges net of click refunds. */
+  soloAds: number;
+  /** Paid CPA advertiser invoices, by payment date. */
+  cpaInvoices: number;
+  /** Marketplace commissions by sale date, less commission taken back by refunds. */
+  digitalCommissions: number;
+  /** Offer wall and CPL commissions credited to wallets, net of reversals. */
+  otherCommissions: number;
+  /** Referral commissions credited to wallets, net of reversals. */
+  referralCommissions: number;
+  /** Billed Solo Ads clicks times the provider cost per click. */
+  soloProviderCost: number;
+};
+
+/** Display order of the income lines; refunds are subtracted. */
+export const PROFIT_INCOME_LINES: Array<{ key: keyof ProfitLines; label: string; subtract?: boolean }> = [
+  { key: "digitalSales", label: "Marketplace sales" },
+  { key: "digitalRefunds", label: "Marketplace refunds", subtract: true },
+  { key: "offerwall", label: "Offer Wall network payout" },
+  { key: "soloAds", label: "Solo Ads click charges" },
+  { key: "cpaInvoices", label: "CPA advertiser invoices paid" },
+];
+
+export const PROFIT_COST_LINES: Array<{ key: keyof ProfitLines; label: string }> = [
+  { key: "digitalCommissions", label: "Marketplace affiliate commissions" },
+  { key: "otherCommissions", label: "Offer Wall / CPL affiliate commissions" },
+  { key: "referralCommissions", label: "Referral commissions" },
+  { key: "soloProviderCost", label: "Solo Ads provider cost" },
+];
+
+export type InvoiceProfitTotals = ProfitLines & {
+  income: number;
+  affiliateCommissions: number;
+  costs: number;
   platformProfit: number;
   adminProfit: number;
   partnerProfit: number;
@@ -20,9 +55,15 @@ export type PartnerInvoiceRecord = {
   id: string;
   number: string;
   periodMonth: string;
+  /** Total income. */
   received: number;
+  /** Affiliate commissions. */
   affiliateSent: number;
+  /** Referral commissions. */
   referralSent: number;
+  soloProviderCost: number;
+  /** Every line; null on invoices issued before the breakdown existed. */
+  breakdown: InvoiceProfitTotals | null;
   platformProfit: number;
   amount: number;
   status: PartnerInvoiceStatusValue;
