@@ -58,7 +58,6 @@ export type AdminNavEntry =
 export const ADMIN_LEGACY_NAV: NavItem[] = [
   { label: "Old Dashboard", href: "/admin/old-dashboard", icon: History },
   { label: "Users", href: STAFF_USERS_PATH, icon: UserCog },
-  { label: "Profit", href: "/admin/profit", icon: TrendingUp },
   { label: "Publishers", href: "/admin/publishers", icon: Users },
   { label: "Campaigns", href: "/admin/campaigns", icon: Megaphone },
   {
@@ -87,6 +86,7 @@ export const ADMIN_LEGACY_NAV: NavItem[] = [
 export const ADMIN_NAV: AdminNavEntry[] = [
   { kind: "section", label: "MAIN" },
   { kind: "item", item: { label: "Dashboard", href: "/admin", icon: LayoutDashboard } },
+  { kind: "item", item: { label: "Profit", href: "/admin/profit", icon: TrendingUp } },
   {
     kind: "item",
     item: {
