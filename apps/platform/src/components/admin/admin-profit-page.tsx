@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense } from "react";
-import { Banknote, HandCoins, Landmark, PiggyBank, Scale, Wallet } from "lucide-react";
+import { Banknote, HandCoins, Landmark, PiggyBank, Wallet } from "lucide-react";
 import { formatCurrency } from "@/components/admin/admin-ui";
 import { UsersTablePagination } from "@/components/admin/users-table-pagination";
 import {
@@ -12,54 +12,47 @@ import { ExportCsvButton } from "@/components/reports/export-csv-button";
 import {
   formatProfitDateDisplay,
   formatProfitPeriodLabel,
-  type AdminProfitPageData,
   type ProfitGroupBy,
 } from "@/services/admin-profit.service";
 import {
-  formatPartnerPaidDate,
+  formatPartnerDate,
   formatPartnerPeriodMonthLabel,
-  type PartnerPaymentRecord,
-  type PartnerSettlementRow,
-  type PartnerSettlementStatus,
-  type PartnerSettlementSummary,
-} from "@/services/partner-payment.service";
+  type InvoiceProfitRow,
+  type InvoiceProfitTotals,
+  type PartnerInvoiceRecord,
+  type PartnerInvoiceStatusValue,
+  type PartnerInvoiceSummary,
+} from "@/lib/partner-invoice";
+import { AdminPartnerInvoicePayDialog } from "@/components/admin/admin-partner-invoice-pay-dialog";
 import { cn } from "@/lib/utils";
 
 function moneyClass(value: number) {
   return value >= 0 ? "text-[var(--theme-success)]" : "text-destructive";
 }
 
-function settlementStatusLabel(status: PartnerSettlementStatus) {
+function invoiceStatusLabel(status: PartnerInvoiceStatusValue) {
   switch (status) {
-    case "unpaid":
+    case "UNPAID":
       return "Unpaid";
-    case "partial":
-      return "Partial";
-    case "settled":
-      return "Settled";
-    case "overpaid":
-      return "Overpaid";
+    case "PAID":
+      return "Paid";
+    case "NOTHING_DUE":
+      return "Nothing due";
   }
 }
 
-function settlementStatusClass(status: PartnerSettlementStatus) {
+function invoiceStatusClass(status: PartnerInvoiceStatusValue) {
   switch (status) {
-    case "unpaid":
+    case "UNPAID":
       return "bg-amber-50 text-amber-800";
-    case "partial":
-      return "bg-sky-50 text-sky-800";
-    case "settled":
+    case "PAID":
       return "bg-emerald-50 text-emerald-800";
-    case "overpaid":
-      return "bg-violet-50 text-violet-800";
+    case "NOTHING_DUE":
+      return "bg-muted text-muted-foreground";
   }
 }
 
-export function AdminPartnerSettlementSummary({
-  summary,
-}: {
-  summary: PartnerSettlementSummary;
-}) {
+export function AdminPartnerInvoiceSummary({ summary }: { summary: PartnerInvoiceSummary }) {
   const cards: Array<{
     title: string;
     value: number;
@@ -68,30 +61,23 @@ export function AdminPartnerSettlementSummary({
     icon: typeof Wallet;
   }> = [
     {
-      title: "Partner owed",
-      value: summary.owed,
-      description: "20% partner profit for months in range",
-      accent: "navy",
-      icon: Scale,
+      title: "Partner unpaid",
+      value: summary.unpaid,
+      description: `${summary.unpaidCount} unpaid ${summary.unpaidCount === 1 ? "invoice" : "invoices"}`,
+      accent: "amber",
+      icon: Wallet,
     },
     {
       title: "Partner paid",
       value: summary.paid,
-      description: "Manual payments recorded",
+      description: `${summary.paidCount} paid ${summary.paidCount === 1 ? "invoice" : "invoices"}`,
       accent: "coral",
       icon: HandCoins,
-    },
-    {
-      title: "Partner remaining",
-      value: summary.remaining,
-      description: "Owed − paid (negative = overpaid)",
-      accent: "amber",
-      icon: Wallet,
     },
   ];
 
   return (
-    <div className="grid gap-4 lg:grid-cols-3">
+    <div className="grid gap-4 lg:grid-cols-2">
       {cards.map((card) => (
         <AffsenseStatCard
           key={card.title}
@@ -99,7 +85,6 @@ export function AdminPartnerSettlementSummary({
           value={formatCurrency(card.value)}
           icon={card.icon}
           accent={card.accent}
-          valueClassName={moneyClass(card.value)}
           footer={{ sub: card.description }}
         />
       ))}
@@ -107,100 +92,92 @@ export function AdminPartnerSettlementSummary({
   );
 }
 
-export function AdminPartnerSettlementTable({ rows }: { rows: PartnerSettlementRow[] }) {
+export function AdminPartnerInvoiceTable({
+  invoices,
+  canPay,
+}: {
+  invoices: PartnerInvoiceRecord[];
+  canPay: boolean;
+}) {
   return (
     <div className="overflow-hidden rounded-[18px] border border-border bg-card shadow-sm">
       <div className="border-b border-border px-5 py-4">
-        <h2 className="text-base font-semibold text-foreground">Partner settlement</h2>
-        <p className="text-sm text-muted-foreground">Monthly owed vs paid for the selected range</p>
+        <h2 className="text-base font-semibold text-foreground">Partner invoices</h2>
+        <p className="text-sm text-muted-foreground">
+          One invoice per month for the 20% partner share, created on the 1st for the month that
+          just ended. Newest first.
+        </p>
       </div>
-      {rows.length === 0 ? (
-        <p className="px-5 py-12 text-center text-sm text-muted-foreground">No months in this range.</p>
+      {invoices.length === 0 ? (
+        <p className="px-5 py-12 text-center text-sm text-muted-foreground">
+          No partner invoices yet. The first one is created on the 1st of next month.
+        </p>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[640px] text-sm">
+          <table className="w-full min-w-[1040px] text-sm">
             <thead className="bg-muted/90 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               <tr>
-                <th className="px-4 py-3 pl-5">Month</th>
-                <th className="px-4 py-3">Owed</th>
-                <th className="px-4 py-3">Paid</th>
-                <th className="px-4 py-3">Remaining</th>
-                <th className="px-4 py-3 pr-5">Status</th>
+                <th className="px-4 py-3 pl-5">Invoice</th>
+                <th className="px-4 py-3">Month</th>
+                <th className="px-4 py-3">Received</th>
+                <th className="px-4 py-3">Sent</th>
+                <th className="px-4 py-3">Platform profit</th>
+                <th className="px-4 py-3">Partner (20%)</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">Issued</th>
+                <th className="px-4 py-3">Payment</th>
+                <th className="px-4 py-3 pr-5 text-right">Action</th>
               </tr>
             </thead>
             <tbody>
-              {rows.map((row) => (
-                <tr key={row.periodMonth} className="border-t border-border hover:bg-muted/60">
-                  <td className="px-4 py-3 pl-5 font-medium text-foreground">
-                    {formatPartnerPeriodMonthLabel(row.periodMonth)}
+              {invoices.map((invoice) => (
+                <tr key={invoice.id} className="border-t border-border align-top hover:bg-muted/60">
+                  <td className="px-4 py-3 pl-5 font-mono text-xs text-foreground">{invoice.number}</td>
+                  <td className="px-4 py-3 font-medium text-foreground">
+                    {formatPartnerPeriodMonthLabel(invoice.periodMonth)}
                   </td>
-                  <td className={cn("px-4 py-3", moneyClass(row.owed))}>
-                    {formatCurrency(row.owed)}
+                  <td className="px-4 py-3 text-foreground">{formatCurrency(invoice.received)}</td>
+                  <td className="px-4 py-3 text-foreground">
+                    {formatCurrency(invoice.affiliateSent + invoice.referralSent)}
                   </td>
-                  <td className="px-4 py-3 text-foreground">{formatCurrency(row.paid)}</td>
-                  <td className={cn("px-4 py-3 font-semibold", moneyClass(row.remaining))}>
-                    {formatCurrency(row.remaining)}
+                  <td className={cn("px-4 py-3", moneyClass(invoice.platformProfit))}>
+                    {formatCurrency(invoice.platformProfit)}
                   </td>
-                  <td className="px-4 py-3 pr-5">
+                  <td className="px-4 py-3 font-semibold text-foreground">
+                    {formatCurrency(invoice.amount)}
+                  </td>
+                  <td className="px-4 py-3">
                     <span
                       className={cn(
                         "inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium",
-                        settlementStatusClass(row.status),
+                        invoiceStatusClass(invoice.status),
                       )}
                     >
-                      {settlementStatusLabel(row.status)}
+                      {invoiceStatusLabel(invoice.status)}
                     </span>
                   </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
-  );
-}
-
-export function AdminPartnerPaymentHistory({ payments }: { payments: PartnerPaymentRecord[] }) {
-  return (
-    <div className="overflow-hidden rounded-[18px] border border-border bg-card shadow-sm">
-      <div className="border-b border-border px-5 py-4">
-        <h2 className="text-base font-semibold text-foreground">Payment history</h2>
-        <p className="text-sm text-muted-foreground">Manual partner payments in this range (newest first)</p>
-      </div>
-      {payments.length === 0 ? (
-        <p className="px-5 py-12 text-center text-sm text-muted-foreground">No partner payments recorded yet.</p>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[720px] text-sm">
-            <thead className="bg-muted/90 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              <tr>
-                <th className="px-4 py-3 pl-5">Month</th>
-                <th className="px-4 py-3">Amount</th>
-                <th className="px-4 py-3">Paid date</th>
-                <th className="px-4 py-3">Method</th>
-                <th className="px-4 py-3">Note</th>
-                <th className="px-4 py-3 pr-5">Recorded by</th>
-              </tr>
-            </thead>
-            <tbody>
-              {payments.map((payment) => (
-                <tr key={payment.id} className="border-t border-border hover:bg-muted/60">
-                  <td className="px-4 py-3 pl-5 font-medium text-foreground">
-                    {formatPartnerPeriodMonthLabel(payment.periodMonth)}
+                  <td className="px-4 py-3 text-foreground">{formatPartnerDate(invoice.issuedAt)}</td>
+                  <td className="max-w-[240px] px-4 py-3 text-xs text-muted-foreground">
+                    {invoice.status === "PAID" ? (
+                      <div className="space-y-0.5">
+                        <p className="text-sm text-foreground">
+                          {formatPartnerDate(invoice.paidAt)}
+                          {invoice.paymentMethod ? ` · ${invoice.paymentMethod}` : ""}
+                        </p>
+                        {invoice.paymentReference ? (
+                          <p className="font-mono">Ref: {invoice.paymentReference}</p>
+                        ) : null}
+                        {invoice.paidNote ? <p className="truncate" title={invoice.paidNote}>{invoice.paidNote}</p> : null}
+                        {invoice.paidByName ? <p>By {invoice.paidByName}</p> : null}
+                      </div>
+                    ) : (
+                      "—"
+                    )}
                   </td>
-                  <td className="px-4 py-3 font-semibold text-foreground">
-                    {formatCurrency(payment.amount)}
-                  </td>
-                  <td className="px-4 py-3 text-foreground">
-                    {formatPartnerPaidDate(payment.paidAt)}
-                  </td>
-                  <td className="px-4 py-3 text-foreground">{payment.method || "—"}</td>
-                  <td className="max-w-[220px] truncate px-4 py-3 text-muted-foreground" title={payment.note ?? ""}>
-                    {payment.note || "—"}
-                  </td>
-                  <td className="px-4 py-3 pr-5 text-foreground">
-                    {payment.createdByName || "—"}
+                  <td className="px-4 py-3 pr-5 text-right">
+                    {invoice.status === "UNPAID" && canPay ? (
+                      <AdminPartnerInvoicePayDialog invoice={invoice} />
+                    ) : null}
                   </td>
                 </tr>
               ))}
@@ -215,7 +192,7 @@ export function AdminPartnerPaymentHistory({ payments }: { payments: PartnerPaym
 export function AdminProfitSummaryCards({
   summary,
 }: {
-  summary: AdminProfitPageData["summary"];
+  summary: InvoiceProfitTotals;
 }) {
   const cards: Array<{
     title: string;
@@ -228,8 +205,8 @@ export function AdminProfitSummaryCards({
     {
       title: "Platform profit",
       value: summary.platformProfit,
-      description: "Advertiser payments − publisher payouts − referral pay",
-      detail: `${formatCurrency(summary.advertiserPayment)} − ${formatCurrency(summary.publisherPayout)} − ${formatCurrency(summary.referralPay)}`,
+      description: "Advertiser invoices received − affiliate invoices − referral payouts",
+      detail: `${formatCurrency(summary.received)} − ${formatCurrency(summary.affiliateSent)} − ${formatCurrency(summary.referralSent)}`,
       accent: "emerald",
       icon: Landmark,
     },
@@ -278,8 +255,8 @@ export function AdminProfitReportTable({
   totalPages,
   total,
 }: {
-  allRows: AdminProfitPageData["rows"];
-  pageRows: AdminProfitPageData["rows"];
+  allRows: InvoiceProfitRow[];
+  pageRows: InvoiceProfitRow[];
   groupBy: ProfitGroupBy;
   fromStr: string;
   toStr: string;
@@ -289,9 +266,9 @@ export function AdminProfitReportTable({
 }) {
   const headers = [
     "Period",
-    "Advertiser payments",
-    "Publisher payouts",
-    "Referral pay",
+    "Advertiser invoices received",
+    "Affiliate invoices sent",
+    "Referral sent",
     "Platform profit",
     "Admin profit (80%)",
     "Partner profit (20%)",
@@ -302,9 +279,9 @@ export function AdminProfitReportTable({
 
   const csvRows = allRows.map((row) => [
     formatProfitPeriodLabel(row.period, groupBy),
-    row.advertiserPayment,
-    row.publisherPayout,
-    row.referralPay,
+    row.received,
+    row.affiliateSent,
+    row.referralSent,
     row.platformProfit,
     row.adminProfit,
     row.partnerProfit,
@@ -347,9 +324,9 @@ export function AdminProfitReportTable({
                     <td className="px-4 py-3 pl-5 font-medium text-foreground">
                       {formatProfitPeriodLabel(row.period, groupBy)}
                     </td>
-                    <td className="px-4 py-3 text-foreground">{formatCurrency(row.advertiserPayment)}</td>
-                    <td className="px-4 py-3 text-foreground">{formatCurrency(row.publisherPayout)}</td>
-                    <td className="px-4 py-3 text-foreground">{formatCurrency(row.referralPay)}</td>
+                    <td className="px-4 py-3 text-foreground">{formatCurrency(row.received)}</td>
+                    <td className="px-4 py-3 text-foreground">{formatCurrency(row.affiliateSent)}</td>
+                    <td className="px-4 py-3 text-foreground">{formatCurrency(row.referralSent)}</td>
                     <td className={cn("px-4 py-3 font-semibold", moneyClass(row.platformProfit))}>
                       {formatCurrency(row.platformProfit)}
                     </td>

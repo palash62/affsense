@@ -299,7 +299,7 @@ model User {
   payouts           Payout[]
   affiliateInvoices AffiliateInvoice[]
   deposits          Deposit[]
-  partnerPayments   PartnerPayment[] @relation("PartnerPaymentCreatedBy")
+  partnerInvoicesPaid PartnerProfitInvoice[] @relation("PartnerProfitInvoicePaidBy")
   notifications     Notification[]
   supportTickets    SupportTicket[]      @relation("TicketOwner")
   assignedTickets   SupportTicket[]      @relation("TicketAssignee")
@@ -838,22 +838,39 @@ model Deposit {
   @@map("deposits")
 }
 
-/// Manual payments to the 20% platform profit-share partner (outside the app).
-model PartnerPayment {
-  id          String   @id @default(cuid())
-  periodMonth String   @map("period_month") // YYYY-MM
-  amount      Decimal  @db.Decimal(12, 2)
-  paidAt      DateTime @map("paid_at")
-  method      String?
-  note        String?  @db.Text
-  createdById String   @map("created_by_id")
-  createdAt   DateTime @default(now()) @map("created_at")
+enum PartnerInvoiceStatus {
+  UNPAID
+  PAID
+  NOTHING_DUE
+}
 
-  createdBy User @relation("PartnerPaymentCreatedBy", fields: [createdById], references: [id])
+/// Monthly invoice for the 20% platform profit-share partner. Amounts are frozen at generation.
+model PartnerProfitInvoice {
+  id               String               @id @default(cuid())
+  number           String               @unique
+  periodMonth      String               @unique @map("period_month") // YYYY-MM
+  periodStart      DateTime             @map("period_start")
+  periodEnd        DateTime             @map("period_end")
+  received         Decimal              @db.Decimal(12, 4)
+  affiliateSent    Decimal              @db.Decimal(12, 4) @map("affiliate_sent")
+  referralSent     Decimal              @db.Decimal(12, 4) @map("referral_sent")
+  platformProfit   Decimal              @db.Decimal(12, 4) @map("platform_profit")
+  amount           Decimal              @db.Decimal(12, 4)
+  status           PartnerInvoiceStatus @default(UNPAID)
+  issuedAt         DateTime             @map("issued_at")
+  paidAt           DateTime?            @map("paid_at")
+  paymentMethod    String?              @map("payment_method") @db.VarChar(60)
+  paymentReference String?              @map("payment_reference") @db.VarChar(191)
+  paidNote         String?              @map("paid_note") @db.Text
+  paidById         String?              @map("paid_by_id")
+  createdAt        DateTime             @default(now()) @map("created_at")
+  updatedAt        DateTime             @updatedAt @map("updated_at")
 
-  @@index([periodMonth])
-  @@index([paidAt])
-  @@map("partner_payments")
+  paidBy User? @relation("PartnerProfitInvoicePaidBy", fields: [paidById], references: [id], onDelete: SetNull)
+
+  @@index([status])
+  @@index([paidById])
+  @@map("partner_profit_invoices")
 }
 
 model Payout {
