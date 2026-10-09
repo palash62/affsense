@@ -18,6 +18,9 @@ export type SoloJobName = (typeof SOLO_JOBS)[number] | "all";
 const LOW_BALANCE_TYPE = "solo.wallet.low_balance";
 const ALERT_COOLDOWN_MS = 24 * 60 * 60 * 1000;
 const RECONCILE_ALERT_KEY = "solo_ads_reconcile_alerted_at";
+const JOBS_LAST_RUN_KEY = "solo_ads_jobs_last_run";
+
+export type SoloJobTrigger = "cron" | "admin";
 
 const STATUS_NOTICES: Record<Exclude<SoloStatusChange["to"], "ACTIVE">, { type: string; title: string; message: string; action: string; label: string }> = {
   COMPLETED: {
@@ -101,7 +104,52 @@ async function runReconcile(now: Date) {
   return { walletMismatches: wallets.length, campaignMismatches: campaigns.length };
 }
 
-export async function runSoloJob(name: SoloJobName, now = new Date()) {
+export type SoloJobsLastRun = {
+  at: string;
+  job: SoloJobName;
+  trigger: SoloJobTrigger;
+  ok: boolean;
+  ms: number;
+  results?: Record<string, unknown>;
+  error?: string;
+};
+
+async function recordLastRun(run: SoloJobsLastRun) {
+  await prisma.platformSetting
+    .upsert({
+      where: { key: JOBS_LAST_RUN_KEY },
+      create: { key: JOBS_LAST_RUN_KEY, value: run as never },
+      update: { value: run as never },
+    })
+    .catch((error) => console.error("[solo] failed to record last job run", error));
+}
+
+export async function getSoloJobsLastRun(): Promise<SoloJobsLastRun | null> {
+  const row = await prisma.platformSetting.findUnique({ where: { key: JOBS_LAST_RUN_KEY } });
+  const value = row?.value as SoloJobsLastRun | null | undefined;
+  return value && typeof value === "object" && typeof value.at === "string" ? value : null;
+}
+
+export async function runSoloJob(name: SoloJobName, now = new Date(), trigger: SoloJobTrigger = "cron") {
+  const started = Date.now();
+  try {
+    const results = await executeSoloJobs(name, now);
+    await recordLastRun({ at: new Date().toISOString(), job: name, trigger, ok: true, ms: Date.now() - started, results });
+    return results;
+  } catch (error) {
+    await recordLastRun({
+      at: new Date().toISOString(),
+      job: name,
+      trigger,
+      ok: false,
+      ms: Date.now() - started,
+      error: (error as Error).message,
+    });
+    throw error;
+  }
+}
+
+async function executeSoloJobs(name: SoloJobName, now: Date) {
   const config = await loadSoloAdsConfig();
   const results: Record<string, unknown> = {};
   const run = (job: (typeof SOLO_JOBS)[number]) => name === job || name === "all";

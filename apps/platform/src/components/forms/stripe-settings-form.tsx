@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CreditCard, Save } from "lucide-react";
+import { Check, Copy, CreditCard, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,8 +20,16 @@ type StripeSettings = {
 const SOURCE_LABELS: Record<StripeSettings["source"], string> = {
   database: "Using settings saved in admin",
   environment: "Using .env variables (no admin Stripe config saved)",
-  none: "Not configured — advertisers cannot pay by card",
+  none: "Not configured — advertisers and Solo Ads buyers cannot pay by card",
 };
+
+const WEBHOOK_EVENTS = [
+  "payment_intent.succeeded",
+  "payment_intent.payment_failed",
+  "payment_intent.canceled",
+  "charge.refunded",
+  "charge.dispute.created",
+];
 
 export function StripeSettingsForm() {
   const [settings, setSettings] = useState<StripeSettings | null>(null);
@@ -29,6 +37,22 @@ export function StripeSettingsForm() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [loadError, setLoadError] = useState("");
+  const [webhookUrl, setWebhookUrl] = useState("");
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    setWebhookUrl(`${window.location.origin}/api/v1/webhooks/stripe`);
+  }, []);
+
+  function copyWebhookUrl() {
+    navigator.clipboard
+      .writeText(webhookUrl)
+      .then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      })
+      .catch(() => setCopied(false));
+  }
 
   function loadSettings() {
     setLoadError("");
@@ -135,8 +159,36 @@ export function StripeSettingsForm() {
               className="font-mono text-sm"
             />
             <p className="text-xs text-muted-foreground">
-              Optional for now. Card payments verify on the server after checkout.
+              Card deposits verify on the server after checkout, so this is optional. Add it to receive
+              Solo Ads refunds, disputes and payments where the buyer closed the browser early.
             </p>
+          </div>
+        </div>
+
+        <div className="space-y-3 rounded-lg border border-border p-4">
+          <div className="space-y-2">
+            <Label htmlFor="stripeWebhookUrl">Webhook endpoint</Label>
+            <div className="flex gap-2">
+              <Input id="stripeWebhookUrl" value={webhookUrl} readOnly className="font-mono text-sm" />
+              <Button type="button" variant="outline" onClick={copyWebhookUrl} disabled={!webhookUrl}>
+                {copied ? <Check className="mr-2 h-4 w-4" /> : <Copy className="mr-2 h-4 w-4" />}
+                {copied ? "Copied" : "Copy"}
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              In Stripe Dashboard → Developers → Webhooks, add this endpoint, then paste its signing
+              secret (<code>whsec_…</code>) above.
+            </p>
+          </div>
+          <div className="space-y-1">
+            <p className="text-xs font-medium text-foreground">Events to send</p>
+            <ul className="flex flex-wrap gap-1.5">
+              {WEBHOOK_EVENTS.map((event) => (
+                <li key={event} className="rounded bg-muted px-2 py-0.5 font-mono text-xs text-muted-foreground">
+                  {event}
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
 
@@ -162,7 +214,8 @@ export function StripeSettingsForm() {
           <CreditCard className="mt-0.5 h-4 w-4 shrink-0 text-[var(--theme-primary)]" />
           <p>
             Once saved, advertisers can add wallet funds on{" "}
-            <strong>/advertiser/wallet</strong> using Stripe card checkout. Use test keys
+            <strong>/advertiser/wallet</strong> and Solo Ads buyers can fund their Ad Wallet on{" "}
+            <strong>/publisher/solo-ads/wallet</strong> using Stripe card checkout. Use test keys
             (`pk_test_` / `sk_test_`) in development.
           </p>
         </div>
