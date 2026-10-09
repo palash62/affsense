@@ -8,7 +8,7 @@ import {
   clientIpFromRequest,
   rateLimitResponse,
 } from "@/lib/rate-limit";
-import { canBypassAdminOtp } from "@/lib/admin-otp-bypass";
+import { canBypassLoginOtp } from "@/lib/admin-otp-bypass";
 import { createLoginOtp } from "@/services/auth-token.service";
 import { notifyLoginOtp } from "@/services/notify.service";
 
@@ -89,7 +89,7 @@ export async function POST(request: Request) {
       );
     }
 
-    if (canBypassAdminOtp(user)) {
+    if (canBypassLoginOtp(user)) {
       return Response.json({
         success: true,
         bypassOtp: true,

@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const ORIGINAL_ENV = process.env.ADMIN_OTP_BYPASS_EMAILS;
+const ORIGINAL_LOGIN_ENV = process.env.LOGIN_OTP_BYPASS_EMAILS;
 
 async function loadBypassModule() {
   vi.resetModules();
@@ -13,6 +14,11 @@ describe("admin otp bypass", () => {
       delete process.env.ADMIN_OTP_BYPASS_EMAILS;
     } else {
       process.env.ADMIN_OTP_BYPASS_EMAILS = ORIGINAL_ENV;
+    }
+    if (ORIGINAL_LOGIN_ENV === undefined) {
+      delete process.env.LOGIN_OTP_BYPASS_EMAILS;
+    } else {
+      process.env.LOGIN_OTP_BYPASS_EMAILS = ORIGINAL_LOGIN_ENV;
     }
     vi.resetModules();
   });
@@ -53,5 +59,31 @@ describe("admin otp bypass", () => {
 
     expect(isAdminOtpBypassEmail("custom-admin@example.com")).toBe(true);
     expect(isAdminOtpBypassEmail("ppalash62@gmail.com")).toBe(false);
+  });
+
+  it("lets the demo publisher skip the login code", async () => {
+    delete process.env.LOGIN_OTP_BYPASS_EMAILS;
+    const { canBypassLoginOtp } = await loadBypassModule();
+
+    expect(canBypassLoginOtp({ email: "publisher@cpl.local", role: "PUBLISHER" })).toBe(true);
+    expect(canBypassLoginOtp({ email: " Publisher@CPL.local ", role: "PUBLISHER" })).toBe(true);
+    expect(canBypassLoginOtp({ email: "other-pub@example.com", role: "PUBLISHER" })).toBe(false);
+  });
+
+  it("keeps the admin list admin-only for the login bypass", async () => {
+    delete process.env.ADMIN_OTP_BYPASS_EMAILS;
+    delete process.env.LOGIN_OTP_BYPASS_EMAILS;
+    const { canBypassLoginOtp } = await loadBypassModule();
+
+    expect(canBypassLoginOtp({ email: "ppalash62@gmail.com", role: "ADMIN" })).toBe(true);
+    expect(canBypassLoginOtp({ email: "ppalash62@gmail.com", role: "PUBLISHER" })).toBe(false);
+  });
+
+  it("replaces the non-admin list from env", async () => {
+    process.env.LOGIN_OTP_BYPASS_EMAILS = "qa-pub@example.com";
+    const { canBypassLoginOtp } = await loadBypassModule();
+
+    expect(canBypassLoginOtp({ email: "qa-pub@example.com", role: "PUBLISHER" })).toBe(true);
+    expect(canBypassLoginOtp({ email: "publisher@cpl.local", role: "PUBLISHER" })).toBe(false);
   });
 });

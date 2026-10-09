@@ -8,6 +8,7 @@ import { getLoginBlock } from "@/lib/auth-login-gate";
 import { consumeImpersonationToken } from "@/services/impersonation.service";
 import { consumeLoginOtp } from "@/services/auth-token.service";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { canBypassLoginOtp } from "@/lib/admin-otp-bypass";
 
 export { ROLE_ROUTES, getDashboardPath } from "@/lib/auth.config";
 
@@ -37,7 +38,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         if (!user) return null;
 
-        if (user.role !== "ADMIN" && user.role !== "PLATFORM_MANAGER") return null;
+        if (
+          user.role !== "ADMIN" &&
+          user.role !== "PLATFORM_MANAGER" &&
+          !canBypassLoginOtp(user)
+        ) {
+          return null;
+        }
 
         const valid = await bcrypt.compare(
           String(credentials.password),

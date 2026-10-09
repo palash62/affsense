@@ -90,6 +90,19 @@ describe("POST /api/v1/auth/request-otp", () => {
     expect(notifyLoginOtp).not.toHaveBeenCalled();
   });
 
+  it("lets the demo publisher skip the code without sending email", async () => {
+    prismaMock.user.findUnique.mockResolvedValue(
+      activeUser({ email: "publisher@cpl.local", role: "PUBLISHER" }),
+    );
+
+    const res = await POST(otpRequest("publisher@cpl.local"));
+
+    expect(res.status).toBe(200);
+    expect((await res.json()).bypassOtp).toBe(true);
+    expect(createLoginOtp).not.toHaveBeenCalled();
+    expect(notifyLoginOtp).not.toHaveBeenCalled();
+  });
+
   it("returns 503 EMAIL_SEND_FAILED when the email could not be sent", async () => {
     vi.stubEnv("NODE_ENV", "production");
     prismaMock.user.findUnique.mockResolvedValue(activeUser({ email: "fail@example.com" }));
