@@ -571,6 +571,7 @@ export async function reverseDigitalProductSaleCommissions(
   tx: Prisma.TransactionClient,
   publisherId: string,
   eventIds: string[],
+  description = "Marketplace sale rejected by admin",
 ): Promise<number> {
   if (eventIds.length === 0) return 0;
   const entries = await tx.ledgerEntry.findMany({
@@ -596,7 +597,7 @@ export async function reverseDigitalProductSaleCommissions(
       amount,
       DIGITAL_PRODUCT_REJECT_REFERENCE,
       entry.referenceId,
-      "Marketplace sale rejected by admin",
+      description,
     );
     alreadyReversed.add(entry.referenceId);
     total += amount;
