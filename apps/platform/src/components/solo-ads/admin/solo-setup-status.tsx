@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, CircleAlert, CircleDashed, Play } from "lucide-react";
 import { toast } from "sonner";
@@ -51,10 +52,14 @@ function summarize(results: Record<string, unknown> | undefined) {
 export function SoloSetupStatus({
   stripeConfigured,
   webhookConfigured,
+  wiseConfigured,
+  transferEnabled,
   lastRun: initialLastRun,
 }: {
   stripeConfigured: boolean;
   webhookConfigured: boolean;
+  wiseConfigured: boolean;
+  transferEnabled: boolean;
   lastRun: SoloJobsLastRun | null;
 }) {
   const router = useRouter();
@@ -107,13 +112,32 @@ export function SoloSetupStatus({
           detail={
             stripeConfigured
               ? "Affiliates can fund their Ad Wallet by card."
-              : "Affiliates cannot add funds by card until publishable and secret keys are saved in payment settings."
+              : "Card funding is off until publishable and secret keys are saved in payment settings."
           }
         />
         <Row
           status={webhookConfigured ? "ok" : "optional"}
           label={webhookConfigured ? "Stripe webhook secret configured" : "Stripe webhook secret not set (optional)"}
           detail="Deposits work without it. It is needed to record refunds, disputes and payments where the buyer closed the browser early."
+        />
+        <Row
+          status={wiseConfigured ? "ok" : "optional"}
+          label={wiseConfigured ? "Wise payments enabled" : "Wise ID not set (optional)"}
+          detail={
+            <>
+              {wiseConfigured
+                ? "Affiliates can send money to your Wise ID and submit the reference; you approve it under Wallets."
+                : "Add your Wise ID under Settings → Withdraw → Receive payment details to let affiliates pay by Wise."}{" "}
+              <Link href="/admin/settings?section=withdraw" className="font-medium text-[var(--theme-primary)] hover:underline">
+                Edit Wise ID
+              </Link>
+            </>
+          }
+        />
+        <Row
+          status={transferEnabled ? "ok" : "optional"}
+          label={transferEnabled ? "Transfers from earnings enabled" : "Transfers from earnings disabled"}
+          detail="Affiliates can move their approved earnings into the ad wallet. Change this under Availability below."
         />
         <Row
           status={jobsStatus}

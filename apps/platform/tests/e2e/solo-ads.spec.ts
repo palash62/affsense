@@ -138,7 +138,7 @@ test.describe.serial("Solo Ads affiliate and admin flows", () => {
     await page.goto("/publisher/solo-ads/wallet");
     await expect(page.getByText("Available to spend")).toBeVisible();
     await expect(page.getByText("$50.00").first()).toBeVisible();
-    await expect(page.getByText("Add funds by card")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Add funds", exact: true })).toBeVisible();
   });
 
   test("admin approves the campaign and issues a provider link", async ({ browser }) => {

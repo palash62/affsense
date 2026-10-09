@@ -6,11 +6,12 @@ import { formatUsdCents, soloPct } from "@/components/solo-ads/solo-shared";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { prisma } from "@/lib/prisma";
 import { getSoloAdminOverview } from "@/services/solo-report.service";
+import { countPendingSoloWiseDeposits } from "@/services/solo-wallet.service";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminSoloAdsOverviewPage() {
-  const o = await getSoloAdminOverview();
+  const [o, pendingWise] = await Promise.all([getSoloAdminOverview(), countPendingSoloWiseDeposits()]);
   const publisherIds = [...new Set([...o.walletMismatches, ...o.campaignMismatches].map((m) => m.publisherId))];
   const publishers = publisherIds.length
     ? await prisma.user.findMany({ where: { id: { in: publisherIds } }, select: { id: true, email: true } })
@@ -21,10 +22,21 @@ export default async function AdminSoloAdsOverviewPage() {
 
   return (
     <SoloAdminShell title="Solo Ads" description="Marketplace health, money and traffic quality at a glance.">
+      {pendingWise > 0 ? (
+        <Link
+          href="/admin/solo-ads/wallets"
+          className="flex items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 hover:bg-amber-100"
+        >
+          <span>
+            {pendingWise} Wise deposit{pendingWise > 1 ? "s are" : " is"} waiting for your review.
+          </span>
+          <span className="font-medium">Review now</span>
+        </Link>
+      ) : null}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <GradientStatCard label="Click revenue (30 days)" value={formatUsdCents(t.spendCents)} icon={DollarSign} variant="revenue" />
         <GradientStatCard label="Ad credit liability" value={formatUsdCents(o.liabilities.balanceCents)} icon={Landmark} variant="leads" />
-        <NeutralStatCard label="Card deposits (30 days)" value={formatUsdCents(o.deposits30.amountCents)} icon={DollarSign} accent="green" />
+        <NeutralStatCard label="Deposits (30 days)" value={formatUsdCents(o.deposits30.amountCents)} icon={DollarSign} accent="green" />
         <NeutralStatCard label="Clicks (24 hours)" value={o.clicks24h.total.toLocaleString()} icon={MousePointerClick} accent="purple" />
       </div>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

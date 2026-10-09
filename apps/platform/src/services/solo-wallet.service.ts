@@ -13,11 +13,15 @@ import { AppError, Errors } from "@/lib/errors";
 import { getResolvedStripeConfig } from "@/services/stripe-settings.service";
 import { getStripeClient, resolveStripeCustomerId } from "@/services/stripe-payment.service";
 import { ensurePublisherWallet } from "@/services/wallet.service";
-import { notifyUserById } from "@/services/notify.service";
+import { notifyAdminAlert, notifyUserById } from "@/services/notify.service";
 
 /** Earnings-wallet ledger reference for money moved into the advertising wallet. */
 export const SOLO_ADS_TRANSFER_REFERENCE = "solo_ads_transfer";
 export const SOLO_DEPOSIT_PURPOSE = "solo_ads_deposit";
+
+const MAX_DEPOSIT_CENTS = 5_000_000;
+const MAX_PENDING_WISE_DEPOSITS = 3;
+const ADMIN_PAY_WISE_KEY = "admin_pay_wise";
 
 async function resumeAfterFunding(publisherId: string) {
   try {
@@ -83,7 +87,7 @@ export async function createSoloDepositIntent(publisherId: string, amountCents: 
   if (!Number.isInteger(amountCents) || amountCents < config.minDepositCents) {
     throw Errors.validation(`The minimum deposit is ${formatCents(config.minDepositCents)}`, "amount");
   }
-  if (amountCents > 5_000_000) throw Errors.validation("The maximum single deposit is $50,000.00", "amount");
+  if (amountCents > MAX_DEPOSIT_CENTS) throw Errors.validation("The maximum single deposit is $50,000.00", "amount");
 
   const stripeConfig = await getResolvedStripeConfig();
   if (!stripeConfig.enabled || !stripeConfig.publishableKey) {
@@ -138,7 +142,7 @@ export async function createSoloDepositIntent(publisherId: string, amountCents: 
 export async function settleSoloDeposit(depositId: string, verifiedIntent?: Stripe.PaymentIntent) {
   const deposit = await prisma.soloDeposit.findUnique({ where: { id: depositId } });
   if (!deposit) throw Errors.notFound("Deposit");
-  if (deposit.status !== "PENDING") return deposit;
+  if (deposit.method !== "CARD" || deposit.status !== "PENDING") return deposit;
   if (!deposit.stripePaymentIntentId) return deposit;
 
   const intent =
@@ -196,6 +200,209 @@ export async function refreshSoloDeposit(publisherId: string, depositId: string)
   const deposit = await prisma.soloDeposit.findUnique({ where: { id: depositId } });
   if (!deposit || deposit.publisherId !== publisherId) throw Errors.notFound("Deposit");
   return settleSoloDeposit(depositId);
+}
+
+/** Admin's Wise ID/email from Admin Settings → Receive payment details. */
+export async function getAdminWiseReceiveId(): Promise<string | null> {
+  const row = await prisma.platformSetting.findUnique({ where: { key: ADMIN_PAY_WISE_KEY } });
+  return typeof row?.value === "string" && row.value.trim() ? row.value.trim() : null;
+}
+
+export async function getSoloFundingOptions() {
+  const [config, stripe, wiseId] = await Promise.all([
+    loadSoloAdsConfig(),
+    getResolvedStripeConfig(),
+    getAdminWiseReceiveId(),
+  ]);
+  return {
+    card: Boolean(stripe.enabled && stripe.publishableKey),
+    wise: wiseId ? { receiveId: wiseId } : null,
+    transfer: config.transferEnabled,
+    minDepositCents: config.minDepositCents,
+    maxDepositCents: MAX_DEPOSIT_CENTS,
+  };
+}
+
+/** Affiliate reports a Wise transfer to the admin; credited only after admin approval. */
+export async function submitSoloWiseDeposit(input: {
+  publisherId: string;
+  amountCents: number;
+  reference: string;
+  note?: string | null;
+}) {
+  const wiseId = await getAdminWiseReceiveId();
+  if (!wiseId) throw new AppError("WISE_NOT_CONFIGURED", "Wise payments are not available right now", 503);
+  const config = await loadSoloAdsConfig();
+  if (!Number.isInteger(input.amountCents) || input.amountCents < config.minDepositCents) {
+    throw Errors.validation(`The minimum deposit is ${formatCents(config.minDepositCents)}`, "amount");
+  }
+  if (input.amountCents > MAX_DEPOSIT_CENTS) throw Errors.validation("The maximum single deposit is $50,000.00", "amount");
+  const reference = input.reference.trim();
+  if (reference.length < 3 || reference.length > 120) {
+    throw Errors.validation("Enter the Wise transfer reference (3–120 characters)", "reference");
+  }
+  const note = input.note?.trim().slice(0, 1000) || null;
+
+  const [pending, duplicate] = await Promise.all([
+    prisma.soloDeposit.count({ where: { publisherId: input.publisherId, method: "WISE", status: "PENDING" } }),
+    prisma.soloDeposit.findFirst({
+      where: { method: "WISE", paymentReference: reference, status: { not: "REJECTED" } },
+      select: { id: true },
+    }),
+  ]);
+  if (pending >= MAX_PENDING_WISE_DEPOSITS) {
+    throw new AppError(
+      "TOO_MANY_PENDING_DEPOSITS",
+      `You already have ${MAX_PENDING_WISE_DEPOSITS} Wise deposits waiting for review`,
+      422,
+    );
+  }
+  if (duplicate) throw new AppError("DUPLICATE_REFERENCE", "This Wise reference was already submitted", 409);
+
+  const wallet = await ensureSoloWallet(input.publisherId);
+  const deposit = await prisma.soloDeposit.create({
+    data: {
+      walletId: wallet.id,
+      publisherId: input.publisherId,
+      amountCents: input.amountCents,
+      method: "WISE",
+      paymentReference: reference,
+      note,
+      status: "PENDING",
+    },
+  });
+
+  const publisher = await prisma.user.findUnique({ where: { id: input.publisherId }, select: { name: true, email: true } });
+  void notifyAdminAlert({
+    title: "Solo Ads Wise deposit to review",
+    message: `${publisher?.name ?? publisher?.email ?? "An affiliate"} reported a ${formatCents(input.amountCents)} Wise payment (reference ${reference}).`,
+    actionPath: "/admin/solo-ads/wallets",
+    actionLabel: "Review deposit",
+    metadata: { depositId: deposit.id },
+  }).catch((error) => console.error("[solo] wise deposit admin alert failed", error));
+
+  return deposit;
+}
+
+export async function listPendingSoloWiseDeposits(take = 100) {
+  const rows = await prisma.soloDeposit.findMany({
+    where: { method: "WISE", status: "PENDING" },
+    orderBy: { createdAt: "asc" },
+    take,
+  });
+  const users = await prisma.user.findMany({
+    where: { id: { in: [...new Set(rows.map((r) => r.publisherId))] } },
+    select: { id: true, name: true, email: true, memberNo: true },
+  });
+  const byId = new Map(users.map((u) => [u.id, u]));
+  return rows.map((r) => ({ ...r, publisher: byId.get(r.publisherId) ?? null }));
+}
+
+export async function countPendingSoloWiseDeposits() {
+  return prisma.soloDeposit.count({ where: { method: "WISE", status: "PENDING" } });
+}
+
+async function loadWiseDepositForReview(depositId: string) {
+  const deposit = await prisma.soloDeposit.findUnique({ where: { id: depositId } });
+  if (!deposit || deposit.method !== "WISE") throw Errors.notFound("Deposit");
+  return deposit;
+}
+
+/** Credit a reported Wise payment. Idempotent; `creditedCents` may be lower to absorb transfer fees. */
+export async function approveSoloWiseDeposit(depositId: string, adminId: string, creditedCents?: number) {
+  const deposit = await loadWiseDepositForReview(depositId);
+  if (deposit.status === "SUCCEEDED") return deposit;
+  if (deposit.status !== "PENDING") throw new AppError("DEPOSIT_NOT_PENDING", "This deposit was already reviewed", 409);
+  const amount = creditedCents ?? deposit.amountCents;
+  if (!Number.isInteger(amount) || amount < 1 || amount > deposit.amountCents) {
+    throw Errors.validation(`Enter an amount between $0.01 and ${formatCents(deposit.amountCents)}`, "amount");
+  }
+
+  const now = new Date();
+  const approved = await prisma.$transaction(async (tx) => {
+    const flipped = await tx.soloDeposit.updateMany({
+      where: { id: deposit.id, status: "PENDING" },
+      data: { status: "SUCCEEDED", amountCents: amount, reviewedById: adminId, reviewedAt: now, completedAt: now },
+    });
+    if (flipped.count !== 1) return false;
+    await postSoloLedgerEntry(tx, {
+      walletId: deposit.walletId,
+      type: "DEPOSIT",
+      amountCents: amount,
+      idempotencyKey: `deposit:${deposit.id}`,
+      sourceType: "solo_deposit",
+      sourceId: deposit.id,
+      actorId: adminId,
+      reason: `Wise deposit (ref ${deposit.paymentReference ?? "-"})`,
+    });
+    await tx.auditLog.create({
+      data: {
+        actorId: adminId,
+        action: "solo.deposit.wise.approve",
+        entityType: "solo_deposit",
+        entityId: deposit.id,
+        metadata: {
+          publisherId: deposit.publisherId,
+          requestedCents: deposit.amountCents,
+          creditedCents: amount,
+          reference: deposit.paymentReference,
+        },
+      },
+    });
+    return true;
+  });
+
+  if (approved) {
+    await resumeAfterFunding(deposit.publisherId);
+    const message =
+      amount === deposit.amountCents
+        ? `${formatCents(amount)} from your Wise payment was added to your Solo Ads wallet.`
+        : `${formatCents(amount)} of your ${formatCents(deposit.amountCents)} Wise payment was added to your Solo Ads wallet (transfer fees deducted).`;
+    void notifyUserById(deposit.publisherId, {
+      title: "Wise deposit approved",
+      message,
+      actionPath: "/publisher/solo-ads/wallet",
+      actionLabel: "View wallet",
+      notificationType: "solo.deposit.succeeded",
+    }).catch((error) => console.error("[solo] wise approve notify failed", error));
+  }
+  return prisma.soloDeposit.findUniqueOrThrow({ where: { id: deposit.id } });
+}
+
+export async function rejectSoloWiseDeposit(depositId: string, adminId: string, reason: string) {
+  const text = reason.trim();
+  if (text.length < 5) throw Errors.validation("Enter a reason of at least 5 characters", "reason");
+  const deposit = await loadWiseDepositForReview(depositId);
+  if (deposit.status !== "PENDING") throw new AppError("DEPOSIT_NOT_PENDING", "This deposit was already reviewed", 409);
+
+  const now = new Date();
+  const rejected = await prisma.$transaction(async (tx) => {
+    const flipped = await tx.soloDeposit.updateMany({
+      where: { id: deposit.id, status: "PENDING" },
+      data: { status: "REJECTED", failureReason: text.slice(0, 500), reviewedById: adminId, reviewedAt: now },
+    });
+    if (flipped.count !== 1) return false;
+    await tx.auditLog.create({
+      data: {
+        actorId: adminId,
+        action: "solo.deposit.wise.reject",
+        entityType: "solo_deposit",
+        entityId: deposit.id,
+        metadata: { publisherId: deposit.publisherId, amountCents: deposit.amountCents, reference: deposit.paymentReference, reason: text },
+      },
+    });
+    return true;
+  });
+  if (!rejected) throw new AppError("DEPOSIT_NOT_PENDING", "This deposit was already reviewed", 409);
+
+  void notifyUserById(deposit.publisherId, {
+    title: "Wise deposit not approved",
+    message: `Your ${formatCents(deposit.amountCents)} Wise deposit (reference ${deposit.paymentReference ?? "-"}) was not approved: ${text}`,
+    actionPath: "/publisher/solo-ads/wallet",
+    actionLabel: "View wallet",
+    notificationType: "solo.deposit.rejected",
+  }).catch((error) => console.error("[solo] wise reject notify failed", error));
+  return prisma.soloDeposit.findUniqueOrThrow({ where: { id: deposit.id } });
 }
 
 /**

@@ -8,12 +8,12 @@ import { SoloStatusBadge, formatSoloDateTime, formatUsdCents, soloStatusLabel } 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { getSession } from "@/lib/session";
 import { getSoloAdsAccess } from "@/lib/solo-ads-access";
-import { getSoloWalletSummary, listSoloDeposits, listSoloLedger } from "@/services/solo-wallet.service";
+import { getSoloFundingOptions, getSoloWalletSummary, listSoloDeposits, listSoloLedger } from "@/services/solo-wallet.service";
 
 export const dynamic = "force-dynamic";
 
 const TYPE_LABELS: Record<string, string> = {
-  DEPOSIT: "Card deposit",
+  DEPOSIT: "Deposit",
   EARNINGS_TRANSFER: "From earnings",
   CHARGE: "Click charges",
   REFUND: "Click refund",
@@ -27,13 +27,15 @@ export default async function SoloWalletPage({ searchParams }: { searchParams: P
   if (!session?.user) redirect("/login");
   const params = await searchParams;
   const type = params.type && TYPE_LABELS[params.type] ? params.type : null;
-  const [{ config }, summary, ledger, deposits] = await Promise.all([
+  const [{ config }, summary, ledger, deposits, funding] = await Promise.all([
     getSoloAdsAccess(session.user.id),
     getSoloWalletSummary(session.user.id),
     listSoloLedger(session.user.id, { page: Number(params.page) || 1, limit: 25, type }),
-    listSoloDeposits(session.user.id, 5),
+    listSoloDeposits(session.user.id, 10),
+    getSoloFundingOptions(),
   ]);
-  const pending = deposits.filter((d) => d.status === "PENDING");
+  const pendingCard = deposits.filter((d) => d.status === "PENDING" && d.method === "CARD");
+  const pendingWise = deposits.filter((d) => d.status === "PENDING" && d.method === "WISE");
   const qs = (page: number) => `?page=${page}${type ? `&type=${type}` : ""}`;
 
   return (
@@ -49,10 +51,16 @@ export default async function SoloWalletPage({ searchParams }: { searchParams: P
           can run again.
         </div>
       ) : null}
-      {pending.length > 0 ? (
+      {pendingCard.length > 0 ? (
         <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          {pending.length} card payment{pending.length > 1 ? "s are" : " is"} still processing. Funds are added as soon as the payment is
-          confirmed.
+          {pendingCard.length} card payment{pendingCard.length > 1 ? "s are" : " is"} still processing. Funds are added as soon as the
+          payment is confirmed.
+        </div>
+      ) : null}
+      {pendingWise.length > 0 ? (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          {pendingWise.length} Wise payment{pendingWise.length > 1 ? "s are" : " is"} waiting for admin review. Funds are added once the
+          payment is confirmed.
         </div>
       ) : null}
 
@@ -60,6 +68,8 @@ export default async function SoloWalletPage({ searchParams }: { searchParams: P
         minDepositCents={config.minDepositCents}
         earningsAvailableCents={summary.earningsAvailableCents}
         transferEnabled={config.transferEnabled}
+        cardEnabled={funding.card}
+        wiseReceiveId={funding.wise?.receiveId ?? null}
         readOnly={Boolean(session.viewAsMode)}
       />
 
@@ -135,18 +145,41 @@ export default async function SoloWalletPage({ searchParams }: { searchParams: P
       {deposits.length > 0 ? (
         <section className="premium-card overflow-hidden">
           <div className="border-b border-border px-6 py-4">
-            <h2 className="text-base font-semibold">Recent card payments</h2>
+            <h2 className="text-base font-semibold">Recent payments</h2>
           </div>
           <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Date</TableHead>
+                <TableHead>Method</TableHead>
+                <TableHead>Amount</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Details</TableHead>
+              </TableRow>
+            </TableHeader>
             <TableBody>
               {deposits.map((d) => (
                 <TableRow key={d.id}>
-                  <TableCell className="text-sm">{formatSoloDateTime(d.createdAt)}</TableCell>
+                  <TableCell className="whitespace-nowrap text-sm">{formatSoloDateTime(d.createdAt)}</TableCell>
+                  <TableCell className="text-sm">{d.method === "WISE" ? "Wise" : "Card"}</TableCell>
                   <TableCell className="tabular-nums">{formatUsdCents(d.amountCents)}</TableCell>
                   <TableCell>
-                    <SoloStatusBadge status={d.status} />
+                    {d.method === "WISE" && d.status === "PENDING" ? (
+                      <SoloStatusBadge status="PENDING_REVIEW" />
+                    ) : d.method === "WISE" && d.status === "SUCCEEDED" ? (
+                      <SoloStatusBadge status="APPROVED" />
+                    ) : (
+                      <SoloStatusBadge status={d.status} />
+                    )}
                   </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{d.failureReason ?? (d.refundedCents ? `Refunded ${formatUsdCents(d.refundedCents)}` : "")}</TableCell>
+                  <TableCell className="max-w-[320px] truncate text-sm text-muted-foreground">
+                    {d.failureReason ??
+                      (d.refundedCents
+                        ? `Refunded ${formatUsdCents(d.refundedCents)}`
+                        : d.paymentReference
+                          ? `Ref ${d.paymentReference}`
+                          : "")}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

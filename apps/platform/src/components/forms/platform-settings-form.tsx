@@ -174,12 +174,12 @@ export function WithdrawSettingsForm() {
         <div className="flex items-center gap-2">
           <Building2 className="h-4 w-4 text-[var(--theme-primary)]" />
           <h3 className="text-sm font-semibold text-foreground">
-            Receive payment details (advertiser invoices)
+            Receive payment details (advertiser invoices and Solo Ads)
           </h3>
         </div>
         <p className="text-sm text-muted-foreground">
           IDs and addresses only — no online checkout. Advertisers see these when paying CPA
-          invoices offline.
+          invoices offline. Solo Ads affiliates see the Wise ID when adding ad funds by Wise.
         </p>
         <div className="space-y-4">
           <div className="space-y-2">

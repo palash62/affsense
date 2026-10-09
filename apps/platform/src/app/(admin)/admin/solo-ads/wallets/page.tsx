@@ -2,14 +2,20 @@ import { Landmark, Lock, Wallet } from "lucide-react";
 import { GradientStatCard, NeutralStatCard } from "@/components/admin/gradient-stat-card";
 import { SoloAdminShell } from "@/components/solo-ads/admin/solo-admin-shell";
 import { SoloWalletAdjustDialog } from "@/components/solo-ads/admin/solo-wallet-adjust-dialog";
-import { formatUsdCents } from "@/components/solo-ads/solo-shared";
+import { SoloWiseDepositReview } from "@/components/solo-ads/admin/solo-wise-deposit-review";
+import { formatSoloDateTime, formatUsdCents } from "@/components/solo-ads/solo-shared";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { prisma } from "@/lib/prisma";
+import { getSession } from "@/lib/session";
+import { listPendingSoloWiseDeposits } from "@/services/solo-wallet.service";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminSoloAdsWalletsPage() {
-  const [totals, wallets, byType] = await Promise.all([
+  const session = await getSession();
+  const canReview = session?.user.role === "ADMIN" && !session.impersonatorId;
+  const [pendingWise, totals, wallets, byType] = await Promise.all([
+    listPendingSoloWiseDeposits(),
     prisma.soloWallet.aggregate({ _sum: { balanceCents: true, reservedCents: true }, _count: { _all: true } }),
     prisma.soloWallet.findMany({
       orderBy: { balanceCents: "desc" },
@@ -42,6 +48,53 @@ export default async function AdminSoloAdsWalletsPage() {
         />
       </div>
 
+      {pendingWise.length > 0 ? (
+        <section className="premium-card overflow-hidden">
+          <div className="border-b border-border px-6 py-4">
+            <h2 className="text-base font-semibold">Pending Wise deposits ({pendingWise.length})</h2>
+            <p className="text-sm text-muted-foreground">
+              Confirm each payment arrived in your Wise account, then approve to credit the affiliate&apos;s ad wallet.
+            </p>
+          </div>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Submitted</TableHead>
+                <TableHead>Affiliate</TableHead>
+                <TableHead className="text-right">Amount</TableHead>
+                <TableHead>Wise reference</TableHead>
+                <TableHead>Note</TableHead>
+                <TableHead />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {pendingWise.map((d) => (
+                <TableRow key={d.id}>
+                  <TableCell className="whitespace-nowrap text-sm">{formatSoloDateTime(d.createdAt)}</TableCell>
+                  <TableCell>
+                    <div className="font-medium">{d.publisher?.name ?? "Unknown"}</div>
+                    <div className="text-xs text-muted-foreground">{d.publisher?.email}</div>
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">{formatUsdCents(d.amountCents)}</TableCell>
+                  <TableCell className="font-mono text-sm">{d.paymentReference}</TableCell>
+                  <TableCell className="max-w-[240px] truncate text-sm text-muted-foreground">{d.note ?? ""}</TableCell>
+                  <TableCell className="text-right">
+                    {canReview ? (
+                      <SoloWiseDepositReview
+                        depositId={d.id}
+                        amountCents={d.amountCents}
+                        publisherName={d.publisher?.name ?? "affiliate"}
+                        reference={d.paymentReference ?? "-"}
+                      />
+                    ) : null}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </section>
+      ) : null}
+
       <div className="premium-card overflow-hidden">
         <Table>
           <TableHeader>
@@ -49,7 +102,7 @@ export default async function AdminSoloAdsWalletsPage() {
               <TableHead>Affiliate</TableHead>
               <TableHead className="text-right">Balance</TableHead>
               <TableHead className="text-right">Reserved</TableHead>
-              <TableHead className="text-right">Card deposits</TableHead>
+              <TableHead className="text-right">Deposits</TableHead>
               <TableHead className="text-right">From earnings</TableHead>
               <TableHead className="text-right">Spent</TableHead>
               <TableHead />

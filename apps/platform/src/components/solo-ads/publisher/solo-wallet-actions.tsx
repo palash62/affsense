@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Elements, PaymentElement, useElements, useStripe } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
-import { ArrowRightLeft, CreditCard, Loader2 } from "lucide-react";
+import { ArrowRightLeft, Check, Copy, CreditCard, Loader2, Send, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -70,18 +70,114 @@ function StripeCard({ intent, onDone, onCancel }: { intent: Intent; onDone: () =
   );
 }
 
+function WiseDepositForm({ receiveId, minDepositCents, onDone }: { receiveId: string; minDepositCents: number; onDone: () => void }) {
+  const [amount, setAmount] = useState((Math.max(minDepositCents, 5000) / 100).toFixed(2));
+  const [reference, setReference] = useState("");
+  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  function copyId() {
+    navigator.clipboard
+      .writeText(receiveId)
+      .then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      })
+      .catch(() => setCopied(false));
+  }
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    try {
+      await soloRequest("/api/v1/publisher/solo-ads/wallet/deposits/wise", {
+        body: { amount: Number(amount), reference, note },
+      });
+      toast.success("Wise payment submitted. Funds are added once an admin confirms it.");
+      setReference("");
+      setNote("");
+      onDone();
+    } catch (error) {
+      toast.error((error as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <form onSubmit={submit} className="space-y-3">
+      <ol className="list-decimal space-y-1 pl-5 text-sm text-muted-foreground">
+        <li>Send the amount in USD from your Wise account to the Wise ID below.</li>
+        <li>Enter the amount you sent and the Wise transfer reference, then submit.</li>
+        <li>Funds are added to your ad wallet once an admin confirms the payment.</li>
+      </ol>
+      <div className="space-y-1.5">
+        <Label htmlFor="solo-wise-id">Pay to (Wise)</Label>
+        <div className="flex gap-2">
+          <Input id="solo-wise-id" value={receiveId} readOnly className="font-mono text-sm" />
+          <Button type="button" variant="outline" onClick={copyId}>
+            {copied ? <Check className="mr-2 h-4 w-4" /> : <Copy className="mr-2 h-4 w-4" />}
+            {copied ? "Copied" : "Copy"}
+          </Button>
+        </div>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="space-y-1.5">
+          <Label htmlFor="solo-wise-amount">Amount sent (USD)</Label>
+          <Input
+            id="solo-wise-amount"
+            type="number"
+            step="0.01"
+            min={(minDepositCents / 100).toFixed(2)}
+            required
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="solo-wise-reference">Wise transfer reference</Label>
+          <Input
+            id="solo-wise-reference"
+            required
+            minLength={3}
+            maxLength={120}
+            placeholder="e.g. #123456789"
+            value={reference}
+            onChange={(e) => setReference(e.target.value)}
+          />
+        </div>
+      </div>
+      <div className="space-y-1.5">
+        <Label htmlFor="solo-wise-note">Note (optional)</Label>
+        <Input id="solo-wise-note" maxLength={1000} value={note} onChange={(e) => setNote(e.target.value)} />
+      </div>
+      <p className="text-xs text-muted-foreground">Minimum {formatUsdCents(minDepositCents)}. Funds can only be used for Solo Ads.</p>
+      <Button type="submit" disabled={busy}>
+        {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+        Submit Wise payment
+      </Button>
+    </form>
+  );
+}
+
 export function SoloWalletActions({
   minDepositCents,
   earningsAvailableCents,
   transferEnabled,
+  cardEnabled,
+  wiseReceiveId,
   readOnly,
 }: {
   minDepositCents: number;
   earningsAvailableCents: number;
   transferEnabled: boolean;
+  cardEnabled: boolean;
+  wiseReceiveId: string | null;
   readOnly: boolean;
 }) {
   const router = useRouter();
+  const [method, setMethod] = useState<"card" | "wise">(cardEnabled || !wiseReceiveId ? "card" : "wise");
   const [amount, setAmount] = useState((Math.max(minDepositCents, 5000) / 100).toFixed(2));
   const [intent, setIntent] = useState<Intent | null>(null);
   const [starting, setStarting] = useState(false);
@@ -126,12 +222,39 @@ export function SoloWalletActions({
   return (
     <div className="grid gap-4 lg:grid-cols-2">
       <section className="premium-card space-y-4 p-6">
-        <div className="flex items-center gap-2">
-          <CreditCard className="h-5 w-5 text-[var(--theme-primary)]" />
-          <h2 className="text-base font-semibold">Add funds by card</h2>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <Wallet className="h-5 w-5 text-[var(--theme-primary)]" />
+            <h2 className="text-base font-semibold">Add funds</h2>
+          </div>
+          {cardEnabled && wiseReceiveId && !intent ? (
+            <div role="tablist" className="inline-flex rounded-lg bg-muted p-0.5 text-sm">
+              {(["card", "wise"] as const).map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  role="tab"
+                  aria-selected={method === m}
+                  onClick={() => setMethod(m)}
+                  className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1 font-medium ${
+                    method === m ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {m === "card" ? <CreditCard className="h-4 w-4" /> : <Send className="h-4 w-4" />}
+                  {m === "card" ? "Card" : "Wise"}
+                </button>
+              ))}
+            </div>
+          ) : null}
         </div>
         {readOnly ? (
           <p className="text-sm text-muted-foreground">Deposits are disabled while viewing as this affiliate.</p>
+        ) : !cardEnabled && !wiseReceiveId ? (
+          <p className="text-sm text-muted-foreground">
+            Adding funds is not available right now.{transferEnabled ? " You can still move your earnings into the ad wallet." : ""}
+          </p>
+        ) : method === "wise" && wiseReceiveId ? (
+          <WiseDepositForm receiveId={wiseReceiveId} minDepositCents={minDepositCents} onDone={() => router.refresh()} />
         ) : intent ? (
           <StripeCard
             intent={intent}
